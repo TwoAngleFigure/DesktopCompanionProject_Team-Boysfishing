@@ -1,0 +1,10 @@
+{
+    "name": "Twoanglefigure.Fishingresource.Editor",
+    "references": [
+      "Twoanglefigure.Fishingresource"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}

@@ -1,0 +1,372 @@
+[
+  {
+    "type": "ItemData_Fish",
+    "m_id": 100001,
+    "m_name": "고등어",
+    "m_type": "Fish",
+    "m_tier": 1,
+    "m_basePrice": 100,
+    "m_rarity": "Normal",
+    "m_aquariumMaterial": {
+      "type": "ItemData_Materials",
+      "id": 300001
+    },
+    "m_aquariumProduceTime": 60,
+    "m_aquariumDecreaseCount": 5
+  },
+  {
+    "type": "ItemData_Fish",
+    "m_id": 100002,
+    "m_name": "참돔",
+    "m_type": "Fish",
+    "m_tier": 1,
+    "m_basePrice": 300,
+    "m_rarity": "Rare",
+    "m_aquariumMaterial": {
+      "type": "ItemData_Materials",
+      "id": 300002
+    },
+    "m_aquariumProduceTime": 90,
+    "m_aquariumDecreaseCount": 8
+  },
+  {
+    "type": "ItemData_Materials",
+    "m_id": 300001,
+    "m_name": "멸치살",
+    "m_type": "Materials",
+    "m_tier": 1,
+    "m_basePrice": 10
+  },
+  {
+    "type": "ItemData_Materials",
+    "m_id": 300002,
+    "m_name": "새우살",
+    "m_type": "Materials",
+    "m_tier": 1,
+    "m_basePrice": 20
+  },
+  {
+    "type": "ItemData_Equipment",
+    "m_id": 200001,
+    "m_name": "낡은 낚싯대",
+    "m_type": "Equipment",
+    "m_tier": 1,
+    "m_basePrice": 50,
+    "m_mountingArea": "FishingRod",
+    "m_baseModifiers": [
+      {
+        "m_stat": "DamagePerClick",
+        "m_operation": "Add",
+        "m_value": 5.0
+      }
+    ],
+    "m_upgradeSteps": [
+      {
+        "m_goldCost": 100,
+        "m_modifiers": [
+          {
+            "m_stat": "DamagePerClick",
+            "m_operation": "Add",
+            "m_value": 8.0
+          }
+        ],
+        "m_materialCosts": [
+          {
+            "m_material": {
+              "type": "ItemData_Materials",
+              "id": 300001
+            },
+            "m_count": 2
+          }
+        ]
+      },
+      {
+        "m_goldCost": 250,
+        "m_modifiers": [
+          {
+            "m_stat": "DamagePerClick",
+            "m_operation": "Add",
+            "m_value": 12.0
+          }
+        ],
+        "m_materialCosts": [
+          {
+            "m_material": {
+              "type": "ItemData_Materials",
+              "id": 300001
+            },
+            "m_count": 4
+          }
+        ]
+      },
+      {
+        "m_goldCost": 500,
+        "m_modifiers": [
+          {
+            "m_stat": "DamagePerClick",
+            "m_operation": "Add",
+            "m_value": 18.0
+          }
+        ],
+        "m_materialCosts": [
+          {
+            "m_material": {
+              "type": "ItemData_Materials",
+              "id": 300001
+            },
+            "m_count": 6
+          },
+          {
+            "m_material": {
+              "type": "ItemData_Materials",
+              "id": 300002
+            },
+            "m_count": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "ItemData_Equipment",
+    "m_id": 200002,
+    "m_name": "낡은 릴",
+    "m_type": "Equipment",
+    "m_tier": 1,
+    "m_basePrice": 50,
+    "m_mountingArea": "Reel",
+    "m_baseModifiers": [
+      {
+        "m_stat": "CriticalChance",
+        "m_operation": "Add",
+        "m_value": 0.05
+      }
+    ]
+  },
+  {
+    "type": "ItemData_Consumables",
+    "m_id": 400001,
+    "m_name": "새우 미끼",
+    "m_type": "Consumables",
+    "m_tier": 1,
+    "m_basePrice": 30,
+    "m_mountingArea": "Bait",
+    "m_modifiers": [
+      {
+        "m_stat": "ProbabilityAtFishSize",
+        "m_operation": "Add",
+        "m_value": 0.1
+      }
+    ],
+    "m_craftMaterials": [
+      {
+        "m_material": {
+          "type": "ItemData_Materials",
+          "id": 300002
+        },
+        "m_count": 3
+      }
+    ],
+    "m_craftGoldCost": 50
+  },
+  {
+    "type": "ItemData_Consumables",
+    "m_id": 400002,
+    "m_name": "보스 소환 미끼",
+    "m_type": "Consumables",
+    "m_tier": 1,
+    "m_basePrice": 0,
+    "m_mountingArea": "Bait",
+    "m_summonTarget": {
+      "type": "BattleFishData",
+      "id": 500002
+    },
+    "m_craftMaterials": [
+      {
+        "m_material": {
+          "type": "ItemData_Materials",
+          "id": 300001
+        },
+        "m_count": 5
+      },
+      {
+        "m_material": {
+          "type": "ItemData_Materials",
+          "id": 300002
+        },
+        "m_count": 5
+      }
+    ],
+    "m_craftGoldCost": 200
+  },
+  {
+    "type": "PlayerData",
+    "m_id": 1,
+    "m_name": "Player",
+    "m_baseDamagePerClick": 1,
+    "m_baseManualDamagePerHitMultiply": 1,
+    "m_baseBattleTimeVariable": 10,
+    "m_baseCriticalChance": 0.05,
+    "m_baseCriticalMultiply": 1.5,
+    "m_baseAutoBattleCooltime": 5,
+    "m_baseAutoSpeedPerTime": 1,
+    "m_baseAutoDamagePerHitMultiply": 1,
+    "m_baseProbabilityAtFishSize": 0,
+    "m_baseProbabilityAtFishRarity": 0,
+    "m_baseGoldGettingMultiply": 1,
+    "m_baseMapMovementSpeedPerTime": 10,
+    "m_baseInventorySize": 20,
+    "m_startingLicense": 1,
+    "m_startingGold": 0
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500001,
+    "m_name": "고등어(전투)",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100001
+    },
+    "m_maxHp": 100,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 20,
+    "m_maxSize": 80,
+    "m_qualityThresholds": [
+      32.0,
+      44.0,
+      56.0,
+      68.0
+    ],
+    "m_isBoss": false
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500002,
+    "m_name": "대왕 고등어(보스)",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100001
+    },
+    "m_maxHp": 1000,
+    "m_battleTimeVariable": 20,
+    "m_minSize": 60,
+    "m_maxSize": 120,
+    "m_qualityThresholds": [
+      72.0,
+      84.0,
+      96.0,
+      108.0
+    ],
+    "m_isBoss": true,
+    "m_bossDrops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300001
+        },
+        "m_count": 5,
+        "m_probability": 0.5
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200001
+        },
+        "m_count": 1,
+        "m_probability": 0.1
+      }
+    ]
+  },
+  {
+    "type": "StageData",
+    "m_id": 600001,
+    "m_name": "부산",
+    "m_requiredLicense": 1,
+    "m_boss": {
+      "type": "BattleFishData",
+      "id": 500002
+    },
+    "m_mapPosition": {
+      "x": 0,
+      "y": 0
+    },
+    "m_tierPools": [
+      {
+        "m_tier": 1,
+        "m_requiredLicense": 1,
+        "m_entries": [
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500001
+            },
+            "m_weight": 70.0
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500002
+            },
+            "m_weight": 5.0
+          }
+        ]
+      },
+      {
+        "m_tier": 4,
+        "m_requiredLicense": 2,
+        "m_entries": [
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500001
+            },
+            "m_weight": 40.0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "StageData",
+    "m_id": 600002,
+    "m_name": "포항",
+    "m_requiredLicense": 2,
+    "m_mapPosition": {
+      "x": 120,
+      "y": 80
+    },
+    "m_tierPools": [
+      {
+        "m_tier": 2,
+        "m_requiredLicense": 2,
+        "m_entries": [
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500001
+            },
+            "m_weight": 60.0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "LicenseData",
+    "m_id": 700001,
+    "m_name": "초급 라이센스",
+    "m_grade": 1,
+    "m_upgradeGoldCost": 1000
+  },
+  {
+    "type": "LicenseData",
+    "m_id": 700002,
+    "m_name": "중급 라이센스",
+    "m_grade": 2,
+    "m_upgradeGoldCost": 5000,
+    "m_requiredBoss": {
+      "type": "BattleFishData",
+      "id": 500002
+    }
+  }
+]

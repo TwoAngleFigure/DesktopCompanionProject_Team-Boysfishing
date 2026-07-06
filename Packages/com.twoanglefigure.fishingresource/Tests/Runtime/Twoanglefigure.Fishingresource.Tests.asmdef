@@ -1,0 +1,11 @@
+{
+    "name": "Twoanglefigure.Fishingresource.Tests",
+    "references": [
+        "Twoanglefigure.Fishingresource"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": []
+}

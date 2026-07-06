@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bacdf2b11abb85c49996c6ccc031deac, type: 3}
+  m_Name: sweet potato
+  m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Data.ItemData_Materials
+  m_id: 0
+  m_name: 
+  m_assetKey: 
+  m_type: 0
+  m_tier: 0
+  m_basePrice: 0

@@ -1,0 +1,184 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Xml.Linq;
+
+namespace DesktopCompanion.EditorTools
+{
+    /// <summary>
+    /// xlsx(=ZIP+XML)를 외부 라이브러리 없이 직접 파싱하는 에디터 전용 리더(§15.8.2).
+    /// 수식 셀은 저장 시점의 캐시값(&lt;v&gt;)을 읽는다 — 본 파이프라인에서 수식은
+    /// #(표시 전용) 열에만 존재하고 그 열은 변환기가 스킵하므로 문제되지 않는다.
+    /// </summary>
+    public static class XlsxSheetReader
+    {
+        /// <summary>시트명 → (행번호 → (열인덱스(1-base) → 값 long/double/bool/string)).</summary>
+        public static Dictionary<string, SortedDictionary<int, Dictionary<int, object>>> Read(string xlsxPath)
+        {
+            using FileStream stream = File.OpenRead(xlsxPath);
+            using var zip = new ZipArchive(stream, ZipArchiveMode.Read);
+
+            List<string> sharedStrings = ReadSharedStrings(zip);
+            Dictionary<string, string> sheetPaths = ReadSheetPaths(zip);
+
+            var result = new Dictionary<string, SortedDictionary<int, Dictionary<int, object>>>();
+            foreach ((string sheetName, string entryPath) in sheetPaths)
+            {
+                ZipArchiveEntry entry = zip.GetEntry(entryPath);
+                if (entry == null)
+                {
+                    continue;
+                }
+                result[sheetName] = ReadSheet(entry, sharedStrings);
+            }
+            return result;
+        }
+
+        private static XDocument LoadXml(ZipArchive zip, string entryPath)
+        {
+            ZipArchiveEntry entry = zip.GetEntry(entryPath);
+            if (entry == null)
+            {
+                throw new FileNotFoundException($"xlsx 내부 항목 없음: {entryPath}");
+            }
+            using Stream stream = entry.Open();
+            return XDocument.Load(stream);
+        }
+
+        // xl/workbook.xml(시트명·rId) + xl/_rels/workbook.xml.rels(rId→파일)로 시트 경로 매핑
+        private static Dictionary<string, string> ReadSheetPaths(ZipArchive zip)
+        {
+            XDocument workbook = LoadXml(zip, "xl/workbook.xml");
+            XDocument rels = LoadXml(zip, "xl/_rels/workbook.xml.rels");
+
+            var idToTarget = new Dictionary<string, string>();
+            foreach (XElement rel in rels.Descendants().Where(e => e.Name.LocalName == "Relationship"))
+            {
+                string target = rel.Attribute("Target")?.Value;
+                if (target == null)
+                {
+                    continue;
+                }
+                // Target은 "worksheets/sheet1.xml"(상대) 또는 "/xl/..."(절대) 형태
+                target = target.StartsWith("/") ? target.TrimStart('/') : "xl/" + target;
+                idToTarget[rel.Attribute("Id")?.Value ?? ""] = target;
+            }
+
+            var paths = new Dictionary<string, string>();
+            foreach (XElement sheet in workbook.Descendants().Where(e => e.Name.LocalName == "sheet"))
+            {
+                string name = sheet.Attribute("name")?.Value;
+                string rId = sheet.Attributes().FirstOrDefault(a => a.Name.LocalName == "id")?.Value;
+                if (name != null && rId != null && idToTarget.TryGetValue(rId, out string path))
+                {
+                    paths[name] = path;
+                }
+            }
+            return paths;
+        }
+
+        private static List<string> ReadSharedStrings(ZipArchive zip)
+        {
+            var strings = new List<string>();
+            ZipArchiveEntry entry = zip.GetEntry("xl/sharedStrings.xml");
+            if (entry == null)
+            {
+                return strings;   // 문자열 없는 통합문서
+            }
+            using Stream s = entry.Open();
+            XDocument doc = XDocument.Load(s);
+            foreach (XElement si in doc.Root.Elements().Where(e => e.Name.LocalName == "si"))
+            {
+                // 서식 분할(rich text run) 대비: si 하위의 모든 <t> 텍스트를 이어붙임
+                strings.Add(string.Concat(si.Descendants().Where(e => e.Name.LocalName == "t").Select(t => t.Value)));
+            }
+            return strings;
+        }
+
+        private static SortedDictionary<int, Dictionary<int, object>> ReadSheet(ZipArchiveEntry entry, List<string> sst)
+        {
+            var rows = new SortedDictionary<int, Dictionary<int, object>>();
+            using Stream s = entry.Open();
+            XDocument doc = XDocument.Load(s);
+
+            foreach (XElement row in doc.Descendants().Where(e => e.Name.LocalName == "row"))
+            {
+                if (!int.TryParse(row.Attribute("r")?.Value, out int rowNum))
+                {
+                    continue;
+                }
+                var cells = new Dictionary<int, object>();
+                foreach (XElement c in row.Elements().Where(e => e.Name.LocalName == "c"))
+                {
+                    string cellRef = c.Attribute("r")?.Value;
+                    if (cellRef == null)
+                    {
+                        continue;
+                    }
+                    object value = ReadCellValue(c, sst);
+                    if (value != null)
+                    {
+                        cells[ColumnIndex(cellRef)] = value;
+                    }
+                }
+                if (cells.Count > 0)
+                {
+                    rows[rowNum] = cells;
+                }
+            }
+            return rows;
+        }
+
+        private static object ReadCellValue(XElement c, List<string> sst)
+        {
+            string type = c.Attribute("t")?.Value;
+
+            if (type == "inlineStr")
+            {
+                return string.Concat(c.Descendants().Where(e => e.Name.LocalName == "t").Select(t => t.Value));
+            }
+
+            string v = c.Elements().FirstOrDefault(e => e.Name.LocalName == "v")?.Value;
+            if (string.IsNullOrEmpty(v))
+            {
+                return null;
+            }
+
+            switch (type)
+            {
+                case "s":     // 공유 문자열 인덱스
+                    return int.TryParse(v, out int index) && index >= 0 && index < sst.Count ? sst[index] : null;
+                case "b":     // 불리언
+                    return v == "1";
+                case "str":   // 수식 결과 문자열(캐시값)
+                    return v;
+                case "e":     // 수식 에러
+                    return null;
+                default:      // 숫자
+                    if (long.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out long l))
+                    {
+                        return l;
+                    }
+                    return double.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out double d) ? d : v;
+            }
+        }
+
+        // "AB12" → 열 인덱스(1-base)
+        private static int ColumnIndex(string cellRef)
+        {
+            int col = 0;
+            foreach (char ch in cellRef)
+            {
+                if (ch < 'A' || ch > 'Z')
+                {
+                    break;
+                }
+                col = col * 26 + (ch - 'A' + 1);
+            }
+            return col;
+        }
+    }
+}
