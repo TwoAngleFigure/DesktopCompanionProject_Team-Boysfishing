@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89343a3126b1b9743bd9b68e5a5c4e9d, type: 3}
+  m_Name: D_Equipment_01
+  m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Data.ItemData_Equipment
+  m_id: 200001
+  m_name: "\uB0A1\uC740 \uB09A\uC2EF\uB300"
+  m_assetKey: 
+  m_type: 3
+  m_tier: 1
+  m_basePrice: 50
+  m_mountingArea: 0
+  m_baseModifiers:
+  - m_stat: 0
+    m_operation: 0
+    m_value: 5
+  m_upgradeSteps: []
