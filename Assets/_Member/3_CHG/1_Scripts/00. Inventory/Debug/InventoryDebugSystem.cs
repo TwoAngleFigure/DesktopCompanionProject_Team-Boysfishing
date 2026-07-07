@@ -91,7 +91,7 @@ namespace DesktopCompanion.Systems
                 return false;
             }
 
-            bool result = inventorySystem.TryAddItem(handle);
+            bool result = inventorySystem.AddItem(handle);
 
             if (!result)
             {
@@ -111,7 +111,7 @@ namespace DesktopCompanion.Systems
                 return false;
             }
 
-            bool result = inventorySystem.TryConsumeItemByDataId(itemType, dataId, amount);
+            bool result = inventorySystem.ConsumeItemByDataId(itemType, dataId, amount);
             Debug.Log($"[InventoryDebugSystem] Consume result: {result}, itemType: {itemType}, dataId: {dataId}, amount: {amount}");
             return result;
         }
@@ -135,7 +135,7 @@ namespace DesktopCompanion.Systems
                 return false;
             }
 
-            bool result = inventorySystem.TrySwapSlots(itemType, fromIndex, toIndex);
+            bool result = inventorySystem.SwapSlots(itemType, fromIndex, toIndex);
             Debug.Log($"[InventoryDebugSystem] Swap result: {result}, itemType: {itemType}, fromIndex: {fromIndex}, toIndex: {toIndex}");
             return result;
         }

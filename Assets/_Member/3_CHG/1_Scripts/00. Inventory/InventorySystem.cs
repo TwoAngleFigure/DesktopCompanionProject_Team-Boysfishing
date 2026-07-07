@@ -99,7 +99,7 @@ namespace DesktopCompanion.Systems
             return usedCount;
         }
 
-        public bool TryGetHandleAt(ItemType itemType, int slotIndex, out EntityHandle handle)
+        public bool GetHandleAt(ItemType itemType, int slotIndex, out EntityHandle handle)
         {
             handle = default;
 
@@ -119,7 +119,7 @@ namespace DesktopCompanion.Systems
             return true;
         }
 
-        public bool TryAddItem(EntityHandle itemHandle)
+        public bool AddItem(EntityHandle itemHandle)
         {
             LogDebug($"TryAddItem called. handle: {itemHandle}");
 
@@ -143,7 +143,7 @@ namespace DesktopCompanion.Systems
                 return false;
             }
 
-            if (!TryGetItemType(itemEntity, out ItemType itemType))
+            if (!GetItemType(itemEntity, out ItemType itemType))
             {
                 LogWarning($"TryAddItem failed. Unsupported entity type: {itemEntity.GetType().Name}");
                 return false;
@@ -152,7 +152,7 @@ namespace DesktopCompanion.Systems
             EntityHandle[] slots = GetSlotArray(itemType);
             ItemType slotType = NormalizeSlotType(itemType);
 
-            if (TryMergeStackableItem(itemHandle, itemEntity, slots, itemType))
+            if (MergeStackableItem(itemHandle, itemEntity, slots, itemType))
             {
                 LogDebug($"TryAddItem merged. slotType: {slotType}, itemType: {itemType}, dataId: {itemEntity.DataId}, name: {itemEntity.Name}");
                 NotifyInventoryChanged($"Merge item / slotType: {slotType}, itemType: {itemType}, dataId: {itemEntity.DataId}", true);
@@ -215,7 +215,7 @@ namespace DesktopCompanion.Systems
             return true;
         }
 
-        public bool TrySwapSlots(ItemType itemType, int fromIndex, int toIndex)
+        public bool SwapSlots(ItemType itemType, int fromIndex, int toIndex)
         {
             EntityHandle[] slots = GetSlotArray(itemType);
             ItemType slotType = NormalizeSlotType(itemType);
@@ -242,7 +242,7 @@ namespace DesktopCompanion.Systems
             return true;
         }
 
-        public bool TryRemoveQuantityAt(ItemType itemType, int slotIndex, int amount, bool destroyEntityWhenZero = true)
+        public bool RemoveQuantityAt(ItemType itemType, int slotIndex, int amount, bool destroyEntityWhenZero = true)
         {
             if (amount <= 0)
             {
@@ -250,7 +250,7 @@ namespace DesktopCompanion.Systems
                 return false;
             }
 
-            if (!TryGetHandleAt(itemType, slotIndex, out EntityHandle handle))
+            if (!GetHandleAt(itemType, slotIndex, out EntityHandle handle))
             {
                 LogWarning($"TryRemoveQuantityAt failed. Handle not found. itemType: {itemType}, slotIndex: {slotIndex}");
                 return false;
@@ -264,7 +264,7 @@ namespace DesktopCompanion.Systems
                 return false;
             }
 
-            if (!TryGetStackQuantity(entity, out int currentQuantity))
+            if (!GetStackQuantity(entity, out int currentQuantity))
             {
                 LogWarning($"TryRemoveQuantityAt failed. Entity is not stackable. type: {entity.GetType().Name}, dataId: {entity.DataId}, name: {entity.Name}");
                 return false;
@@ -317,7 +317,7 @@ namespace DesktopCompanion.Systems
                     continue;
                 }
 
-                if (TryGetStackQuantity(entity, out int quantity))
+                if (GetStackQuantity(entity, out int quantity))
                 {
                     totalQuantity += quantity;
                 }
@@ -326,7 +326,7 @@ namespace DesktopCompanion.Systems
             return totalQuantity;
         }
 
-        public bool TryConsumeItemByDataId(ItemType itemType, int dataId, int amount)
+        public bool ConsumeItemByDataId(ItemType itemType, int dataId, int amount)
         {
             LogDebug($"TryConsumeItemByDataId called. itemType: {itemType}, dataId: {dataId}, amount: {amount}");
 
@@ -367,7 +367,7 @@ namespace DesktopCompanion.Systems
                     continue;
                 }
 
-                if (!TryGetStackQuantity(entity, out int quantity))
+                if (!GetStackQuantity(entity, out int quantity))
                 {
                     continue;
                 }
@@ -506,7 +506,7 @@ namespace DesktopCompanion.Systems
                     continue;
                 }
 
-                if (!TryGetItemType(entity, out ItemType itemType))
+                if (!GetItemType(entity, out ItemType itemType))
                 {
                     LogWarning($"CaptureSlots skipped. Unsupported entity type: {entity.GetType().Name}");
                     continue;
@@ -559,7 +559,7 @@ namespace DesktopCompanion.Systems
         {
             LogDebug($"RestoreSlot called. itemType: {slotSave.itemType}, slotIndex: {slotSave.slotIndex}, dataId: {slotSave.dataId}, handle: {slotSave.handle}");
 
-            if (!TryRestoreEntity(slotSave, out EntityHandle restoredHandle))
+            if (!RestoreEntity(slotSave, out EntityHandle restoredHandle))
             {
                 LogWarning($"RestoreSlot failed. Entity restore failed. itemType: {slotSave.itemType}, dataId: {slotSave.dataId}");
                 return false;
@@ -599,7 +599,7 @@ namespace DesktopCompanion.Systems
             return true;
         }
 
-        private bool TryRestoreEntity(InventorySave.SlotSave slotSave, out EntityHandle restoredHandle)
+        private bool RestoreEntity(InventorySave.SlotSave slotSave, out EntityHandle restoredHandle)
         {
             restoredHandle = default;
 
@@ -612,16 +612,16 @@ namespace DesktopCompanion.Systems
             switch (slotSave.itemType)
             {
                 case ItemType.Fish:
-                    return TryRestoreFish(slotSave, parsedHandle, out restoredHandle);
+                    return RestoreFish(slotSave, parsedHandle, out restoredHandle);
 
                 case ItemType.Equipment:
-                    return TryRestoreEquipment(slotSave, parsedHandle, out restoredHandle);
+                    return RestoreEquipment(slotSave, parsedHandle, out restoredHandle);
 
                 case ItemType.Materials:
-                    return TryRestoreMaterials(slotSave, parsedHandle, out restoredHandle);
+                    return RestoreMaterials(slotSave, parsedHandle, out restoredHandle);
 
                 case ItemType.Consumables:
-                    return TryRestoreConsumables(slotSave, parsedHandle, out restoredHandle);
+                    return RestoreConsumables(slotSave, parsedHandle, out restoredHandle);
 
                 default:
                     LogWarning($"TryRestoreEntity failed. Unsupported itemType: {slotSave.itemType}");
@@ -629,7 +629,7 @@ namespace DesktopCompanion.Systems
             }
         }
 
-        private bool TryRestoreFish(InventorySave.SlotSave slotSave, EntityHandle parsedHandle, out EntityHandle restoredHandle)
+        private bool RestoreFish(InventorySave.SlotSave slotSave, EntityHandle parsedHandle, out EntityHandle restoredHandle)
         {
             restoredHandle = default;
 
@@ -650,7 +650,7 @@ namespace DesktopCompanion.Systems
             return false;
         }
 
-        private bool TryRestoreEquipment(InventorySave.SlotSave slotSave, EntityHandle parsedHandle, out EntityHandle restoredHandle)
+        private bool RestoreEquipment(InventorySave.SlotSave slotSave, EntityHandle parsedHandle, out EntityHandle restoredHandle)
         {
             restoredHandle = default;
 
@@ -671,7 +671,7 @@ namespace DesktopCompanion.Systems
             return false;
         }
 
-        private bool TryRestoreMaterials(InventorySave.SlotSave slotSave, EntityHandle parsedHandle, out EntityHandle restoredHandle)
+        private bool RestoreMaterials(InventorySave.SlotSave slotSave, EntityHandle parsedHandle, out EntityHandle restoredHandle)
         {
             restoredHandle = default;
 
@@ -692,7 +692,7 @@ namespace DesktopCompanion.Systems
             return false;
         }
 
-        private bool TryRestoreConsumables(InventorySave.SlotSave slotSave, EntityHandle parsedHandle, out EntityHandle restoredHandle)
+        private bool RestoreConsumables(InventorySave.SlotSave slotSave, EntityHandle parsedHandle, out EntityHandle restoredHandle)
         {
             restoredHandle = default;
 
@@ -713,22 +713,22 @@ namespace DesktopCompanion.Systems
             return false;
         }
 
-        private bool TryMergeStackableItem(EntityHandle incomingHandle, Entity incomingEntity, EntityHandle[] targetSlots, ItemType itemType)
+        private bool MergeStackableItem(EntityHandle incomingHandle, Entity incomingEntity, EntityHandle[] targetSlots, ItemType itemType)
         {
             if (incomingEntity is Entity_Materials incomingMaterials)
             {
-                return TryMergeMaterials(incomingHandle, incomingMaterials, targetSlots);
+                return MergeMaterials(incomingHandle, incomingMaterials, targetSlots);
             }
 
             if (incomingEntity is Entity_Consumables incomingConsumables)
             {
-                return TryMergeConsumables(incomingHandle, incomingConsumables, targetSlots);
+                return MergeConsumables(incomingHandle, incomingConsumables, targetSlots);
             }
 
             return false;
         }
 
-        private bool TryMergeMaterials(EntityHandle incomingHandle, Entity_Materials incomingMaterials, EntityHandle[] targetSlots)
+        private bool MergeMaterials(EntityHandle incomingHandle, Entity_Materials incomingMaterials, EntityHandle[] targetSlots)
         {
             if (incomingMaterials.Quantity <= 0)
             {
@@ -754,7 +754,7 @@ namespace DesktopCompanion.Systems
             return false;
         }
 
-        private bool TryMergeConsumables(EntityHandle incomingHandle, Entity_Consumables incomingConsumables, EntityHandle[] targetSlots)
+        private bool MergeConsumables(EntityHandle incomingHandle, Entity_Consumables incomingConsumables, EntityHandle[] targetSlots)
         {
             if (incomingConsumables.Quantity <= 0)
             {
@@ -803,7 +803,7 @@ namespace DesktopCompanion.Systems
             return entity;
         }
 
-        private bool TryGetItemType(Entity entity, out ItemType itemType)
+        private bool GetItemType(Entity entity, out ItemType itemType)
         {
             itemType = default;
 
@@ -921,7 +921,7 @@ namespace DesktopCompanion.Systems
             return false;
         }
 
-        private bool TryGetStackQuantity(Entity entity, out int quantity)
+        private bool GetStackQuantity(Entity entity, out int quantity)
         {
             quantity = 0;
 
