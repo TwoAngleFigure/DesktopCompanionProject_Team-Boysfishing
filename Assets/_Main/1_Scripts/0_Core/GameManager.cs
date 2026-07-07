@@ -83,11 +83,12 @@ namespace DesktopCompanion.Core
         {
             m_systemManager.Register(new DesktopCompanion.Systems.InventorySystem());
 
-            m_systemManager.Register(new DesktopCompanion.Systems.FishingSystem());
 
             m_systemManager.Register(new DesktopCompanion.Systems.StageSystem());
 
             m_systemManager.Register(new DesktopCompanion.Systems.PlayerSystem());
+
+            m_systemManager.Register(new DesktopCompanion.Systems.FishingSystem());
         }
 
         // Data 타입 ↔ Entity 매핑 등록. 새 계열은 여기 한 줄 추가(EntityManager 본체는 불변).

@@ -72,6 +72,9 @@ namespace DesktopCompanion.Systems
 
         public void Tick(float dt)
         {
+
+            Debug.Log("Tick 체크");
+
             if (!m_isTraveling) return;
 
             m_travelTimer -= dt;

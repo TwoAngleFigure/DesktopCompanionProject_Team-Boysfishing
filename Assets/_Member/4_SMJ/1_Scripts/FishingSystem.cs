@@ -1,4 +1,4 @@
-using DesktopCompanion.Data;
+ï»¿using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
 using System;
 using System.Collections.Generic;
@@ -16,13 +16,11 @@ namespace DesktopCompanion.Systems
     public class FishingSystem : SystemBase, ITickable
     {
         private int defaultPlayerDataId = 1;
-        private int defaultStageDataId = 600001;
 
         private float baseBattleDuration = 10f;
         private float minBattleDuration = 0.5f;
 
         private FishingState m_state;
-        private int m_currentStageId;
         private EntityHandle m_currentBattleFish;
         private float m_waitTimer;
         private float m_battleTimer;
@@ -39,13 +37,12 @@ namespace DesktopCompanion.Systems
         public override void Initialize()
         {
             m_state = FishingState.Stopped;
-            m_currentStageId = 0;
             m_currentBattleFish = default;
             m_waitTimer = 0f;
             m_battleTimer = 0f;
             m_autoAttackTimer = 0f;
 
-            StartFishing(defaultStageDataId);
+            StartFishing();
         }
 
         public void Tick(float deltaTime)
@@ -82,7 +79,7 @@ namespace DesktopCompanion.Systems
 
             if (m_battleTimer <= 0f)
             {
-                FailBattle("Á¦ÇÑ½Ã°£ ÃÊ°ú");
+                FailBattle("ì œí•œì‹œê°„ ì´ˆê³¼");
                 return;
             }
 
@@ -101,39 +98,33 @@ namespace DesktopCompanion.Systems
                     attackInterval = playerData.BaseAutoSpeedPerTime;
                 }
 
-                Debug.Log($"[FishingSystem] ÀÚµ¿ °ø°İ: damage={damage}");
+                Debug.Log($"[FishingSystem] ìë™ ê³µê²©: damage={damage}");
 
                 ApplyDamage(damage);
 
                 m_autoAttackTimer = attackInterval;
             }
         }
-        public void StartFishing(int stageId)
+        public void StartFishing()
         {
-            StageData stageData = DataManager.GetData<StageData>(stageId);
-
-            if (stageData == null)
+            if (m_state != FishingState.Stopped)
             {
-                Debug.LogWarning($"[FishingSystem] StageData¸¦ Ã£Áö ¸øÇß½À´Ï´Ù. stageId={stageId}");
+                Debug.Log($"[FishingSystem] ì´ë¯¸ ë‚šì‹œ ì§„í–‰ ì¤‘ì…ë‹ˆë‹¤. state={m_state}");
                 return;
             }
-
-            m_currentStageId = stageId;
-
 
             m_waitTimer = 0f;
             ChangeState(FishingState.Waiting);
 
-            Debug.Log($"[FishingSystem] ÀÚµ¿ ³¬½Ã ½ÃÀÛ: stageId={stageId}, ´ë±â½Ã°£={m_waitTimer:0.00}ÃÊ");
+            Debug.Log($"[FishingSystem] ìë™ ë‚šì‹œ ì‹œì‘ ëŒ€ê¸°ì‹œê°„={m_waitTimer:0.00}ì´ˆ");
         }
 
         public void StopFishing()
         {
-            Debug.Log("[FishingSystem] ÀÚµ¿ ³¬½Ã ÁßÁö");
+            Debug.Log("[FishingSystem] ìë™ ë‚šì‹œ ì¤‘ì§€");
 
             ClearCurrentBattleFish();
 
-            m_currentStageId = 0;
             m_waitTimer = 0f;
             m_battleTimer = 0f;
             m_autoAttackTimer = 0f;
@@ -147,7 +138,7 @@ namespace DesktopCompanion.Systems
 
             if (fishData == null)
             {
-                Debug.LogWarning("[FishingSystem] ÀüÅõ ½ÃÀÛ ½ÇÆĞ: ¼±ÅÃ °¡´ÉÇÑ BattleFishData°¡ ¾ø½À´Ï´Ù.");
+                Debug.LogWarning("[FishingSystem] ì „íˆ¬ ì‹œì‘ ì‹¤íŒ¨: ì„ íƒ ê°€ëŠ¥í•œ BattleFishDataê°€ ì—†ìŠµë‹ˆë‹¤.");
                 ScheduleNextFishing();
                 return;
             }
@@ -157,7 +148,7 @@ namespace DesktopCompanion.Systems
             Entity_BattleFish battleFish = EntityManager.Get<Entity_BattleFish>(m_currentBattleFish);
             if (battleFish == null)
             {
-                Debug.LogWarning($"[FishingSystem] Entity_BattleFish »ı¼º ½ÇÆĞ: id={fishData.ID}");
+                Debug.LogWarning($"[FishingSystem] Entity_BattleFish ìƒì„± ì‹¤íŒ¨: id={fishData.ID}");
                 ClearCurrentBattleFish();
                 ScheduleNextFishing();
                 return;
@@ -172,7 +163,7 @@ namespace DesktopCompanion.Systems
 
             ChangeState(FishingState.Battling);
 
-            Debug.Log($"[FishingSystem] ÀüÅõ ½ÃÀÛ: {fishData.Name}, HP={battleFish.CurrentHp}/{fishData.MaxHp}, Size={size:0.00}, Quality={quality}, Á¦ÇÑ½Ã°£={m_battleTimer:0.00}ÃÊ");
+            Debug.Log($"[FishingSystem] ì „íˆ¬ ì‹œì‘: {fishData.Name}, HP={battleFish.CurrentHp}/{fishData.MaxHp}, Size={size:0.00}, Quality={quality}, ì œí•œì‹œê°„={m_battleTimer:0.00}ì´ˆ");
         }
 
 
@@ -182,7 +173,7 @@ namespace DesktopCompanion.Systems
 
             if (battleFish == null)
             {
-                Debug.LogWarning("[FishingSystem] µ¥¹ÌÁö Àû¿ë ½ÇÆĞ: ÇöÀç ÀüÅõ ¹°°í±â°¡ ¾ø½À´Ï´Ù.");
+                Debug.LogWarning("[FishingSystem] ë°ë¯¸ì§€ ì ìš© ì‹¤íŒ¨: í˜„ì¬ ì „íˆ¬ ë¬¼ê³ ê¸°ê°€ ì—†ìŠµë‹ˆë‹¤.");
                 ClearCurrentBattleFish();
                 ScheduleNextFishing();
                 return;
@@ -190,7 +181,7 @@ namespace DesktopCompanion.Systems
 
             battleFish.ApplyDamage(damage);
 
-            Debug.Log($"[FishingSystem] ¹°°í±â HP : {battleFish.Name} HP={battleFish.CurrentHp}/{battleFish.BattleData.MaxHp}");
+            Debug.Log($"[FishingSystem] ë¬¼ê³ ê¸° HP : {battleFish.Name} HP={battleFish.CurrentHp}/{battleFish.BattleData.MaxHp}");
 
             if (battleFish.CurrentHp <= 0)
             {
@@ -213,10 +204,10 @@ namespace DesktopCompanion.Systems
 
             m_caughtFish.Add(caughtHandle);
 
-            Debug.Log($"[FishingSystem] ³¬½Ã ¼º°ø: {battleFish.BattleData.ItemFish.Name}, " +
+            Debug.Log($"[FishingSystem] ë‚šì‹œ ì„±ê³µ: {battleFish.BattleData.ItemFish.Name}, " +
                 $"Size={battleFish.Size:0.00}, " +
                 $"Quality={battleFish.Quality}, " +
-                $"ÃÑ ³¬Àº ¼ö={m_caughtFish.Count}");
+                $"ì´ ë‚šì€ ìˆ˜={m_caughtFish.Count}");
 
             ClearCurrentBattleFish();
             ScheduleNextFishing();
@@ -227,7 +218,7 @@ namespace DesktopCompanion.Systems
             Entity_BattleFish battleFish = EntityManager.Get<Entity_BattleFish>(m_currentBattleFish);
             string fishName = battleFish != null ? battleFish.Name : "Unknown";
 
-            Debug.Log($"[FishingSystem] Æ÷È¹ ½ÇÆĞ: {fishName}, reason={reason}");
+            Debug.Log($"[FishingSystem] í¬íš ì‹¤íŒ¨: {fishName}, reason={reason}");
 
             ClearCurrentBattleFish();
             ScheduleNextFishing();
@@ -237,7 +228,7 @@ namespace DesktopCompanion.Systems
         {
             if (battleFish.BattleData.ItemFish == null)
             {
-                Debug.LogWarning("[FishingSystem] BattleFishData¿¡ ItemFish°¡ ¿¬°áµÇ¾î ÀÖÁö ¾Ê½À´Ï´Ù.");
+                Debug.LogWarning("[FishingSystem] BattleFishDataì— ItemFishê°€ ì—°ê²°ë˜ì–´ ìˆì§€ ì•ŠìŠµë‹ˆë‹¤.");
                 return default;
             }
 
@@ -255,11 +246,6 @@ namespace DesktopCompanion.Systems
 
         private void ScheduleNextFishing()
         {
-            if (m_currentStageId == 0)
-            {
-                ChangeState(FishingState.Stopped);
-                return;
-            }
 
             m_waitTimer = CalculateNextFishingDelay();
             m_battleTimer = 0f;
@@ -267,44 +253,62 @@ namespace DesktopCompanion.Systems
 
             ChangeState(FishingState.Waiting);
 
-            Debug.Log($"[FishingSystem] ´ÙÀ½ ÀÔÁú ´ë±â: {m_waitTimer:0.00}ÃÊ");
+            Debug.Log($"[FishingSystem] ë‹¤ìŒ ì…ì§ˆ ëŒ€ê¸°: {m_waitTimer:0.00}ì´ˆ");
         }
 
 
         private BattleFishData SelectBattleFish()
         {
-            StageData stageData = DataManager.GetData<StageData>(m_currentStageId);
+            StageSystem stageSystem = SystemManager.GetSystem<StageSystem>();
 
-            if (stageData != null)
+            if (stageSystem == null)
             {
-                BattleFishData fishFromStage = SelectBattleFishFromStage(stageData);
-
-                if (fishFromStage != null)
-                {
-                    Debug.Log($"[FishingSystem] StageData »ç¿ë: stage={stageData.Name}, fish={fishFromStage.Name}");
-                    return fishFromStage;
-                }
-
-                Debug.LogWarning($"[FishingSystem] StageData({stageData.Name})¿¡ ¼±ÅÃ °¡´ÉÇÑ ¹°°í±â ¾øÀ½.");
+                Debug.LogWarning("[FishingSystem] StageSystemì„ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
+                return null;
             }
 
-            return null;
+            int playerLicense = GetPlayerLicense();
+            List<TierPool> availablePools = stageSystem.GetAvailableTierPools(playerLicense);
+
+            if (availablePools == null || availablePools.Count == 0)
+            {
+                Debug.LogWarning($"[FishingSystem] ì‚¬ìš© ê°€ëŠ¥í•œ TierPoolì´ ì—†ìŠµë‹ˆë‹¤. playerLicense={playerLicense}");
+                return null;
+            }
+
+            TierPool selectedPool = SelectHighestTierPool(availablePools);
+            BattleFishData selectedFish = SelectBattleFishFromTierPool(selectedPool);
+
+            if (selectedFish != null)
+            {
+                Debug.Log($"[FishingSystem] StageSystem TierPool ì‚¬ìš©: tier={selectedPool.Tier}, fish={selectedFish.Name}");
+            }
+
+            return selectedFish;
         }
 
-        private BattleFishData SelectBattleFishFromStage(StageData stageData)
+        private TierPool SelectHighestTierPool(List<TierPool> pools)
         {
-            if (stageData == null)
+            TierPool selectedPool = null;
+
+            foreach (TierPool pool in pools)
             {
-                return null;
+                if (pool == null)
+                {
+                    continue;
+                }
+
+                if (selectedPool == null || pool.Tier > selectedPool.Tier)
+                {
+                    selectedPool = pool;
+                }
             }
 
-            if (stageData.TierPools == null || stageData.TierPools.Length == 0)
-            {
-                return null;
-            }
+            return selectedPool;
+        }
 
-            TierPool pool = stageData.TierPools[0];
-
+        private BattleFishData SelectBattleFishFromTierPool(TierPool pool)
+        {
             if (pool == null || pool.Entries == null || pool.Entries.Length == 0)
             {
                 return null;
@@ -327,9 +331,10 @@ namespace DesktopCompanion.Systems
 
             float randomValue = UnityEngine.Random.Range(0f, totalWeight);
             float currentWeight = 0f;
+
             foreach (FishPoolEntry entry in pool.Entries)
             {
-                if (entry == null || entry.Fish == null || entry.Weight < 0f)
+                if (entry == null || entry.Fish == null || entry.Weight <= 0f)
                 {
                     continue;
                 }
@@ -343,6 +348,18 @@ namespace DesktopCompanion.Systems
             }
 
             return null;
+        }
+
+        private int GetPlayerLicense()
+        {
+            PlayerData playerData = GetPlayerData();
+
+            if (playerData == null)
+            {
+                return 0;
+            }
+
+            return playerData.StartingLicense;
         }
 
         private float RollFishSize(BattleFishData fishData)
@@ -359,7 +376,7 @@ namespace DesktopCompanion.Systems
 
             if (playerData == null)
             {
-                Debug.Log("[FishingSystem] PlayerData¸¦ Ã£Áö ¸øÇØ ±âº» ÀüÅõ ½Ã°£À» »ç¿ëÇÕ´Ï´Ù.");
+                Debug.Log("[FishingSystem] PlayerDataë¥¼ ì°¾ì§€ ëª»í•´ ê¸°ë³¸ ì „íˆ¬ ì‹œê°„ì„ ì‚¬ìš©í•©ë‹ˆë‹¤.");
                 return baseBattleDuration;
             }
 
@@ -374,7 +391,7 @@ namespace DesktopCompanion.Systems
 
             if (playerData == null)
             {
-                Debug.LogWarning("[FishingSystem] PlayerData¸¦ Ã£Áö ¸øÇØ ±âº» ³¬½Ã ´ë±â½Ã°£À» »ç¿ëÇÕ´Ï´Ù.");
+                Debug.LogWarning("[FishingSystem] PlayerDataë¥¼ ì°¾ì§€ ëª»í•´ ê¸°ë³¸ ë‚šì‹œ ëŒ€ê¸°ì‹œê°„ì„ ì‚¬ìš©í•©ë‹ˆë‹¤.");
                 return 10f;
             }
 
@@ -408,7 +425,7 @@ namespace DesktopCompanion.Systems
 
             m_state = nextState;
 
-            Debug.Log($"[FishingSystem] »óÅÂ º¯°æ: {nextState}");
+            Debug.Log($"[FishingSystem] ìƒíƒœ ë³€ê²½: {nextState}");
         }
 
         private void ClearCurrentBattleFish()
