@@ -151,33 +151,52 @@ namespace DesktopCompanion.Systems
         /// </summary>
         /// <param name="area">장착할 슬롯 부위</param>
         /// <param name="handle">장비의 엔티티 핸들</param>
+        private bool TryFindAndRemoveFromInventory(InventorySystem inventory, EntityHandle handle)
+        {
+            // (현재 InventorySystem 구조상 Fish, Equipment, Materials 세 종류로 관리됨)
+            ItemType[] types = { ItemType.Fish, ItemType.Equipment, ItemType.Materials };
+
+            foreach (var type in types)
+            {
+                EntityHandle[] slots = inventory.GetSlots(type);
+                for (int i = 0; i < slots.Length; i++)
+                {
+                    // 슬롯의 핸들과 찾으려는 핸들이 같다면
+                    if (slots[i].Equals(handle))
+                    {
+                        // 해당 인덱스의 아이템을 이동 요청 (destroyEntity: false)
+                        return inventory.TryRemoveAt(type, i, false);
+                    }
+                }
+            }
+            return false;
+        }
+
+        //  수정된 Equip 메서드
         public void Equip(EquipmentMountingArea area, EntityHandle afterEquipHandle)
         {
-            // 1. 플레이어 데이터 가져오기
             Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
+            var inventory = SystemManager.GetSystem<InventorySystem>();
 
-            // (가정) 인벤토리 시스템에 접근 (실제 환경에 맞게 EntityManager.Get 등으로 수정하세요)
-            // var inventory = EntityManager.Get<Entity_Inventory>(playerHandle); 
-
-            // 2. [교체 로직] 이미 해당 슬롯에 장비가 있는지 확인
+            //  기존 장비 교체 로직
             if (player.Equipped.TryGetValue(area, out EntityHandle beforeEquipHandle))
             {
-                // A. 기존 장비 해제 (내부 데이터 삭제)
                 player.Unequip(area);
-
-                // B. 기존 장비를 인벤토리에 다시 추가
-                // inventory.AddItem(beforeEquipHandle);
-                Debug.Log($"기존 장비가 인벤토리로 이동되었습니다: {beforeEquipHandle}");
+                inventory?.AddItem(beforeEquipHandle); // 인벤토리로 되돌림
             }
 
-            // 3. 새로운 장비 처리
-            // A. 새 장비를 인벤토리에서 제거
-            // inventory.RemoveItem(afterEquipHandle);
+           
+            if (inventory != null)
+            {
+                bool isRemoved = TryFindAndRemoveFromInventory(inventory, afterEquipHandle);
+                if (!isRemoved)
+                {
+                    Debug.LogWarning("인벤토리에서 해당 아이템을 찾을 수 없거나 삭제에 실패했습니다.");
+                }
+            }
 
-            // B. 새로운 장비 장착
+            //  새로운 장비 장착
             player.Equip(area, afterEquipHandle);
-
-            // 4. 장비 장착 완료 후 전체 능력치 다시 계산
             CaculatedStat();
 
             Debug.Log($"{area} 부위에 새로운 장비가 장착되었습니다.");
