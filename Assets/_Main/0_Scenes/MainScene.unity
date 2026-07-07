@@ -163,8 +163,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c549287285a63b43885c07c2624b9a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Core.GameManager
-  m_useTestData: 0
-  m_testData: []
+  m_useTestData: 1
+  m_testData:
+  - {fileID: 11400000, guid: cfe1ebf28b8b809478504bccfdcbedbf, type: 2}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -252,7 +253,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalPosition: {x: 1.72, y: 1.41, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
