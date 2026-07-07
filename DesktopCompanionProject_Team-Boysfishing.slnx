@@ -1,0 +1,8 @@
+﻿<Solution>
+  <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="Twoanglefigure.Fishingresource.Tests.csproj" />
+  <Project Path="Twoanglefigure.Fishingresource.csproj" />
+  <Project Path="Assembly-CSharp-Editor.csproj" />
+  <Project Path="Twoanglefigure.Fishingresource.Editor.csproj" />
+  <Project Path="Twoanglefigure.Fishingresource.Editor.Tests.csproj" />
+</Solution>
