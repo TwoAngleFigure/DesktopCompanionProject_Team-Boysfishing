@@ -30,14 +30,14 @@ namespace DesktopCompanion.Systems
 
         private readonly List<EntityHandle> m_caughtFish = new();
 
-        public event Action<FishingState> OnStateChanged;
-        public event Action<EntityHandle> OnBattleStarted;
-        public event Action<EntityHandle, int, int> OnBattleHpChanged;
-        public event Action<EntityHandle> OnFishCaught;
-        public event Action<EntityHandle> OnBattleFailed;
-        
+        // public event Action<FishingState> OnStateChanged;
+        // public event Action<EntityHandle> OnBattleStarted;
+        // public event Action<EntityHandle, int, int> OnBattleHpChanged;
+        // public event Action<EntityHandle> OnFishCaught;
+        // public event Action<EntityHandle> OnBattleFailed;
+
         public override void Initialize()
-        {   
+        {
             m_state = FishingState.Stopped;
             m_currentStageId = 0;
             m_currentBattleFish = default;
@@ -211,7 +211,7 @@ namespace DesktopCompanion.Systems
 
             EntityHandle caughtHandle = CreateCaughtFish(battleFish);
 
-                m_caughtFish.Add(caughtHandle);
+            m_caughtFish.Add(caughtHandle);
 
             Debug.Log($"[FishingSystem] 낚시 성공: {battleFish.BattleData.ItemFish.Name}, " +
                 $"Size={battleFish.Size:0.00}, " +
@@ -255,7 +255,7 @@ namespace DesktopCompanion.Systems
 
         private void ScheduleNextFishing()
         {
-            if(m_currentStageId == 0)
+            if (m_currentStageId == 0)
             {
                 ChangeState(FishingState.Stopped);
                 return;
@@ -270,7 +270,7 @@ namespace DesktopCompanion.Systems
             Debug.Log($"[FishingSystem] 다음 입질 대기: {m_waitTimer:0.00}초");
         }
 
-        
+
         private BattleFishData SelectBattleFish()
         {
             StageData stageData = DataManager.GetData<StageData>(m_currentStageId);
@@ -300,7 +300,7 @@ namespace DesktopCompanion.Systems
 
             if (stageData.TierPools == null || stageData.TierPools.Length == 0)
             {
-                return null;  
+                return null;
             }
 
             TierPool pool = stageData.TierPools[0];
@@ -360,7 +360,7 @@ namespace DesktopCompanion.Systems
             if (playerData == null)
             {
                 Debug.Log("[FishingSystem] PlayerData를 찾지 못해 기본 전투 시간을 사용합니다.");
-                return baseBattleDuration; 
+                return baseBattleDuration;
             }
 
             float duration = baseBattleDuration + playerData.BaseBattleTimeVariable - fishData.BattleTimeVariable;

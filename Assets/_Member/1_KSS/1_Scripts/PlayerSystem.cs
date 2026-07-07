@@ -4,7 +4,7 @@ using DesktopCompanion.Entities;
 using DesktopCompanion.Systems;
 using UnityEngine;
 
-namespace DesktopCompanion
+namespace DesktopCompanion.Systems
 {
     /// <summary>
     /// 플레이어의 능력치를 관리하고, 장비 장착에 따른 스탯 변화를 실시간으로 계산하는 시스템입니다.

@@ -471,22 +471,18 @@ namespace DesktopCompanion.Systems
 
         private void LogDebug(string message)
         {
-            if (!EnableInventoryDebugLog)
+            if (EnableInventoryDebugLog)
             {
-                return;
+                Debug.Log($"[InventorySystem] {message}");
             }
-
-            Debug.Log($"[InventorySystem] {message}");
         }
 
         private void LogWarning(string message)
         {
-            if (!EnableInventoryDebugLog)
+            if (EnableInventoryDebugLog)
             {
-                return;
+                Debug.LogWarning($"[InventorySystem] {message}");
             }
-
-            Debug.LogWarning($"[InventorySystem] {message}");
         }
 
         private void CaptureSlots(InventorySave save, ItemType slotType, EntityHandle[] slots)

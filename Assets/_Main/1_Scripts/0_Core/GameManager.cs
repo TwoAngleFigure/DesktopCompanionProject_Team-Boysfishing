@@ -81,12 +81,13 @@ namespace DesktopCompanion.Core
         // (구체 System 타입을 아는 곳은 composition root인 GameManager뿐)
         private void RegisterSystems()
         {
-            // ★ Save/Load 검증용 임시 System — 검증 완료 후 이 줄과 SaveTestSystem.cs 제거 가능
-            m_systemManager.Register(new DesktopCompanion.Systems.SaveTestSystem());
-
             m_systemManager.Register(new DesktopCompanion.Systems.InventorySystem());
-            // ★ Inventory 검증용 디버거 System - 검증 완료 후 이 줄과 InventoryDebugSystem.cs 제거 가능
-            m_systemManager.Register(new DesktopCompanion.Systems.InventoryDebugSystem());
+
+            m_systemManager.Register(new DesktopCompanion.Systems.FishingSystem());
+
+            m_systemManager.Register(new DesktopCompanion.Systems.StageSystem());
+
+            m_systemManager.Register(new DesktopCompanion.Systems.PlayerSystem());
         }
 
         // Data 타입 ↔ Entity 매핑 등록. 새 계열은 여기 한 줄 추가(EntityManager 본체는 불변).
