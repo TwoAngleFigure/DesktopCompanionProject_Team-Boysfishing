@@ -44,6 +44,8 @@ namespace DesktopCompanion.Systems
         private EntityHandle[] m_equipmentSlots;
         private EntityHandle[] m_materialSlots;
 
+        private PlayerSystem m_playerSystem;
+
         // UI 갱신용 이벤트.
         public event Action OnInventoryChanged;
 
@@ -55,7 +57,9 @@ namespace DesktopCompanion.Systems
 
         public override void Initialize()
         {
-            int baseInventorySize = GetBaseInventorySizeFromPlayerData();
+            m_playerSystem = SystemManager.GetSystem<PlayerSystem>();
+
+            int baseInventorySize = GetCurrentInventorySize();
 
             m_fishSlots = CreateSlots(baseInventorySize);
             m_equipmentSlots = CreateSlots(baseInventorySize);
@@ -152,7 +156,7 @@ namespace DesktopCompanion.Systems
             EntityHandle[] slots = GetSlotArray(itemType);
             ItemType slotType = NormalizeSlotType(itemType);
 
-            if (MergeStackableItem(itemHandle, itemEntity, slots, itemType))
+            if (MergeStackableItem(itemHandle, itemEntity, slots))
             {
                 LogDebug($"TryAddItem merged. slotType: {slotType}, itemType: {itemType}, dataId: {itemEntity.DataId}, name: {itemEntity.Name}");
                 NotifyInventoryChanged($"Merge item / slotType: {slotType}, itemType: {itemType}, dataId: {itemEntity.DataId}", true);
@@ -175,7 +179,7 @@ namespace DesktopCompanion.Systems
             return true;
         }
 
-        public bool TryRemoveAt(ItemType itemType, int slotIndex, bool destroyEntity = false)
+        public bool RemoveAt(ItemType itemType, int slotIndex, bool destroyEntity = false)
         {
             EntityHandle[] slots = GetSlotArray(itemType);
             ItemType slotType = NormalizeSlotType(itemType);
@@ -193,8 +197,6 @@ namespace DesktopCompanion.Systems
             }
 
             EntityHandle removedHandle = slots[slotIndex];
-            Entity removedEntity = EntityManager.Get(removedHandle);
-
             slots[slotIndex] = default;
 
             if (destroyEntity)
@@ -202,16 +204,8 @@ namespace DesktopCompanion.Systems
                 EntityManager.Destroy(removedHandle);
             }
 
-            if (removedEntity != null)
-            {
-                LogDebug($"TryRemoveAt success. slotType: {slotType}, itemType: {itemType}, slotIndex: {slotIndex}, dataId: {removedEntity.DataId}, name: {removedEntity.Name}, destroyEntity: {destroyEntity}");
-            }
-            else
-            {
-                LogWarning($"TryRemoveAt success but entity was missing. slotType: {slotType}, itemType: {itemType}, slotIndex: {slotIndex}, handle: {removedHandle}, destroyEntity: {destroyEntity}");
-            }
-
-            NotifyInventoryChanged($"Remove item / slotType: {slotType}, itemType: {itemType}, slotIndex: {slotIndex}", true);
+            LogDebug($"TryRemoveAt success. itemType: {itemType}, slotIndex: {slotIndex}, destroyEntity: {destroyEntity}");
+            NotifyInventoryChanged($"Remove item / itemType: {itemType}, slotIndex: {slotIndex}", true);
             return true;
         }
 
@@ -228,7 +222,7 @@ namespace DesktopCompanion.Systems
 
             if (fromIndex == toIndex)
             {
-                LogWarning($"TrySwapSlots skipped. Same index. slotType: {slotType}, itemType: {itemType}, index: {fromIndex}");
+                LogDebug($"TrySwapSlots skipped. Same index. itemType: {itemType}, index: {fromIndex}");
                 return false;
             }
 
@@ -289,7 +283,7 @@ namespace DesktopCompanion.Systems
             }
 
             LogDebug($"TryRemoveQuantityAt zero. dataId: {entity.DataId}, name: {entity.Name}, before: {currentQuantity}, remove: {amount}. Slot will be removed.");
-            return TryRemoveAt(itemType, slotIndex, destroyEntityWhenZero);
+            return RemoveAt(itemType, slotIndex, destroyEntityWhenZero);
         }
 
         //item이 인벤토리에 몇 개 있는지 반환
@@ -561,14 +555,6 @@ namespace DesktopCompanion.Systems
                 return false;
             }
 
-            Entity restoredEntity = EntityManager.Get(restoredHandle);
-
-            if (restoredEntity == null)
-            {
-                LogWarning($"RestoreSlot failed. Restored entity not found. handle: {restoredHandle}");
-                return false;
-            }
-
             EntityHandle[] slots = GetSlotArray(slotSave.itemType);
             ItemType slotType = NormalizeSlotType(slotSave.itemType);
             int targetIndex = slotSave.slotIndex;
@@ -591,7 +577,7 @@ namespace DesktopCompanion.Systems
 
             slots[targetIndex] = restoredHandle;
 
-            LogDebug($"RestoreSlot success. slotType: {slotType}, itemType: {slotSave.itemType}, slotIndex: {targetIndex}, dataId: {restoredEntity.DataId}, name: {restoredEntity.Name}, handle: {restoredHandle}");
+            LogDebug($"RestoreSlot success. slotType: {slotType}, itemType: {slotSave.itemType}, slotIndex: {targetIndex}, dataId: {slotSave.dataId}, handle: {restoredHandle}");
             return true;
         }
 
@@ -709,7 +695,7 @@ namespace DesktopCompanion.Systems
             return false;
         }
 
-        private bool MergeStackableItem(EntityHandle incomingHandle, Entity incomingEntity, EntityHandle[] targetSlots, ItemType itemType)
+        private bool MergeStackableItem(EntityHandle incomingHandle, Entity incomingEntity, EntityHandle[] targetSlots)
         {
             if (incomingEntity is Entity_Materials incomingMaterials)
             {
@@ -778,11 +764,6 @@ namespace DesktopCompanion.Systems
 
         private Entity GetAliveEntityOrClear(EntityHandle[] slots, int slotIndex)
         {
-            if (!IsValidSlotIndex(slots, slotIndex))
-            {
-                return null;
-            }
-
             if (IsEmptyHandle(slots[slotIndex]))
             {
                 return null;
@@ -860,25 +841,23 @@ namespace DesktopCompanion.Systems
             return itemType;
         }
 
-        private int GetBaseInventorySizeFromPlayerData()
+        private int GetCurrentInventorySize()
         {
-            IReadOnlyList<PlayerData> playerDataList = DataManager.GetAll<PlayerData>();
-
-            if (playerDataList == null || playerDataList.Count <= 0)
+            if (m_playerSystem == null)
             {
-                LogWarning($"PlayerData not found. fallback slot size: {FallbackInventorySize}");
+                LogWarning($"PlayerSystem not found. fallback slot size: {FallbackInventorySize}");
                 return FallbackInventorySize;
             }
 
-            PlayerData playerData = playerDataList[0];
+            int size = m_playerSystem.BaseInventorySize;
 
-            if (playerData.BaseInventorySize <= 0)
+            if (size <= 0)
             {
-                LogWarning($"PlayerData.BaseInventorySize is invalid. value: {playerData.BaseInventorySize}, fallback slot size: {FallbackInventorySize}");
+                LogWarning($"PlayerSystem.BaseInventorySize is invalid. value: {size}, fallback slot size: {FallbackInventorySize}");
                 return FallbackInventorySize;
             }
 
-            return playerData.BaseInventorySize;
+            return size;
         }
 
         private EntityHandle[] CreateSlots(int slotSize)
@@ -938,15 +917,13 @@ namespace DesktopCompanion.Systems
 
         private void SetStackQuantity(Entity entity, int quantity)
         {
-            int safeQuantity = Math.Max(0, quantity);
-
             if (entity is Entity_Materials materials)
             {
-                materials.SetQuantity(safeQuantity);
+                materials.SetQuantity(quantity);
             }
             else if (entity is Entity_Consumables consumables)
             {
-                consumables.SetQuantity(safeQuantity);
+                consumables.SetQuantity(quantity);
             }
         }
 

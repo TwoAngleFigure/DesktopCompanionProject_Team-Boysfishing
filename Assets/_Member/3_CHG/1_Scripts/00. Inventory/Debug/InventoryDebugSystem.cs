@@ -123,7 +123,7 @@ namespace DesktopCompanion.Systems
                 return false;
             }
 
-            bool result = inventorySystem.TryRemoveAt(itemType, slotIndex, destroyEntity);
+            bool result = inventorySystem.RemoveAt(itemType, slotIndex, destroyEntity);
             Debug.Log($"[InventoryDebugSystem] Remove result: {result}, itemType: {itemType}, slotIndex: {slotIndex}, destroyEntity: {destroyEntity}");
             return result;
         }
