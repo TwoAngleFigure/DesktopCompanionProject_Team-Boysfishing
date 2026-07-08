@@ -73,6 +73,8 @@ namespace DesktopCompanion.Systems
             ResizeSlots(inventorySize);
 
             LogDebug($"PostInitialize complete. slotSize: {inventorySize}");
+
+            m_playerSystem.OnStatChanged += HandlePlayerStatChanged;
         }
 
         /// <summary>
@@ -1032,6 +1034,20 @@ namespace DesktopCompanion.Systems
             }
 
             return true;
+        }
+
+        private void HandlePlayerStatChanged(PlayerStat changedStat)
+        {
+            if (changedStat != PlayerStat.InventorySize)
+            {
+                return;
+            }
+
+            int nextInventorySize = GetCurrentInventorySize();
+
+            bool result = ResizeSlots(nextInventorySize);
+
+            LogDebug($"InventorySize stat changed. " + $"nextSize: {nextInventorySize}, resizeResult: {result}");
         }
 
 #if UNITY_EDITOR

@@ -251,7 +251,7 @@ namespace DesktopCompanion.Systems
                 {
                     if (slots[i].Equals(handle))
                     {
-                        return inventory.TryRemoveAt(type, i, false);
+                        return inventory.RemoveAt(type, i, false);
                     }
                 }
             }
