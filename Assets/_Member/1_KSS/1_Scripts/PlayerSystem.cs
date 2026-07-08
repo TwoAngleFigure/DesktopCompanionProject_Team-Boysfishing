@@ -1,7 +1,9 @@
+using System; // [수정됨] Type 에러 해결을 위해 추가
 using DesktopCompanion.Core;
 using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
 using DesktopCompanion.Systems;
+using DesktopCompanion.Save;
 using UnityEngine;
 
 namespace DesktopCompanion.Systems
@@ -9,9 +11,10 @@ namespace DesktopCompanion.Systems
     /// <summary>
     /// 플레이어의 능력치를 관리하고, 장비 장착에 따른 스탯 변화를 실시간으로 계산하는 시스템입니다.
     /// </summary>
-    public class PlayerSystem : SystemBase
+    public class PlayerSystem : SystemBase, ISaveable
     {
         EntityHandle playerHandle;
+        private InventorySystem m_inventorySystem;
 
         #region Stats
 
@@ -58,12 +61,40 @@ namespace DesktopCompanion.Systems
 
         #endregion
 
+
+        // [ISaveable 인터페이스 구현부]26-07-08 추가
+        public string SaveId => "player_system_stats";
+        public Type StateType => typeof(string);
+
+        public object CaptureState()
+        {
+            // 스탯은 저장할 필요가 없으므로 더미(Dummy) 데이터를 넘깁니다.
+            return "stats_calculated_dynamically";
+        }
+
+        public void RestoreState(object state)
+        {
+            // GameManager가 세이브 파일 로드를 끝낸 직후에 자동으로 이 함수를 실행해 줍니다.
+            CaculatedStat();
+            Debug.Log("[PlayerSystem] 세이브 로드 완료! 장비 스탯 재계산 완료.");
+        }
+        // ==========================================
+
         /// <summary>
-        /// 시스템 초기화 시 플레이어 데이터를 생성합니다.
+        /// Phase 1: 시스템 초기화 시 플레이어 데이터를 생성합니다.
         /// </summary>
         public override void Initialize()
         {
+            // [수정됨] 중복되었던 Initialize 메서드를 하나로 정리했습니다.
             playerHandle = EntityManager.Create<PlayerData>(1);
+        }
+
+        /// <summary>
+        /// Phase 2: 다른 시스템이 모두 준비된 후 인벤토리 시스템을 찾아 캐싱합니다.
+        /// </summary>
+        public override void PostInitialize()
+        {
+            m_inventorySystem = SystemManager.GetSystem<InventorySystem>();
         }
 
         /// <summary>
@@ -74,7 +105,6 @@ namespace DesktopCompanion.Systems
             Entity_Player entity_Player = EntityManager.Get<Entity_Player>(playerHandle);
 
             // 1. 초기화: 모든 스탯을 캐릭터 고유의 기본값(BaseData)으로 리셋합니다.
-            // 이렇게 함으로써 이전 장비의 효과가 남지 않도록 보장합니다.
             m_baseDamagePerClick = entity_Player.BaseData.BaseDamagePerClick;
             m_baseManualDamagePerHitMultiply = entity_Player.BaseData.BaseManualDamagePerHitMultiply;
             m_baseBattleTimeVariable = entity_Player.BaseData.BaseBattleTimeVariable;
@@ -102,14 +132,16 @@ namespace DesktopCompanion.Systems
                         case PlayerStat.DamagePerClick:
                             m_baseDamagePerClick += (int)stat.Value;
                             break;
+                        case PlayerStat.BattleTimeVariable:
+                            m_baseBattleTimeVariable += (int)stat.Value;
+                            break;
+                        case PlayerStat.InventorySize:
+                            m_baseInventorySize += (int)stat.Value;
+                            break;
 
                         // 실수형 스탯은 데이터 정밀도 유지를 위해 형변환 없이 더함
                         case PlayerStat.ManualDamagePerHitMultiply:
                             m_baseManualDamagePerHitMultiply += stat.Value;
-                            break;
-
-                        case PlayerStat.BattleTimeVariable:
-                            m_baseBattleTimeVariable += (int)stat.Value;
                             break;
                         case PlayerStat.CriticalChance:
                             m_baseCriticalChance += stat.Value;
@@ -129,9 +161,6 @@ namespace DesktopCompanion.Systems
                         case PlayerStat.MapMovementSpeedPerTime:
                             m_baseMapMovementSpeedPerTime += stat.Value;
                             break;
-                        case PlayerStat.InventorySize:
-                            m_baseInventorySize += (int)stat.Value;
-                            break;
                         case PlayerStat.ProbabilityAtFishSize:
                             m_baseProbabilityAtFishSize += stat.Value;
                             break;
@@ -147,13 +176,10 @@ namespace DesktopCompanion.Systems
         }
 
         /// <summary>
-        /// 특정 부위에 장비를 장착하고 능력치를 재계산합니다.
+        /// PlayerSystem 내부에 아이템을 찾아 위치를 이동(Remove)시키는 헬퍼 메서드
         /// </summary>
-        /// <param name="area">장착할 슬롯 부위</param>
-        /// <param name="handle">장비의 엔티티 핸들</param>
         private bool TryFindAndRemoveFromInventory(InventorySystem inventory, EntityHandle handle)
         {
-            // (현재 InventorySystem 구조상 Fish, Equipment, Materials 세 종류로 관리됨)
             ItemType[] types = { ItemType.Fish, ItemType.Equipment, ItemType.Materials };
 
             foreach (var type in types)
@@ -161,10 +187,8 @@ namespace DesktopCompanion.Systems
                 EntityHandle[] slots = inventory.GetSlots(type);
                 for (int i = 0; i < slots.Length; i++)
                 {
-                    // 슬롯의 핸들과 찾으려는 핸들이 같다면
                     if (slots[i].Equals(handle))
                     {
-                        // 해당 인덱스의 아이템을 이동 요청 (destroyEntity: false)
                         return inventory.TryRemoveAt(type, i, false);
                     }
                 }
@@ -172,30 +196,32 @@ namespace DesktopCompanion.Systems
             return false;
         }
 
-        //  수정된 Equip 메서드
+        /// <summary>
+        /// 특정 부위에 장비를 장착하고 능력치를 재계산합니다.
+        /// </summary>
         public void Equip(EquipmentMountingArea area, EntityHandle afterEquipHandle)
         {
             Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
-            var inventory = SystemManager.GetSystem<InventorySystem>();
 
-            //  기존 장비 교체 로직
+            // [수정됨] 매번 GetSystem을 부르지 않고 PostInitialize에서 찾아둔 변수(m_inventorySystem)를 사용합니다.
+
+            // 기존 장비 교체 로직
             if (player.Equipped.TryGetValue(area, out EntityHandle beforeEquipHandle))
             {
                 player.Unequip(area);
-                inventory?.AddItem(beforeEquipHandle); // 인벤토리로 되돌림
+                m_inventorySystem?.AddItem(beforeEquipHandle); // 인벤토리로 되돌림
             }
 
-           
-            if (inventory != null)
+            if (m_inventorySystem != null)
             {
-                bool isRemoved = TryFindAndRemoveFromInventory(inventory, afterEquipHandle);
+                bool isRemoved = TryFindAndRemoveFromInventory(m_inventorySystem, afterEquipHandle);
                 if (!isRemoved)
                 {
                     Debug.LogWarning("인벤토리에서 해당 아이템을 찾을 수 없거나 삭제에 실패했습니다.");
                 }
             }
 
-            //  새로운 장비 장착
+            // 새로운 장비 장착
             player.Equip(area, afterEquipHandle);
             CaculatedStat();
 
