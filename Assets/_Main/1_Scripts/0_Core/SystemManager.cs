@@ -15,7 +15,9 @@ namespace DesktopCompanion.Core
     {
         private readonly EntityManager m_entityManager;
         private readonly DataManager m_dataManager;
-        private readonly Dictionary<Type, SystemBase> m_systems = new();
+        private readonly Dictionary<Type, SystemBase> m_systems = new();   // 타입 조회용
+        private readonly List<SystemBase> m_ordered = new();                // 등록 순서 보존(초기화·저장 순서)
+        private readonly List<ITickable> m_tickables = new();               // 매 프레임 Tick 대상(등록 순서)
 
         public SystemManager(EntityManager entityManager, DataManager dataManager)
         {
@@ -23,8 +25,8 @@ namespace DesktopCompanion.Core
             m_dataManager = dataManager;
         }
 
-        /// <summary>등록된 모든 System 열거(예: GameManager가 ISaveable 수집 시 사용).</summary>
-        public IEnumerable<SystemBase> AllSystems => m_systems.Values;
+        /// <summary>등록된 모든 System을 등록 순서대로 열거(예: GameManager가 ISaveable 수집 시 사용).</summary>
+        public IEnumerable<SystemBase> AllSystems => m_ordered;
 
         /// <summary>System 인스턴스를 등록하고 의존성을 주입한다. GameManager가 부팅 시 호출.</summary>
         public void Register<T>(T system) where T : SystemBase
@@ -37,18 +39,40 @@ namespace DesktopCompanion.Core
             }
             system.Inject(m_entityManager, m_dataManager, this);
             m_systems.Add(type, system);
+            m_ordered.Add(system);
+            if (system is ITickable tickable)
+            {
+                m_tickables.Add(tickable);
+            }
         }
 
         /// <summary>등록된 System을 타입으로 조회한다(System 간 참조 포함).</summary>
         public T GetSystem<T>() where T : SystemBase
             => m_systems.TryGetValue(typeof(T), out var system) ? (T)system : null;
 
-        /// <summary>모든 System 등록 후 일괄 초기화(참조가 안전해지는 시점).</summary>
+        /// <summary>
+        /// 모든 System 등록 후 2단계로 일괄 초기화한다(등록 순서대로).
+        /// Phase 1(Initialize): 각자 자기 상태만 구성. Phase 2(PostInitialize): 타 System 조회·구독.
+        /// 전원이 Phase 1을 마친 뒤 Phase 2에 들어가므로, 크로스 System 의존이 순서와 무관하게 안전하다.
+        /// </summary>
         public void InitializeAll()
         {
-            foreach (var system in m_systems.Values)
+            foreach (var system in m_ordered)
             {
-                system.Initialize();
+                system.Initialize();      // Phase 1: 생산
+            }
+            foreach (var system in m_ordered)
+            {
+                system.PostInitialize();  // Phase 2: 소비·배선
+            }
+        }
+
+        /// <summary>ITickable을 구현한 System을 등록 순서대로 매 프레임 갱신한다(GameManager.Update가 중계).</summary>
+        public void TickAll(float deltaTime)
+        {
+            for (int i = 0; i < m_tickables.Count; i++)
+            {
+                m_tickables[i].Tick(deltaTime);
             }
         }
     }
