@@ -61,6 +61,7 @@ namespace DesktopCompanion.Systems
 
         #endregion
 
+        public Action<PlayerStat> OnStatChanged;
 
         // [ISaveable 인터페이스 구현부]26-07-08 추가
         public string SaveId => "player_system_stats";
@@ -119,6 +120,20 @@ namespace DesktopCompanion.Systems
             m_baseMapMovementSpeedPerTime = entity_Player.BaseData.BaseMapMovementSpeedPerTime;
             m_baseInventorySize = entity_Player.BaseData.BaseInventorySize;
 
+            bool m_baseDamagePerClick_Tri = false;
+            bool m_baseManualDamagePerHitMultiply_Tri = false;
+            bool m_baseBattleTimeVariable_Tri = false;
+            bool m_baseCriticalChance_Tri = false;
+            bool m_baseCriticalMultiply_Tri = false;
+            bool m_baseAutoBattleCooltime_Tri = false;
+            bool m_baseAutoSpeedPerTime_Tri = false;
+            bool m_baseAutoDamagePerHitMultiply_Tri = false;
+            bool m_baseProbabilityAtFishSize_Tri = false;
+            bool m_baseProbabilityAtFishRarity_Tri = false;
+            bool m_baseGoldGettingMultiply_Tri = false;
+            bool m_baseMapMovementSpeedPerTime_Tri = false;
+            bool m_baseInventorySize_Tri = false;
+
             // 2. 장착된 장비들의 스탯 모디파이어를 순회하며 추가 합산합니다.
             foreach (EntityHandle equitmentHandle in entity_Player.Equipped.Values)
             {
@@ -131,48 +146,75 @@ namespace DesktopCompanion.Systems
                         // 정수형 스탯은 int로 형변환하여 더함
                         case PlayerStat.DamagePerClick:
                             m_baseDamagePerClick += (int)stat.Value;
+                            m_baseDamagePerClick_Tri = true;
                             break;
                         case PlayerStat.BattleTimeVariable:
                             m_baseBattleTimeVariable += (int)stat.Value;
+                            m_baseBattleTimeVariable_Tri = true;
                             break;
                         case PlayerStat.InventorySize:
                             m_baseInventorySize += (int)stat.Value;
+                            m_baseInventorySize_Tri = true;
                             break;
 
                         // 실수형 스탯은 데이터 정밀도 유지를 위해 형변환 없이 더함
                         case PlayerStat.ManualDamagePerHitMultiply:
                             m_baseManualDamagePerHitMultiply += stat.Value;
+                            m_baseManualDamagePerHitMultiply_Tri = true;
                             break;
                         case PlayerStat.CriticalChance:
                             m_baseCriticalChance += stat.Value;
+                            m_baseCriticalChance_Tri = true;
                             break;
                         case PlayerStat.CriticalMultiply:
                             m_baseCriticalMultiply += stat.Value;
+                            m_baseCriticalMultiply_Tri = true;
                             break;
                         case PlayerStat.AutoBattleCooltime:
                             m_baseAutoBattleCooltime += stat.Value;
+                            m_baseAutoBattleCooltime_Tri = true;
                             break;
                         case PlayerStat.AutoSpeedPerTime:
                             m_baseAutoSpeedPerTime += stat.Value;
+                            m_baseAutoSpeedPerTime_Tri = true;
                             break;
                         case PlayerStat.AutoDamagePerHitMultiply:
                             m_baseAutoDamagePerHitMultiply += stat.Value;
+                            m_baseAutoDamagePerHitMultiply_Tri = true;
                             break;
                         case PlayerStat.MapMovementSpeedPerTime:
                             m_baseMapMovementSpeedPerTime += stat.Value;
+                            m_baseMapMovementSpeedPerTime_Tri = true;
                             break;
                         case PlayerStat.ProbabilityAtFishSize:
                             m_baseProbabilityAtFishSize += stat.Value;
+                            m_baseProbabilityAtFishSize_Tri = true;
                             break;
                         case PlayerStat.ProbabilityAtFishRarity:
                             m_baseProbabilityAtFishRarity += stat.Value;
+                            m_baseProbabilityAtFishRarity_Tri = true;
                             break;
                         case PlayerStat.GoldGettingMultiply:
                             m_baseGoldGettingMultiply += stat.Value;
+                            m_baseGoldGettingMultiply_Tri = true;
                             break;
                     }
                 }
             }
+
+            if (m_baseDamagePerClick_Tri) OnStatChanged.Invoke(PlayerStat.DamagePerClick);
+            if (m_baseManualDamagePerHitMultiply_Tri) OnStatChanged.Invoke(PlayerStat.ManualDamagePerHitMultiply);
+            if (m_baseBattleTimeVariable_Tri) OnStatChanged.Invoke(PlayerStat.BattleTimeVariable);
+            if (m_baseCriticalChance_Tri) OnStatChanged.Invoke(PlayerStat.CriticalChance);
+            if (m_baseCriticalMultiply_Tri) OnStatChanged.Invoke(PlayerStat.CriticalMultiply);
+            if (m_baseAutoBattleCooltime_Tri) OnStatChanged.Invoke(PlayerStat.AutoBattleCooltime);
+            if (m_baseAutoSpeedPerTime_Tri) OnStatChanged.Invoke(PlayerStat.AutoSpeedPerTime);
+            if (m_baseAutoDamagePerHitMultiply_Tri) OnStatChanged.Invoke(PlayerStat.AutoDamagePerHitMultiply);
+            if (m_baseProbabilityAtFishSize_Tri) OnStatChanged.Invoke(PlayerStat.ProbabilityAtFishSize);
+            if (m_baseProbabilityAtFishRarity_Tri) OnStatChanged.Invoke(PlayerStat.ProbabilityAtFishRarity);
+            if (m_baseGoldGettingMultiply_Tri) OnStatChanged.Invoke(PlayerStat.GoldGettingMultiply);
+            if (m_baseMapMovementSpeedPerTime_Tri) OnStatChanged.Invoke(PlayerStat.MapMovementSpeedPerTime);
+            if (m_baseInventorySize_Tri) OnStatChanged.Invoke(PlayerStat.InventorySize);
         }
 
         /// <summary>
