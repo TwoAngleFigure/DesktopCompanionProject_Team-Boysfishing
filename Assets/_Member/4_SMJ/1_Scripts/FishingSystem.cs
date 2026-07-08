@@ -2,6 +2,7 @@
 using DesktopCompanion.Entities;
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace DesktopCompanion.Systems
@@ -15,7 +16,9 @@ namespace DesktopCompanion.Systems
 
     public class FishingSystem : SystemBase, ITickable
     {
-        private int defaultPlayerDataId = 1;
+        private StageSystem m_stageSystem;
+        private PlayerSystem m_playerSystem;
+        private InventorySystem m_inventorySystem;
 
         private float baseBattleDuration = 10f;
         private float minBattleDuration = 0.5f;
@@ -25,8 +28,6 @@ namespace DesktopCompanion.Systems
         private float m_waitTimer;
         private float m_battleTimer;
         private float m_autoAttackTimer;
-
-        private readonly List<EntityHandle> m_caughtFish = new();
 
         // public event Action<FishingState> OnStateChanged;
         // public event Action<EntityHandle> OnBattleStarted;
@@ -41,7 +42,18 @@ namespace DesktopCompanion.Systems
             m_waitTimer = 0f;
             m_battleTimer = 0f;
             m_autoAttackTimer = 0f;
+            m_stageSystem = SystemManager.GetSystem<StageSystem>();
+            m_playerSystem = SystemManager.GetSystem<PlayerSystem>();
+            m_inventorySystem = SystemManager.GetSystem<InventorySystem>();
 
+            if (m_stageSystem != null)
+            {
+                m_stageSystem.OnStageChanged += HandleStageChanged;
+            }
+        }
+
+        public override void PostInitialize()
+        {
             StartFishing();
         }
 
@@ -87,15 +99,13 @@ namespace DesktopCompanion.Systems
 
             if (m_autoAttackTimer <= 0f)
             {
-                PlayerData playerData = GetPlayerData();
-
                 int damage = 1;
                 float attackInterval = 1f;
 
-                if (playerData != null)
+                if (m_playerSystem != null)
                 {
-                    damage = Mathf.RoundToInt(playerData.BaseDamagePerClick * playerData.BaseAutoDamagePerHitMultiply);
-                    attackInterval = playerData.BaseAutoSpeedPerTime;
+                    damage = Mathf.RoundToInt(m_playerSystem.BaseDamagePerClick * m_playerSystem.BaseAutoDamagePerHitMultiply);
+                    attackInterval = m_playerSystem.BaseAutoSpeedPerTime;
                 }
 
                 Debug.Log($"[FishingSystem] 자동 공격: damage={damage}");
@@ -202,12 +212,37 @@ namespace DesktopCompanion.Systems
 
             EntityHandle caughtHandle = CreateCaughtFish(battleFish);
 
-            m_caughtFish.Add(caughtHandle);
+            if (caughtHandle.Value == Guid.Empty)
+            {
+                Debug.LogWarning("[FishingSystem] 낚시 성공 처리 실패: 포획 물고기 Entity 생성 실패");
+                ClearCurrentBattleFish();
+                ScheduleNextFishing();
+                return;
+            }
 
-            Debug.Log($"[FishingSystem] 낚시 성공: {battleFish.BattleData.ItemFish.Name}, " +
+            if (m_inventorySystem == null)
+            {
+                Debug.LogWarning("[FishingSystem] InventorySystem을 찾을 수 없어 물고기를 지급할 수 없습니다.");
+                EntityManager.Destroy(caughtHandle);
+                ClearCurrentBattleFish();
+                ScheduleNextFishing();
+                return;
+            }
+
+            bool added = m_inventorySystem.AddItem(caughtHandle);
+
+            if (!added)
+            {
+                Debug.LogWarning($"[FishingSystem] 인벤토리 지급 실패: {battleFish.BattleData.ItemFish.Name}");
+                EntityManager.Destroy(caughtHandle);
+                ClearCurrentBattleFish();
+                ScheduleNextFishing();
+                return;
+            }
+
+            Debug.Log($"[FishingSystem] 낚시 성공 및 인벤토리 지급: {battleFish.BattleData.ItemFish.Name}, " +
                 $"Size={battleFish.Size:0.00}, " +
-                $"Quality={battleFish.Quality}, " +
-                $"총 낚은 수={m_caughtFish.Count}");
+                $"Quality={battleFish.Quality}, ");
 
             ClearCurrentBattleFish();
             ScheduleNextFishing();
@@ -352,14 +387,12 @@ namespace DesktopCompanion.Systems
 
         private int GetPlayerLicense()
         {
-            PlayerData playerData = GetPlayerData();
-
-            if (playerData == null)
+            if (m_playerSystem == null)
             {
                 return 0;
             }
 
-            return playerData.StartingLicense;
+            return m_playerSystem.StartingLicense;
         }
 
         private float RollFishSize(BattleFishData fishData)
@@ -372,48 +405,33 @@ namespace DesktopCompanion.Systems
 
         private float CalculateBattleDuration(BattleFishData fishData)
         {
-            PlayerData playerData = GetPlayerData();
-
-            if (playerData == null)
+            if (m_playerSystem == null)
             {
-                Debug.Log("[FishingSystem] PlayerData를 찾지 못해 기본 전투 시간을 사용합니다.");
+                Debug.Log("[FishingSystem] PlayerSystem을 찾지 못해 기본 전투 시간을 사용합니다.");
                 return baseBattleDuration;
             }
 
-            float duration = baseBattleDuration + playerData.BaseBattleTimeVariable - fishData.BattleTimeVariable;
+
+            float duration = baseBattleDuration + m_playerSystem.BaseBattleTimeVariable - fishData.BattleTimeVariable;
 
             return Mathf.Max(minBattleDuration, duration);
         }
 
         private float CalculateNextFishingDelay()
         {
-            PlayerData playerData = GetPlayerData();
 
-            if (playerData == null)
+            if (m_playerSystem == null)
             {
-                Debug.LogWarning("[FishingSystem] PlayerData를 찾지 못해 기본 낚시 대기시간을 사용합니다.");
+                Debug.LogWarning("[FishingSystem] PlayerSystem을 찾지 못해 기본 낚시 대기시간을 사용합니다.");
                 return 10f;
             }
 
-            float baseDelay = playerData.BaseAutoBattleCooltime;
+            float baseDelay = m_playerSystem.BaseAutoBattleCooltime;
 
             float minDelay = baseDelay * 0.8f;
             float maxDelay = baseDelay * 1.2f;
 
             return UnityEngine.Random.Range(minDelay, maxDelay);
-        }
-
-        private PlayerData GetPlayerData()
-        {
-            PlayerData playerData = DataManager.GetData<PlayerData>(defaultPlayerDataId);
-
-            if (playerData != null)
-            {
-                return playerData;
-            }
-
-            IReadOnlyList<PlayerData> players = DataManager.GetAll<PlayerData>();
-            return players.Count > 0 ? players[0] : null;
         }
 
         private void ChangeState(FishingState nextState)
@@ -432,6 +450,23 @@ namespace DesktopCompanion.Systems
         {
             EntityManager.Destroy(m_currentBattleFish);
             m_currentBattleFish = default;
+        }
+
+        private void HandleStageChanged(int stageDataId)
+        {
+            if (m_state == FishingState.Stopped)
+            {
+                return;
+            }
+
+            ClearCurrentBattleFish();
+            m_waitTimer = 0f;
+            m_battleTimer = 0f;
+            m_autoAttackTimer = 0f;
+
+            ChangeState(FishingState.Waiting);
+
+            Debug.Log($"[FishingSystem] 스테이지 변경 감지: stageId={stageDataId}, 낚시 풀 갱신");
         }
     }
 }
