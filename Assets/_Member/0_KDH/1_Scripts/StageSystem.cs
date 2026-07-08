@@ -21,15 +21,15 @@ namespace DesktopCompanion.Systems
         public string SaveId => "stage_system";
         public Type StateType => typeof(StageSaveData);
 
-        public override void PostInitialize()
+        public override void Initialize()
         {
             ForceSetInitialStage(600001);
         }
-
-        public override void Initialize()
+        public override void PostInitialize()
         {
             //start
         }
+
 
         private void ForceSetInitialStage(int defaultDataId)
         {
