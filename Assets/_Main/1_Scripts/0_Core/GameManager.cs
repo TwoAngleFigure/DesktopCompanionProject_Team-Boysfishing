@@ -16,6 +16,10 @@ namespace DesktopCompanion.Core
         [SerializeField] private bool m_useTestData;
         [SerializeField] private List<GameData> m_testData = new();
 
+        [Header("View")]
+        [SerializeField] private DesktopCompanion.Views.WorldManager m_worldManager;
+        [SerializeField] private DesktopCompanion.Views.UIManager m_uiManager;
+
         private DataManager m_dataManager;
         private EntityManager m_entityManager;
         private SystemManager m_systemManager;
@@ -69,7 +73,32 @@ namespace DesktopCompanion.Core
         private void OnBootCompleted()
         {
             Debug.Log("[GameManager] 부팅 완료 — 데이터·시스템·세이브·에셋 준비됨");
-            // (후속) UIManager/WorldManager 초기화 지점 — m_assetProvider·m_systemManager 주입
+
+            // View 초기화 지점 — m_systemManager·m_assetProvider 주입.
+            // WorldManager가 등록된 WorldViewBase 유닛들에 의존성을 내려주고 Bind()를 호출한다.
+            if (m_worldManager != null)
+            {
+                m_worldManager.Initialize(m_systemManager, m_assetProvider);
+            }
+            else
+            {
+                Debug.LogWarning("[GameManager] WorldManager 미할당 — 씬에서 참조를 연결하세요.");
+            }
+
+            if (m_uiManager != null)
+            {
+                m_uiManager.Initialize(m_systemManager, m_assetProvider);
+            }
+            else
+            {
+                Debug.LogWarning("[GameManager] UIManager 미할당 — 씬에서 참조를 연결하세요.");
+            }
+        }
+
+        // 유일한 MonoBehaviour의 프레임 루프를 ITickable System에 중계한다(System은 plain C# 유지).
+        private void Update()
+        {
+            m_systemManager?.TickAll(Time.deltaTime);
         }
 
         private void OnApplicationQuit()
@@ -79,12 +108,17 @@ namespace DesktopCompanion.Core
 
         // 팀원이 만든 System을 여기서 등록한다. SystemManager가 EntityManager/자기 자신을 주입한다.
         // (구체 System 타입을 아는 곳은 composition root인 GameManager뿐)
+        // 초기화 순서 = Register 호출 순서: PlayerSystem → InventorySystem → FishingSystem → StageSystem.
+        // (2단계 초기화로 순서 민감도는 낮지만, 같은 phase 내 tie-break를 위해 결정적으로 고정)
         private void RegisterSystems()
         {
-            // ★ Save/Load 검증용 임시 System — 검증 완료 후 이 줄과 SaveTestSystem.cs 제거 가능
-            m_systemManager.Register(new DesktopCompanion.Systems.SaveTestSystem());
+            m_systemManager.Register(new DesktopCompanion.Systems.PlayerSystem());
 
-            // 예) m_systemManager.Register(new ItemInventorySystem());
+            m_systemManager.Register(new DesktopCompanion.Systems.InventorySystem());
+
+            m_systemManager.Register(new DesktopCompanion.Systems.FishingSystem());
+
+            m_systemManager.Register(new DesktopCompanion.Systems.StageSystem());
         }
 
         // Data 타입 ↔ Entity 매핑 등록. 새 계열은 여기 한 줄 추가(EntityManager 본체는 불변).
