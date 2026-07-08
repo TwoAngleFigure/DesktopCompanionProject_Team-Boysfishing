@@ -88,6 +88,26 @@ namespace DesktopCompanion.Systems
         {
             // [수정됨] 중복되었던 Initialize 메서드를 하나로 정리했습니다.
             playerHandle = EntityManager.Create<PlayerData>(1);
+            PlayerData player = EntityManager.Get<Entity_Player>(playerHandle).BaseData;
+
+            m_baseDamagePerClick = player.BaseDamagePerClick;
+            m_baseManualDamagePerHitMultiply = player.BaseManualDamagePerHitMultiply;
+            m_baseBattleTimeVariable = player.BaseBattleTimeVariable;
+            m_baseCriticalChance = player.BaseCriticalChance;
+            m_baseCriticalMultiply = player.BaseCriticalMultiply;
+
+            m_baseAutoBattleCooltime = player.BaseAutoBattleCooltime;
+            m_baseAutoSpeedPerTime = player.BaseAutoSpeedPerTime;
+            m_baseAutoDamagePerHitMultiply = player.BaseAutoDamagePerHitMultiply;
+
+            m_baseProbabilityAtFishSize = player.BaseProbabilityAtFishSize;
+            m_baseProbabilityAtFishRarity = player.BaseProbabilityAtFishRarity;
+            m_baseGoldGettingMultiply = player.BaseGoldGettingMultiply;
+
+            m_baseMapMovementSpeedPerTime = player.BaseMapMovementSpeedPerTime;
+            m_baseInventorySize = player.BaseInventorySize;
+            m_startingLicense = player.StartingLicense;
+            m_startingGold = player.StartingGold;
         }
 
         /// <summary>
