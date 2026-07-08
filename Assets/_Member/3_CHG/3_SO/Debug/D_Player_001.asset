@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88dcb4d74a32c694caf43c4a2064cd69, type: 3}
   m_Name: D_Player_001
   m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Data.PlayerData
-  m_id: 44
+  m_id: 1
   m_name: PP
   m_assetKey: 
   m_baseDamagePerClick: 0
@@ -27,6 +27,6 @@ MonoBehaviour:
   m_baseProbabilityAtFishRarity: 0
   m_baseGoldGettingMultiply: 0
   m_baseMapMovementSpeedPerTime: 0
-  m_baseInventorySize: 5
+  m_baseInventorySize: 70
   m_startingLicense: 0
   m_startingGold: 0

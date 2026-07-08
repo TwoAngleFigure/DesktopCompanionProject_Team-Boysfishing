@@ -57,15 +57,22 @@ namespace DesktopCompanion.Systems
 
         public override void Initialize()
         {
+            m_fishSlots = CreateSlots(FallbackInventorySize);
+            m_equipmentSlots = CreateSlots(FallbackInventorySize);
+            m_materialSlots = CreateSlots(FallbackInventorySize);
+
+            LogDebug($"Initialize complete. temporary slotSize: {FallbackInventorySize}");
+        }
+
+        public override void PostInitialize()
+        {
             m_playerSystem = SystemManager.GetSystem<PlayerSystem>();
 
-            int baseInventorySize = GetCurrentInventorySize();
+            int inventorySize = GetCurrentInventorySize();
 
-            m_fishSlots = CreateSlots(baseInventorySize);
-            m_equipmentSlots = CreateSlots(baseInventorySize);
-            m_materialSlots = CreateSlots(baseInventorySize);
+            ResizeSlots(inventorySize);
 
-            LogDebug($"Initialize complete. slotSize: {baseInventorySize}");
+            LogDebug($"PostInitialize complete. slotSize: {inventorySize}");
         }
 
         /// <summary>
@@ -971,6 +978,60 @@ namespace DesktopCompanion.Systems
                     EntityManager.Destroy(handle);
                 }
             }
+        }
+
+        private bool ResizeSlots(int slotSize)
+        {
+            if (slotSize <= 0)
+            {
+                LogWarning($"ResizeSlots failed. Invalid slot size: {slotSize}");
+                return false;
+            }
+
+            if (!CanResizeSlots(slotSize))
+            {
+                LogWarning($"ResizeSlots failed. Items exist outside next slot size. nextSize: {slotSize}");
+                return false;
+            }
+
+            Array.Resize(ref m_fishSlots, slotSize);
+            Array.Resize(ref m_equipmentSlots, slotSize);
+            Array.Resize(ref m_materialSlots, slotSize);
+
+            NotifyInventoryChanged($"Resize inventory / slotSize: {slotSize}", false);
+
+            return true;
+        }
+
+        private bool CanResizeSlots(int nextSlotSize)
+        {
+            return CanResizeSlotArray(m_fishSlots, nextSlotSize)
+                && CanResizeSlotArray(m_equipmentSlots, nextSlotSize)
+                && CanResizeSlotArray(m_materialSlots, nextSlotSize);
+        }
+
+        private bool CanResizeSlotArray(EntityHandle[] slots, int nextSlotSize)
+        {
+            if (slots == null)
+            {
+                return true;
+            }
+
+            if (nextSlotSize >= slots.Length)
+            {
+                return true;
+            }
+
+            // 줄어드는 경우, 잘려나갈 범위에 아이템이 있으면 금지.
+            for (int i = nextSlotSize; i < slots.Length; i++)
+            {
+                if (!IsEmptyHandle(slots[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
 #if UNITY_EDITOR
