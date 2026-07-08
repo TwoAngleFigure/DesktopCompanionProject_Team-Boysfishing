@@ -23,7 +23,20 @@ namespace DesktopCompanion.Systems
             SystemManager = systemManager;
         }
 
-        /// <summary>기본은 no-op. 초기화가 필요하면 override 한다.</summary>
+        /// <summary>
+        /// Phase 1(생산). 자기 자신의 런타임 상태만 구성한다.
+        /// 이 단계에서는 다른 System의 런타임 상태를 읽지 않는다(아직 준비 전일 수 있음).
+        /// 기본은 no-op. 필요하면 override 한다.
+        /// </summary>
         public virtual void Initialize() { }
+
+        /// <summary>
+        /// Phase 2(소비·배선). 모든 System이 Phase 1을 마쳐 자기 상태가 존재하는 시점.
+        /// 다른 System 조회(SystemManager.GetSystem&lt;T&gt;())·이벤트 구독처럼
+        /// "다른 System이 준비된 뒤에 해야 하는 초기화"를 여기서 한다.
+        /// 이렇게 나누면 생산→소비 의존이 등록 순서와 무관하게 안전해진다(상호 의존 포함).
+        /// 기본은 no-op. 필요하면 override 한다.
+        /// </summary>
+        public virtual void PostInitialize() { }
     }
 }
