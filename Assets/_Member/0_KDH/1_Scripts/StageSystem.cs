@@ -21,9 +21,14 @@ namespace DesktopCompanion.Systems
         public string SaveId => "stage_system";
         public Type StateType => typeof(StageSaveData);
 
-        public override void Initialize()
+        public override void PostInitialize()
         {
             ForceSetInitialStage(600001);
+        }
+
+        public override void Initialize()
+        {
+            //start
         }
 
         private void ForceSetInitialStage(int defaultDataId)
@@ -36,7 +41,7 @@ namespace DesktopCompanion.Systems
             }
         }
 
-        public void MoveToStage(int targetDataId, int playerLicense, float playerSpeed)
+        public void MoveToStage(int targetDataId)
         {
             if (m_isTraveling) return;
             if (m_currentStageDataId == targetDataId) return;
@@ -51,6 +56,11 @@ namespace DesktopCompanion.Systems
                                $"목표맵 ID({targetDataId}) 로드: {(targetStageData != null ? "성공" : "실패")}");
                 return;
             }
+
+            var playerSystem = SystemManager.GetSystem<PlayerSystem>();
+
+            int playerLicense = playerSystem != null ? playerSystem.StartingLicense : 1;
+            float playerSpeed = playerSystem != null ? playerSystem.BaseMapMovementSpeedPerTime : 50f;
 
             if (playerLicense < targetStageData.RequiredLicense)
             {
