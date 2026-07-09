@@ -110,14 +110,24 @@ namespace DesktopCompanion.Views
             HpRatio.Value = maxHp > 0 ? (float)currentHp / maxHp : 0f;
         }
 
-        private void HandleFishCaught(FishingCatchResult result)
+        private void HandleFishCaught(EntityHandle fishHandle)
         {
-            ResultText.Value = $"Result: {result.FishName} Caught";
-            CatchInfoText.Value =
-                $"CatchInfo\n" +
-                $"Size: {result.Size:0.00}\n" +
-                $"Quality: {result.Quality}\n" +
-                $"Rarity: {result.Rarity}";
+            Entity_Fish fish = EntityManager.Get<Entity_Fish>(fishHandle);
+
+            if (fish == null)
+            {
+                ResultText.Value = "Result: Caught";
+                CatchInfoText.Value = "CatchInfo: -";
+                HpText.Value = "-";
+                HpRatio.Value = 0f;
+                return;
+            }
+
+            ResultText.Value = $"Result: {fish.Name} Caught";
+            CatchInfoText.Value =                
+                $"Size: {fish.Size:0.00}\n" +
+                $"Quality: {fish.Quality}\n" +
+                $"Rarity: {fish.Rarity}";
             HpText.Value = "-";
             HpRatio.Value = 0f;
         }

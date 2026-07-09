@@ -13,24 +13,6 @@ namespace DesktopCompanion.Systems
         Battling
     }
 
-    public readonly struct FishingCatchResult
-    {
-        public readonly EntityHandle FishHandle;
-        public readonly string FishName;
-        public readonly float Size;
-        public readonly ItemQuality Quality;
-        public readonly ItemRarity Rarity;
-
-        public FishingCatchResult(EntityHandle fishHandle, string fishName, float size, ItemQuality quality, ItemRarity rarity)
-        {
-            FishHandle = fishHandle;
-            FishName = fishName;
-            Size = size;
-            Quality = quality;
-            Rarity = rarity;
-        }
-    }
-
     public class FishingSystem : SystemBase, ITickable
     {
 
@@ -53,7 +35,7 @@ namespace DesktopCompanion.Systems
 
         public event Action<FishingState> OnStateChanged;
         public event Action<EntityHandle> OnBattleStarted;
-        public event Action<FishingCatchResult> OnFishCaught;
+        public event Action<EntityHandle> OnFishCaught;
         public event Action<EntityHandle> OnBattleFailed;
         public event Action<EntityHandle, int, int> OnBattleHpChanged;
 
@@ -290,14 +272,7 @@ namespace DesktopCompanion.Systems
                 return;
             }
 
-            FishingCatchResult catchResult = new FishingCatchResult(
-                caughtHandle,
-                battleFish.BattleData.ItemFish.Name,
-                battleFish.Size,
-                battleFish.Quality,
-                battleFish.BattleData.ItemFish.Rarity);
-
-            OnFishCaught?.Invoke(catchResult);
+            OnFishCaught?.Invoke(caughtHandle);
 
             Debug.Log($"[FishingSystem] 낚시 성공 및 인벤토리 지급: {battleFish.BattleData.ItemFish.Name}, " +
                 $"Size={battleFish.Size:0.00}, " +
