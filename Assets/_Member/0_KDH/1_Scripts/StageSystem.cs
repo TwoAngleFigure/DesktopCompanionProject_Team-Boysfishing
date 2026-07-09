@@ -10,13 +10,16 @@ namespace DesktopCompanion.Systems
     public class StageSystem : SystemBase, ISaveable, ITickable
     {
         private int m_currentStageDataId;
-        private bool m_isTraveling;
         private int m_targetStageDataId;
-        private float m_travelTimer;
-        private float m_totalTravelDuration;
+        private bool m_isTraveling;
+
+        private Vector2 m_currentLogicalPosition;
+        private float m_currentSpeed;
+        private float m_remainingTravelTime;
 
         public event Action<int> OnStageChanged;
         public event Action<int, float> OnTravelStarted;
+        public event Action OnTravelCanceled;
 
         public string SaveId => "stage_system";
         public Type StateType => typeof(StageSaveData);
@@ -37,23 +40,25 @@ namespace DesktopCompanion.Systems
             if (stageData != null)
             {
                 m_currentStageDataId = defaultDataId;
+                m_currentLogicalPosition = stageData.MapPosition;
                 m_isTraveling = false;
             }
         }
 
         public void MoveToStage(int targetDataId)
         {
-            if (m_isTraveling) return;
-            if (m_currentStageDataId == targetDataId) return;
+            if (m_isTraveling && m_targetStageDataId == targetDataId) return;
 
-            var currentStageData = DataManager.GetData<StageData>(m_currentStageDataId);
             var targetStageData = DataManager.GetData<StageData>(targetDataId);
-
-            if (currentStageData == null || targetStageData == null)
+            if (targetStageData == null)
             {
-                Debug.LogError($"[StageSystem] 맵 이동 실패! 데이터를 찾을 수 없습니다. " +
-                               $"현재맵 ID({m_currentStageDataId}) 로드: {(currentStageData != null ? "성공" : "실패")} / " +
-                               $"목표맵 ID({targetDataId}) 로드: {(targetStageData != null ? "성공" : "실패")}");
+                Debug.LogError($"[StageSystem] 목표맵 ID({targetDataId}) 데이터를 찾을 수 없습니다.");
+                return;
+            }
+
+            if (!m_isTraveling && Vector2.Distance(m_currentLogicalPosition, targetStageData.MapPosition) <= 0.001f)
+            {
+                Debug.Log("[StageSystem] 이미 해당 위치에 있습니다.");
                 return;
             }
 
@@ -68,27 +73,45 @@ namespace DesktopCompanion.Systems
                 return;
             }
 
-            float distance = Vector2.Distance(currentStageData.MapPosition, targetStageData.MapPosition);
-            float speed = Mathf.Max(playerSpeed, 0.1f);
-            float duration = distance / speed;
+            float distance = Vector2.Distance(m_currentLogicalPosition, targetStageData.MapPosition);
+
+            m_currentSpeed = Mathf.Max(playerSpeed, 0.1f);
+            float duration = distance / m_currentSpeed;
 
             m_targetStageDataId = targetDataId;
-            m_totalTravelDuration = duration;
-            m_travelTimer = duration;
+            m_remainingTravelTime = duration;
             m_isTraveling = true;
 
             OnTravelStarted?.Invoke(targetDataId, duration);
+        }
+
+        public void CancelTravel()
+        {
+            if (!m_isTraveling) return;
+
+            m_isTraveling = false;
+            m_targetStageDataId = 0;
+            m_remainingTravelTime = 0f;
+
+            OnTravelCanceled?.Invoke();
         }
 
         public void Tick(float dt)
         {
             if (!m_isTraveling) return;
 
-            m_travelTimer -= dt;
+            var targetStageData = DataManager.GetData<StageData>(m_targetStageDataId);
+            if (targetStageData == null) return;
 
-            if (m_travelTimer <= 0f)
+            m_currentLogicalPosition = Vector2.MoveTowards(m_currentLogicalPosition, targetStageData.MapPosition, m_currentSpeed * dt);
+
+            float distance = Vector2.Distance(m_currentLogicalPosition, targetStageData.MapPosition);
+            m_remainingTravelTime = distance / m_currentSpeed;
+
+            if (distance <= 0.001f)
             {
-                m_travelTimer = 0f;
+                m_currentLogicalPosition = targetStageData.MapPosition;
+                m_remainingTravelTime = 0f;
                 m_isTraveling = false;
 
                 m_currentStageDataId = m_targetStageDataId;
@@ -100,7 +123,8 @@ namespace DesktopCompanion.Systems
 
         public StageData CurrentStageData => DataManager.GetData<StageData>(m_currentStageDataId);
         public bool IsTraveling => m_isTraveling;
-        public float RemainingTravelTime => m_travelTimer;
+        public float RemainingTravelTime => m_remainingTravelTime;
+        public Vector2 CurrentLogicalPosition => m_currentLogicalPosition;
 
         public List<TierPool> GetAvailableTierPools(int playerLicense)
         {
@@ -118,13 +142,27 @@ namespace DesktopCompanion.Systems
 
         public object CaptureState()
         {
-            return new StageSaveData { currentStageDataId = m_currentStageDataId };
+            return new StageSaveData
+            {
+                currentStageDataId = m_currentStageDataId,
+                savedPosX = m_currentLogicalPosition.x,
+                savedPosY = m_currentLogicalPosition.y
+            };
         }
 
         public void RestoreState(object state)
         {
             var save = (StageSaveData)state;
-            ForceSetInitialStage(save.currentStageDataId);
+            m_currentStageDataId = save.currentStageDataId;
+
+            if (save.savedPosX != 0 || save.savedPosY != 0)
+            {
+                m_currentLogicalPosition = new Vector2(save.savedPosX, save.savedPosY);
+            }
+            else
+            {
+                ForceSetInitialStage(m_currentStageDataId != 0 ? m_currentStageDataId : 600001);
+            }
         }
     }
 
@@ -132,5 +170,7 @@ namespace DesktopCompanion.Systems
     public class StageSaveData
     {
         public int currentStageDataId;
+        public float savedPosX;
+        public float savedPosY;
     }
 }
