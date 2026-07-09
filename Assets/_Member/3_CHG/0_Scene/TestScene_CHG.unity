@@ -762,10 +762,10 @@ MonoBehaviour:
   m_ChildAlignment: 0
   m_StartCorner: 0
   m_StartAxis: 0
-  m_CellSize: {x: 72, y: 72}
+  m_CellSize: {x: 78, y: 78}
   m_Spacing: {x: 6, y: 6}
   m_Constraint: 1
-  m_ConstraintCount: 6
+  m_ConstraintCount: 5
 --- !u!1 &185776099
 GameObject:
   m_ObjectHideFlags: 0
@@ -3270,7 +3270,7 @@ MonoBehaviour:
   m_equipmentTabButton: {fileID: 151261060}
   m_materialTabButton: {fileID: 1699168491}
   m_closeButton: {fileID: 1291513788}
-  m_moveButton: {fileID: 0}
+  m_moveButton: {fileID: 1995249050}
   m_moveGuideText: {fileID: 0}
   m_slotRoot: {fileID: 163928379}
   m_slotPrefab: {fileID: 7503822869583258100, guid: 38576e5925204824192b275750ef47ae, type: 3}
