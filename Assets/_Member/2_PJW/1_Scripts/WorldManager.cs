@@ -13,6 +13,7 @@ namespace DesktopCompanion.Views
     public class WorldManager : MonoBehaviour
     {
         private static WorldManager s_instance;   // 유닛 자가 등록 접근점
+        private static readonly List<WorldViewBase> s_pending = new();   // Initialize 전(씬 로드)에 등록 시도한 유닛 대기
 
         private SystemManager m_systemManager;
         private EntityManager m_entityManager;
@@ -20,8 +21,6 @@ namespace DesktopCompanion.Views
         private bool m_initialized;
 
         private readonly List<WorldViewBase> m_views = new();
-
-        private void Awake() => s_instance = this;
 
         private void OnDestroy()
         {
@@ -31,51 +30,74 @@ namespace DesktopCompanion.Views
             }
         }
 
-        /// <summary>GameManager.OnBootCompleted에서 호출(의존성 주입 + 대기 유닛 일괄 바인딩).</summary>
+        /// <summary>
+        /// GameManager.OnBootCompleted에서 호출. 이 시점에 싱글턴을 지정하고(조립 루트가 수명을 통제),
+        /// Initialize 이전(씬 로드)에 등록을 시도해 대기 중이던 유닛을 흡수·바인딩한다.
+        /// </summary>
         public void Initialize(SystemManager systemManager, EntityManager entityManager, AssetProvider assetProvider)
         {
+            s_instance = this;
             m_systemManager = systemManager;
             m_entityManager = entityManager;
             m_assetProvider = assetProvider;
             m_initialized = true;
 
-            // 이미 등록되어 대기 중이던 유닛들을 일괄 바인딩.
-            for (int i = 0; i < m_views.Count; i++)
+            for (int i = 0; i < s_pending.Count; i++)
             {
-                BindView(m_views[i]);
+                if (s_pending[i] != null)
+                {
+                    RegisterInternal(s_pending[i]);   // m_initialized=true이므로 즉시 Bind
+                }
             }
+            s_pending.Clear();
         }
 
-        /// <summary>유닛이 스스로 호출(자가 등록). 초기화 이후 등록된 유닛은 즉시 바인딩된다.</summary>
+        /// <summary>
+        /// 유닛이 스스로 호출(자가 등록). 매니저 Initialize 전이면 대기 큐에 담아 유실을 막고,
+        /// 초기화 이후면 즉시 바인딩한다.
+        /// </summary>
         public static void Register(WorldViewBase view)
         {
-            if (s_instance == null || view == null)
-            {
-                return;   // 매니저 부재 시 방어
-            }
-
-            if (s_instance.m_views.Contains(view))
+            if (view == null)
             {
                 return;
             }
-
-            s_instance.m_views.Add(view);
-
-            if (s_instance.m_initialized)
+            if (s_instance == null)
             {
-                s_instance.BindView(view);   // 늦게 온 유닛 즉시 바인딩
+                if (!s_pending.Contains(view))   // 매니저 Initialize 전 — 유실 대신 대기
+                {
+                    s_pending.Add(view);
+                }
+                return;
             }
+            s_instance.RegisterInternal(view);
         }
 
         /// <summary>유닛이 스스로 호출(등록 해제).</summary>
         public static void Unregister(WorldViewBase view)
         {
-            if (s_instance == null || view == null)
+            if (view == null)
             {
                 return;
             }
+            s_pending.Remove(view);   // 아직 대기 중이었다면 제거
+            if (s_instance != null)
+            {
+                s_instance.m_views.Remove(view);
+            }
+        }
 
-            s_instance.m_views.Remove(view);
+        private void RegisterInternal(WorldViewBase view)
+        {
+            if (m_views.Contains(view))
+            {
+                return;
+            }
+            m_views.Add(view);
+            if (m_initialized)
+            {
+                BindView(view);   // 늦게 온 유닛 즉시 바인딩
+            }
         }
 
         private void BindView(WorldViewBase view)
