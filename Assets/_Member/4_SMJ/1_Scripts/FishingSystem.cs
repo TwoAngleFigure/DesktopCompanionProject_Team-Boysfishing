@@ -2,13 +2,10 @@
 using DesktopCompanion.Entities;
 using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace DesktopCompanion.Systems
 {
-    #region Types
-
     public enum FishingState
     {
         Stopped,
@@ -16,60 +13,54 @@ namespace DesktopCompanion.Systems
         Battling
     }
 
-    #endregion
-
     public class FishingSystem : SystemBase, ITickable
     {
-        #region Dependencies
 
         private StageSystem m_stageSystem;
         private PlayerSystem m_playerSystem;
         private InventorySystem m_inventorySystem;
 
-        #endregion
-
-        #region Settings
-
         private float baseBattleDuration = 10f;
         private float minBattleDuration = 0.5f;
 
-        #endregion
-
-        #region State
-
         private FishingState m_state;
         private EntityHandle m_currentBattleFish;
+        private float m_waitDuration;
+        private float m_battleDuration;
         private float m_waitTimer;
         private float m_battleTimer;
         private float m_autoAttackTimer;
 
-        #endregion
-
         #region Events
 
         public event Action<FishingState> OnStateChanged;
-        public event Action<EntityHandle> OnBattleStarted;
-        public event Action<EntityHandle, int, int> OnBattleHpChanged;
-        public event Action<EntityHandle> OnFishCaught;
+        public event Action<EntityHandle, string> OnBattleStarted;
+        public event Action<EntityHandle, string> OnFishCaught;
         public event Action<EntityHandle> OnBattleFailed;
+        public event Action<EntityHandle, int, int> OnBattleHpChanged;
 
         #endregion
 
         #region Properties
 
         public FishingState State => m_state;
+
+        public float WaitDuration => m_waitDuration; // Debug 남은 시간 확인용
         public float WaitTimeRemaining => m_waitTimer;
+
+        
+        public float BattleDuration => m_battleDuration; // Debug 남은 시간 확인용
         public float BattleTimeRemaining => m_battleTimer;
         public EntityHandle CurrentBattleFish => m_currentBattleFish;
 
         #endregion
 
-        #region Lifecycle
-
         public override void Initialize()
         {
             m_state = FishingState.Stopped;
             m_currentBattleFish = default;
+            m_waitDuration = 0f;
+            m_battleDuration = 0f;
             m_waitTimer = 0f;
             m_battleTimer = 0f;
             m_autoAttackTimer = 0f;
@@ -85,12 +76,8 @@ namespace DesktopCompanion.Systems
 
         public override void PostInitialize()
         {
-            StartFishing();
+            //StartFishing();
         }
-
-        #endregion
-
-        #region Tick
 
         public void Tick(float deltaTime)
         {
@@ -151,10 +138,6 @@ namespace DesktopCompanion.Systems
             }
         }
 
-        #endregion
-
-        #region Public Controls
-
         public void StartFishing()
         {
             if (m_state != FishingState.Stopped)
@@ -163,7 +146,7 @@ namespace DesktopCompanion.Systems
                 return;
             }
 
-            m_waitTimer = 0f;
+            ScheduleNextFishing();
             ChangeState(FishingState.Waiting);
 
             Debug.Log($"[FishingSystem] 자동 낚시 시작 대기시간={m_waitTimer:0.00}초");
@@ -175,14 +158,14 @@ namespace DesktopCompanion.Systems
 
             ClearCurrentBattleFish();
 
+            m_waitDuration = 0f;
+            m_battleDuration = 0f;
             m_waitTimer = 0f;
             m_battleTimer = 0f;
             m_autoAttackTimer = 0f;
 
             ChangeState(FishingState.Stopped);
         }
-
-        #endregion
 
         #region Battle Flow
 
@@ -212,12 +195,13 @@ namespace DesktopCompanion.Systems
             ItemQuality quality = fishData.GetQuality(size);
             battleFish.SetRollResult(size, quality);
 
-            m_battleTimer = CalculateBattleDuration(fishData);
+            m_battleDuration = CalculateBattleDuration(fishData);
+            m_battleTimer = m_battleDuration;
             m_autoAttackTimer = 0f;
 
             ChangeState(FishingState.Battling);
 
-            OnBattleStarted?.Invoke(m_currentBattleFish);
+            OnBattleStarted?.Invoke(m_currentBattleFish, battleFish.Name);
             OnBattleHpChanged?.Invoke(m_currentBattleFish, battleFish.CurrentHp, fishData.MaxHp);
             Debug.Log($"[FishingSystem] 전투 시작: {fishData.Name}, HP={battleFish.CurrentHp}/{fishData.MaxHp}, Size={size:0.00}, Quality={quality}, 제한시간={m_battleTimer:0.00}초");
         }
@@ -288,7 +272,7 @@ namespace DesktopCompanion.Systems
                 return;
             }
 
-            OnFishCaught?.Invoke(caughtHandle);
+            OnFishCaught?.Invoke(caughtHandle, battleFish.Name);
 
             Debug.Log($"[FishingSystem] 낚시 성공 및 인벤토리 지급: {battleFish.BattleData.ItemFish.Name}, " +
                 $"Size={battleFish.Size:0.00}, " +
@@ -301,11 +285,10 @@ namespace DesktopCompanion.Systems
         private void FailBattle(string reason)
         {
             Entity_BattleFish battleFish = EntityManager.Get<Entity_BattleFish>(m_currentBattleFish);
-            string fishName = battleFish != null ? battleFish.Name : "Unknown";
 
             OnBattleFailed?.Invoke(m_currentBattleFish);
 
-            Debug.Log($"[FishingSystem] 포획 실패: {fishName}, reason={reason}");
+            Debug.Log($"[FishingSystem] 포획 실패: reason={reason}");
 
             ClearCurrentBattleFish();
             ScheduleNextFishing();
@@ -334,7 +317,9 @@ namespace DesktopCompanion.Systems
         private void ScheduleNextFishing()
         {
 
-            m_waitTimer = CalculateNextFishingDelay();
+            m_waitDuration = CalculateNextFishingDelay();
+            m_waitTimer = m_waitDuration;
+            m_battleDuration = 0f;
             m_battleTimer = 0f;
             m_autoAttackTimer = 0f;
 
@@ -529,6 +514,8 @@ namespace DesktopCompanion.Systems
             }
 
             ClearCurrentBattleFish();
+            m_waitDuration = 0f;
+            m_battleDuration = 0f;
             m_waitTimer = 0f;
             m_battleTimer = 0f;
             m_autoAttackTimer = 0f;
