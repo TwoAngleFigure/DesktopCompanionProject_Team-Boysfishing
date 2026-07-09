@@ -15,7 +15,7 @@ MonoBehaviour:
   m_id: 1
   m_name: 
   m_assetKey: 
-  m_baseDamagePerClick: 10
+  m_baseDamagePerClick: 5
   m_baseManualDamagePerHitMultiply: 1
   m_baseBattleTimeVariable: 10
   m_baseCriticalChance: 0.05
@@ -27,6 +27,6 @@ MonoBehaviour:
   m_baseProbabilityAtFishRarity: 0
   m_baseGoldGettingMultiply: 0
   m_baseMapMovementSpeedPerTime: 0
-  m_baseInventorySize: 0
+  m_baseInventorySize: 20
   m_startingLicense: 1
   m_startingGold: 0

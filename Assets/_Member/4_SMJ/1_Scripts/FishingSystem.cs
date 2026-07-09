@@ -21,7 +21,7 @@ namespace DesktopCompanion.Systems
         private InventorySystem m_inventorySystem;
 
         private float baseBattleDuration = 10f;
-        private float minBattleDuration = 0.5f;
+        private float minBattleDuration = 2f;
 
         private FishingState m_state;
         private EntityHandle m_currentBattleFish;
@@ -64,6 +64,11 @@ namespace DesktopCompanion.Systems
             m_waitTimer = 0f;
             m_battleTimer = 0f;
             m_autoAttackTimer = 0f;
+           
+        }
+
+        public override void PostInitialize()
+        {
             m_stageSystem = SystemManager.GetSystem<StageSystem>();
             m_playerSystem = SystemManager.GetSystem<PlayerSystem>();
             m_inventorySystem = SystemManager.GetSystem<InventorySystem>();
@@ -72,11 +77,6 @@ namespace DesktopCompanion.Systems
             {
                 m_stageSystem.OnStageChanged += HandleStageChanged;
             }
-        }
-
-        public override void PostInitialize()
-        {
-            //StartFishing();
         }
 
         public void Tick(float deltaTime)
@@ -136,6 +136,21 @@ namespace DesktopCompanion.Systems
 
                 m_autoAttackTimer = attackInterval;
             }
+        }
+
+        public void ManualAttack()
+        {
+            if(m_state != FishingState.Battling)
+            {
+                Debug.Log("[FishingSystem] 수동 공격 실패: 전투 중이 아닙니다.");
+                return;
+            }
+
+            int damage = CalculateManualDamage();
+
+            Debug.Log($"[FishingSystem] 수동 공격: damage={damage}");
+
+            ApplyDamage(damage);
         }
 
         public void StartFishing()
@@ -477,6 +492,21 @@ namespace DesktopCompanion.Systems
 
             return UnityEngine.Random.Range(minDelay, maxDelay);
         }
+
+        private int CalculateManualDamage()
+        {
+            float damage = m_playerSystem.BaseDamagePerClick * m_playerSystem.BaseManualDamagePerHitMultiply;
+
+            bool isCritical = UnityEngine.Random.value < m_playerSystem.BaseCriticalChance;
+
+            if (isCritical)
+            {
+                damage *= m_playerSystem.BaseCriticalMultiply;
+            }
+
+            return Mathf.Max(1, Mathf.RoundToInt(damage));
+        }
+
 
         #endregion
 

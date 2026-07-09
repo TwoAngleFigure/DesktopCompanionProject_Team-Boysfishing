@@ -15,6 +15,7 @@ namespace DesktopCompanion.Views
         public readonly BindableProperty<string> ToggleButtonText = new("Start Fishing");
 
         public RelayCommand ToggleFishingState { get; private set; }
+        public RelayCommand ManualAttack { get; private set; }
 
         // Debug HUD
         public readonly BindableProperty<string> DebugWaitTimeText = new("WaitTime: -");
