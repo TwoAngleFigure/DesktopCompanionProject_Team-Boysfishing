@@ -9,7 +9,6 @@ namespace DesktopCompanion.Views
     public class InventoryViewModel : UIViewModelBase
     {
         private InventorySystem m_inventorySystem;
-        private EntityManager m_entityManager;
 
         private ItemType m_currentTab = ItemType.Fish;
 
@@ -30,19 +29,9 @@ namespace DesktopCompanion.Views
 
         // TEMP: Drag-Drop 도입 시 수정
         public RelayCommand MoveButtonCommand { get; private set; }
-        public void InjectEntityManager(EntityManager entityManager)
-        {
-            m_entityManager = entityManager;
-        }
 
         public override void Bind()
         {
-            if (SystemManager == null)
-            {
-                UnityEngine.Debug.LogError("[InventoryViewModel] SystemManager is null. ViewModel Inject is missing.");
-                return;
-            }
-
             m_inventorySystem = SystemManager.GetSystem<InventorySystem>();
 
             SelectTabCommand = new RelayCommand<ItemType>(SelectTab);
@@ -68,7 +57,6 @@ namespace DesktopCompanion.Views
             }
 
             m_inventorySystem = null;
-            m_entityManager = null;
         }
 
         private void HandleInventoryChanged()
@@ -203,12 +191,7 @@ namespace DesktopCompanion.Views
                 return InventorySlotViewData.Empty(slotIndex, m_currentTab, isSelected, m_isMoveMode);
             }
 
-            if (m_entityManager == null)
-            {
-                return InventorySlotViewData.Empty(slotIndex, m_currentTab, isSelected, m_isMoveMode);
-            }
-
-            Entity entity = m_entityManager.Get(handle);
+            Entity entity = EntityManager.Get(handle);
 
             if (entity == null)
             {

@@ -33,17 +33,9 @@ namespace DesktopCompanion.Views
         private readonly InventoryViewModel m_vm = new();
         private readonly List<InventorySlotView> m_slotViews = new();
 
-        public void Start()
-        {
-            Debug.Log("[Test]");
-        }
-
         public override void Bind()
         {
-            Debug.Log("[InventoryWindowView] Bind called");
-
-            //m_vm.Inject(SystemManager);
-            m_vm.InjectEntityManager(EntityManager);
+            m_vm.Inject(SystemManager, EntityManager);
             m_vm.Bind();
 
             m_vm.Slots.Bind(RefreshSlotViews);
