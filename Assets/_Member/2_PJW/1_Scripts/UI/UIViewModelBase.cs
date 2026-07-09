@@ -13,7 +13,13 @@ namespace DesktopCompanion.Views
         protected SystemManager SystemManager { get; private set; }
 
         // View가 자기 VM에 주입한다(같은 어셈블리 내부 전용).
-        internal void Inject(SystemManager systemManager) => SystemManager = systemManager;
+        protected EntityManager EntityManager { get; private set; }   // EntityHandle → Entity 조회
+
+        internal void Inject(SystemManager systemManager, EntityManager entityManager)
+        {
+            SystemManager = systemManager;
+            EntityManager = entityManager;
+        }
 
         /// <summary>System Action 구독(System→View 상태 갱신)을 여기서.</summary>
         public abstract void Bind();
