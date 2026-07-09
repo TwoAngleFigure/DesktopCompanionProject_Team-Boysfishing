@@ -162,7 +162,18 @@ namespace DesktopCompanion.EditorTools
                     {
                         return l;
                     }
-                    return double.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out double d) ? d : v;
+                    if (double.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out double d))
+                    {
+                        // 구글 시트 등 외부 툴이 정수를 "200001.0"으로 저장하는 경우 대응:
+                        // 소수부가 없는 실수는 정수(long)로 복원한다(직접 작성 시트의 정수 토큰과 동일 결과).
+                        // 이렇게 하지 않으면 이후 로드에서 int 필드에 float 리터럴이 들어가 JsonReaderException이 난다.
+                        if (d == Math.Floor(d) && !double.IsInfinity(d))
+                        {
+                            return (long)d;
+                        }
+                        return d;
+                    }
+                    return v;
             }
         }
 
