@@ -164,8 +164,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Core.GameManager
   m_useTestData: 0
-  m_testData: []
-  m_worldManager: {fileID: 821727477}
+  m_testData:
+  - {fileID: 11400000, guid: c51db99853ce45f40aab1f7748ad5712, type: 2}
+  m_worldManager: {fileID: 0}
   m_uiManager: {fileID: 0}
 --- !u!1 &330585543
 GameObject:
