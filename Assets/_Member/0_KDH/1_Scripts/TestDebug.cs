@@ -11,10 +11,6 @@ public class TestDebug : MonoBehaviour
     [Header("스페이스바로 이동할 목표 맵 ID (예: 600002)")]
     [SerializeField] private int m_targetMapIdToMove = 600002;
 
-    [Header("테스트 설정")]
-    [SerializeField] private int m_testPlayerLicense = 3;
-    [SerializeField] private float m_testPlayerSpeed = 50f;
-
     private StageSystem m_stageSystem;
 
     private void Start()
@@ -73,7 +69,7 @@ public class TestDebug : MonoBehaviour
             if (!m_stageSystem.IsTraveling)
             {
                 Debug.Log($"[TestDebug] {m_targetMapIdToMove}번 맵으로 이동 시도...");
-                m_stageSystem.MoveToStage(m_targetMapIdToMove, m_testPlayerLicense, m_testPlayerSpeed);
+                m_stageSystem.MoveToStage(m_targetMapIdToMove);
             }
         }
 
