@@ -6,10 +6,10 @@ using UnityEngine.UI;
 public class FishingView : UIViewBase
 {
     [SerializeField] private TMP_Text m_stateText;
-    [SerializeField] private TMP_Text m_fishNameText;
     [SerializeField] private TMP_Text m_hpText;
     [SerializeField] private Slider m_hpSlider;
     [SerializeField] private TMP_Text m_resultText;
+    [SerializeField] private TMP_Text m_catchInfoText;
 
     [Header("State Toggle")]
     [SerializeField] private Button m_toggleFishingButton;
@@ -27,10 +27,10 @@ public class FishingView : UIViewBase
         m_vm.Bind();
 
         m_vm.StateText.Bind(OnStateTextChanged);
-        m_vm.BattleFishNameText.Bind(OnFishNameTextChanged);
         m_vm.HpText.Bind(OnHpTextChanged);
         m_vm.HpRatio.Bind(OnHpRatioChanged);
         m_vm.ResultText.Bind(OnResultTextChanged);
+        m_vm.CatchInfoText.Bind(OnCatchInfoTextChanged);
         m_vm.ToggleButtonText.Bind(OnToggleButtonTextChanged);
         m_vm.DebugWaitTimeText.Bind(OnDebugWaitTimeTextChanged);
         m_vm.DebugBattleTimeText.Bind(OnDebugBattleTimeTextChanged);
@@ -44,10 +44,10 @@ public class FishingView : UIViewBase
     public override void Unbind()
     {
         m_vm.StateText.Unbind(OnStateTextChanged);
-        m_vm.BattleFishNameText.Unbind(OnFishNameTextChanged);
         m_vm.HpText.Unbind(OnHpTextChanged);
         m_vm.HpRatio.Unbind(OnHpRatioChanged);
         m_vm.ResultText.Unbind(OnResultTextChanged);
+        m_vm.CatchInfoText.Unbind(OnCatchInfoTextChanged);
         m_vm.ToggleButtonText.Unbind(OnToggleButtonTextChanged);
         m_vm.DebugWaitTimeText.Unbind(OnDebugWaitTimeTextChanged);
         m_vm.DebugBattleTimeText.Unbind(OnDebugBattleTimeTextChanged);
@@ -74,14 +74,6 @@ public class FishingView : UIViewBase
         }
     }
 
-    private void OnFishNameTextChanged(string value)
-    {
-        if (m_fishNameText != null)
-        {
-            m_fishNameText.text = value;
-        }
-    }
-
     private void OnHpTextChanged(string value)
     {
         if (m_hpText != null)
@@ -103,6 +95,14 @@ public class FishingView : UIViewBase
         if (m_resultText != null)
         {
             m_resultText.text = value;
+        }
+    }
+
+    private void OnCatchInfoTextChanged(string value)
+    {
+        if (m_catchInfoText != null)
+        {
+            m_catchInfoText.text = value;
         }
     }
 

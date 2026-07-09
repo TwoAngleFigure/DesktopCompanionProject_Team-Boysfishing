@@ -13,6 +13,24 @@ namespace DesktopCompanion.Systems
         Battling
     }
 
+    public readonly struct FishingCatchResult
+    {
+        public readonly EntityHandle FishHandle;
+        public readonly string FishName;
+        public readonly float Size;
+        public readonly ItemQuality Quality;
+        public readonly ItemRarity Rarity;
+
+        public FishingCatchResult(EntityHandle fishHandle, string fishName, float size, ItemQuality quality, ItemRarity rarity)
+        {
+            FishHandle = fishHandle;
+            FishName = fishName;
+            Size = size;
+            Quality = quality;
+            Rarity = rarity;
+        }
+    }
+
     public class FishingSystem : SystemBase, ITickable
     {
 
@@ -34,8 +52,8 @@ namespace DesktopCompanion.Systems
         #region Events
 
         public event Action<FishingState> OnStateChanged;
-        public event Action<EntityHandle, string> OnBattleStarted;
-        public event Action<EntityHandle, string> OnFishCaught;
+        public event Action<EntityHandle> OnBattleStarted;
+        public event Action<FishingCatchResult> OnFishCaught;
         public event Action<EntityHandle> OnBattleFailed;
         public event Action<EntityHandle, int, int> OnBattleHpChanged;
 
@@ -201,7 +219,7 @@ namespace DesktopCompanion.Systems
 
             ChangeState(FishingState.Battling);
 
-            OnBattleStarted?.Invoke(m_currentBattleFish, battleFish.Name);
+            OnBattleStarted?.Invoke(m_currentBattleFish);
             OnBattleHpChanged?.Invoke(m_currentBattleFish, battleFish.CurrentHp, fishData.MaxHp);
             Debug.Log($"[FishingSystem] 전투 시작: {fishData.Name}, HP={battleFish.CurrentHp}/{fishData.MaxHp}, Size={size:0.00}, Quality={quality}, 제한시간={m_battleTimer:0.00}초");
         }
@@ -272,7 +290,14 @@ namespace DesktopCompanion.Systems
                 return;
             }
 
-            OnFishCaught?.Invoke(caughtHandle, battleFish.Name);
+            FishingCatchResult catchResult = new FishingCatchResult(
+                caughtHandle,
+                battleFish.BattleData.ItemFish.Name,
+                battleFish.Size,
+                battleFish.Quality,
+                battleFish.BattleData.ItemFish.Rarity);
+
+            OnFishCaught?.Invoke(catchResult);
 
             Debug.Log($"[FishingSystem] 낚시 성공 및 인벤토리 지급: {battleFish.BattleData.ItemFish.Name}, " +
                 $"Size={battleFish.Size:0.00}, " +

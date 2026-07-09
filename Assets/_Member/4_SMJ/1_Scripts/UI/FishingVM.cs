@@ -8,10 +8,10 @@ namespace DesktopCompanion.Views
         private FishingSystem m_fishingSystem;
 
         public readonly BindableProperty<string> StateText = new("Stopped");
-        public readonly BindableProperty<string> BattleFishNameText = new("-");
         public readonly BindableProperty<string> HpText = new("-");
         public readonly BindableProperty<float> HpRatio = new(0f);
         public readonly BindableProperty<string> ResultText = new("");
+        public readonly BindableProperty<string> CatchInfoText = new("CatchInfo: -");
         public readonly BindableProperty<string> ToggleButtonText = new("Start Fishing");
 
         public RelayCommand ToggleFishingState { get; private set; }
@@ -79,7 +79,6 @@ namespace DesktopCompanion.Views
             {
                 case FishingState.Stopped:
                     StateText.Value = $"CurrentState: {state}";
-                    BattleFishNameText.Value = $"FishName: - ";
                     HpText.Value = "-";
                     HpRatio.Value = 0f;
                     ToggleButtonText.Value = "Start Fishing";
@@ -87,7 +86,6 @@ namespace DesktopCompanion.Views
 
                 case FishingState.Waiting:
                     StateText.Value = $"CurrentState: {state}";
-                    BattleFishNameText.Value = $"FishName: - ";
                     HpText.Value = "-";
                     HpRatio.Value = 0f;
                     ToggleButtonText.Value = "Stop Fishing";
@@ -100,10 +98,10 @@ namespace DesktopCompanion.Views
             }
         }
 
-        private void HandleBattleStarted(EntityHandle fishHandle, string fishName)
+        private void HandleBattleStarted(EntityHandle fishHandle)
         {
             ResultText.Value = "Result: -";
-            BattleFishNameText.Value = $"FishName: {fishName}"; ;
+            CatchInfoText.Value = "CatchInfo: -";
         }
 
         private void HandleBattleHpChanged(EntityHandle fishHandle, int currentHp, int maxHp)
@@ -112,10 +110,14 @@ namespace DesktopCompanion.Views
             HpRatio.Value = maxHp > 0 ? (float)currentHp / maxHp : 0f;
         }
 
-        private void HandleFishCaught(EntityHandle fishHandle, string fishName)
+        private void HandleFishCaught(FishingCatchResult result)
         {
-            ResultText.Value = $"Result: {fishName} Caught";
-            BattleFishNameText.Value = "BattleFishNameText: -";
+            ResultText.Value = $"Result: {result.FishName} Caught";
+            CatchInfoText.Value =
+                $"CatchInfo\n" +
+                $"Size: {result.Size:0.00}\n" +
+                $"Quality: {result.Quality}\n" +
+                $"Rarity: {result.Rarity}";
             HpText.Value = "-";
             HpRatio.Value = 0f;
         }
@@ -123,7 +125,7 @@ namespace DesktopCompanion.Views
         private void HandleBattleFailed(EntityHandle fishHandle)
         {
             ResultText.Value = "Result: Failed";
-            BattleFishNameText.Value = "BattleFishNameText: -";
+            CatchInfoText.Value = "CatchInfo: -";
             HpText.Value = "-";
             HpRatio.Value = 0f;
         }
