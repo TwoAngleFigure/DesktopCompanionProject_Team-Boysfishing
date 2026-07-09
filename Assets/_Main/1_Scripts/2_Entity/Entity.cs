@@ -55,6 +55,8 @@ namespace DesktopCompanion.Entities
         public Entity_Equipment(EntityHandle id, ItemData_Equipment data) : base(id, data)
             => m_equipment = data;
 
+        public ItemData_Equipment ItemData => m_equipment;
+
         /// <summary>현재 강화 단계의 효과(정의는 Data에서 조회).</summary>
         public StatModifier[] CurrentModifiers => m_equipment.GetModifiers(UpgradeLevel);
 
