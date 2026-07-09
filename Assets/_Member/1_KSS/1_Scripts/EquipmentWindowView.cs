@@ -17,7 +17,7 @@ namespace DesktopCompanion.Views
 
         public override void Bind()
         {
-            m_vm.Inject(SystemManager);
+            m_vm.Inject(SystemManager, EntityManager);
             m_vm.Bind();
 
             // 1. 공격력 텍스트 바인딩
