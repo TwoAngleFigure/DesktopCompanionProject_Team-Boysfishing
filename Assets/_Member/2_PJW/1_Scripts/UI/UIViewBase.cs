@@ -11,6 +11,7 @@ namespace DesktopCompanion.Views
     public abstract class UIViewBase : MonoBehaviour
     {
         protected SystemManager SystemManager { get; private set; }
+        protected EntityManager EntityManager { get; private set; }   // EntityHandle → Entity 조회
         protected AssetProvider AssetProvider { get; private set; }
 
         protected virtual void OnEnable() => UIManager.Register(this);
@@ -22,9 +23,10 @@ namespace DesktopCompanion.Views
         }
 
         // UIManager가 바인딩 직전에 호출(같은 어셈블리 내부 전용).
-        internal void Inject(SystemManager systemManager, AssetProvider assetProvider)
+        internal void Inject(SystemManager systemManager, EntityManager entityManager, AssetProvider assetProvider)
         {
             SystemManager = systemManager;
+            EntityManager = entityManager;
             AssetProvider = assetProvider;
         }
 
