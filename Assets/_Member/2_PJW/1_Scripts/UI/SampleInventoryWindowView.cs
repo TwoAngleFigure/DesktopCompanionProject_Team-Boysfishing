@@ -65,7 +65,7 @@ namespace DesktopCompanion.Views
 
         public override void Bind()
         {
-            m_vm.Inject(SystemManager);
+            m_vm.Inject(SystemManager, EntityManager);
             m_vm.Bind();
             m_vm.UsedFishSlots.Bind(OnUsedFishSlotsChanged);   // 현재값 즉시 + 이후 변경 구독
         }

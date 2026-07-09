@@ -14,6 +14,7 @@ namespace DesktopCompanion.Views
     public abstract class WorldViewBase : MonoBehaviour
     {
         protected SystemManager SystemManager { get; private set; }
+        protected EntityManager EntityManager { get; private set; }   // EntityHandle → Entity 조회
         protected AssetProvider AssetProvider { get; private set; }
 
         // 씬 배치 유닛은 스스로 매니저에 등록한다.
@@ -26,9 +27,10 @@ namespace DesktopCompanion.Views
         }
 
         // WorldManager가 바인딩 직전에 호출(같은 어셈블리 내부 전용).
-        internal void Inject(SystemManager systemManager, AssetProvider assetProvider)
+        internal void Inject(SystemManager systemManager, EntityManager entityManager, AssetProvider assetProvider)
         {
             SystemManager = systemManager;
+            EntityManager = entityManager;
             AssetProvider = assetProvider;
         }
 

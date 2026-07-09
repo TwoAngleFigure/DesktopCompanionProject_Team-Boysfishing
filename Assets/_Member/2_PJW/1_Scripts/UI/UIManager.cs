@@ -14,6 +14,7 @@ namespace DesktopCompanion.Views
         private static UIManager s_instance;   // 유닛 자가 등록 접근점
 
         private SystemManager m_systemManager;
+        private EntityManager m_entityManager;
         private AssetProvider m_assetProvider;
         private bool m_initialized;
 
@@ -31,9 +32,10 @@ namespace DesktopCompanion.Views
         }
 
         /// <summary>GameManager.OnBootCompleted에서 호출(의존성 주입 + 대기 View 일괄 바인딩).</summary>
-        public void Initialize(SystemManager systemManager, AssetProvider assetProvider)
+        public void Initialize(SystemManager systemManager, EntityManager entityManager, AssetProvider assetProvider)
         {
             m_systemManager = systemManager;
+            m_entityManager = entityManager;
             m_assetProvider = assetProvider;
             m_initialized = true;
 
@@ -77,7 +79,7 @@ namespace DesktopCompanion.Views
 
         private void BindView(UIViewBase view)
         {
-            view.Inject(m_systemManager, m_assetProvider);
+            view.Inject(m_systemManager, m_entityManager, m_assetProvider);
             view.Bind();
         }
 
