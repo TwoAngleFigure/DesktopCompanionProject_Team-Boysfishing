@@ -3,6 +3,7 @@ using UnityEngine;
 using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
 using DesktopCompanion.Save;
+using DesktopCompanion.Views;
 
 namespace DesktopCompanion.Core
 {
@@ -17,20 +18,25 @@ namespace DesktopCompanion.Core
         [SerializeField] private List<GameData> m_testData = new();
 
         [Header("View")]
-        [SerializeField] private DesktopCompanion.Views.WorldManager m_worldManager;
-        [SerializeField] private DesktopCompanion.Views.UIManager m_uiManager;
+        [SerializeField] private WorldManager m_worldManager;
+        [SerializeField] private UIManager m_uiManager;
 
         private DataManager m_dataManager;
         private EntityManager m_entityManager;
         private SystemManager m_systemManager;
         private SaveManager m_saveManager;
-        private DesktopCompanion.Views.AssetProvider m_assetProvider;
+        private AssetProvider m_assetProvider;
 
         private void Awake()
         {
-            // 1) Data — 소스 우선순위: 테스트 주입 → StreamingAssets JSON → Resources SO (D14)
+            // 1) Data — StreamingAssets JSON → Resources SO 로드(D14).
+            //    로드 완료 후, 테스트 모드면 같은 (타입·ID)의 테스트 SO로 해당 항목만 덮어쓴다(교체 전용, D9).
             m_dataManager = new DataManager();
-            m_dataManager.Load(m_useTestData ? m_testData : null);
+            m_dataManager.Load();
+            if (m_useTestData)
+            {
+                m_dataManager.OverrideWithTestData(m_testData);
+            }
 
             // 2) Entity — DataManager 주입 + 팩토리 등록
             m_entityManager = new EntityManager(m_dataManager);
@@ -41,7 +47,11 @@ namespace DesktopCompanion.Core
             RegisterSystems();
             m_systemManager.InitializeAll();
 
-            // 4) Save — ISaveable 자동 등록 후 로드(저장된 가변 상태 덮어쓰기, §15.3)
+            // 4) World/UI Manager 탐색 및 할당
+            m_worldManager = FindAnyObjectByType<WorldManager>();
+            m_uiManager = FindAnyObjectByType<UIManager>();
+
+            // 5) Save — ISaveable 자동 등록 후 로드(저장된 가변 상태 덮어쓰기, §15.3)
             m_saveManager = new SaveManager();
             foreach (var system in m_systemManager.AllSystems)
             {

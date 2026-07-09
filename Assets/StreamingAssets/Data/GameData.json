@@ -151,13 +151,6 @@
     "m_tier": 1,
     "m_basePrice": 30,
     "m_mountingArea": "Bait",
-    "m_modifiers": [
-      {
-        "m_stat": "ProbabilityAtFishSize",
-        "m_operation": "Add",
-        "m_value": 0.1
-      }
-    ],
     "m_craftMaterials": [
       {
         "m_material": {
@@ -167,7 +160,14 @@
         "m_count": 3
       }
     ],
-    "m_craftGoldCost": 50
+    "m_craftGoldCost": 50,
+    "m_modifiers": [
+      {
+        "m_stat": "ProbabilityAtFishSize",
+        "m_operation": "Add",
+        "m_value": 0.1
+      }
+    ]
   },
   {
     "type": "ItemData_Consumables",
