@@ -1,7 +1,9 @@
+using System;
 using DesktopCompanion.Core;
 using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
 using DesktopCompanion.Systems;
+using DesktopCompanion.Save;
 using UnityEngine;
 
 namespace DesktopCompanion.Systems
@@ -9,13 +11,19 @@ namespace DesktopCompanion.Systems
     /// <summary>
     /// 플레이어의 능력치를 관리하고, 장비 장착에 따른 스탯 변화를 실시간으로 계산하는 시스템입니다.
     /// </summary>
-    public class PlayerSystem : SystemBase
+    public class PlayerSystem : SystemBase, ISaveable
     {
         EntityHandle playerHandle;
+        private InventorySystem m_inventorySystem;
+
+        // [팀장님 프레임워크 규칙 적용] UI 등 외부에 알릴 때 '누구의' 스탯이 변했는지 핸들을 넘겨줍니다.
+        public event Action<EntityHandle> OnStatChanged;
 
         #region Stats
 
-        // 능력치 분류별 헤더 설정
+        // ==========================================
+        // 1. 능력치 변수 선언부 (기준점)
+        // ==========================================
         [Header("Battle")]
         [SerializeField] private int m_baseDamagePerClick;
         [SerializeField] private float m_baseManualDamagePerHitMultiply;
@@ -39,18 +47,27 @@ namespace DesktopCompanion.Systems
         [SerializeField] private int m_startingLicense;
         [SerializeField] private int m_startingGold;
 
-        // 외부에서 계산된 최종 능력치를 읽기 위한 프로퍼티들
+        // ==========================================
+        // 2. 외부 읽기용 프로퍼티 (선언부와 순서 동일)
+        // ==========================================
+        // Battle
         public int BaseDamagePerClick => m_baseDamagePerClick;
         public float BaseManualDamagePerHitMultiply => m_baseManualDamagePerHitMultiply;
         public int BaseBattleTimeVariable => m_baseBattleTimeVariable;
         public float BaseCriticalChance => m_baseCriticalChance;
         public float BaseCriticalMultiply => m_baseCriticalMultiply;
+
+        // Auto Battle
         public float BaseAutoBattleCooltime => m_baseAutoBattleCooltime;
         public float BaseAutoSpeedPerTime => m_baseAutoSpeedPerTime;
         public float BaseAutoDamagePerHitMultiply => m_baseAutoDamagePerHitMultiply;
+
+        // Battle Reward
         public float BaseProbabilityAtFishSize => m_baseProbabilityAtFishSize;
         public float BaseProbabilityAtFishRarity => m_baseProbabilityAtFishRarity;
         public float BaseGoldGettingMultiply => m_baseGoldGettingMultiply;
+
+        // Other
         public float BaseMapMovementSpeedPerTime => m_baseMapMovementSpeedPerTime;
         public int BaseInventorySize => m_baseInventorySize;
         public int StartingLicense => m_startingLicense;
@@ -58,12 +75,43 @@ namespace DesktopCompanion.Systems
 
         #endregion
 
+        // ==========================================
+        // [ISaveable 인터페이스 구현부]
+        // ==========================================
+        public string SaveId => "player_system_stats";
+        public Type StateType => typeof(string);
+
+        public object CaptureState()
+        {
+            // 스탯은 저장할 필요가 없으므로 더미(Dummy) 데이터를 넘깁니다.
+            return "stats_calculated_dynamically";
+        }
+
+        public void RestoreState(object state)
+        {
+            // GameManager가 세이브 파일 로드를 끝낸 직후에 자동으로 실행
+            CaculatedStat();
+            Debug.Log("[PlayerSystem] 세이브 로드 완료! 장비 스탯 재계산 완료.");
+        }
+        // ==========================================
+
         /// <summary>
-        /// 시스템 초기화 시 플레이어 데이터를 생성합니다.
+        /// Phase 1: 시스템 초기화 시 플레이어 데이터를 생성합니다.
         /// </summary>
         public override void Initialize()
         {
             playerHandle = EntityManager.Create<PlayerData>(1);
+        }
+
+        /// <summary>
+        /// Phase 2: 다른 시스템이 모두 준비된 후 인벤토리 시스템을 찾아 캐싱하고, 기본 스탯을 계산합니다.
+        /// </summary>
+        public override void PostInitialize()
+        {
+            m_inventorySystem = SystemManager.GetSystem<InventorySystem>();
+
+            // 스탯이 0으로 출력되는 버그를 막기 위해 최초 1회 무조건 계산 실행
+            CaculatedStat();
         }
 
         /// <summary>
@@ -73,23 +121,33 @@ namespace DesktopCompanion.Systems
         {
             Entity_Player entity_Player = EntityManager.Get<Entity_Player>(playerHandle);
 
-            // 1. 초기화: 모든 스탯을 캐릭터 고유의 기본값(BaseData)으로 리셋합니다.
-            // 이렇게 함으로써 이전 장비의 효과가 남지 않도록 보장합니다.
+            // ==========================================
+            // 3. 스탯 초기화 로직 (선언부와 순서 동일)
+            // ==========================================
+            // Battle
             m_baseDamagePerClick = entity_Player.BaseData.BaseDamagePerClick;
             m_baseManualDamagePerHitMultiply = entity_Player.BaseData.BaseManualDamagePerHitMultiply;
             m_baseBattleTimeVariable = entity_Player.BaseData.BaseBattleTimeVariable;
             m_baseCriticalChance = entity_Player.BaseData.BaseCriticalChance;
             m_baseCriticalMultiply = entity_Player.BaseData.BaseCriticalMultiply;
+
+            // Auto Battle
             m_baseAutoBattleCooltime = entity_Player.BaseData.BaseAutoBattleCooltime;
             m_baseAutoSpeedPerTime = entity_Player.BaseData.BaseAutoSpeedPerTime;
             m_baseAutoDamagePerHitMultiply = entity_Player.BaseData.BaseAutoDamagePerHitMultiply;
+
+            // Battle Reward
             m_baseProbabilityAtFishSize = entity_Player.BaseData.BaseProbabilityAtFishSize;
             m_baseProbabilityAtFishRarity = entity_Player.BaseData.BaseProbabilityAtFishRarity;
             m_baseGoldGettingMultiply = entity_Player.BaseData.BaseGoldGettingMultiply;
+
+            // Other
             m_baseMapMovementSpeedPerTime = entity_Player.BaseData.BaseMapMovementSpeedPerTime;
             m_baseInventorySize = entity_Player.BaseData.BaseInventorySize;
 
-            // 2. 장착된 장비들의 스탯 모디파이어를 순회하며 추가 합산합니다.
+            // ==========================================
+            // 4. 장비 모디파이어 합산 (선언부와 순서 동일하게 재배치)
+            // ==========================================
             foreach (EntityHandle equitmentHandle in entity_Player.Equipped.Values)
             {
                 Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(equitmentHandle);
@@ -98,16 +156,13 @@ namespace DesktopCompanion.Systems
                 {
                     switch (stat.Stat)
                     {
-                        // 정수형 스탯은 int로 형변환하여 더함
+                        // [Battle]
                         case PlayerStat.DamagePerClick:
                             m_baseDamagePerClick += (int)stat.Value;
                             break;
-
-                        // 실수형 스탯은 데이터 정밀도 유지를 위해 형변환 없이 더함
                         case PlayerStat.ManualDamagePerHitMultiply:
                             m_baseManualDamagePerHitMultiply += stat.Value;
                             break;
-
                         case PlayerStat.BattleTimeVariable:
                             m_baseBattleTimeVariable += (int)stat.Value;
                             break;
@@ -117,6 +172,8 @@ namespace DesktopCompanion.Systems
                         case PlayerStat.CriticalMultiply:
                             m_baseCriticalMultiply += stat.Value;
                             break;
+
+                        // [Auto Battle]
                         case PlayerStat.AutoBattleCooltime:
                             m_baseAutoBattleCooltime += stat.Value;
                             break;
@@ -126,12 +183,8 @@ namespace DesktopCompanion.Systems
                         case PlayerStat.AutoDamagePerHitMultiply:
                             m_baseAutoDamagePerHitMultiply += stat.Value;
                             break;
-                        case PlayerStat.MapMovementSpeedPerTime:
-                            m_baseMapMovementSpeedPerTime += stat.Value;
-                            break;
-                        case PlayerStat.InventorySize:
-                            m_baseInventorySize += (int)stat.Value;
-                            break;
+
+                        // [Battle Reward]
                         case PlayerStat.ProbabilityAtFishSize:
                             m_baseProbabilityAtFishSize += stat.Value;
                             break;
@@ -141,43 +194,69 @@ namespace DesktopCompanion.Systems
                         case PlayerStat.GoldGettingMultiply:
                             m_baseGoldGettingMultiply += stat.Value;
                             break;
+
+                        // [Other]
+                        case PlayerStat.MapMovementSpeedPerTime:
+                            m_baseMapMovementSpeedPerTime += stat.Value;
+                            break;
+                        case PlayerStat.InventorySize:
+                            m_baseInventorySize += (int)stat.Value;
+                            break;
                     }
                 }
             }
+
+            // 스탯 계산이 끝난 후, 내 핸들(playerHandle)을 함께 넘겨줍니다.
+            OnStatChanged?.Invoke(playerHandle);
+        }
+
+        /// <summary>
+        /// PlayerSystem 내부에 아이템을 찾아 위치를 이동(Remove)시키는 헬퍼 메서드
+        /// </summary>
+        private bool TryFindAndRemoveFromInventory(InventorySystem inventory, EntityHandle handle)
+        {
+            ItemType[] types = { ItemType.Fish, ItemType.Equipment, ItemType.Materials };
+
+            foreach (var type in types)
+            {
+                EntityHandle[] slots = inventory.GetSlots(type);
+                for (int i = 0; i < slots.Length; i++)
+                {
+                    if (slots[i].Equals(handle))
+                    {
+                        return inventory.TryRemoveAt(type, i, false);
+                    }
+                }
+            }
+            return false;
         }
 
         /// <summary>
         /// 특정 부위에 장비를 장착하고 능력치를 재계산합니다.
         /// </summary>
-        /// <param name="area">장착할 슬롯 부위</param>
-        /// <param name="handle">장비의 엔티티 핸들</param>
         public void Equip(EquipmentMountingArea area, EntityHandle afterEquipHandle)
         {
-            // 1. 플레이어 데이터 가져오기
             Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
 
-            // (가정) 인벤토리 시스템에 접근 (실제 환경에 맞게 EntityManager.Get 등으로 수정하세요)
-            // var inventory = EntityManager.Get<Entity_Inventory>(playerHandle); 
-
-            // 2. [교체 로직] 이미 해당 슬롯에 장비가 있는지 확인
+            // 1. 기존 장비 교체 로직 (장착 해제 후 인벤토리로 되돌림)
             if (player.Equipped.TryGetValue(area, out EntityHandle beforeEquipHandle))
             {
-                // A. 기존 장비 해제 (내부 데이터 삭제)
                 player.Unequip(area);
-
-                // B. 기존 장비를 인벤토리에 다시 추가
-                // inventory.AddItem(beforeEquipHandle);
-                Debug.Log($"기존 장비가 인벤토리로 이동되었습니다: {beforeEquipHandle}");
+                m_inventorySystem?.AddItem(beforeEquipHandle);
             }
 
-            // 3. 새로운 장비 처리
-            // A. 새 장비를 인벤토리에서 제거
-            // inventory.RemoveItem(afterEquipHandle);
+            // 2. 인벤토리에서 새 장비 꺼내기
+            if (m_inventorySystem != null)
+            {
+                bool isRemoved = TryFindAndRemoveFromInventory(m_inventorySystem, afterEquipHandle);
+                if (!isRemoved)
+                {
+                    Debug.LogWarning("인벤토리에서 해당 아이템을 찾을 수 없거나 삭제에 실패했습니다.");
+                }
+            }
 
-            // B. 새로운 장비 장착
+            // 3. 새로운 장비 장착 및 스탯 갱신
             player.Equip(area, afterEquipHandle);
-
-            // 4. 장비 장착 완료 후 전체 능력치 다시 계산
             CaculatedStat();
 
             Debug.Log($"{area} 부위에 새로운 장비가 장착되었습니다.");
