@@ -1,33 +1,13 @@
-using System;
-using System.Collections.Generic;
 using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
 using DesktopCompanion.Save;
+using DesktopCompanion.Views;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DesktopCompanion.Systems
 {
-    [Serializable]
-    public class InventorySave
-    {
-        public List<SlotSave> slots = new List<SlotSave>();
-
-        [Serializable]
-        public class SlotSave
-        {
-            public ItemType itemType;
-            public int slotIndex;
-
-            public string handle;
-            public int dataId;
-
-            public float size;
-            public ItemQuality quality;
-            public int upgradeLevel;
-            public int quantity;
-        }
-    }
-
     /// <summary>
     /// 인벤토리 시스템.
     /// - EntityHandle을 슬롯 배열에 보관
