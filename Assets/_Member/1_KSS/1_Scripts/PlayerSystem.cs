@@ -1,4 +1,4 @@
-using System; // [수정됨] Type 에러 해결을 위해 추가
+using System;
 using DesktopCompanion.Core;
 using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
@@ -16,9 +16,14 @@ namespace DesktopCompanion.Systems
         EntityHandle playerHandle;
         private InventorySystem m_inventorySystem;
 
+        // [팀장님 프레임워크 규칙 적용] UI 등 외부에 알릴 때 '누구의' 스탯이 변했는지 핸들을 넘겨줍니다.
+        public event Action<EntityHandle> OnStatChanged;
+
         #region Stats
 
-        // 능력치 분류별 헤더 설정
+        // ==========================================
+        // 1. 능력치 변수 선언부 (기준점)
+        // ==========================================
         [Header("Battle")]
         [SerializeField] private int m_baseDamagePerClick;
         [SerializeField] private float m_baseManualDamagePerHitMultiply;
@@ -42,18 +47,27 @@ namespace DesktopCompanion.Systems
         [SerializeField] private int m_startingLicense;
         [SerializeField] private int m_startingGold;
 
-        // 외부에서 계산된 최종 능력치를 읽기 위한 프로퍼티들
+        // ==========================================
+        // 2. 외부 읽기용 프로퍼티 (선언부와 순서 동일)
+        // ==========================================
+        // Battle
         public int BaseDamagePerClick => m_baseDamagePerClick;
         public float BaseManualDamagePerHitMultiply => m_baseManualDamagePerHitMultiply;
         public int BaseBattleTimeVariable => m_baseBattleTimeVariable;
         public float BaseCriticalChance => m_baseCriticalChance;
         public float BaseCriticalMultiply => m_baseCriticalMultiply;
+
+        // Auto Battle
         public float BaseAutoBattleCooltime => m_baseAutoBattleCooltime;
         public float BaseAutoSpeedPerTime => m_baseAutoSpeedPerTime;
         public float BaseAutoDamagePerHitMultiply => m_baseAutoDamagePerHitMultiply;
+
+        // Battle Reward
         public float BaseProbabilityAtFishSize => m_baseProbabilityAtFishSize;
         public float BaseProbabilityAtFishRarity => m_baseProbabilityAtFishRarity;
         public float BaseGoldGettingMultiply => m_baseGoldGettingMultiply;
+
+        // Other
         public float BaseMapMovementSpeedPerTime => m_baseMapMovementSpeedPerTime;
         public int BaseInventorySize => m_baseInventorySize;
         public int StartingLicense => m_startingLicense;
@@ -61,9 +75,9 @@ namespace DesktopCompanion.Systems
 
         #endregion
 
-        public Action<PlayerStat> OnStatChanged;
-
-        // [ISaveable 인터페이스 구현부]26-07-08 추가
+        // ==========================================
+        // [ISaveable 인터페이스 구현부]
+        // ==========================================
         public string SaveId => "player_system_stats";
         public Type StateType => typeof(string);
 
@@ -75,7 +89,7 @@ namespace DesktopCompanion.Systems
 
         public void RestoreState(object state)
         {
-            // GameManager가 세이브 파일 로드를 끝낸 직후에 자동으로 이 함수를 실행해 줍니다.
+            // GameManager가 세이브 파일 로드를 끝낸 직후에 자동으로 실행
             CaculatedStat();
             Debug.Log("[PlayerSystem] 세이브 로드 완료! 장비 스탯 재계산 완료.");
         }
@@ -86,36 +100,18 @@ namespace DesktopCompanion.Systems
         /// </summary>
         public override void Initialize()
         {
-            // [수정됨] 중복되었던 Initialize 메서드를 하나로 정리했습니다.
             playerHandle = EntityManager.Create<PlayerData>(1);
-            PlayerData player = EntityManager.Get<Entity_Player>(playerHandle).BaseData;
-
-            m_baseDamagePerClick = player.BaseDamagePerClick;
-            m_baseManualDamagePerHitMultiply = player.BaseManualDamagePerHitMultiply;
-            m_baseBattleTimeVariable = player.BaseBattleTimeVariable;
-            m_baseCriticalChance = player.BaseCriticalChance;
-            m_baseCriticalMultiply = player.BaseCriticalMultiply;
-
-            m_baseAutoBattleCooltime = player.BaseAutoBattleCooltime;
-            m_baseAutoSpeedPerTime = player.BaseAutoSpeedPerTime;
-            m_baseAutoDamagePerHitMultiply = player.BaseAutoDamagePerHitMultiply;
-
-            m_baseProbabilityAtFishSize = player.BaseProbabilityAtFishSize;
-            m_baseProbabilityAtFishRarity = player.BaseProbabilityAtFishRarity;
-            m_baseGoldGettingMultiply = player.BaseGoldGettingMultiply;
-
-            m_baseMapMovementSpeedPerTime = player.BaseMapMovementSpeedPerTime;
-            m_baseInventorySize = player.BaseInventorySize;
-            m_startingLicense = player.StartingLicense;
-            m_startingGold = player.StartingGold;
         }
 
         /// <summary>
-        /// Phase 2: 다른 시스템이 모두 준비된 후 인벤토리 시스템을 찾아 캐싱합니다.
+        /// Phase 2: 다른 시스템이 모두 준비된 후 인벤토리 시스템을 찾아 캐싱하고, 기본 스탯을 계산합니다.
         /// </summary>
         public override void PostInitialize()
         {
             m_inventorySystem = SystemManager.GetSystem<InventorySystem>();
+
+            // 스탯이 0으로 출력되는 버그를 막기 위해 최초 1회 무조건 계산 실행
+            CaculatedStat();
         }
 
         /// <summary>
@@ -125,36 +121,33 @@ namespace DesktopCompanion.Systems
         {
             Entity_Player entity_Player = EntityManager.Get<Entity_Player>(playerHandle);
 
-            // 1. 초기화: 모든 스탯을 캐릭터 고유의 기본값(BaseData)으로 리셋합니다.
+            // ==========================================
+            // 3. 스탯 초기화 로직 (선언부와 순서 동일)
+            // ==========================================
+            // Battle
             m_baseDamagePerClick = entity_Player.BaseData.BaseDamagePerClick;
             m_baseManualDamagePerHitMultiply = entity_Player.BaseData.BaseManualDamagePerHitMultiply;
             m_baseBattleTimeVariable = entity_Player.BaseData.BaseBattleTimeVariable;
             m_baseCriticalChance = entity_Player.BaseData.BaseCriticalChance;
             m_baseCriticalMultiply = entity_Player.BaseData.BaseCriticalMultiply;
+
+            // Auto Battle
             m_baseAutoBattleCooltime = entity_Player.BaseData.BaseAutoBattleCooltime;
             m_baseAutoSpeedPerTime = entity_Player.BaseData.BaseAutoSpeedPerTime;
             m_baseAutoDamagePerHitMultiply = entity_Player.BaseData.BaseAutoDamagePerHitMultiply;
+
+            // Battle Reward
             m_baseProbabilityAtFishSize = entity_Player.BaseData.BaseProbabilityAtFishSize;
             m_baseProbabilityAtFishRarity = entity_Player.BaseData.BaseProbabilityAtFishRarity;
             m_baseGoldGettingMultiply = entity_Player.BaseData.BaseGoldGettingMultiply;
+
+            // Other
             m_baseMapMovementSpeedPerTime = entity_Player.BaseData.BaseMapMovementSpeedPerTime;
             m_baseInventorySize = entity_Player.BaseData.BaseInventorySize;
 
-            bool m_baseDamagePerClick_Tri = false;
-            bool m_baseManualDamagePerHitMultiply_Tri = false;
-            bool m_baseBattleTimeVariable_Tri = false;
-            bool m_baseCriticalChance_Tri = false;
-            bool m_baseCriticalMultiply_Tri = false;
-            bool m_baseAutoBattleCooltime_Tri = false;
-            bool m_baseAutoSpeedPerTime_Tri = false;
-            bool m_baseAutoDamagePerHitMultiply_Tri = false;
-            bool m_baseProbabilityAtFishSize_Tri = false;
-            bool m_baseProbabilityAtFishRarity_Tri = false;
-            bool m_baseGoldGettingMultiply_Tri = false;
-            bool m_baseMapMovementSpeedPerTime_Tri = false;
-            bool m_baseInventorySize_Tri = false;
-
-            // 2. 장착된 장비들의 스탯 모디파이어를 순회하며 추가 합산합니다.
+            // ==========================================
+            // 4. 장비 모디파이어 합산 (선언부와 순서 동일하게 재배치)
+            // ==========================================
             foreach (EntityHandle equitmentHandle in entity_Player.Equipped.Values)
             {
                 Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(equitmentHandle);
@@ -163,78 +156,58 @@ namespace DesktopCompanion.Systems
                 {
                     switch (stat.Stat)
                     {
-                        // 정수형 스탯은 int로 형변환하여 더함
+                        // [Battle]
                         case PlayerStat.DamagePerClick:
                             m_baseDamagePerClick += (int)stat.Value;
-                            m_baseDamagePerClick_Tri = true;
+                            break;
+                        case PlayerStat.ManualDamagePerHitMultiply:
+                            m_baseManualDamagePerHitMultiply += stat.Value;
                             break;
                         case PlayerStat.BattleTimeVariable:
                             m_baseBattleTimeVariable += (int)stat.Value;
-                            m_baseBattleTimeVariable_Tri = true;
-                            break;
-                        case PlayerStat.InventorySize:
-                            m_baseInventorySize += (int)stat.Value;
-                            m_baseInventorySize_Tri = true;
-                            break;
-
-                        // 실수형 스탯은 데이터 정밀도 유지를 위해 형변환 없이 더함
-                        case PlayerStat.ManualDamagePerHitMultiply:
-                            m_baseManualDamagePerHitMultiply += stat.Value;
-                            m_baseManualDamagePerHitMultiply_Tri = true;
                             break;
                         case PlayerStat.CriticalChance:
                             m_baseCriticalChance += stat.Value;
-                            m_baseCriticalChance_Tri = true;
                             break;
                         case PlayerStat.CriticalMultiply:
                             m_baseCriticalMultiply += stat.Value;
-                            m_baseCriticalMultiply_Tri = true;
                             break;
+
+                        // [Auto Battle]
                         case PlayerStat.AutoBattleCooltime:
                             m_baseAutoBattleCooltime += stat.Value;
-                            m_baseAutoBattleCooltime_Tri = true;
                             break;
                         case PlayerStat.AutoSpeedPerTime:
                             m_baseAutoSpeedPerTime += stat.Value;
-                            m_baseAutoSpeedPerTime_Tri = true;
                             break;
                         case PlayerStat.AutoDamagePerHitMultiply:
                             m_baseAutoDamagePerHitMultiply += stat.Value;
-                            m_baseAutoDamagePerHitMultiply_Tri = true;
                             break;
-                        case PlayerStat.MapMovementSpeedPerTime:
-                            m_baseMapMovementSpeedPerTime += stat.Value;
-                            m_baseMapMovementSpeedPerTime_Tri = true;
-                            break;
+
+                        // [Battle Reward]
                         case PlayerStat.ProbabilityAtFishSize:
                             m_baseProbabilityAtFishSize += stat.Value;
-                            m_baseProbabilityAtFishSize_Tri = true;
                             break;
                         case PlayerStat.ProbabilityAtFishRarity:
                             m_baseProbabilityAtFishRarity += stat.Value;
-                            m_baseProbabilityAtFishRarity_Tri = true;
                             break;
                         case PlayerStat.GoldGettingMultiply:
                             m_baseGoldGettingMultiply += stat.Value;
-                            m_baseGoldGettingMultiply_Tri = true;
+                            break;
+
+                        // [Other]
+                        case PlayerStat.MapMovementSpeedPerTime:
+                            m_baseMapMovementSpeedPerTime += stat.Value;
+                            break;
+                        case PlayerStat.InventorySize:
+                            m_baseInventorySize += (int)stat.Value;
                             break;
                     }
                 }
             }
 
-            if (m_baseDamagePerClick_Tri) OnStatChanged.Invoke(PlayerStat.DamagePerClick);
-            if (m_baseManualDamagePerHitMultiply_Tri) OnStatChanged.Invoke(PlayerStat.ManualDamagePerHitMultiply);
-            if (m_baseBattleTimeVariable_Tri) OnStatChanged.Invoke(PlayerStat.BattleTimeVariable);
-            if (m_baseCriticalChance_Tri) OnStatChanged.Invoke(PlayerStat.CriticalChance);
-            if (m_baseCriticalMultiply_Tri) OnStatChanged.Invoke(PlayerStat.CriticalMultiply);
-            if (m_baseAutoBattleCooltime_Tri) OnStatChanged.Invoke(PlayerStat.AutoBattleCooltime);
-            if (m_baseAutoSpeedPerTime_Tri) OnStatChanged.Invoke(PlayerStat.AutoSpeedPerTime);
-            if (m_baseAutoDamagePerHitMultiply_Tri) OnStatChanged.Invoke(PlayerStat.AutoDamagePerHitMultiply);
-            if (m_baseProbabilityAtFishSize_Tri) OnStatChanged.Invoke(PlayerStat.ProbabilityAtFishSize);
-            if (m_baseProbabilityAtFishRarity_Tri) OnStatChanged.Invoke(PlayerStat.ProbabilityAtFishRarity);
-            if (m_baseGoldGettingMultiply_Tri) OnStatChanged.Invoke(PlayerStat.GoldGettingMultiply);
-            if (m_baseMapMovementSpeedPerTime_Tri) OnStatChanged.Invoke(PlayerStat.MapMovementSpeedPerTime);
-            if (m_baseInventorySize_Tri) OnStatChanged.Invoke(PlayerStat.InventorySize);
+            // 스탯 계산이 끝난 후, 내 핸들(playerHandle)을 함께 넘겨줍니다.
+            OnStatChanged?.Invoke(playerHandle);
         }
 
         /// <summary>
@@ -265,15 +238,14 @@ namespace DesktopCompanion.Systems
         {
             Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
 
-            // [수정됨] 매번 GetSystem을 부르지 않고 PostInitialize에서 찾아둔 변수(m_inventorySystem)를 사용합니다.
-
-            // 기존 장비 교체 로직
+            // 1. 기존 장비 교체 로직 (장착 해제 후 인벤토리로 되돌림)
             if (player.Equipped.TryGetValue(area, out EntityHandle beforeEquipHandle))
             {
                 player.Unequip(area);
-                m_inventorySystem?.AddItem(beforeEquipHandle); // 인벤토리로 되돌림
+                m_inventorySystem?.AddItem(beforeEquipHandle);
             }
 
+            // 2. 인벤토리에서 새 장비 꺼내기
             if (m_inventorySystem != null)
             {
                 bool isRemoved = TryFindAndRemoveFromInventory(m_inventorySystem, afterEquipHandle);
@@ -283,7 +255,7 @@ namespace DesktopCompanion.Systems
                 }
             }
 
-            // 새로운 장비 장착
+            // 3. 새로운 장비 장착 및 스탯 갱신
             player.Equip(area, afterEquipHandle);
             CaculatedStat();
 
