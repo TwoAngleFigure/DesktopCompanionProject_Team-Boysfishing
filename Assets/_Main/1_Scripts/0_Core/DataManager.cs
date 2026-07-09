@@ -79,8 +79,8 @@ namespace DesktopCompanion.Core
         }
 
         /// <summary>
-        /// JSON/SO 로드 완료 후, 같은 (타입·ID)를 가진 항목을 테스트 SO로 덮어쓴다(수동 Play 검증, D9).
-        /// 교체 전용 — 같은 ID가 없는 테스트 SO는 추가하지 않고 무시한다.
+        /// JSON/SO 로드 완료 후, 테스트 SO를 적용한다(수동 Play 검증, D9).
+        /// 같은 (타입·ID)가 있으면 교체하고, 없으면 신규로 추가한다.
         /// </summary>
         public void OverrideWithTestData(IEnumerable<GameData> testData)
         {
@@ -90,7 +90,7 @@ namespace DesktopCompanion.Core
             }
 
             int overridden = 0;
-            int skipped = 0;
+            int added = 0;
             foreach (var data in testData)
             {
                 if (data == null)
@@ -99,19 +99,25 @@ namespace DesktopCompanion.Core
                 }
 
                 var type = data.GetType();
-                if (m_store.TryGetValue(type, out var table) && table.ContainsKey(data.ID))
+                if (!m_store.TryGetValue(type, out var table))
                 {
-                    table[data.ID] = data;   // 기존 JSON 항목을 테스트 SO로 교체
+                    table = new Dictionary<int, GameData>();
+                    m_store.Add(type, table);
+                }
+
+                if (table.ContainsKey(data.ID))
+                {
+                    table[data.ID] = data;   // 기존 항목을 테스트 SO로 교체
                     overridden++;
                 }
                 else
                 {
-                    Debug.LogWarning($"[DataManager] 테스트 override 대상 없음(교체 전용) {type.Name} ID={data.ID} ({data.name}) — 무시");
-                    skipped++;
+                    table.Add(data.ID, data);   // JSON에 없던 ID는 신규 추가
+                    added++;
                 }
             }
 
-            Debug.Log($"[DataManager] 테스트 override: 교체 {overridden}건, 무시 {skipped}건");
+            Debug.Log($"[DataManager] 테스트 적용: 교체 {overridden}건, 추가 {added}건");
         }
 
         /// <summary>구체 타입 T의 단건을 ID로 조회한다(예: GetData&lt;ItemData_Fish&gt;(1)).</summary>
