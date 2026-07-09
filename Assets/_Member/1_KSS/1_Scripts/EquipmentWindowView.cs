@@ -1,41 +1,51 @@
-using DesktopCompanion.Views; // 팀장님 프레임워크 네임스페이스
+using DesktopCompanion.Entities;
+using DesktopCompanion.Views;
 using UnityEngine;
-using UnityEngine.UI;
-using TMPro; // 텍스트를 위한 네임스페이스
+using TMPro;
 
-public class EquipmentWindowView : UIWindowBase
+namespace DesktopCompanion.Views
 {
-    // 뷰모델 생성
-    private readonly EquipmentViewModel m_vm = new();
-
-    [Header("UI 연결")]
-    [SerializeField] private TextMeshProUGUI m_damageText; // 공격력 텍스트
-    [SerializeField] private Button m_equipTestButton; // 임시 장착 테스트 버튼
-
-    public override void Bind()
+    public class EquipmentWindowView : UIWindowBase
     {
-        // 1. 뷰모델에 매니저 주입 및 바인딩 시작
-        m_vm.Inject(SystemManager);
-        m_vm.Bind();
+        private readonly EquipmentViewModel m_vm = new();
 
-        // 2. 뷰모델의 데이터(Damage)가 변할 때마다 텍스트를 바꾸도록 연결(Bind)
-        m_vm.Damage.Bind(damageValue => m_damageText.text = $"공격력: {damageValue}");
+        [Header("UI 연결")]
+        [SerializeField] private TextMeshProUGUI m_damageText;
 
-        // 3. 버튼을 누르면 뷰모델의 EquipCommand를 실행하도록 연결
-        // (실제 게임에서는 인벤토리의 특정 아이템 핸들을 가져와서 넘겨야 합니다)
-        m_equipTestButton.onClick.AddListener(() =>
+        // [핵심 변경점] 버튼 수십 개 대신, 위에서 만든 슬롯 위젯을 '배열'로 한 번에 관리합니다!
+        [SerializeField] private EquipmentSlotWidget[] m_slots;
+
+        public override void Bind()
         {
-            // 임시 테스트용 데이터 (실제로는 선택된 아이템의 데이터를 넣어야 함)
-            // m_vm.EquipCommand.Execute((EquipmentMountingArea.Weapon, 특정아이템핸들));
-        });
-    }
+            m_vm.Inject(SystemManager);
+            m_vm.Bind();
 
-    public override void Unbind()
-    {
-        // 연결했던 것들을 모두 해제
-        m_equipTestButton.onClick.RemoveAllListeners();
+            // 1. 공격력 텍스트 바인딩
+            m_vm.Damage.Bind(damageValue => m_damageText.text = $"공격력: {damageValue}");
 
-        m_vm.Damage.Unbind(damageValue => m_damageText.text = $"공격력: {damageValue}");
-        m_vm.Unbind();
+            // 2. [핵심] 배열에 있는 모든 슬롯을 한 바퀴 돌면서 클릭 이벤트를 연결해줍니다. (for문 활용)
+            foreach (var slot in m_slots)
+            {
+                // 슬롯이 클릭되면 -> 뷰모델의 장착/해제 명령(Command)을 실행해라!
+                slot.Bind(clickedArea =>
+                {
+                    // ※ 실제로는 클릭했을 때 인벤토리에 띄워둔 선택된 아이템 핸들을 가져와서 넘겨야 합니다.
+                    // 지금은 UI 작동 테스트를 위해 빈 핸들(default)을 넘기도록 세팅했습니다.
+                    m_vm.EquipCommand.Execute((clickedArea, default(EntityHandle)));
+                });
+            }
+        }
+
+        public override void Unbind()
+        {
+            m_vm.Damage.Unbind(damageValue => m_damageText.text = $"공격력: {damageValue}");
+            m_vm.Unbind();
+
+            // 모든 슬롯의 연결도 깔끔하게 해제
+            foreach (var slot in m_slots)
+            {
+                slot.Unbind();
+            }
+        }
     }
 }
