@@ -7,6 +7,8 @@ using UnityEngine;
 
 namespace DesktopCompanion.Systems
 {
+    #region Types
+
     public enum FishingState
     {
         Stopped,
@@ -14,14 +16,26 @@ namespace DesktopCompanion.Systems
         Battling
     }
 
+    #endregion
+
     public class FishingSystem : SystemBase, ITickable
     {
+        #region Dependencies
+
         private StageSystem m_stageSystem;
         private PlayerSystem m_playerSystem;
         private InventorySystem m_inventorySystem;
 
+        #endregion
+
+        #region Settings
+
         private float baseBattleDuration = 10f;
         private float minBattleDuration = 0.5f;
+
+        #endregion
+
+        #region State
 
         private FishingState m_state;
         private EntityHandle m_currentBattleFish;
@@ -29,11 +43,28 @@ namespace DesktopCompanion.Systems
         private float m_battleTimer;
         private float m_autoAttackTimer;
 
-        // public event Action<FishingState> OnStateChanged;
-        // public event Action<EntityHandle> OnBattleStarted;
-        // public event Action<EntityHandle, int, int> OnBattleHpChanged;
-        // public event Action<EntityHandle> OnFishCaught;
-        // public event Action<EntityHandle> OnBattleFailed;
+        #endregion
+
+        #region Events
+
+        public event Action<FishingState> OnStateChanged;
+        public event Action<EntityHandle> OnBattleStarted;
+        public event Action<EntityHandle, int, int> OnBattleHpChanged;
+        public event Action<EntityHandle> OnFishCaught;
+        public event Action<EntityHandle> OnBattleFailed;
+
+        #endregion
+
+        #region Properties
+
+        public FishingState State => m_state;
+        public float WaitTimeRemaining => m_waitTimer;
+        public float BattleTimeRemaining => m_battleTimer;
+        public EntityHandle CurrentBattleFish => m_currentBattleFish;
+
+        #endregion
+
+        #region Lifecycle
 
         public override void Initialize()
         {
@@ -56,6 +87,10 @@ namespace DesktopCompanion.Systems
         {
             StartFishing();
         }
+
+        #endregion
+
+        #region Tick
 
         public void Tick(float deltaTime)
         {
@@ -115,6 +150,11 @@ namespace DesktopCompanion.Systems
                 m_autoAttackTimer = attackInterval;
             }
         }
+
+        #endregion
+
+        #region Public Controls
+
         public void StartFishing()
         {
             if (m_state != FishingState.Stopped)
@@ -141,6 +181,10 @@ namespace DesktopCompanion.Systems
 
             ChangeState(FishingState.Stopped);
         }
+
+        #endregion
+
+        #region Battle Flow
 
         private void StartBattle()
         {
@@ -173,6 +217,8 @@ namespace DesktopCompanion.Systems
 
             ChangeState(FishingState.Battling);
 
+            OnBattleStarted?.Invoke(m_currentBattleFish);
+            OnBattleHpChanged?.Invoke(m_currentBattleFish, battleFish.CurrentHp, fishData.MaxHp);
             Debug.Log($"[FishingSystem] 전투 시작: {fishData.Name}, HP={battleFish.CurrentHp}/{fishData.MaxHp}, Size={size:0.00}, Quality={quality}, 제한시간={m_battleTimer:0.00}초");
         }
 
@@ -190,6 +236,8 @@ namespace DesktopCompanion.Systems
             }
 
             battleFish.ApplyDamage(damage);
+
+            OnBattleHpChanged?.Invoke(m_currentBattleFish, battleFish.CurrentHp, battleFish.BattleData.MaxHp);
 
             Debug.Log($"[FishingSystem] 물고기 HP : {battleFish.Name} HP={battleFish.CurrentHp}/{battleFish.BattleData.MaxHp}");
 
@@ -240,6 +288,8 @@ namespace DesktopCompanion.Systems
                 return;
             }
 
+            OnFishCaught?.Invoke(caughtHandle);
+
             Debug.Log($"[FishingSystem] 낚시 성공 및 인벤토리 지급: {battleFish.BattleData.ItemFish.Name}, " +
                 $"Size={battleFish.Size:0.00}, " +
                 $"Quality={battleFish.Quality}, ");
@@ -252,6 +302,8 @@ namespace DesktopCompanion.Systems
         {
             Entity_BattleFish battleFish = EntityManager.Get<Entity_BattleFish>(m_currentBattleFish);
             string fishName = battleFish != null ? battleFish.Name : "Unknown";
+
+            OnBattleFailed?.Invoke(m_currentBattleFish);
 
             Debug.Log($"[FishingSystem] 포획 실패: {fishName}, reason={reason}");
 
@@ -291,6 +343,9 @@ namespace DesktopCompanion.Systems
             Debug.Log($"[FishingSystem] 다음 입질 대기: {m_waitTimer:0.00}초");
         }
 
+        #endregion
+
+        #region Fish Selection
 
         private BattleFishData SelectBattleFish()
         {
@@ -385,6 +440,10 @@ namespace DesktopCompanion.Systems
             return null;
         }
 
+        #endregion
+
+        #region Calculations
+
         private int GetPlayerLicense()
         {
             if (m_playerSystem == null)
@@ -434,6 +493,10 @@ namespace DesktopCompanion.Systems
             return UnityEngine.Random.Range(minDelay, maxDelay);
         }
 
+        #endregion
+
+        #region State Helpers
+
         private void ChangeState(FishingState nextState)
         {
             if (m_state == nextState)
@@ -443,6 +506,8 @@ namespace DesktopCompanion.Systems
 
             m_state = nextState;
 
+            OnStateChanged?.Invoke(nextState);
+
             Debug.Log($"[FishingSystem] 상태 변경: {nextState}");
         }
 
@@ -451,6 +516,10 @@ namespace DesktopCompanion.Systems
             EntityManager.Destroy(m_currentBattleFish);
             m_currentBattleFish = default;
         }
+
+        #endregion
+
+        #region Event Handlers
 
         private void HandleStageChanged(int stageDataId)
         {
@@ -468,5 +537,7 @@ namespace DesktopCompanion.Systems
 
             Debug.Log($"[FishingSystem] 스테이지 변경 감지: stageId={stageDataId}, 낚시 풀 갱신");
         }
+
+        #endregion
     }
 }

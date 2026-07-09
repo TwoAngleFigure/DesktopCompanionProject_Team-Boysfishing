@@ -10,23 +10,23 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 88dcb4d74a32c694caf43c4a2064cd69, type: 3}
-  m_Name: New Player Data
+  m_Name: TestPlayerData
   m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Data.PlayerData
-  m_id: 0
+  m_id: 1
   m_name: 
   m_assetKey: 
-  m_baseDamagePerClick: 0
-  m_baseManualDamagePerHitMultiply: 0
-  m_baseBattleTimeVariable: 0
-  m_baseCriticalChance: 0
-  m_baseCriticalMultiply: 0
-  m_baseAutoBattleCooltime: 0
-  m_baseAutoSpeedPerTime: 0
-  m_baseAutoDamagePerHitMultiply: 0
+  m_baseDamagePerClick: 10
+  m_baseManualDamagePerHitMultiply: 1
+  m_baseBattleTimeVariable: 10
+  m_baseCriticalChance: 0.05
+  m_baseCriticalMultiply: 1.5
+  m_baseAutoBattleCooltime: 5
+  m_baseAutoSpeedPerTime: 1
+  m_baseAutoDamagePerHitMultiply: 2
   m_baseProbabilityAtFishSize: 0
   m_baseProbabilityAtFishRarity: 0
   m_baseGoldGettingMultiply: 0
   m_baseMapMovementSpeedPerTime: 0
   m_baseInventorySize: 0
-  m_startingLicense: 0
+  m_startingLicense: 1
   m_startingGold: 0
