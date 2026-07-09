@@ -3,6 +3,7 @@ using DesktopCompanion.Data;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 namespace DesktopCompanion.Views
 {
@@ -109,7 +110,10 @@ namespace DesktopCompanion.Views
                 return;
             }
 
-            EnsureSlotViews(slots.Count);
+            if (!EnsureSlotViews(slots.Count))
+            {
+                return;
+            }
 
             for (int i = 0; i < slots.Count; i++)
             {
@@ -125,11 +129,18 @@ namespace DesktopCompanion.Views
             }
         }
 
-        private void EnsureSlotViews(int requiredCount)
+        private bool EnsureSlotViews(int requiredCount)
         {
-            if (m_slotPrefab == null || m_slotRoot == null)
+            if (m_slotPrefab == null)
             {
-                return;
+                Debug.LogError("[InventoryWindowView] Slot prefab is not assigned.");
+                return false;
+            }
+
+            if (m_slotRoot == null)
+            {
+                Debug.LogError("[InventoryWindowView] Slot root is not assigned.");
+                return false;
             }
 
             while (m_slotViews.Count < requiredCount)
@@ -145,6 +156,8 @@ namespace DesktopCompanion.Views
             {
                 m_slotViews[i].gameObject.SetActive(true);
             }
+
+            return true;
         }
 
         private void OnSlotClicked(int slotIndex)
@@ -242,7 +255,26 @@ namespace DesktopCompanion.Views
                     moveButtonText.text = isMoveMode ? "취소" : "이동";
                 }
             }
+
+            if (!isMoveMode)
+            {
+                ClearMoveButtonSelection();
+            }
         }
+
+        private void ClearMoveButtonSelection()
+        {
+            if (m_moveButton == null || EventSystem.current == null)
+            {
+                return;
+            }
+
+            if (EventSystem.current.currentSelectedGameObject == m_moveButton.gameObject)
+            {
+                EventSystem.current.SetSelectedGameObject(null);
+            }
+        }
+
         private string BuildDetailText(InventorySlotViewData selected)
         {
             switch (selected.ItemType)
