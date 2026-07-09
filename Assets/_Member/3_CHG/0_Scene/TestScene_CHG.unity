@@ -288,6 +288,7 @@ GameObject:
   m_Component:
   - component: {fileID: 335049275}
   - component: {fileID: 335049276}
+  - component: {fileID: 335049277}
   m_Layer: 0
   m_Name: Debugger
   m_TagString: Untagged
@@ -317,7 +318,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 335049274}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 573d88f714240b446abcad8ce90e0cc7, type: 3}
   m_Name: 
@@ -341,6 +342,30 @@ MonoBehaviour:
   swapItemType: 1
   swapFromIndex: 0
   swapToIndex: 1
+--- !u!114 &335049277
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 335049274}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 58af919ebbaaaa840a884ec92054230d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Views.InventoryWindowView
+  m_fishTabButton: {fileID: 0}
+  m_equipmentTabButton: {fileID: 0}
+  m_materialTabButton: {fileID: 0}
+  m_closeButton: {fileID: 0}
+  m_moveButton: {fileID: 0}
+  m_moveGuideText: {fileID: 0}
+  m_slotRoot: {fileID: 0}
+  m_slotPrefab: {fileID: 0}
+  m_detailPanel: {fileID: 0}
+  m_detailIconImage: {fileID: 0}
+  m_detailNameText: {fileID: 0}
+  m_detailInfoText: {fileID: 0}
 --- !u!1 &352614016
 GameObject:
   m_ObjectHideFlags: 0
