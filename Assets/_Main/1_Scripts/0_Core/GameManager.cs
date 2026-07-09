@@ -88,7 +88,7 @@ namespace DesktopCompanion.Core
             // WorldManager가 등록된 WorldViewBase 유닛들에 의존성을 내려주고 Bind()를 호출한다.
             if (m_worldManager != null)
             {
-                m_worldManager.Initialize(m_systemManager, m_assetProvider);
+                m_worldManager.Initialize(m_systemManager, m_entityManager, m_assetProvider);
             }
             else
             {
@@ -97,7 +97,7 @@ namespace DesktopCompanion.Core
 
             if (m_uiManager != null)
             {
-                m_uiManager.Initialize(m_systemManager, m_assetProvider);
+                m_uiManager.Initialize(m_systemManager, m_entityManager, m_assetProvider);
             }
             else
             {
