@@ -15,14 +15,14 @@ MonoBehaviour:
   m_id: 1
   m_name: PP
   m_assetKey: 
-  m_baseDamagePerClick: 0
-  m_baseManualDamagePerHitMultiply: 0
-  m_baseBattleTimeVariable: 0
+  m_baseDamagePerClick: 2
+  m_baseManualDamagePerHitMultiply: 2
+  m_baseBattleTimeVariable: 5000
   m_baseCriticalChance: 0
   m_baseCriticalMultiply: 0
-  m_baseAutoBattleCooltime: 0
-  m_baseAutoSpeedPerTime: 0
-  m_baseAutoDamagePerHitMultiply: 0
+  m_baseAutoBattleCooltime: 1
+  m_baseAutoSpeedPerTime: 1
+  m_baseAutoDamagePerHitMultiply: 5
   m_baseProbabilityAtFishSize: 0
   m_baseProbabilityAtFishRarity: 0
   m_baseGoldGettingMultiply: 0

@@ -351,6 +351,7 @@ GameObject:
   m_Component:
   - component: {fileID: 352614017}
   - component: {fileID: 352614018}
+  - component: {fileID: 352614019}
   m_Layer: 0
   m_Name: GM
   m_TagString: Untagged
@@ -393,7 +394,19 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 53f9e37032ca6bd42a3198d219e2328b, type: 2}
   - {fileID: 11400000, guid: d3bf65fa642e3f44caf3d3f39f200887, type: 2}
   m_worldManager: {fileID: 0}
-  m_uiManager: {fileID: 0}
+  m_uiManager: {fileID: 352614019}
+--- !u!114 &352614019
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 352614016}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb5f4b2fc088c894dacc3516402ccf3b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Views.UIManager
 --- !u!1 &1061985083
 GameObject:
   m_ObjectHideFlags: 0

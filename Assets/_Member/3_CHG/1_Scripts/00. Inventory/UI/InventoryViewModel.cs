@@ -1,17 +1,15 @@
+using System.Collections.Generic;
 using DesktopCompanion.Core;
 using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
 using DesktopCompanion.Systems;
-using System.Collections.Generic;
 
 namespace DesktopCompanion.Views
 {
     public class InventoryViewModel : UIViewModelBase
     {
         private InventorySystem m_inventorySystem;
-
         private EntityManager m_entityManager;
-        private DataManager m_dataManager;
 
         private ItemType m_currentTab = ItemType.Fish;
 
@@ -32,15 +30,19 @@ namespace DesktopCompanion.Views
 
         // TEMP: Drag-Drop 도입 시 수정
         public RelayCommand MoveButtonCommand { get; private set; }
-
-        public void InjectManagers(EntityManager entityManager, DataManager dataManager)
+        public void InjectEntityManager(EntityManager entityManager)
         {
             m_entityManager = entityManager;
-            m_dataManager = dataManager;
         }
 
         public override void Bind()
         {
+            if (SystemManager == null)
+            {
+                UnityEngine.Debug.LogError("[InventoryViewModel] SystemManager is null. ViewModel Inject is missing.");
+                return;
+            }
+
             m_inventorySystem = SystemManager.GetSystem<InventorySystem>();
 
             SelectTabCommand = new RelayCommand<ItemType>(SelectTab);
@@ -67,7 +69,6 @@ namespace DesktopCompanion.Views
 
             m_inventorySystem = null;
             m_entityManager = null;
-            m_dataManager = null;
         }
 
         private void HandleInventoryChanged()
@@ -214,97 +215,136 @@ namespace DesktopCompanion.Views
                 return InventorySlotViewData.Empty(slotIndex, m_currentTab, isSelected, m_isMoveMode);
             }
 
-            bool success = BuildSlotViewData( slotIndex, handle, entity, isSelected, out InventorySlotViewData viewData);
-
-            if (!success)
-            {
-                return InventorySlotViewData.Empty(slotIndex, m_currentTab, isSelected, m_isMoveMode);
-            }
-
-            return viewData;
+            return CreateSlotViewData(slotIndex, handle, entity, isSelected);
         }
 
-        private bool BuildSlotViewData(int slotIndex, EntityHandle handle, Entity entity, bool isSelected, out InventorySlotViewData viewData)
+        private InventorySlotViewData CreateSlotViewData(int slotIndex, EntityHandle handle, Entity entity, bool isSelected)
         {
-            viewData = null;
+            ItemType actualItemType = GetItemType(entity);
+            string iconKey = BuildIconKey(entity, actualItemType);
 
-            if (entity is Entity_Fish fish)
-            {
-                ItemData_Fish itemData = m_dataManager != null ? m_dataManager.GetData<ItemData_Fish>(entity.DataId) : null;
-
-                viewData = CreateBaseSlotData(slotIndex, handle, ItemType.Fish, itemData, entity, isSelected);
-
-                viewData.Size = fish.Size;
-                viewData.Quality = fish.Quality;
-                return true;
-            }
-
-            if (entity is Entity_Equipment equipment)
-            {
-                ItemData_Equipment itemData = m_dataManager != null ? m_dataManager.GetData<ItemData_Equipment>(entity.DataId) : null;
-
-                viewData = CreateBaseSlotData(slotIndex, handle, ItemType.Equipment, itemData, entity, isSelected);
-
-                viewData.UpgradeLevel = equipment.UpgradeLevel;
-                return true;
-            }
-
-            if (entity is Entity_Materials materials)
-            {
-                ItemData_Materials itemData = m_dataManager != null ? m_dataManager.GetData<ItemData_Materials>(entity.DataId) : null;
-
-                viewData = CreateBaseSlotData(slotIndex, handle, ItemType.Materials, itemData, entity, isSelected);
-
-                viewData.Quantity = materials.Quantity;
-                return true;
-            }
-
-            if (entity is Entity_Consumables consumables)
-            {
-                ItemData_Consumables itemData = m_dataManager != null ? m_dataManager.GetData<ItemData_Consumables>(entity.DataId) : null;
-
-                viewData = CreateBaseSlotData(slotIndex, handle, ItemType.Consumables, itemData, entity, isSelected);
-
-                viewData.Quantity = consumables.Quantity;
-                return true;
-            }
-
-            return false;
-        }
-
-        private InventorySlotViewData CreateBaseSlotData(int slotIndex, EntityHandle handle, 
-            ItemType actualItemType, ItemData itemData, Entity entity, bool isSelected)
-        {
-            string itemName = string.Empty;
-
-            if (itemData != null)
-            {
-                itemName = itemData.Name;
-            }
-            else if (entity != null)
-            {
-                itemName = entity.Name;
-            }
-
-            return new InventorySlotViewData
+            InventorySlotViewData viewData = new InventorySlotViewData
             {
                 SlotIndex = slotIndex,
                 IsEmpty = false,
+
                 SlotType = m_currentTab,
+
                 ItemType = actualItemType,
+
                 Handle = handle,
-                ItemData = itemData,
-                ItemName = itemName,
-                DataId = entity != null ? entity.DataId : 0,
+
+                ItemName = entity.Name,
+                IconKey = iconKey,
+                DataId = entity.DataId,
+
                 Size = 0f,
                 Quality = ItemQuality.OneStar,
                 UpgradeLevel = 0,
                 Quantity = 0,
+
                 IsSelected = isSelected,
-                // TEMP: Drag - Drop 도입 시 수정
+
+                // TEMP: Drag-Drop 도입 시 수정
                 IsMoveSource = m_isMoveMode && isSelected,
                 IsMoveMode = m_isMoveMode
             };
+
+            ApplyRuntimeValues(viewData, entity);
+
+            return viewData;
+        }
+
+        private void ApplyRuntimeValues(InventorySlotViewData viewData, Entity entity)
+        {
+            if (entity is Entity_Fish fish)
+            {
+                viewData.Size = fish.Size;
+                viewData.Quality = fish.Quality;
+                return;
+            }
+
+            if (entity is Entity_Equipment equipment)
+            {
+                viewData.UpgradeLevel = equipment.UpgradeLevel;
+                return;
+            }
+
+            if (entity is Entity_Materials materials)
+            {
+                viewData.Quantity = materials.Quantity;
+                return;
+            }
+
+            if (entity is Entity_Consumables consumables)
+            {
+                viewData.Quantity = consumables.Quantity;
+            }
+        }
+
+        private ItemType GetItemType(Entity entity)
+        {
+            if (entity is Entity_Fish)
+            {
+                return ItemType.Fish;
+            }
+
+            if (entity is Entity_Equipment)
+            {
+                return ItemType.Equipment;
+            }
+
+            if (entity is Entity_Materials)
+            {
+                return ItemType.Materials;
+            }
+
+            if (entity is Entity_Consumables)
+            {
+                return ItemType.Consumables;
+            }
+
+            return m_currentTab;
+        }
+
+        private string BuildIconKey(Entity entity, ItemType itemType)
+        {
+            if (entity == null)
+            {
+                return string.Empty;
+            }
+
+            string dataClassName = GetDataClassName(itemType);
+
+            if (string.IsNullOrEmpty(dataClassName))
+            {
+                return string.Empty;
+            }
+
+            // 현재 프로젝트의 AssetKey 규칙:
+            // {데이터클래스명}_{DataId}_{용도}
+            return $"{dataClassName}_{entity.DataId}_Icon";
+        }
+
+        private string GetDataClassName(ItemType itemType)
+        {
+            switch (itemType)
+            {
+                case ItemType.Fish:
+                    return nameof(ItemData_Fish);
+
+                case ItemType.Equipment:
+                    return nameof(ItemData_Equipment);
+
+                case ItemType.Materials:
+                    return nameof(ItemData_Materials);
+
+                case ItemType.Consumables:
+                    return nameof(ItemData_Consumables);
+
+                default:
+                    return string.Empty;
+            }
         }
 
         private ItemType NormalizeTab(ItemType tab)
