@@ -30,7 +30,7 @@ namespace DesktopCompanion.Core
         private void Awake()
         {
             // 1) Data — StreamingAssets JSON → Resources SO 로드(D14).
-            //    로드 완료 후, 테스트 모드면 같은 (타입·ID)의 테스트 SO로 해당 항목만 덮어쓴다(교체 전용, D9).
+            //    로드 완료 후, 테스트 모드면 테스트 SO를 적용한다: 같은 (타입·ID)는 교체, 없는 ID는 추가(D9).
             m_dataManager = new DataManager();
             m_dataManager.Load();
             if (m_useTestData)
