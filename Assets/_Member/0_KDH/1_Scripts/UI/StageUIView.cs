@@ -26,7 +26,7 @@ namespace DesktopCompanion.Views
 
         public override void Bind()
         {
-            m_vm.Inject(SystemManager);
+            m_vm.Inject(SystemManager, EntityManager);
             m_vm.Bind();
 
             m_vm.CurrentStageName.Bind(OnCurrentStageNameChanged);
