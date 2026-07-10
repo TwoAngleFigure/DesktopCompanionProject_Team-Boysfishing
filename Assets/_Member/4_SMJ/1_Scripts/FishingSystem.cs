@@ -15,7 +15,6 @@ namespace DesktopCompanion.Systems
 
     public class FishingSystem : SystemBase, ITickable
     {
-
         private StageSystem m_stageSystem;
         private PlayerSystem m_playerSystem;
         private InventorySystem m_inventorySystem;

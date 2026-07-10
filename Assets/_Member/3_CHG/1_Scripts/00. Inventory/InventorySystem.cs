@@ -42,6 +42,7 @@ namespace DesktopCompanion.Systems
             m_materialSlots = CreateSlots(FallbackInventorySize);
 
             LogDebug($"Initialize complete. temporary slotSize: {FallbackInventorySize}");
+
         }
 
         public override void PostInitialize()
@@ -1016,13 +1017,8 @@ namespace DesktopCompanion.Systems
             return true;
         }
 
-        private void HandlePlayerStatChanged(PlayerStat changedStat)
+        private void HandlePlayerStatChanged(EntityHandle playerHandle)
         {
-            if (changedStat != PlayerStat.InventorySize)
-            {
-                return;
-            }
-
             int nextInventorySize = GetCurrentInventorySize();
 
             bool result = ResizeSlots(nextInventorySize);

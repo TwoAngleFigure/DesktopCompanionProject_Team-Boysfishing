@@ -108,3 +108,6 @@ InitTestScene*.unity*
 
 # Personal docs (plans, notes) — not shared
 /Docs/
+
+# Embedded package excluded from Git (not shared)
+/Packages/com.twoanglefigure.fishingresource/

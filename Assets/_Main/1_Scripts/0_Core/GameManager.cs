@@ -42,16 +42,17 @@ namespace DesktopCompanion.Core
             m_entityManager = new EntityManager(m_dataManager);
             RegisterEntityFactories();
 
-            // 3) System — 의존성 주입, System 등록 후 일괄 초기화(기본 상태 구성)
+            // 3) System — 등록 후 Phase 1(Initialize): 각 System의 원시 상태 기본값만 구성
             m_systemManager = new SystemManager(m_entityManager, m_dataManager);
             RegisterSystems();
-            m_systemManager.InitializeAll();
+            m_systemManager.InitializePhase1();
 
             // 4) World/UI Manager 탐색 및 할당
             m_worldManager = FindAnyObjectByType<WorldManager>();
             m_uiManager = FindAnyObjectByType<UIManager>();
 
-            // 5) Save — ISaveable 자동 등록 후 로드(저장된 가변 상태 덮어쓰기, §15.3)
+            // 5) Save — ISaveable 자동 등록 후 로드(원시 상태를 저장값으로 덮어쓰기, §15.3).
+            //    반드시 Phase 2 이전에 복원해야 파생·교차 계산이 저장값을 반영한다(R1).
             m_saveManager = new SaveManager();
             foreach (var system in m_systemManager.AllSystems)
             {
@@ -62,7 +63,8 @@ namespace DesktopCompanion.Core
             }
             m_saveManager.TryLoad();
 
-            // 5) (후속) UI / World — SystemManager 주입
+            // 6) System — Phase 2(PostInitialize): 타 System 조회·구독·파생 계산(복원값 반영)
+            m_systemManager.InitializePhase2();
         }
 
         // 부팅 2부(비동기, D18): 에셋 프리로드 → 뷰 초기화. Awake(동기 조립)와 분리.

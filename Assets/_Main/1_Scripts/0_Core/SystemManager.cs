@@ -51,19 +51,27 @@ namespace DesktopCompanion.Core
             => m_systems.TryGetValue(typeof(T), out var system) ? (T)system : null;
 
         /// <summary>
-        /// 모든 System 등록 후 2단계로 일괄 초기화한다(등록 순서대로).
-        /// Phase 1(Initialize): 각자 자기 상태만 구성. Phase 2(PostInitialize): 타 System 조회·구독.
-        /// 전원이 Phase 1을 마친 뒤 Phase 2에 들어가므로, 크로스 System 의존이 순서와 무관하게 안전하다.
+        /// Phase 1(생산): 각 System이 자기 원시 상태만 구성한다(등록 순서대로).
+        /// 이 단계 뒤에 SaveData 복원(RestoreState)이 원시 상태를 덮어쓰고, 그다음 Phase 2가 실행된다.
         /// </summary>
-        public void InitializeAll()
+        public void InitializePhase1()
         {
             foreach (var system in m_ordered)
             {
-                system.Initialize();      // Phase 1: 생산
+                system.Initialize();
             }
+        }
+
+        /// <summary>
+        /// Phase 2(소비·배선·파생): 타 System 조회·구독·파생 계산.
+        /// SaveData 복원 이후에 호출되므로 파생 계산이 복원된 값을 반영한다.
+        /// 전원이 Phase 1을 마친 뒤 실행되므로 크로스 System 의존이 순서와 무관하게 안전하다.
+        /// </summary>
+        public void InitializePhase2()
+        {
             foreach (var system in m_ordered)
             {
-                system.PostInitialize();  // Phase 2: 소비·배선
+                system.PostInitialize();
             }
         }
 
