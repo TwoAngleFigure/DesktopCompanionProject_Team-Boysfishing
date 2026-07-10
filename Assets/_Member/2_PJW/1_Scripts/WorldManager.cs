@@ -102,8 +102,16 @@ namespace DesktopCompanion.Views
 
         private void BindView(WorldViewBase view)
         {
-            view.Inject(m_systemManager, m_entityManager, m_assetProvider);
-            view.Bind();   // 유닛이 자기 System Action을 구독하는 지점
+            // 유닛 하나의 주입/Bind 실패가 다른 유닛·부팅 완료를 막지 않도록 격리한다.
+            try
+            {
+                view.Inject(m_systemManager, m_entityManager, m_assetProvider);
+                view.Bind();   // 유닛이 자기 System Action을 구독하는 지점
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[WorldManager] View Bind 실패: {view.GetType().Name} — {e}", view);
+            }
         }
     }
 }

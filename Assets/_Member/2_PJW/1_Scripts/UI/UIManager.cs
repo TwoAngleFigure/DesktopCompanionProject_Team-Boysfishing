@@ -110,8 +110,16 @@ namespace DesktopCompanion.Views
 
         private void BindView(UIViewBase view)
         {
-            view.Inject(m_systemManager, m_entityManager, m_assetProvider);
-            view.Bind();
+            // 뷰 하나의 주입/Bind 실패가 다른 뷰·부팅 완료를 막지 않도록 격리한다.
+            try
+            {
+                view.Inject(m_systemManager, m_entityManager, m_assetProvider);
+                view.Bind();
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[UIManager] View Bind 실패: {view.GetType().Name} — {e}", view);
+            }
         }
 
         // ── 활성 윈도우 관리 (윈도우형 전용) ──
