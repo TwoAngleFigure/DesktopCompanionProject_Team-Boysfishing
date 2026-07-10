@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: cf68eb48df7045e6ab979eeb7dd25215
+timeCreated: 1718782193
+AssetOrigin:
+  serializedVersion: 1
+  productId: 287769
+  packageName: Stylized Water 3
+  packageVersion: 3.2.8
+  assetPath: Assets/Stylized Water 3/Editor/PropertyDrawers/MinMaxSlider.cs
+  uploadId: 938902
