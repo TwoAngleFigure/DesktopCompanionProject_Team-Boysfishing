@@ -8,7 +8,7 @@ namespace DesktopCompanion.Views
     {
         private StageSystem m_stageSystem;
 
-        public readonly BindableProperty<string> CurrentStageName = new("Loading Location...");
+        public readonly BindableProperty<string> CurrentStageName = new("위치 로드 중...");
         public readonly BindableProperty<bool> IsCancelButtonInteractable = new(false);
 
         public RelayCommand<int> MoveCommand { get; private set; }
@@ -55,7 +55,7 @@ namespace DesktopCompanion.Views
 
         private void HandleTravelCanceled()
         {
-            CurrentStageName.Value = "Stop voyage (above the sea)";
+            CurrentStageName.Value = "항해 중지 (바다 위)";
             IsCancelButtonInteractable.Value = false;
         }
 
@@ -63,7 +63,7 @@ namespace DesktopCompanion.Views
         {
             if (m_stageSystem != null && m_stageSystem.CurrentStageData != null)
             {
-                CurrentStageName.Value = $"Current Stage: {m_stageSystem.CurrentStageData.Name}";
+                CurrentStageName.Value = $"현재 지역: {m_stageSystem.CurrentStageData.Name}";
             }
         }
 
