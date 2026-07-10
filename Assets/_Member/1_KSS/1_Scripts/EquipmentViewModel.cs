@@ -2,6 +2,7 @@ using DesktopCompanion.Systems;
 using DesktopCompanion.Entities;
 using DesktopCompanion.Data;
 using DesktopCompanion.Views;
+using System; // Action을 사용하기 위해 추가
 
 public class EquipmentViewModel : UIViewModelBase
 {
@@ -12,6 +13,9 @@ public class EquipmentViewModel : UIViewModelBase
 
     // 2. 화면에서 누를 버튼의 명령 (장비 장착 명령)
     public RelayCommand<(EquipmentMountingArea area, EntityHandle handle)> EquipCommand { get; private set; }
+
+    // [추가됨] View에게 "장비 바뀌었으니 UI 새로고침해!" 라고 알려줄 이벤트
+    public event Action OnEquipmentChanged;
 
     public override void Bind()
     {
@@ -39,6 +43,9 @@ public class EquipmentViewModel : UIViewModelBase
     private void OnStatChanged(EntityHandle handle)
     {
         RefreshStats();
+
+        // [추가됨] 스탯이 변했다는 건 장비가 변했다는 뜻이므로, View에게 UI 갱신 신호를 보냅니다.
+        OnEquipmentChanged?.Invoke();
     }
 
     // 최신 스탯을 가져와서 BindableProperty에 넣어줌 -> UI가 알아서 바뀜!
@@ -48,5 +55,11 @@ public class EquipmentViewModel : UIViewModelBase
         {
             Damage.Value = m_playerSystem.BaseDamagePerClick;
         }
+    }
+
+    // [추가됨] View가 특정 슬롯의 장비 이름을 물어볼 때, PlayerSystem에서 꺼내서 대답해주는 함수
+    public string GetItemNameForArea(EquipmentMountingArea area)
+    {
+        return m_playerSystem != null ? m_playerSystem.GetEquippedItemName(area) : "Empty Slot";
     }
 }
