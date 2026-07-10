@@ -140,6 +140,11 @@ namespace DesktopCompanion.Systems
             return availablePools;
         }
 
+        public IReadOnlyList<StageData> GetAllStageDatas()
+        {
+            return DataManager.GetAll<StageData>();
+        }
+
         public object CaptureState()
         {
             return new StageSaveData
@@ -152,6 +157,15 @@ namespace DesktopCompanion.Systems
 
         public void RestoreState(object state)
         {
+            bool ignoreSaveForTesting = true; //테스트용, 배포시에는 false로 변경 필수//
+
+            if (ignoreSaveForTesting)
+            {
+                Debug.Log("[StageSystem] 테스트 모드 켜짐: 세이브 위치를 무시하고 600001로 강제 초기화합니다.");
+                ForceSetInitialStage(600001);
+                return;
+            }
+
             var save = (StageSaveData)state;
             m_currentStageDataId = save.currentStageDataId;
 
