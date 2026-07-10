@@ -9,11 +9,12 @@ using UnityEngine;
 namespace DesktopCompanion.Systems
 {
     /// <summary>
-    /// ÇÃ·¹ÀÌ¾îÀÇ ´É·ÂÄ¡¸¦ °ü¸®ÇÏ°í, Àåºñ ÀåÂø¿¡ µû¸¥ ½ºÅÈ º¯È­¸¦ ½Ç½Ã°£À¸·Î °è»êÇÏ´Â ½Ã½ºÅÛÀÔ´Ï´Ù.
+    /// ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ï¿½ï¿½ ï¿½É·ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½, ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È­ï¿½ï¿½ ï¿½Ç½Ã°ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½Ã½ï¿½ï¿½ï¿½ï¿½Ô´Ï´ï¿½.
     /// </summary>
     public class PlayerSystem : SystemBase, ISaveable
     {
-        EntityHandle playerHandle;
+        private EntityHandle playerHandle;
+        private Entity_Player entity_Player;
         private InventorySystem m_inventorySystem;
 
         public event Action<EntityHandle> OnStatChanged;
@@ -64,9 +65,8 @@ namespace DesktopCompanion.Systems
 
         #endregion
 
-        // ==========================================
-        // [ISaveable ÀÎÅÍÆäÀÌ½º ±¸ÇöºÎ]
-        // ==========================================
+        #region Save
+
         public string SaveId => "player_system_stats";
         public Type StateType => typeof(string);
 
@@ -77,15 +77,18 @@ namespace DesktopCompanion.Systems
 
         public void RestoreState(object state)
         {
-            CaculatedStat();
-            // [º¹±¸µÊ] °³¹ßÀÚ È®ÀÎ¿ë ·Î±×´Â ÇÑ±Û·Î
-            Debug.Log("[PlayerSystem] ¼¼ÀÌºê ·Îµå ¿Ï·á! Àåºñ ½ºÅÈ Àç°è»ê ¿Ï·á.");
+            // R1: ë³µì› ë‹¨ê³„ì—ì„œëŠ” ì›ì‹œ ìƒíƒœë§Œ ë‹¤ë£¬ë‹¤. ìµœì¢… ìŠ¤íƒ¯ ê³„ì‚°(CaculatedStat)ì€
+            // ë³µì› ì´í›„ Phase 2(PostInitialize)ì—ì„œ ìˆ˜í–‰ë˜ì–´ ì €ì¥ê°’ì„ ë°˜ì˜í•˜ë¯€ë¡œ ì—¬ê¸°ì„œ í˜¸ì¶œí•˜ì§€ ì•ŠëŠ”ë‹¤.
+            // [ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½] ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È®ï¿½Î¿ï¿½ ï¿½Î±×´ï¿½ ï¿½Ñ±Û·ï¿½
+            Debug.Log("[PlayerSystem] ï¿½ï¿½ï¿½Ìºï¿½ ï¿½Îµï¿½ ï¿½Ï·ï¿½! ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ï·ï¿½.");
         }
-        // ==========================================
+
+        #endregion
 
         public override void Initialize()
         {
             playerHandle = EntityManager.Create<PlayerData>(1);
+            entity_Player = EntityManager.Get<Entity_Player>(playerHandle);
         }
 
         public override void PostInitialize()
@@ -95,14 +98,11 @@ namespace DesktopCompanion.Systems
             m_startingLicense = entity_Player.CurrentLicense;
             m_startingGold = entity_Player.Gold;
 
-            
             CaculatedStat();
         }
 
-        public void CaculatedStat()
+        public void InitializeStat()
         {
-            Entity_Player entity_Player = EntityManager.Get<Entity_Player>(playerHandle);
-
             m_baseDamagePerClick = entity_Player.BaseData.BaseDamagePerClick;
             m_baseManualDamagePerHitMultiply = entity_Player.BaseData.BaseManualDamagePerHitMultiply;
             m_baseBattleTimeVariable = entity_Player.BaseData.BaseBattleTimeVariable;
@@ -119,6 +119,11 @@ namespace DesktopCompanion.Systems
 
             m_baseMapMovementSpeedPerTime = entity_Player.BaseData.BaseMapMovementSpeedPerTime;
             m_baseInventorySize = entity_Player.BaseData.BaseInventorySize;
+        }
+
+        public void CaculatedStat()
+        {
+            InitializeStat();
 
             foreach (EntityHandle equitmentHandle in entity_Player.Equipped.Values)
             {
@@ -185,7 +190,7 @@ namespace DesktopCompanion.Systems
                 {
                     if (slots[i].Equals(handle))
                     {
-                        return inventory.TryRemoveAt(type, i, false);
+                        return inventory.RemoveAt(type, i, false);
                     }
                 }
             }
@@ -207,31 +212,31 @@ namespace DesktopCompanion.Systems
                 bool isRemoved = TryFindAndRemoveFromInventory(m_inventorySystem, afterEquipHandle);
                 if (!isRemoved)
                 {
-                    // [º¹±¸µÊ] °³¹ßÀÚ È®ÀÎ¿ë ·Î±×´Â ÇÑ±Û·Î
-                    Debug.LogWarning("ÀÎº¥Åä¸®¿¡¼­ ÇØ´ç ¾ÆÀÌÅÛÀ» Ã£À» ¼ö ¾ø°Å³ª »èÁ¦¿¡ ½ÇÆĞÇß½À´Ï´Ù.");
+                    // [ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½] ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È®ï¿½Î¿ï¿½ ï¿½Î±×´ï¿½ ï¿½Ñ±Û·ï¿½
+                    Debug.LogWarning("ï¿½Îºï¿½ï¿½ä¸®ï¿½ï¿½ï¿½ï¿½ ï¿½Ø´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½Å³ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½.");
                 }
             }
 
             player.Equip(area, afterEquipHandle);
             CaculatedStat();
 
-            // [º¹±¸µÊ] °³¹ßÀÚ È®ÀÎ¿ë ·Î±×´Â ÇÑ±Û·Î
-            Debug.Log($"{area} ºÎÀ§¿¡ »õ·Î¿î Àåºñ°¡ ÀåÂøµÇ¾ú½À´Ï´Ù.");
+            // [ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½] ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È®ï¿½Î¿ï¿½ ï¿½Î±×´ï¿½ ï¿½Ñ±Û·ï¿½
+            Debug.Log($"{area} ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Î¿ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ç¾ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.");
         }
 
         /// <summary>
-        /// Æ¯Á¤ ºÎÀ§¿¡ ÀåÂøµÈ ÀåºñÀÇ ÀÌ¸§À» ¹İÈ¯ÇÕ´Ï´Ù. (UI ½½·Ô Ç¥½Ã¿ë)
+        /// Æ¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Õ´Ï´ï¿½. (UI ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½Ã¿ï¿½)
         /// </summary>
         public string GetEquippedItemName(EquipmentMountingArea area)
         {
-            // [À¯Áö] UI·Î ¹Ù·Î ³Ñ¾î°¡´Â ÅØ½ºÆ®´Â ¿µ¾î¸¦ À¯ÁöÇÏ¿© ÆùÆ® ±úÁü ¹æÁö
+            // [ï¿½ï¿½ï¿½ï¿½] UIï¿½ï¿½ ï¿½Ù·ï¿½ ï¿½Ñ¾î°¡ï¿½ï¿½ ï¿½Ø½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½î¸¦ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             if (playerHandle.Value == Guid.Empty) return "Empty Slot";
 
             Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
             if (player != null && player.Equipped.TryGetValue(area, out EntityHandle handle))
             {
                 Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(handle);
-                // ÀåºñÀÇ ¿ø·¡ ÀÌ¸§(µ¥ÀÌÅÍ)ÀÌ ¿µ¾î¶ó°í °¡Á¤
+                // ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
                 return equipment != null ? equipment.Name : "Empty Slot";
             }
 
