@@ -339,5 +339,18 @@ namespace DesktopCompanion.Views
 
             return tab;
         }
+
+        public bool SwapSlots(int fromIndex, int toIndex)
+        {
+            if (m_inventorySystem == null)
+            {
+                return false;
+            }
+
+            return m_inventorySystem.SwapSlots(
+                CurrentTab.Value,
+                fromIndex,
+                toIndex);
+        }
     }
 }

@@ -1,9 +1,7 @@
 using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
 using DesktopCompanion.Save;
-using DesktopCompanion.Views;
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace DesktopCompanion.Systems
@@ -32,17 +30,13 @@ namespace DesktopCompanion.Systems
         // 프로토타입용 즉시 저장 요청 이벤트.
         public event Action OnInventorySaveRequested;
 
+        private InventorySave m_loadedSave;
+
         public string SaveId => "inventory";
         public Type StateType => typeof(InventorySave);
 
         public override void Initialize()
         {
-            m_fishSlots = CreateSlots(FallbackInventorySize);
-            m_equipmentSlots = CreateSlots(FallbackInventorySize);
-            m_materialSlots = CreateSlots(FallbackInventorySize);
-
-            LogDebug($"Initialize complete. temporary slotSize: {FallbackInventorySize}");
-
         }
 
         public override void PostInitialize()
@@ -51,11 +45,19 @@ namespace DesktopCompanion.Systems
 
             int inventorySize = GetCurrentInventorySize();
 
-            ResizeSlots(inventorySize);
+            m_fishSlots = CreateSlots(inventorySize);
+            m_equipmentSlots = CreateSlots(inventorySize);
+            m_materialSlots = CreateSlots(inventorySize);
 
-            LogDebug($"PostInitialize complete. slotSize: {inventorySize}");
+            if (m_loadedSave != null)
+            {
+                RestoreLoadedSave();
+                m_loadedSave = null;
+            }
 
             m_playerSystem.OnStatChanged += HandlePlayerStatChanged;
+
+            LogDebug($"PostInitialize complete. slotSize: {inventorySize}");
         }
 
         /// <summary>
@@ -413,29 +415,9 @@ namespace DesktopCompanion.Systems
                 return;
             }
 
-            LogDebug($"RestoreState start. savedSlotCount: {save.slots.Count}");
+            m_loadedSave = save;
 
-            ClearAllSlots(true);
-
-            int restoredCount = 0;
-            int failedCount = 0;
-
-            for (int i = 0; i < save.slots.Count; i++)
-            {
-                bool result = RestoreSlot(save.slots[i]);
-
-                if (result)
-                {
-                    restoredCount++;
-                }
-                else
-                {
-                    failedCount++;
-                }
-            }
-
-            LogDebug($"RestoreState finished. restored: {restoredCount}, failed: {failedCount}");
-            NotifyInventoryChanged($"Restore inventory / restored: {restoredCount}, failed: {failedCount}", false);
+            LogDebug($"RestoreState pending. savedSlotCount: {save.slots.Count}");
         }
 
         private void NotifyInventoryChanged(string reason, bool requestSave)
@@ -569,6 +551,31 @@ namespace DesktopCompanion.Systems
 
             LogDebug($"RestoreSlot success. slotType: {slotType}, itemType: {slotSave.itemType}, slotIndex: {targetIndex}, dataId: {slotSave.dataId}, handle: {restoredHandle}");
             return true;
+        }
+
+        private void RestoreLoadedSave()
+        {
+            LogDebug($"RestoreState start. savedSlotCount: {m_loadedSave.slots.Count}");
+
+            int restoredCount = 0;
+            int failedCount = 0;
+
+            for (int i = 0; i < m_loadedSave.slots.Count; i++)
+            {
+                bool result = RestoreSlot(m_loadedSave.slots[i]);
+
+                if (result)
+                {
+                    restoredCount++;
+                }
+                else
+                {
+                    failedCount++;
+                }
+            }
+
+            LogDebug($"RestoreState finished. restored: {restoredCount}, failed: {failedCount}");
+            NotifyInventoryChanged($"Restore inventory / restored: {restoredCount}, failed: {failedCount}", false);
         }
 
         private bool RestoreEntity(InventorySave.SlotSave slotSave, out EntityHandle restoredHandle)
@@ -935,32 +942,6 @@ namespace DesktopCompanion.Systems
             }
 
             return ItemQuality.OneStar;
-        }
-
-        private void ClearAllSlots(bool destroyEntities)
-        {
-            ClearSlots(m_fishSlots, destroyEntities);
-            ClearSlots(m_equipmentSlots, destroyEntities);
-            ClearSlots(m_materialSlots, destroyEntities);
-        }
-
-        private void ClearSlots(EntityHandle[] slots, bool destroyEntities)
-        {
-            for (int i = 0; i < slots.Length; i++)
-            {
-                if (IsEmptyHandle(slots[i]))
-                {
-                    continue;
-                }
-
-                EntityHandle handle = slots[i];
-                slots[i] = default;
-
-                if (destroyEntities)
-                {
-                    EntityManager.Destroy(handle);
-                }
-            }
         }
 
         private bool ResizeSlots(int slotSize)

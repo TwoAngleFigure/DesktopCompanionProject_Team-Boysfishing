@@ -173,5 +173,13 @@ namespace DesktopCompanion.Views
                     return string.Empty;
             }
         }
+
+        public void SetPickupSource(bool isPickupSource)
+        {
+            if (m_moveSourceFrame != null)
+            {
+                m_moveSourceFrame.SetActive(isPickupSource);
+            }
+        }
     }
 }
