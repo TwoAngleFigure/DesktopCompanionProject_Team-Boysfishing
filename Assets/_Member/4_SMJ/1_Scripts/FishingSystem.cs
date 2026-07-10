@@ -494,6 +494,12 @@ namespace DesktopCompanion.Systems
 
         private int CalculateManualDamage()
         {
+            if (m_playerSystem == null)
+            {
+                Debug.LogWarning("[FishingSystem] PlayerSystem을 찾지 못해 기본 수동 공격 데미지를 사용합니다.");
+                return 1;
+            }
+
             float damage = m_playerSystem.BaseDamagePerClick * m_playerSystem.BaseManualDamagePerHitMultiply;
 
             bool isCritical = UnityEngine.Random.value < m_playerSystem.BaseCriticalChance;

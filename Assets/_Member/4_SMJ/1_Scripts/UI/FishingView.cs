@@ -15,6 +15,9 @@ public class FishingView : UIViewBase
     [SerializeField] private Button m_toggleFishingButton;
     [SerializeField] private TMP_Text m_toggleFishingButtonText;
 
+    [Header("Manual Attack")]
+    [SerializeField] private Button m_manualAttackButton;
+
     [Header("Debug HUD")]
     [SerializeField] private TMP_Text m_debugWaitTimeText;
     [SerializeField] private TMP_Text m_debugBattleTimeText;
@@ -39,6 +42,11 @@ public class FishingView : UIViewBase
         {
             m_toggleFishingButton.onClick.AddListener(OnToggleFishingClicked);
         }
+
+        if (m_manualAttackButton != null)
+        {
+            m_manualAttackButton.onClick.AddListener(OnManualAttackClicked);
+        }
     }
 
     public override void Unbind()
@@ -55,6 +63,11 @@ public class FishingView : UIViewBase
         if (m_toggleFishingButton != null)
         {
             m_toggleFishingButton.onClick.RemoveListener(OnToggleFishingClicked);
+        }
+
+        if (m_manualAttackButton != null)
+        {
+            m_manualAttackButton.onClick.RemoveListener(OnManualAttackClicked);
         }
 
         m_vm.Unbind();
@@ -135,6 +148,10 @@ public class FishingView : UIViewBase
         m_vm.ToggleFishingState?.Execute();
     }
 
+    private void OnManualAttackClicked()
+    {
+        m_vm.ManualAttack?.Execute();
+    }
 
 }
 
