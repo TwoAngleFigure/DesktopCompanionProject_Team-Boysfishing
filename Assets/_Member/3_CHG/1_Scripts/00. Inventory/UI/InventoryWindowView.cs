@@ -17,10 +17,6 @@ namespace DesktopCompanion.Views
         [Header("Window Buttons")]
         [SerializeField] private Button m_closeButton;
 
-        [Header("Temporary Move Mode")]
-        [SerializeField] private Button m_moveButton;
-        [SerializeField] private TMP_Text m_moveGuideText;
-
         [Header("Slot Grid")]
         [SerializeField] private Transform m_slotRoot;
         [SerializeField] private InventorySlotView m_slotPrefab;
@@ -30,6 +26,9 @@ namespace DesktopCompanion.Views
         [SerializeField] private Image m_detailIconImage;
         [SerializeField] private TMP_Text m_detailNameText;
         [SerializeField] private TMP_Text m_detailInfoText;
+
+        [Header("Item Pickup")]
+        [SerializeField] private ItemPickupController m_itemPickupController;
 
         private readonly InventoryViewModel m_vm = new();
         private readonly List<InventorySlotView> m_slotViews = new();
@@ -41,64 +40,38 @@ namespace DesktopCompanion.Views
 
             m_vm.Slots.Bind(RefreshSlotViews);
             m_vm.SelectedSlot.Bind(RefreshDetailPanel);
-            m_vm.IsMoveMode.Bind(RefreshMoveModeUI);
 
-            if (m_fishTabButton != null)
+            if (m_itemPickupController != null)
             {
-                m_fishTabButton.onClick.AddListener(() => m_vm.SelectTabCommand.Execute(ItemType.Fish));
+                m_itemPickupController.OnPickupChanged += RefreshPickupSourceFrames;
+            }
+            else
+            {
+                Debug.LogError("[InventoryWindowView] ItemPickupController is not assigned.");
             }
 
-            if (m_equipmentTabButton != null)
-            {
-                m_equipmentTabButton.onClick.AddListener(() => m_vm.SelectTabCommand.Execute(ItemType.Equipment));
-            }
+            m_fishTabButton.onClick.AddListener(OnFishTabClicked);
+            m_equipmentTabButton.onClick.AddListener(OnEquipmentTabClicked);
+            m_materialTabButton.onClick.AddListener(OnMaterialTabClicked);
 
-            if (m_materialTabButton != null)
-            {
-                m_materialTabButton.onClick.AddListener(() => m_vm.SelectTabCommand.Execute(ItemType.Materials));
-            }
-
-            if (m_moveButton != null)
-            {
-                m_moveButton.onClick.AddListener(() => m_vm.MoveButtonCommand.Execute());
-            }
-
-            if (m_closeButton != null)
-            {
-                m_closeButton.onClick.AddListener(Close);
-            }
+            m_closeButton.onClick.AddListener(OnCloseButtonClicked);
         }
 
         public override void Unbind()
         {
+            if (m_itemPickupController != null)
+            {
+                m_itemPickupController.OnPickupChanged -= RefreshPickupSourceFrames;
+                m_itemPickupController.ClearPickup();
+            }
+
             m_vm.Slots.Unbind(RefreshSlotViews);
             m_vm.SelectedSlot.Unbind(RefreshDetailPanel);
-            m_vm.IsMoveMode.Unbind(RefreshMoveModeUI);
 
-            if (m_fishTabButton != null)
-            {
-                m_fishTabButton.onClick.RemoveAllListeners();
-            }
-
-            if (m_equipmentTabButton != null)
-            {
-                m_equipmentTabButton.onClick.RemoveAllListeners();
-            }
-
-            if (m_materialTabButton != null)
-            {
-                m_materialTabButton.onClick.RemoveAllListeners();
-            }
-
-            if (m_moveButton != null)
-            {
-                m_moveButton.onClick.RemoveAllListeners();
-            }
-
-            if (m_closeButton != null)
-            {
-                m_closeButton.onClick.RemoveAllListeners();
-            }
+            m_fishTabButton.onClick.RemoveListener(OnFishTabClicked);
+            m_equipmentTabButton.onClick.RemoveListener(OnEquipmentTabClicked);
+            m_materialTabButton.onClick.RemoveListener(OnMaterialTabClicked);
+            m_closeButton.onClick.RemoveListener(OnCloseButtonClicked);
 
             m_vm.Unbind();
         }
@@ -127,13 +100,15 @@ namespace DesktopCompanion.Views
             {
                 m_slotViews[i].gameObject.SetActive(false);
             }
+
+            RefreshPickupSourceFrames();
         }
 
         private bool EnsureSlotViews(int requiredCount)
         {
             if (m_slotPrefab == null)
             {
-                Debug.LogError("[InventoryWindowView] Slot prefab is not assigned.");
+                Debug.LogError("[InventoryWindowView] Slot prefab is not assigned." + this);
                 return false;
             }
 
@@ -162,7 +137,58 @@ namespace DesktopCompanion.Views
 
         private void OnSlotClicked(int slotIndex)
         {
+            List<InventorySlotViewData> slots = m_vm.Slots.Value;
+
+            if (slots == null || slotIndex < 0 || slotIndex >= slots.Count)
+            {
+                return;
+            }
+
+            InventorySlotViewData clickedSlot = slots[slotIndex];
+
             m_vm.SelectSlotCommand.Execute(slotIndex);
+
+            if (m_itemPickupController == null)
+            {
+                return;
+            }
+
+            if (!m_itemPickupController.HasItem)
+            {
+                if (clickedSlot.IsEmpty)
+                {
+                    return;
+                }
+
+                BeginPickup(clickedSlot);
+                return;
+            }
+
+            if (m_itemPickupController.SourceSlotType != clickedSlot.SlotType)
+            {
+                return;
+            }
+
+            if (m_itemPickupController.SourceSlotIndex == slotIndex)
+            {
+                m_itemPickupController.ClearPickup();
+                return;
+            }
+
+            if (!IsPickedItemStillValid())
+            {
+                m_itemPickupController.ClearPickup();
+                return;
+            }
+
+            bool swapped = m_vm.SwapSlots(
+                m_itemPickupController.SourceSlotIndex,
+                slotIndex);
+
+            if (swapped)
+            {
+                m_itemPickupController.ClearPickup();
+            }
         }
 
         private Sprite GetIcon(InventorySlotViewData slotData)
@@ -207,11 +233,6 @@ namespace DesktopCompanion.Views
             {
                 m_detailInfoText.text = BuildDetailText(selected);
             }
-
-            if (m_moveButton != null)
-            {
-                m_moveButton.interactable = true;
-            }
         }
 
         private void ClearDetailPanel()
@@ -230,48 +251,6 @@ namespace DesktopCompanion.Views
             if (m_detailInfoText != null)
             {
                 m_detailInfoText.text = string.Empty;
-            }
-
-            if (m_moveButton != null)
-            {
-                m_moveButton.interactable = false;
-            }
-        }
-
-        private void RefreshMoveModeUI(bool isMoveMode)
-        {
-            if (m_moveGuideText != null)
-            {
-                m_moveGuideText.text = isMoveMode ? "이동할 슬롯을 선택하세요." : string.Empty;
-            }
-
-            if (m_moveButton != null)
-            {
-                TMP_Text moveButtonText = m_moveButton.GetComponentInChildren<TMP_Text>();
-
-                if (moveButtonText != null)
-                {
-                    // TEMP: Drag-Drop 도입 시 수정
-                    moveButtonText.text = isMoveMode ? "취소" : "이동";
-                }
-            }
-
-            if (!isMoveMode)
-            {
-                ClearMoveButtonSelection();
-            }
-        }
-
-        private void ClearMoveButtonSelection()
-        {
-            if (m_moveButton == null || EventSystem.current == null)
-            {
-                return;
-            }
-
-            if (EventSystem.current.currentSelectedGameObject == m_moveButton.gameObject)
-            {
-                EventSystem.current.SetSelectedGameObject(null);
             }
         }
 
@@ -318,6 +297,85 @@ namespace DesktopCompanion.Views
                 default:
                     return string.Empty;
             }
+        }
+
+        private void BeginPickup(InventorySlotViewData slotData)
+        {
+            Sprite icon = GetIcon(slotData);
+
+            m_itemPickupController.BeginPickup(
+                slotData.SlotType,
+                slotData.SlotIndex,
+                slotData.Handle,
+                icon);
+        }
+
+        private bool IsPickedItemStillValid()
+        {
+            List<InventorySlotViewData> slots = m_vm.Slots.Value;
+            int sourceSlotIndex = m_itemPickupController.SourceSlotIndex;
+
+            if (slots == null || sourceSlotIndex < 0 || sourceSlotIndex >= slots.Count)
+            {
+                return false;
+            }
+
+            InventorySlotViewData sourceSlot = slots[sourceSlotIndex];
+
+            if (sourceSlot.IsEmpty)
+            {
+                return false;
+            }
+
+            return sourceSlot.SlotType == m_itemPickupController.SourceSlotType
+                && sourceSlot.Handle.Equals(m_itemPickupController.PickedHandle);
+        }
+
+        private void RefreshPickupSourceFrames()
+        {
+            for (int i = 0; i < m_slotViews.Count; i++)
+            {
+                bool isPickupSource =
+                    m_itemPickupController != null
+                    && m_itemPickupController.HasItem
+                    && m_itemPickupController.SourceSlotType == m_vm.CurrentTab.Value
+                    && m_itemPickupController.SourceSlotIndex == i;
+
+                m_slotViews[i].SetPickupSource(isPickupSource);
+            }
+        }
+
+        private void OnFishTabClicked()
+        {
+            ClearPickup();
+            m_vm.SelectTabCommand.Execute(ItemType.Fish);
+        }
+
+        private void OnEquipmentTabClicked()
+        {
+            ClearPickup();
+            m_vm.SelectTabCommand.Execute(ItemType.Equipment);
+        }
+
+        private void OnMaterialTabClicked()
+        {
+            ClearPickup();
+            m_vm.SelectTabCommand.Execute(ItemType.Materials);
+        }
+
+        private void ClearPickup()
+        {
+            if (m_itemPickupController != null && m_itemPickupController.HasItem)
+            {
+                m_itemPickupController.ClearPickup();
+            }
+        }
+
+        private void OnCloseButtonClicked()
+        {
+            ClearPickup();
+
+            Close();
         }
     }
 }
