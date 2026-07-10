@@ -11,16 +11,16 @@ namespace DesktopCompanion.Views
         public readonly BindableProperty<string> HpText = new("-");
         public readonly BindableProperty<float> HpRatio = new(0f);
         public readonly BindableProperty<string> ResultText = new("");
-        public readonly BindableProperty<string> CatchInfoText = new("CatchInfo: -");
-        public readonly BindableProperty<string> ToggleButtonText = new("Start Fishing");
+        public readonly BindableProperty<string> CatchInfoText = new("획득 정보: -");
+        public readonly BindableProperty<string> ToggleButtonText = new("낚시 시작");
 
         public RelayCommand ToggleFishingState { get; private set; }
         public RelayCommand ManualAttack { get; private set; }
 
         // Debug HUD
-        public readonly BindableProperty<string> DebugWaitTimeText = new("WaitTime: -");
+        public readonly BindableProperty<string> DebugWaitTimeText = new("입질 대기: -");
 
-        public readonly BindableProperty<string> DebugBattleTimeText = new("BattleTime: -");
+        public readonly BindableProperty<string> DebugBattleTimeText = new("전투 시간: -");
 
         public override void Bind()
         {
@@ -28,7 +28,7 @@ namespace DesktopCompanion.Views
 
             if (m_fishingSystem == null)
             {
-                StateText.Value = "FishingSystem is null";
+                StateText.Value = "낚시 시스템 없음";
                 return;
             }
 
@@ -38,6 +38,7 @@ namespace DesktopCompanion.Views
             m_fishingSystem.OnFishCaught += HandleFishCaught;
             m_fishingSystem.OnBattleFailed += HandleBattleFailed;
             ToggleFishingState = new RelayCommand(ToggleFishing);
+            ManualAttack = new RelayCommand(ExecuteManualAttack, CanManualAttack);
 
             HandleStateChanged(m_fishingSystem.State);
             RefreshDebugTime();
@@ -62,16 +63,16 @@ namespace DesktopCompanion.Views
         {
             if (m_fishingSystem == null)
             {
-                DebugWaitTimeText.Value = "WaitTime: -";
-                DebugBattleTimeText.Value = "BattleTime: -";
+                DebugWaitTimeText.Value = "대기 시간: -";
+                DebugBattleTimeText.Value = "전투 시간: -";
                 return;
             }
 
             DebugWaitTimeText.Value =
-                $"WaitTime: {m_fishingSystem.WaitDuration:0.0}s / {ClampZero(m_fishingSystem.WaitTimeRemaining):0.0}s";
+                $"대기 시간: {m_fishingSystem.WaitDuration:0.0}초 / {ClampZero(m_fishingSystem.WaitTimeRemaining):0.0}초";
 
             DebugBattleTimeText.Value =
-                $"BattleTime: {m_fishingSystem.BattleDuration:0.0}s / {ClampZero(m_fishingSystem.BattleTimeRemaining):0.0}s";
+                $"전투 시간: {m_fishingSystem.BattleDuration:0.0}초 / {ClampZero(m_fishingSystem.BattleTimeRemaining):0.0}초";
         }
 
         private void HandleStateChanged(FishingState state)
@@ -79,30 +80,30 @@ namespace DesktopCompanion.Views
             switch (state)
             {
                 case FishingState.Stopped:
-                    StateText.Value = $"CurrentState: {state}";
+                    StateText.Value = $"현재 상태: {state}";
                     HpText.Value = "-";
                     HpRatio.Value = 0f;
-                    ToggleButtonText.Value = "Start Fishing";
+                    ToggleButtonText.Value = "낚시 시작";
                     break;
 
                 case FishingState.Waiting:
-                    StateText.Value = $"CurrentState: {state}";
+                    StateText.Value = $"현재 상태: {state}";
                     HpText.Value = "-";
                     HpRatio.Value = 0f;
-                    ToggleButtonText.Value = "Stop Fishing";
+                    ToggleButtonText.Value = "낚시 중지";
                     break;
 
                 case FishingState.Battling:
-                    StateText.Value = $"CurrentState: {state}";
-                    ToggleButtonText.Value = "Stop Fishing";
+                    StateText.Value = $"현재 상태: {state}";
+                    ToggleButtonText.Value = "낚시 중지";
                     break;
             }
         }
 
         private void HandleBattleStarted(EntityHandle fishHandle)
         {
-            ResultText.Value = "Result: -";
-            CatchInfoText.Value = "CatchInfo: -";
+            ResultText.Value = "결과: -";
+            CatchInfoText.Value = "획득 정보: -";
         }
 
         private void HandleBattleHpChanged(EntityHandle fishHandle, int currentHp, int maxHp)
@@ -117,26 +118,26 @@ namespace DesktopCompanion.Views
 
             if (fish == null)
             {
-                ResultText.Value = "Result: Caught";
-                CatchInfoText.Value = "CatchInfo: -";
+                ResultText.Value = "결과: 포획 성공";
+                CatchInfoText.Value = "획득 정보: -";
                 HpText.Value = "-";
                 HpRatio.Value = 0f;
                 return;
             }
 
-            ResultText.Value = $"Result: {fish.Name} Caught";
+            ResultText.Value = $"결과: {fish.Name} 포획 성공";
             CatchInfoText.Value =                
-                $"Size: {fish.Size:0.00}\n" +
-                $"Quality: {fish.Quality}\n" +
-                $"Rarity: {fish.Rarity}";
+                $"크기: {fish.Size:0.00}\n" +
+                $"품질: {fish.Quality}\n" +
+                $"희귀도: {fish.Rarity}";
             HpText.Value = "-";
             HpRatio.Value = 0f;
         }
 
         private void HandleBattleFailed(EntityHandle fishHandle)
         {
-            ResultText.Value = "Result: Failed";
-            CatchInfoText.Value = "CatchInfo: -";
+            ResultText.Value = "결과: 포획 실패";
+            CatchInfoText.Value = "획득 정보: -";
             HpText.Value = "-";
             HpRatio.Value = 0f;
         }
@@ -156,6 +157,16 @@ namespace DesktopCompanion.Views
             {
                 m_fishingSystem.StopFishing();
             }
+        }
+
+        private bool CanManualAttack()
+        {
+            return m_fishingSystem != null && m_fishingSystem.State == FishingState.Battling;
+        }
+
+        private void ExecuteManualAttack()
+        {
+            m_fishingSystem.ManualAttack();
         }
 
         private float ClampZero(float value)
