@@ -63,7 +63,7 @@ namespace DesktopCompanion.Systems
             m_waitTimer = 0f;
             m_battleTimer = 0f;
             m_autoAttackTimer = 0f;
-           
+
         }
 
         public override void PostInitialize()
