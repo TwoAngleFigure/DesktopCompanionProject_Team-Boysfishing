@@ -3,6 +3,8 @@ using DesktopCompanion.Entities;
 using DesktopCompanion.Systems;
 using DesktopCompanion.Views;
 using UnityEngine;
+using TMPro;
+using UnityEngine.UI;
 
 public class FishingWorldView : WorldViewBase
 {
@@ -10,6 +12,11 @@ public class FishingWorldView : WorldViewBase
     [SerializeField] private Transform m_spawnPoint;
     [SerializeField] private Transform m_modelRoot;
     [SerializeField] private Vector3 m_modelScale = Vector3.one;
+
+    [Header("Catch Popup")]
+    [SerializeField] private GameObject m_popupRoot;
+    [SerializeField] private TMP_Text m_fishInfoText;
+    [SerializeField] private Image[] m_qualityStars;
 
     private FishingSystem m_fishingSystem;
     private ItemData_Fish m_currentFishData;
@@ -43,6 +50,37 @@ public class FishingWorldView : WorldViewBase
         m_fishingSystem = null;
     }
 
+    private void UpdateCatchPopup(Entity_Fish fish)
+    {
+        if (fish == null)
+        {
+            return;
+        }
+
+        if (m_fishInfoText != null)
+        {
+            m_fishInfoText.text = $"{fish.Name} / {fish.Size:0.00} cm";
+        }
+
+        int starCount = Mathf.Clamp(
+            (int)fish.Quality,
+            1,
+            m_qualityStars.Length
+        );
+
+        for (int i = 0; i < m_qualityStars.Length; i++)
+        {
+            if (m_qualityStars[i] != null)
+            {
+                m_qualityStars[i].gameObject.SetActive(i < starCount);
+            }
+        }
+
+        if (m_popupRoot != null)
+        {
+            m_popupRoot.SetActive(true);
+        }
+    }
     private void HandleBattleStarted(EntityHandle battleFishHandle)
     {
         Entity_BattleFish battleFish = EntityManager.Get<Entity_BattleFish>(battleFishHandle);
@@ -90,6 +128,8 @@ public class FishingWorldView : WorldViewBase
 
         m_currentModel = Instantiate(prefab, position, rotation, parent);
         m_currentModel.transform.localScale = m_modelScale;
+
+        UpdateCatchPopup(fish);
 
         Debug.Log($"[FishingWorldView] 물고기 모델 생성: {fish.Name}, key={modelKey}");
     }
