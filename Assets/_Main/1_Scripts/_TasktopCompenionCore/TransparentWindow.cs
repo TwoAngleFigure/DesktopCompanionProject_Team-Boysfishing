@@ -38,6 +38,9 @@ namespace DesktopCompanion
         /// <summary>창 초기화가 끝나 HWND가 확보된 상태인지.</summary>
         public bool IsReady => _hwnd != IntPtr.Zero;
 
+        /// <summary>확보된 창 핸들(전역 커서 좌표 변환 등에 사용). 미확보 시 IntPtr.Zero.</summary>
+        public IntPtr Hwnd => _hwnd;
+
         private void Start()
         {
 #if UNITY_STANDALONE_WIN && !UNITY_EDITOR
@@ -137,6 +140,25 @@ namespace DesktopCompanion
                 _hwnd, Win32Native.DWMWA_WINDOW_CORNER_PREFERENCE, ref preference, sizeof(int));
         }
 #endif
+
+        /// <summary>
+        /// 창을 지정한 모니터 영역(가상 데스크톱 좌표)으로 재배치한다(다중 모니터: Full 모니터 선택용).
+        /// 에디터에서는 no-op. 좌표는 <see cref="Win32Native.GetMonitorRects"/>의 rect를 사용한다.
+        /// </summary>
+        public void ApplyMonitorBounds(int x, int y, int width, int height)
+        {
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+            if (_hwnd == IntPtr.Zero)
+            {
+                return;
+            }
+            int w = Mathf.Max(1, width - _edgeInset);
+            int h = Mathf.Max(1, height - _edgeInset);
+            Screen.SetResolution(w, h, FullScreenMode.Windowed);
+            Win32Native.SetWindowPos(_hwnd, Win32Native.HWND_TOPMOST, x, y, w, h,
+                Win32Native.SWP_NOACTIVATE | Win32Native.SWP_SHOWWINDOW);
+#endif
+        }
 
         /// <summary>창을 최상단으로 고정하거나 해제한다.</summary>
         public void ApplyTopMost(bool on)
