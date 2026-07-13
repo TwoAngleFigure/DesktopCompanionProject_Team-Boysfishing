@@ -23,6 +23,7 @@ namespace DesktopCompanion.Views
         public readonly BindableProperty<List<InventorySlotViewData>> Slots = new(new List<InventorySlotViewData>());
         public readonly BindableProperty<InventorySlotViewData> SelectedSlot = new(null);
         public readonly BindableProperty<ItemType> CurrentTab = new(ItemType.Fish);
+        public readonly BindableProperty<int> Gold = new(0);
 
         // View -> ViewModel
         public RelayCommand<ItemType> SelectTabCommand { get; private set; }
@@ -41,6 +42,7 @@ namespace DesktopCompanion.Views
                 m_inventorySystem.OnInventoryChanged += HandleInventoryChanged;
             }
 
+            RefreshGold();
             RefreshSlots();
             RefreshSelectedSlot();
         }
@@ -54,6 +56,17 @@ namespace DesktopCompanion.Views
 
             m_inventorySystem = null;
             m_playerSystem = null;
+        }
+
+        private void RefreshGold()
+        {
+            if (m_playerSystem == null)
+            {
+                Gold.Value = 0;
+                return;
+            }
+
+            Gold.Value = m_playerSystem.StartingGold;
         }
 
         private void HandleInventoryChanged()

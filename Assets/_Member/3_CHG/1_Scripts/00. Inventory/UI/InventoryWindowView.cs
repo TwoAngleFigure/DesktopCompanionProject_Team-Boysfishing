@@ -27,6 +27,9 @@ namespace DesktopCompanion.Views
         [SerializeField] private TMP_Text m_detailNameText;
         [SerializeField] private TMP_Text m_detailInfoText;
 
+        [Header("Gold")]
+        [SerializeField] private TMP_Text m_goldText;
+
         [Header("Hover Tooltip")]
         [SerializeField] private InventoryItemTooltipView m_itemTooltip;
 
@@ -45,6 +48,7 @@ namespace DesktopCompanion.Views
 
             m_vm.Slots.Bind(RefreshSlotViews);
             m_vm.SelectedSlot.Bind(RefreshDetailPanel);
+            m_vm.Gold.Bind(RefreshGoldText);
 
             if (m_itemPickupController != null)
             {
@@ -93,6 +97,7 @@ namespace DesktopCompanion.Views
 
             m_vm.Slots.Unbind(RefreshSlotViews);
             m_vm.SelectedSlot.Unbind(RefreshDetailPanel);
+            m_vm.Gold.Unbind(RefreshGoldText);
 
             if (m_fishTabButton != null)
             {
@@ -513,6 +518,18 @@ namespace DesktopCompanion.Views
             ClearHoveredTooltip();
 
             Close();
+        }
+
+        private void RefreshGoldText(int gold)
+        {
+            if (m_goldText == null)
+            {
+                return;
+            }
+
+            // 천 단위 쉼표로 표시
+            // 예: 1000 -> 1,000
+            m_goldText.text = gold.ToString("N0");
         }
     }
 }
