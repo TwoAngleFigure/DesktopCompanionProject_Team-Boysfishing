@@ -1,42 +1,54 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
 
 namespace DesktopCompanion
 {
     /// <summary>
-    /// 커서 아래 픽셀의 알파를 검사해 클릭 관통을 동적으로 토글한다.
-    /// 캐릭터(불투명 픽셀) 위 = 클릭 가능, 투명 영역 = 관통.
-    /// ReadPixels는 프레임 렌더 완료 이후 호출해야 하므로 WaitForEndOfFrame으로 처리한다.
+    /// 커서가 상호작용 대상(UI 또는 클릭 가능한 월드 오브젝트) 위인지 판정해 클릭 관통을 동적으로 토글한다.
+    /// 대상 위 = 클릭 가능(관통 해제), 그 외(빈/투명 영역) = 관통(데스크톱 조작).
+    ///
+    /// [핵심] 커서 위치는 반드시 Win32 GetCursorPos(전역 커서)로 읽는다.
+    /// 클릭관통(WS_EX_TRANSPARENT) 창은 마우스 메시지를 받지 못해 Unity의 Mouse.current.position이
+    /// 갱신되지 않는다(첫 프레임부터 관통 상태이므로 stale). 그 값으로 판정하면 콘텐츠 위를 영영 감지하지
+    /// 못해 관통이 절대 해제되지 않는 교착이 생긴다(UI·오브젝트 모두 클릭 불가). GetCursorPos는 관통과
+    /// 무관하게 유효하다. UI 판정도 같은 이유로 IsPointerOverGameObject(Mouse.current 의존) 대신
+    /// 해당 좌표로 GraphicRaycaster를 직접 돌린다.
     /// </summary>
     [RequireComponent(typeof(TransparentWindow))]
     public class ClickThroughManager : MonoBehaviour
     {
-        // _alphaThreshold / _window / _currentClickThrough는 Windows Standalone 빌드
-        // (#if UNITY_STANDALONE_WIN && !UNITY_EDITOR)의 클릭 관통 로직에서만 읽힌다. 에디터는 해당
-        // 블록을 컴파일에서 제외하므로 "할당했지만 미사용(CS0414)" 경고가 뜨지만, 빌드에서는 사용되므로
-        // 필드를 삭제하면 안 된다. 에디터 경고만 억제한다. (_pixelBuffer는 OnDestroy에서 쓰여 경고 없음)
-#pragma warning disable CS0414
-        [Tooltip("이 값 이상의 알파면 캐릭터(클릭 가능)로 간주")]
-        [SerializeField] private float _alphaThreshold = 0.1f;
+        // 아래 SerializeField는 Windows Standalone 빌드 블록에서만 읽히므로 에디터 컴파일 경고를 억제한다.
+#pragma warning disable CS0414, CS0649
+        [Tooltip("월드 오브젝트 히트테스트에 쓸 카메라(미지정 시 Camera.main)")]
+        [SerializeField] private Camera _worldCamera;
+
+        [Tooltip("클릭을 막을 오브젝트 레이어. 바다 등 관통시킬 대상은 제외할 것.")]
+        [SerializeField] private LayerMask _clickableMask = ~0;
 
         private TransparentWindow _window;
-        private Texture2D _pixelBuffer;
         private bool _currentClickThrough = true;
-#pragma warning restore CS0414
+#pragma warning restore CS0414, CS0649
+
+        /// <summary>true면 판정과 무관하게 관통을 항상 해제한다(예: 창 이동 모드 동안 전체 오버레이가 입력을 잡도록).</summary>
+        public bool ForceNoClickThrough { get; set; }
+
+        /// <summary>
+        /// 커서 스크린 좌표를 월드 카메라 좌표로 매핑한다(RT 크롭: RawImage uv → RT 픽셀).
+        /// null이면 커서 좌표를 그대로 사용. 반환이 null이면 커서가 월드 표시 영역(창) 밖이다.
+        /// </summary>
+        public System.Func<Vector2, Vector2?> ScreenToWorldCameraPoint;
 
         private void Awake()
         {
             _window = GetComponent<TransparentWindow>();
-            _pixelBuffer = new Texture2D(1, 1, TextureFormat.RGBA32, false);
         }
 
-        private void OnDestroy()
+        /// <summary>레이캐스트에 쓸 월드 카메라를 런타임에 갱신한다(Camera Swap 모드 전환 연동).</summary>
+        public void SetWorldCamera(Camera cam)
         {
-            if (_pixelBuffer != null)
-            {
-                Destroy(_pixelBuffer);
-            }
+            _worldCamera = cam;
         }
 
         private void OnEnable()
@@ -47,14 +59,14 @@ namespace DesktopCompanion
         }
 
 #if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+        private static readonly List<RaycastResult> s_uiResults = new List<RaycastResult>();
+        private PointerEventData _pointerData;
+
         private IEnumerator UpdateClickThroughLoop()
         {
-            // ReadPixels는 프레임 렌더 완료 후에 호출해야 하므로 WaitForEndOfFrame 뒤에 처리한다.
-            // 단일 프레임 예외가 루프를 영구 정지시키지 않도록 처리 본문은 try/catch로 감싼다.
-            var frameEnd = new WaitForEndOfFrame();
             while (enabled)
             {
-                yield return frameEnd;
+                yield return null;
                 ProcessFrame();
             }
         }
@@ -68,8 +80,8 @@ namespace DesktopCompanion
 
             try
             {
-                bool overCharacter = IsCursorOverOpaquePixel();
-                bool wantClickThrough = overCharacter == false; // 캐릭터 위면 관통 해제
+                bool interactive = ForceNoClickThrough || IsCursorOverInteractive();
+                bool wantClickThrough = interactive == false; // 대상 위(또는 강제 해제)면 관통 해제
                 if (wantClickThrough != _currentClickThrough)
                 {
                     _window.SetClickThrough(wantClickThrough);
@@ -82,27 +94,69 @@ namespace DesktopCompanion
             }
         }
 
-        // 마우스 위치의 렌더 결과 알파를 1픽셀만 읽어 판정한다.
-        private bool IsCursorOverOpaquePixel()
+        // 관통 상태에서도 유효한 전역 커서 위치를 Unity 화면 좌표로 변환한다.
+        private bool TryGetCursorScreenPos(out Vector2 pos)
         {
-            // Input System 패키지 사용. Mouse가 없는 프레임(입력 장치 미가용)은 관통 유지.
-            Mouse mouse = Mouse.current;
-            if (mouse == null)
+            pos = default;
+            if (Win32Native.GetCursorPos(out Win32Native.POINT p) == false)
+            {
+                return false;
+            }
+            // 화면(가상 데스크톱) → 창 클라이언트(좌상단 원점, y 아래)
+            Win32Native.ScreenToClient(_window.Hwnd, ref p);
+            // 클라이언트 → Unity 화면(좌하단 원점, y 위)
+            pos = new Vector2(p.x, Screen.height - p.y);
+            return true;
+        }
+
+        private bool IsCursorOverInteractive()
+        {
+            if (TryGetCursorScreenPos(out Vector2 pos) == false)
+            {
+                return false;
+            }
+            if (pos.x < 0 || pos.y < 0 || pos.x >= Screen.width || pos.y >= Screen.height)
             {
                 return false;
             }
 
-            Vector2 mousePos = mouse.position.ReadValue();
-            if (mousePos.x < 0 || mousePos.y < 0 ||
-                mousePos.x >= Screen.width || mousePos.y >= Screen.height)
+            // 1) UI — 해당 좌표로 GraphicRaycaster 직접 레이캐스트(Mouse.current 비의존).
+            if (EventSystem.current != null)
             {
-                return false;
+                if (_pointerData == null)
+                {
+                    _pointerData = new PointerEventData(EventSystem.current);
+                }
+                _pointerData.position = pos;
+                s_uiResults.Clear();
+                EventSystem.current.RaycastAll(_pointerData, s_uiResults);
+                if (s_uiResults.Count > 0)
+                {
+                    return true;
+                }
             }
 
-            var readRect = new Rect(mousePos.x, mousePos.y, 1, 1);
-            _pixelBuffer.ReadPixels(readRect, 0, 0, false);
-            _pixelBuffer.Apply(false);
-            return _pixelBuffer.GetPixel(0, 0).a >= _alphaThreshold;
+            // 2) 클릭 가능한 월드 오브젝트(콜라이더) — 커서를 월드 카메라(RT) 좌표로 매핑 후 레이캐스트.
+            Camera cam = _worldCamera != null ? _worldCamera : Camera.main;
+            if (cam != null)
+            {
+                Vector2 rayPos = pos;
+                if (ScreenToWorldCameraPoint != null)
+                {
+                    Vector2? mapped = ScreenToWorldCameraPoint(pos);
+                    if (mapped.HasValue == false)
+                    {
+                        return false;   // 월드 표시 영역(창) 밖 → 월드 히트 없음
+                    }
+                    rayPos = mapped.Value;
+                }
+                if (Physics.Raycast(cam.ScreenPointToRay(rayPos), Mathf.Infinity, _clickableMask))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 #endif
     }
