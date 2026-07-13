@@ -66,4 +66,41 @@ public class EquipmentViewModel : UIViewModelBase
     {
         return m_playerSystem != null ? m_playerSystem.GetEquippedItemHandle(area) : default;
     }
+    // [추가됨] View가 스탯 창을 열거나 장비를 바꿀 때, 모든 스탯을 예쁘게 포맷팅해서 넘겨줍니다.
+    public string GetAllStatsFormattedText()
+    {
+        if (m_playerSystem == null) return "스탯 정보를 불러오는 중...";
+
+        // C#의 문자열 보간($)과 줄바꿈(\n)을 활용해 하나의 거대한 텍스트로 묶습니다.
+        string stats =
+            $"<color=#5BC0EB><b>[ 전투 스탯 ]</b></color>\n" +
+            $"클릭 데미지 :  {m_playerSystem.BaseDamagePerClick}\n" +
+            $"수동 타격 배율 :  {m_playerSystem.BaseManualDamagePerHitMultiply}\n" +
+            $"크리티컬 확률 :  {m_playerSystem.BaseCriticalChance}%\n" +
+            $"크리티컬 배율 :  {m_playerSystem.BaseCriticalMultiply}배\n" +
+            $"전투 시간 변수 :  {m_playerSystem.BaseBattleTimeVariable}\n\n" +
+
+            $"<color=#9BC53D><b>[ 자동 전투 ]</b></color>\n" +
+            $"자동 공격 쿨타임 :  {m_playerSystem.BaseAutoBattleCooltime}초\n" +
+            $"자동 공격 속도 :  {m_playerSystem.BaseAutoSpeedPerTime}\n" +
+            $"자동 타격 배율 :  {m_playerSystem.BaseAutoDamagePerHitMultiply}\n\n" +
+
+            $"<color=#FDE74C><b>[ 보상 및 기타 ]</b></color>\n" +
+            $"대어 낚시 확률 :  {m_playerSystem.BaseProbabilityAtFishSize}\n" +
+            $"희귀어 낚시 확률 :  {m_playerSystem.BaseProbabilityAtFishRarity}\n" +
+            $"골드 획득 배율 :  {m_playerSystem.BaseGoldGettingMultiply}배\n" +
+            $"이동 속도 :  {m_playerSystem.BaseMapMovementSpeedPerTime}\n" +
+            $"인벤토리 크기 :  {m_playerSystem.BaseInventorySize}칸";
+
+        return stats;
+    }
+    public string GetEngineSpeedText()
+    {
+        return m_playerSystem != null ? $"이동 속도: {m_playerSystem.BaseMapMovementSpeedPerTime}" : "이동 속도: 0";
+    }
+
+    public string GetStorageSizeText()
+    {
+        return m_playerSystem != null ? $"물고기 창고: {m_playerSystem.BaseInventorySize}칸" : "물고기 창고: 0칸";
+    }
 }

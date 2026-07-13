@@ -12,10 +12,14 @@ namespace DesktopCompanion.Views
         private readonly EquipmentViewModel m_vm = new();
 
         [Header("UI 연결")]
-        [SerializeField] private TextMeshProUGUI m_damageText;
+        [SerializeField] private TextMeshProUGUI m_allStatsText;
         [SerializeField] private EquipmentSlotWidget[] m_slots;
 
-        // 인벤토리 팀원분의 마우스 드래그 컨트롤러를 연결할 빈칸
+        // [추가됨] 배 장비창 텍스트 2개를 연결할 빈칸!
+        [Header("Ship Equip UI")]
+        [SerializeField] private TextMeshProUGUI m_engineSpeedText;
+        [SerializeField] private TextMeshProUGUI m_storageSizeText;
+
         [Header("Inventory Link")]
         [SerializeField] private ItemPickupController m_itemPickupController;
 
@@ -34,12 +38,7 @@ namespace DesktopCompanion.Views
             m_vm.Inject(SystemManager, EntityManager);
             m_vm.Bind();
 
-            m_vm.Damage.Bind(damageValue =>
-            {
-                if (m_damageText != null) m_damageText.text = $"공격력: {damageValue}";
-            });
-
-            m_vm.OnEquipmentChanged += RefreshAllSlots;
+            m_vm.OnEquipmentChanged += RefreshUI;
 
             foreach (var slot in m_slots)
             {
@@ -50,7 +49,6 @@ namespace DesktopCompanion.Views
                     },
                     onDropAction: dropArea =>
                     {
-                        // 1. 인벤토리에서 끌고 온 아이템을 내 위에 떨어뜨렸을 때
                         if (m_itemPickupController != null && m_itemPickupController.HasItem)
                         {
                             EntityHandle droppedItem = m_itemPickupController.PickedHandle;
@@ -60,10 +58,8 @@ namespace DesktopCompanion.Views
                     },
                     onBeginDragAction: dragArea =>
                     {
-                        // 2. 장비창에 껴있는 장비를 바깥으로 끌어낼 때
                         EntityHandle equippedItem = m_vm.GetEquippedHandleForArea(dragArea);
 
-                        // [에러 해결] '!=' 기호 대신 .Equals() 함수를 사용하여 안전하게 비교합니다!
                         if (!equippedItem.Equals(default(EntityHandle)) && m_itemPickupController != null)
                         {
                             m_itemPickupController.BeginPickup(ItemType.Equipment, -1, equippedItem, null);
@@ -77,18 +73,13 @@ namespace DesktopCompanion.Views
             if (m_tabShipEquipBtn != null) m_tabShipEquipBtn.onClick.AddListener(() => SwitchTab(1));
             if (m_tabStatsBtn != null) m_tabStatsBtn.onClick.AddListener(() => SwitchTab(2));
 
-            RefreshAllSlots();
+            RefreshUI();
             SwitchTab(0);
         }
 
         public override void Unbind()
         {
-            m_vm.Damage.Unbind(damageValue =>
-            {
-                if (m_damageText != null) m_damageText.text = $"공격력: {damageValue}";
-            });
-
-            m_vm.OnEquipmentChanged -= RefreshAllSlots;
+            m_vm.OnEquipmentChanged -= RefreshUI;
             m_vm.Unbind();
 
             foreach (var slot in m_slots)
@@ -101,12 +92,27 @@ namespace DesktopCompanion.Views
             if (m_tabStatsBtn != null) m_tabStatsBtn.onClick.RemoveAllListeners();
         }
 
-        private void RefreshAllSlots()
+        private void RefreshUI()
         {
             foreach (var slot in m_slots)
             {
                 string itemName = m_vm.GetItemNameForArea(slot.Area);
                 slot.RefreshSlotUI(itemName);
+            }
+
+            if (m_allStatsText != null)
+            {
+                m_allStatsText.text = m_vm.GetAllStatsFormattedText();
+            }
+
+            // [추가됨] 스탯창이 갱신될 때, 배 장비창의 텍스트도 자동으로 최신 스탯을 받아옵니다!
+            if (m_engineSpeedText != null)
+            {
+                m_engineSpeedText.text = m_vm.GetEngineSpeedText();
+            }
+            if (m_storageSizeText != null)
+            {
+                m_storageSizeText.text = m_vm.GetStorageSizeText();
             }
         }
 
