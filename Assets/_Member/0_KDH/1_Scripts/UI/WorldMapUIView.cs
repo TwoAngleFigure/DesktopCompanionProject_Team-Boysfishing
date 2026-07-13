@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections.Generic;
 using DesktopCompanion.Data;
 
@@ -8,7 +9,10 @@ namespace DesktopCompanion.Views
     {
         [Header("동적 생성 인프라 설정")]
         [SerializeField] private GameObject m_nodePrefab; 
-        [SerializeField] private Transform m_nodeContainer; 
+        [SerializeField] private Transform m_nodeContainer;
+
+        [Header("UI 제어")]
+        public Button m_closeButton;
 
         private readonly WorldMapViewModel m_vm = new();
         private readonly List<GameObject> m_instantiatedNodes = new();
@@ -18,12 +22,18 @@ namespace DesktopCompanion.Views
             m_vm.Inject(SystemManager, EntityManager);
             m_vm.Bind();
 
-
             GenerateMapNodes();
+
+            if (m_closeButton != null)
+            {
+                m_closeButton.onClick.AddListener(() => gameObject.SetActive(false));
+            }
         }
 
         public override void Unbind()
         {
+            if (m_closeButton != null) m_closeButton.onClick.RemoveAllListeners();
+
             ClearMapNodes();
             m_vm.Unbind();
         }

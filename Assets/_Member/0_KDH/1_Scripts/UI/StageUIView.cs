@@ -13,13 +13,12 @@ namespace DesktopCompanion.Views
 
         [Header("명령 버튼 UI")]
         [SerializeField] private Button m_cancelButton;
-        public Button m_moveButton;
 
-        [Header("현재 설정된 목적지 (실전 동적 연동용)")]
-        public int m_targetMapId;
+        [Header("월드맵 제어 UI")]
+        public Button m_openMapButton;
+        public GameObject m_worldMapPanel;
 
         private readonly StageViewModel m_vm = new();
-
         private bool m_wasTraveling = false;
 
         public override void Bind()
@@ -30,8 +29,15 @@ namespace DesktopCompanion.Views
             m_vm.CurrentStageName.Bind(OnCurrentStageNameChanged);
             m_vm.IsCancelButtonInteractable.Bind(interactable => { if (m_cancelButton != null) m_cancelButton.interactable = interactable; });
 
-            if (m_moveButton != null) m_moveButton.onClick.AddListener(() => m_vm.MoveCommand?.Execute(m_targetMapId));
             if (m_cancelButton != null) m_cancelButton.onClick.AddListener(() => m_vm.CancelCommand?.Execute());
+
+            if (m_openMapButton != null)
+            {
+                m_openMapButton.onClick.AddListener(() =>
+                {
+                    if (m_worldMapPanel != null) m_worldMapPanel.SetActive(true);
+                });
+            }
 
             if (m_timerText != null && !m_vm.IsTraveling)
             {
@@ -42,8 +48,9 @@ namespace DesktopCompanion.Views
 
         public override void Unbind()
         {
-            if (m_moveButton != null) m_moveButton.onClick.RemoveAllListeners();
             if (m_cancelButton != null) m_cancelButton.onClick.RemoveAllListeners();
+
+            if (m_openMapButton != null) m_openMapButton.onClick.RemoveAllListeners();
 
             m_vm.CurrentStageName.Unbind(OnCurrentStageNameChanged);
             m_vm.Unbind();
