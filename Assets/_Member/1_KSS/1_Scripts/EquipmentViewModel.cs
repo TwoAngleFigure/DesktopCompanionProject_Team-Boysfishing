@@ -62,4 +62,8 @@ public class EquipmentViewModel : UIViewModelBase
     {
         return m_playerSystem != null ? m_playerSystem.GetEquippedItemName(area) : "Empty Slot";
     }
+    public EntityHandle GetEquippedHandleForArea(EquipmentMountingArea area)
+    {
+        return m_playerSystem != null ? m_playerSystem.GetEquippedItemHandle(area) : default;
+    }
 }

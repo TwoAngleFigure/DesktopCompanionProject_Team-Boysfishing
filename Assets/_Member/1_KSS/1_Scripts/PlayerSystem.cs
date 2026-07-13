@@ -9,7 +9,7 @@ using UnityEngine;
 namespace DesktopCompanion.Systems
 {
     /// <summary>
-    /// �÷��̾��� �ɷ�ġ�� �����ϰ�, ��� ������ ���� ���� ��ȭ�� �ǽð����� ����ϴ� �ý����Դϴ�.
+    /// 플레이어의 기본 스탯을 관리하고, 장비 장착에 따른 스탯 변화를 실시간으로 계산하는 시스템입니다.
     /// </summary>
     public class PlayerSystem : SystemBase, ISaveable
     {
@@ -79,8 +79,9 @@ namespace DesktopCompanion.Systems
         {
             // R1: 복원 단계에서는 원시 상태만 다룬다. 최종 스탯 계산(CaculatedStat)은
             // 복원 이후 Phase 2(PostInitialize)에서 수행되어 저장값을 반영하므로 여기서 호출하지 않는다.
-            // [������] ������ Ȯ�ο� �α״� �ѱ۷�
-            Debug.Log("[PlayerSystem] ���̺� �ε� �Ϸ�! ��� ���� ���� �Ϸ�.");
+
+            // [디버그] 저장 데이터 복원 확인용 로그
+            Debug.Log("[PlayerSystem] 세이브 데이터 복원 완료! 원시 상태 로드 성공.");
         }
 
         #endregion
@@ -212,35 +213,51 @@ namespace DesktopCompanion.Systems
                 bool isRemoved = TryFindAndRemoveFromInventory(m_inventorySystem, afterEquipHandle);
                 if (!isRemoved)
                 {
-                    // [������] ������ Ȯ�ο� �α״� �ѱ۷�
-                    Debug.LogWarning("�κ��丮���� �ش� �������� ã�� �� ���ų� ������ �����߽��ϴ�.");
+                    // [경고] 장착하려는 아이템이 인벤토리에 없을 경우 경고 로그 출력
+                    Debug.LogWarning("[PlayerSystem] 인벤토리에서 장착할 아이템을 찾을 수 없거나 제거에 실패했습니다.");
                 }
             }
 
             player.Equip(area, afterEquipHandle);
             CaculatedStat();
 
-            // [������] ������ Ȯ�ο� �α״� �ѱ۷�
-            Debug.Log($"{area} ������ ���ο� ��� �����Ǿ����ϴ�.");
+            // [디버그] 정상적으로 장착되었음을 알리는 로그 출력
+            Debug.Log($"[PlayerSystem] {area} 슬롯에 새로운 장비가 성공적으로 장착되었습니다.");
         }
 
         /// <summary>
-        /// Ư�� ������ ������ ����� �̸��� ��ȯ�մϴ�. (UI ���� ǥ�ÿ�)
+        /// 특정 장비 슬롯에 장착된 아이템의 이름을 반환합니다. (UI 표시용)
         /// </summary>
         public string GetEquippedItemName(EquipmentMountingArea area)
         {
-            // [����] UI�� �ٷ� �Ѿ�� �ؽ�Ʈ�� ��� �����Ͽ� ��Ʈ ���� ����
+            // [예외 처리] 플레이어 엔티티가 없거나 핸들이 비어있을 경우 텍스트 에러 방지용 "Empty Slot" 반환
             if (playerHandle.Value == Guid.Empty) return "Empty Slot";
 
             Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
             if (player != null && player.Equipped.TryGetValue(area, out EntityHandle handle))
             {
                 Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(handle);
-                // ����� ���� �̸�(������)�� ������ ����
+                // 장비 데이터가 유효하면 해당 장비의 이름을 반환하고, 없으면 "Empty Slot" 반환
                 return equipment != null ? equipment.Name : "Empty Slot";
             }
 
             return "Empty Slot";
+        }
+
+        /// <summary>
+        /// 특정 구역에 장착된 장비의 실제 데이터(EntityHandle)를 반환합니다. (드래그 탈착용)
+        /// </summary>
+        public EntityHandle GetEquippedItemHandle(EquipmentMountingArea area)
+        {
+            if (playerHandle.Value == Guid.Empty) return default;
+
+            Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
+            if (player != null && player.Equipped.TryGetValue(area, out EntityHandle handle))
+            {
+                return handle;
+            }
+
+            return default;
         }
     }
 }

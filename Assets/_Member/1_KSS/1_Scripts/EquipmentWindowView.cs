@@ -1,8 +1,9 @@
+using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
 using DesktopCompanion.Views;
-using UnityEngine;
-using UnityEngine.UI; // 버튼 컴포넌트용
 using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace DesktopCompanion.Views
 {
@@ -14,7 +15,10 @@ namespace DesktopCompanion.Views
         [SerializeField] private TextMeshProUGUI m_damageText;
         [SerializeField] private EquipmentSlotWidget[] m_slots;
 
-        // [탭 기능] 추가된 변수들
+        // 인벤토리 팀원분의 마우스 드래그 컨트롤러를 연결할 빈칸
+        [Header("Inventory Link")]
+        [SerializeField] private ItemPickupController m_itemPickupController;
+
         [Header("Tab Buttons")]
         [SerializeField] private Button m_tabPlayerEquipBtn;
         [SerializeField] private Button m_tabShipEquipBtn;
@@ -27,38 +31,63 @@ namespace DesktopCompanion.Views
 
         public override void Bind()
         {
-            // Inject 에러 안 나도록 사용자님 원본 그대로 2개 다 넣음
             m_vm.Inject(SystemManager, EntityManager);
             m_vm.Bind();
 
-            // 1. 공격력 텍스트 바인딩
-            m_vm.Damage.Bind(damageValue => m_damageText.text = $"공격력: {damageValue}");
+            m_vm.Damage.Bind(damageValue =>
+            {
+                if (m_damageText != null) m_damageText.text = $"공격력: {damageValue}";
+            });
 
-            // 2. 뷰모델의 '장비 변경 이벤트' 구독 (UI 자동 갱신)
             m_vm.OnEquipmentChanged += RefreshAllSlots;
 
-            // 3. 슬롯 클릭 이벤트 연결
             foreach (var slot in m_slots)
             {
-                slot.Bind(clickedArea =>
-                {
-                    m_vm.EquipCommand.Execute((clickedArea, default(EntityHandle)));
-                });
+                slot.Bind(
+                    onClickAction: clickedArea =>
+                    {
+                        m_vm.EquipCommand.Execute((clickedArea, default(EntityHandle)));
+                    },
+                    onDropAction: dropArea =>
+                    {
+                        // 1. 인벤토리에서 끌고 온 아이템을 내 위에 떨어뜨렸을 때
+                        if (m_itemPickupController != null && m_itemPickupController.HasItem)
+                        {
+                            EntityHandle droppedItem = m_itemPickupController.PickedHandle;
+                            m_vm.EquipCommand.Execute((dropArea, droppedItem));
+                            m_itemPickupController.ClearPickup();
+                        }
+                    },
+                    onBeginDragAction: dragArea =>
+                    {
+                        // 2. 장비창에 껴있는 장비를 바깥으로 끌어낼 때
+                        EntityHandle equippedItem = m_vm.GetEquippedHandleForArea(dragArea);
+
+                        // [에러 해결] '!=' 기호 대신 .Equals() 함수를 사용하여 안전하게 비교합니다!
+                        if (!equippedItem.Equals(default(EntityHandle)) && m_itemPickupController != null)
+                        {
+                            m_itemPickupController.BeginPickup(ItemType.Equipment, -1, equippedItem, null);
+                            m_vm.EquipCommand.Execute((dragArea, default(EntityHandle)));
+                        }
+                    }
+                );
             }
 
-            // 4. 탭 버튼 클릭 이벤트 연결
-            m_tabPlayerEquipBtn.onClick.AddListener(() => SwitchTab(0));
-            m_tabShipEquipBtn.onClick.AddListener(() => SwitchTab(1));
-            m_tabStatsBtn.onClick.AddListener(() => SwitchTab(2));
+            if (m_tabPlayerEquipBtn != null) m_tabPlayerEquipBtn.onClick.AddListener(() => SwitchTab(0));
+            if (m_tabShipEquipBtn != null) m_tabShipEquipBtn.onClick.AddListener(() => SwitchTab(1));
+            if (m_tabStatsBtn != null) m_tabStatsBtn.onClick.AddListener(() => SwitchTab(2));
 
-            // 초기화: 슬롯 이름들 불러오고, 1번 탭(플레이어 장비) 강제로 켜기
             RefreshAllSlots();
             SwitchTab(0);
         }
 
         public override void Unbind()
         {
-            m_vm.Damage.Unbind(damageValue => m_damageText.text = $"공격력: {damageValue}");
+            m_vm.Damage.Unbind(damageValue =>
+            {
+                if (m_damageText != null) m_damageText.text = $"공격력: {damageValue}";
+            });
+
             m_vm.OnEquipmentChanged -= RefreshAllSlots;
             m_vm.Unbind();
 
@@ -67,12 +96,11 @@ namespace DesktopCompanion.Views
                 slot.Unbind();
             }
 
-            m_tabPlayerEquipBtn.onClick.RemoveAllListeners();
-            m_tabShipEquipBtn.onClick.RemoveAllListeners();
-            m_tabStatsBtn.onClick.RemoveAllListeners();
+            if (m_tabPlayerEquipBtn != null) m_tabPlayerEquipBtn.onClick.RemoveAllListeners();
+            if (m_tabShipEquipBtn != null) m_tabShipEquipBtn.onClick.RemoveAllListeners();
+            if (m_tabStatsBtn != null) m_tabStatsBtn.onClick.RemoveAllListeners();
         }
 
-        // 모든 슬롯의 텍스트(이름)를 새로고침 하는 함수
         private void RefreshAllSlots()
         {
             foreach (var slot in m_slots)
@@ -82,7 +110,6 @@ namespace DesktopCompanion.Views
             }
         }
 
-        // 탭 화면 전환 함수
         private void SwitchTab(int tabIndex)
         {
             if (m_playerEquipPanel != null) m_playerEquipPanel.SetActive(tabIndex == 0);
