@@ -15,6 +15,7 @@ namespace DesktopCompanion.Views
 
         private InventorySystem m_inventorySystem;
         private PlayerSystem m_playerSystem;
+        private CurrencySystem m_currencySystem;
 
         private ItemType m_currentTab = ItemType.Fish;
         private int m_selectedSlotIndex = -1;
@@ -33,6 +34,7 @@ namespace DesktopCompanion.Views
         {
             m_inventorySystem = SystemManager.GetSystem<InventorySystem>();
             m_playerSystem = SystemManager.GetSystem<PlayerSystem>();
+            m_currencySystem = SystemManager.GetSystem<CurrencySystem>();
 
             SelectTabCommand = new RelayCommand<ItemType>(SelectTab);
             SelectSlotCommand = new RelayCommand<int>(SelectSlot);
@@ -42,7 +44,13 @@ namespace DesktopCompanion.Views
                 m_inventorySystem.OnInventoryChanged += HandleInventoryChanged;
             }
 
-            RefreshGold();
+            if (m_currencySystem != null)
+            {
+                m_currencySystem.OnGoldChanged += HandleGoldChanged;
+
+                //최초 값 리딩
+                Gold.Value = m_currencySystem.CurrentGold;
+            }
             RefreshSlots();
             RefreshSelectedSlot();
         }
@@ -54,19 +62,19 @@ namespace DesktopCompanion.Views
                 m_inventorySystem.OnInventoryChanged -= HandleInventoryChanged;
             }
 
-            m_inventorySystem = null;
-            m_playerSystem = null;
-        }
-
-        private void RefreshGold()
-        {
-            if (m_playerSystem == null)
+            if (m_currencySystem != null)
             {
-                Gold.Value = 0;
-                return;
+                m_currencySystem.OnGoldChanged -= HandleGoldChanged;
             }
 
-            Gold.Value = m_playerSystem.StartingGold;
+            m_inventorySystem = null;
+            m_playerSystem = null;
+            m_currencySystem = null;
+        }
+
+        private void HandleGoldChanged(int currentGold)
+        {
+            Gold.Value = currentGold;
         }
 
         private void HandleInventoryChanged()
