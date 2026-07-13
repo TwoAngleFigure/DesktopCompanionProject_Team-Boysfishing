@@ -129,11 +129,18 @@ namespace DesktopCompanion.Systems
 
         public void CaculatedStat()
         {
+            // 여기서 캐릭터의 기본 스탯은 어떠한 경우에도 무조건 갱신됩니다!
             InitializeStat();
 
             foreach (EntityHandle equitmentHandle in entity_Player.Equipped.Values)
             {
+                // 🛡️ [방어 코드 1] 슬롯이 비어있으면 해당 칸의 추가 스탯 계산만 건너뜁니다.
+                if (equitmentHandle.Value == Guid.Empty) continue;
+
                 Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(equitmentHandle);
+
+                // 🛡️ [방어 코드 2] 장비 데이터가 null인 경우 해당 칸 무시 (NullReferenceException 완벽 차단)
+                if (equipment == null) continue;
 
                 foreach (StatModifier stat in equipment.CurrentModifiers)
                 {
@@ -181,6 +188,7 @@ namespace DesktopCompanion.Systems
                     }
                 }
             }
+
             m_baseInventorySize += m_bonusInventorySize;
             OnStatChanged?.Invoke(playerHandle);
         }
@@ -207,13 +215,22 @@ namespace DesktopCompanion.Systems
         {
             Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
 
-            if (player.Equipped.TryGetValue(area, out EntityHandle beforeEquipHandle))
+            // 🛡️ [추가된 방어 코드] 기존에 낀 장비도 없고, 새로 장착할 장비도 빈 값(클릭만 한 상태)이면 불필요한 로직 없이 조용히 종료!
+            bool hasEquippedItem = player.Equipped.TryGetValue(area, out EntityHandle beforeEquipHandle) && beforeEquipHandle.Value != Guid.Empty;
+            if (!hasEquippedItem && afterEquipHandle.Value == Guid.Empty)
+            {
+                return;
+            }
+
+            // 1. 기존 장비 해제 후 인벤토리 반환
+            if (hasEquippedItem)
             {
                 player.Unequip(area);
                 m_inventorySystem?.AddItem(beforeEquipHandle);
             }
 
-            if (m_inventorySystem != null)
+            // 2. 새로 장착할 아이템이 빈 값이 아닐 때만 인벤토리에서 제거 시도
+            if (afterEquipHandle.Value != Guid.Empty && m_inventorySystem != null)
             {
                 bool isRemoved = TryFindAndRemoveFromInventory(m_inventorySystem, afterEquipHandle);
                 if (!isRemoved)
@@ -223,11 +240,14 @@ namespace DesktopCompanion.Systems
                 }
             }
 
+            // 3. 새 아이템 장착 (빈 값이면 빈 값대로 덮어씌워서 완벽한 해제 상태로 만듦)
             player.Equip(area, afterEquipHandle);
+
+            // 4. 스탯 재계산 (기본 스탯 + 장착 장비 스탯 안전하게 갱신)
             CaculatedStat();
 
             // [디버그] 정상적으로 장착되었음을 알리는 로그 출력
-            Debug.Log($"[PlayerSystem] {area} 슬롯에 새로운 장비가 성공적으로 장착되었습니다.");
+            Debug.Log($"[PlayerSystem] {area} 슬롯 장비 갱신 완료.");
         }
 
         /// <summary>
