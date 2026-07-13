@@ -1,5 +1,6 @@
 using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
+using DesktopCompanion.Systems;
 using DesktopCompanion.Views;
 using TMPro;
 using UnityEngine;
@@ -73,7 +74,7 @@ namespace DesktopCompanion.Views
             if (m_tabPlayerEquipBtn != null) m_tabPlayerEquipBtn.onClick.AddListener(() => SwitchTab(0));
             if (m_tabShipEquipBtn != null) m_tabShipEquipBtn.onClick.AddListener(() => SwitchTab(1));
             if (m_tabStatsBtn != null) m_tabStatsBtn.onClick.AddListener(() => SwitchTab(2));
-
+            if (m_storageUpgradeBtn != null) m_storageUpgradeBtn.onClick.AddListener(() => SystemManager.GetSystem<PlayerSystem>().UpgradeFishStorage());
             RefreshUI();
             SwitchTab(0);
         }
