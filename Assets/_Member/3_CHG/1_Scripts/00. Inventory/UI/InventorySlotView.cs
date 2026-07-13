@@ -1,13 +1,14 @@
-using DesktopCompanion.Data;
 using System;
+using DesktopCompanion.Data;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace DesktopCompanion.Views
 {
-    public class InventorySlotView : MonoBehaviour
+    public class InventorySlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         [Header("Button")]
         [SerializeField] private Button m_button;
@@ -21,9 +22,9 @@ namespace DesktopCompanion.Views
         [SerializeField] private GameObject m_emptyRoot;
         [SerializeField] private GameObject m_selectedFrame;
 
-        [Header("Temporary Move Mode")]
-        [SerializeField] private GameObject m_moveSourceFrame;
-        [SerializeField] private GameObject m_moveTargetFrame;
+        [Header("Pickup State")]
+        [FormerlySerializedAs("m_moveSourceFrame")]
+        [SerializeField] private GameObject m_pickupSourceFrame;
 
         private const float DoubleClickInterval = 0.3f;
 
@@ -33,6 +34,8 @@ namespace DesktopCompanion.Views
 
         private Action<int> m_onClick;
         private Action<int> m_onDoubleClick;
+        private Action<int> m_onPointerEnter;
+        private Action<int> m_onPointerExit;
 
         private void Awake()
         {
@@ -42,11 +45,14 @@ namespace DesktopCompanion.Views
             }
         }
 
-        public void Initialize(int slotIndex, Action<int> onClick, Action<int> onDoubleClick)
+        public void Initialize(int slotIndex, Action<int> onClick, Action<int> onDoubleClick, Action<int> onPointerEnter, Action<int> onPointerExit)
         {
             m_slotIndex = slotIndex;
+
             m_onClick = onClick;
             m_onDoubleClick = onDoubleClick;
+            m_onPointerEnter = onPointerEnter;
+            m_onPointerExit = onPointerExit;
 
             if (m_button == null)
             {
@@ -75,13 +81,15 @@ namespace DesktopCompanion.Views
 
             if (m_iconImage != null)
             {
-                m_iconImage.enabled = icon != null;
                 m_iconImage.sprite = icon;
+                m_iconImage.enabled = icon != null;
             }
 
             if (m_quantityText != null)
             {
-                m_quantityText.text = data.Quantity > 1 ? data.Quantity.ToString() : string.Empty;
+                m_quantityText.text = data.Quantity > 1
+                    ? data.Quantity.ToString()
+                    : string.Empty;
             }
 
             if (m_subInfoText != null)
@@ -89,11 +97,17 @@ namespace DesktopCompanion.Views
                 m_subInfoText.text = GetSubInfoText(data);
             }
 
-            SetStateFrames(data);
+            if (m_selectedFrame != null)
+            {
+                m_selectedFrame.SetActive(data.IsSelected);
+            }
         }
 
         private void SetEmpty(InventorySlotViewData data)
         {
+            m_canDoubleClick = false;
+            m_lastClickTime = -1f;
+
             if (m_emptyRoot != null)
             {
                 m_emptyRoot.SetActive(true);
@@ -101,8 +115,8 @@ namespace DesktopCompanion.Views
 
             if (m_iconImage != null)
             {
-                m_iconImage.enabled = false;
                 m_iconImage.sprite = null;
+                m_iconImage.enabled = false;
             }
 
             if (m_quantityText != null)
@@ -115,30 +129,9 @@ namespace DesktopCompanion.Views
                 m_subInfoText.text = string.Empty;
             }
 
-            SetStateFrames(data);
-        }
-
-        private void SetStateFrames(InventorySlotViewData data)
-        {
-            bool isSelected = data != null && data.IsSelected;
-
-            // TEMP: Drag-Drop 도입 시 수정
-            bool isMoveSource = data != null && data.IsMoveSource;
-            bool isMoveTarget = data != null && data.IsMoveMode && !data.IsMoveSource;
-
             if (m_selectedFrame != null)
             {
-                m_selectedFrame.SetActive(isSelected);
-            }
-
-            if (m_moveSourceFrame != null)
-            {
-                m_moveSourceFrame.SetActive(isMoveSource);
-            }
-
-            if (m_moveTargetFrame != null)
-            {
-                m_moveTargetFrame.SetActive(isMoveTarget);
+                m_selectedFrame.SetActive(data != null && data.IsSelected);
             }
         }
 
@@ -150,7 +143,9 @@ namespace DesktopCompanion.Views
                     return GetQualityText(data.Quality);
 
                 case ItemType.Equipment:
-                    return data.UpgradeLevel > 0 ? $"+{data.UpgradeLevel}" : string.Empty;
+                    return data.UpgradeLevel > 0
+                        ? $"+{data.UpgradeLevel}"
+                        : string.Empty;
 
                 case ItemType.Materials:
                 case ItemType.Consumables:
@@ -187,9 +182,9 @@ namespace DesktopCompanion.Views
 
         public void SetPickupSource(bool isPickupSource)
         {
-            if (m_moveSourceFrame != null)
+            if (m_pickupSourceFrame != null)
             {
-                m_moveSourceFrame.SetActive(isPickupSource);
+                m_pickupSourceFrame.SetActive(isPickupSource);
             }
         }
 
@@ -197,7 +192,10 @@ namespace DesktopCompanion.Views
         {
             float currentTime = Time.unscaledTime;
 
-            bool isDoubleClick = m_canDoubleClick && m_lastClickTime >= 0f && currentTime - m_lastClickTime <= DoubleClickInterval;
+            bool isDoubleClick =
+                m_canDoubleClick
+                && m_lastClickTime >= 0f
+                && currentTime - m_lastClickTime <= DoubleClickInterval;
 
             if (isDoubleClick)
             {
@@ -207,9 +205,21 @@ namespace DesktopCompanion.Views
                 return;
             }
 
-            m_lastClickTime = m_canDoubleClick ? currentTime : -1f;
+            m_lastClickTime = m_canDoubleClick
+                ? currentTime
+                : -1f;
 
             m_onClick?.Invoke(m_slotIndex);
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            m_onPointerEnter?.Invoke(m_slotIndex);
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            m_onPointerExit?.Invoke(m_slotIndex);
         }
 
         private void OnDestroy()
@@ -218,6 +228,11 @@ namespace DesktopCompanion.Views
             {
                 m_button.onClick.RemoveListener(HandleClick);
             }
+
+            m_onClick = null;
+            m_onDoubleClick = null;
+            m_onPointerEnter = null;
+            m_onPointerExit = null;
         }
     }
 }
