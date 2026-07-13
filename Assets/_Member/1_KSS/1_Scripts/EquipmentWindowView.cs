@@ -19,6 +19,7 @@ namespace DesktopCompanion.Views
         [Header("Ship Equip UI")]
         [SerializeField] private TextMeshProUGUI m_engineSpeedText;
         [SerializeField] private TextMeshProUGUI m_storageSizeText;
+        [SerializeField] private Button m_storageUpgradeBtn;//테스트용
 
         [Header("Inventory Link")]
         [SerializeField] private ItemPickupController m_itemPickupController;

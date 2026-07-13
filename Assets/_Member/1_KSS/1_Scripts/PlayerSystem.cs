@@ -3,7 +3,8 @@ using DesktopCompanion.Core;
 using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
 using DesktopCompanion.Systems;
-using DesktopCompanion.Save;
+// [세이브 관련 주석 처리]
+// using DesktopCompanion.Save; 
 using UnityEngine;
 
 namespace DesktopCompanion.Systems
@@ -11,7 +12,8 @@ namespace DesktopCompanion.Systems
     /// <summary>
     /// 플레이어의 기본 스탯을 관리하고, 장비 장착에 따른 스탯 변화를 실시간으로 계산하는 시스템입니다.
     /// </summary>
-    public class PlayerSystem : SystemBase, ISaveable
+    // [세이브 관련 주석 처리] ISaveable 상속 비활성화
+    public class PlayerSystem : SystemBase //, ISaveable
     {
         private EntityHandle playerHandle;
         private Entity_Player entity_Player;
@@ -65,6 +67,8 @@ namespace DesktopCompanion.Systems
 
         #endregion
 
+        // [세이브 관련 주석 처리] Save 영역 전체를 블록 주석(/* */)으로 비활성화
+        /*
         #region Save
 
         public string SaveId => "player_system_stats";
@@ -85,6 +89,7 @@ namespace DesktopCompanion.Systems
         }
 
         #endregion
+        */
 
         public override void Initialize()
         {
@@ -176,7 +181,7 @@ namespace DesktopCompanion.Systems
                     }
                 }
             }
-
+            m_baseInventorySize += m_bonusInventorySize;
             OnStatChanged?.Invoke(playerHandle);
         }
 
@@ -258,6 +263,45 @@ namespace DesktopCompanion.Systems
             }
 
             return default;
+        }
+        // =========================================================
+        // 물고기 창고 강화 로직 (골드 소모 및 1.25배 비용 증가)
+        // =========================================================
+        private int m_bonusInventorySize = 0; // 강화로 영구적으로 늘어난 인벤토리 칸 수
+
+        // [나중에 수정할 부분] 현재 0으로 두어 무한 테스트 가능. 실전 시 100 등으로 변경!
+        private int m_currentStorageUpgradeCost = 0;
+        private float m_storageUpgradeCostMultiplier = 1.25f; // 비용 1.25배 증가
+
+        public void UpgradeFishStorage()
+        {
+            if (playerHandle.Value == Guid.Empty) return;
+
+            Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
+
+            // 플레이어의 골드가 업그레이드 비용보다 같거나 많은지 확인
+            if (player != null && player.Gold >= m_currentStorageUpgradeCost)
+            {
+                // 1. 골드 차감(테스트용)
+                //player.Gold -= m_currentStorageUpgradeCost;
+
+                // 2. 인벤토리 칸 수 1 증가
+                m_bonusInventorySize += 1;
+
+                // 3. 다음 업그레이드 비용 1.25배 계산 
+                // (Mathf.CeilToInt를 써서 소수점은 올림 처리합니다. 예: 125.5 골드 -> 126 골드)
+                // 현재는 0 * 1.25 이므로 계속 0이 됩니다.
+                m_currentStorageUpgradeCost = Mathf.CeilToInt(m_currentStorageUpgradeCost * m_storageUpgradeCostMultiplier);
+
+                // 4. 스탯 재계산 및 UI/인벤토리 자동 확장 방송(OnStatChanged) 송출!
+                CaculatedStat();
+
+                Debug.Log($"[물고기 창고] 강화 성공! 총 추가 칸 수: {m_bonusInventorySize} / 다음 필요 골드: {m_currentStorageUpgradeCost}");
+            }
+            else
+            {
+                Debug.LogWarning($"[물고기 창고] 골드가 부족합니다! (필요 골드: {m_currentStorageUpgradeCost} / 보유 골드: {player?.Gold})");
+            }
         }
     }
 }

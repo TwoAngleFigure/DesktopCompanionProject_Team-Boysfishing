@@ -17,12 +17,18 @@ public class EquipmentViewModel : UIViewModelBase
     // [추가됨] View에게 "장비 바뀌었으니 UI 새로고침해!" 라고 알려줄 이벤트
     public event Action OnEquipmentChanged;
 
+    public RelayCommand UpgradeStorageCommand { get; private set; }
+
     public override void Bind()
     {
         m_playerSystem = SystemManager.GetSystem<PlayerSystem>();
 
         EquipCommand = new RelayCommand<(EquipmentMountingArea, EntityHandle)>(
             args => m_playerSystem?.Equip(args.Item1, args.Item2)
+        );
+
+        UpgradeStorageCommand = new RelayCommand(
+            () => m_playerSystem?.UpgradeFishStorage()
         );
 
         // PlayerSystem의 스탯 변경 이벤트를 구독
