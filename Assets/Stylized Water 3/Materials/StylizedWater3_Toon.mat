@@ -21,7 +21,6 @@ Material:
   - _SURFACE_FOAM_DUAL
   - _SURFACE_FOAM_SINGLE
   - _UNLIT
-  - _WAVES
   m_InvalidKeywords:
   - ADVANCED_LIGHTING
   - _DEPTHEXP_ON
@@ -121,7 +120,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _WaveProfile:
-        m_Texture: {fileID: 5393152077581806659, guid: 54224f5218597124e8955cd6e5a58fd0, type: 2}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _texcoord:
@@ -306,20 +305,20 @@ Material:
     - _VertexColorTransparency: 0
     - _VertexColorWaveFlattening: 0
     - _WaveDistance: 0.679
-    - _WaveFrequency: 0.17
-    - _WaveHeight: 0.39
+    - _WaveFrequency: 1
+    - _WaveHeight: 0.47
     - _WaveMaxLayers: 64
     - _WaveNormalStr: 0
-    - _WaveSpeed: 0.34
-    - _WaveSteepness: 1.14
+    - _WaveSpeed: 2
+    - _WaveSteepness: 5
     - _WaveTint: 0.1
-    - _WavesOn: 1
+    - _WavesOn: 0
     - _WorkflowMode: 1
     - _WorldSpaceUV: 1
     - _ZClip: 1
     - _ZWrite: 0
     m_Colors:
-    - _BaseColor: {r: 0, g: 0.04731498, b: 0.6150943, a: 0.73333335}
+    - _BaseColor: {r: 0, g: 0.36981124, b: 0.7660377, a: 0.5058824}
     - _Color: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _DepthMapBounds: {r: -402.3, g: -459.43, b: 0.0012693577, a: 0}
     - _Direction: {r: 1, g: 1, b: 0, a: 0}
@@ -328,7 +327,7 @@ Material:
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _FoamColor: {r: 1, g: 1, b: 1, a: 1}
     - _FoamCrestMinMaxHeight: {r: 1, g: 2, b: 0, a: 0}
-    - _FoamTiling: {r: 0.1, g: 0.1, b: 0, a: 0}
+    - _FoamTiling: {r: 0.1, g: 0.03, b: 0, a: 0}
     - _HorizonColor: {r: 0.68, g: 1, b: 0.99, a: 0.15}
     - _IntersectionColor: {r: 1, g: 1, b: 1, a: 1}
     - _NormalTiling: {r: 0.2, g: 0.2, b: 0, a: 0}
