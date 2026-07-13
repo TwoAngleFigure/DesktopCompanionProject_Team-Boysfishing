@@ -20,7 +20,7 @@ MonoBehaviour:
   m_baseBattleTimeVariable: 10
   m_baseCriticalChance: 0.05
   m_baseCriticalMultiply: 1.5
-  m_baseAutoBattleCooltime: 5
+  m_baseAutoBattleCooltime: 10
   m_baseAutoSpeedPerTime: 1
   m_baseAutoDamagePerHitMultiply: 2
   m_baseProbabilityAtFishSize: 0

@@ -21,8 +21,9 @@ public class FishingWorldView : WorldViewBase
     [SerializeField] private TMP_Text m_fishInfoText;
     [SerializeField] private Image[] m_qualityStars;
     [SerializeField] private float m_popupHoldDuration = 1.5f;
-    [SerializeField] private float m_popupFadeDuration = 0.4f;
-
+    [SerializeField] private float m_popupMoveDistance = 0.4f;
+    [SerializeField] private float m_popupEnterDuration = 0.35f;
+    [SerializeField] private float m_popupExitDuration = 0.4f;
 
     private FishingSystem m_fishingSystem;
     private ItemData_Fish m_currentFishData;
@@ -30,6 +31,16 @@ public class FishingWorldView : WorldViewBase
     private DitherFade m_currentModelFade;
     private Sequence m_popupSequence;
 
+    private Vector3 m_popupShownLocalPosition;
+
+    private void Awake()
+    {
+        if (m_popupRoot != null)
+        {
+            m_popupShownLocalPosition =
+                m_popupRoot.transform.localPosition;
+        }
+    }
 
     public override void Bind()
     {
@@ -158,7 +169,7 @@ public class FishingWorldView : WorldViewBase
         Debug.Log($"[FishingWorldView] 물고기 모델 생성: {fish.Name}, key={modelKey}");
     }
 
-       private void ClearCurrentModel()
+    private void ClearCurrentModel()
     {
         if (m_currentModel != null)
         {
@@ -173,22 +184,70 @@ public class FishingWorldView : WorldViewBase
     {
         m_popupSequence?.Kill();
 
-        m_popupCanvasGroup.alpha = 1f;
-        m_currentModelFade?.SetFadeImmediate(1f);
+        Transform popupTransform = m_popupRoot.transform;
+
+        float hiddenY =
+            m_popupShownLocalPosition.y - m_popupMoveDistance;
+
+        // 아래쪽 시작 위치
+        popupTransform.localPosition = new Vector3(
+            m_popupShownLocalPosition.x,
+            hiddenY,
+            m_popupShownLocalPosition.z
+        );
+
         m_popupRoot.SetActive(true);
 
-        m_popupSequence = DOTween.Sequence()
-            .AppendInterval(m_popupHoldDuration)
+        // SetActive 시 DitherFade 자동 재생이 시작될 수 있으므로
+        // 활성화 이후 다시 초기화한다.
+        m_popupCanvasGroup.alpha = 0f;
+        m_currentModelFade?.SetFadeImmediate(0f);
+
+        m_popupSequence = DOTween.Sequence();
+
+        // 아래에서 올라오면서 패널과 모델 페이드 인
+        m_popupSequence
             .Append(
+                popupTransform
+                    .DOLocalMoveY(
+                        m_popupShownLocalPosition.y,
+                        m_popupEnterDuration
+                    )
+                    .SetEase(Ease.OutCubic)
+            )
+            .Join(
                 m_popupCanvasGroup
-                    .DOFade(0f, m_popupFadeDuration)
+                    .DOFade(1f, m_popupEnterDuration)
+                    .SetEase(Ease.OutQuad)
+            );
+
+        if (m_currentModelFade != null)
+        {
+            m_popupSequence.Join(
+                m_currentModelFade.DOFadeIn(m_popupEnterDuration)
+            );
+        }
+
+        // 유지
+        m_popupSequence.AppendInterval(m_popupHoldDuration);
+
+        // 아래로 내려가면서 패널과 모델 페이드 아웃
+        m_popupSequence
+            .Append(
+                popupTransform
+                    .DOLocalMoveY(hiddenY, m_popupExitDuration)
+                    .SetEase(Ease.InCubic)
+            )
+            .Join(
+                m_popupCanvasGroup
+                    .DOFade(0f, m_popupExitDuration)
                     .SetEase(Ease.InQuad)
             );
 
         if (m_currentModelFade != null)
         {
             m_popupSequence.Join(
-                m_currentModelFade.DOFadeOut(m_popupFadeDuration)
+                m_currentModelFade.DOFadeOut(m_popupExitDuration)
             );
         }
 
@@ -197,8 +256,14 @@ public class FishingWorldView : WorldViewBase
             .OnComplete(() =>
             {
                 ClearCurrentModel();
+
+                // 다음 재생을 위해 원래 위치로 복구
+                popupTransform.localPosition =
+                    m_popupShownLocalPosition;
+
+                m_popupCanvasGroup.alpha = 0f;
                 m_popupRoot.SetActive(false);
-                m_popupCanvasGroup.alpha = 1f;
+                m_popupSequence = null;
             });
     }
 }
