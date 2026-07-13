@@ -46,27 +46,25 @@ namespace DesktopCompanion.Views
             foreach (var slot in m_slots)
             {
                 slot.Bind(
+                    // 1. 클릭: 장착 해제 (이전과 동일)
                     onClickAction: clickedArea =>
                     {
                         m_vm.EquipCommand.Execute((clickedArea, default(EntityHandle)));
                     },
+
+                    // 2. 드롭: 장착 (규격 검사 추가!)
                     onDropAction: dropArea =>
                     {
                         if (m_itemPickupController != null && m_itemPickupController.HasItem)
                         {
                             EntityHandle droppedItem = m_itemPickupController.PickedHandle;
-
-                            // 1. EntityHandle을 통해 실제 장비 엔티티를 가져옵니다.
                             Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(droppedItem);
 
                             if (equipment != null)
                             {
-                                // 2. [중요] 해당 장비의 '장착 부위(Area)' 정보를 가져옵니다.
-                                // *주의: 여기서 'ItemData.MountingArea' 부분은 실제 ItemData_Equipment 스크립트에
-                                // 정의된 변수명(예: EquipArea, MountingArea 등)으로 바꿔야 합니다!
+                                // ⚠️ 주의: 변수명(MountingArea)이 에러나면 ItemData_Equipment의 실제 변수명으로 수정하세요!
                                 EquipmentMountingArea itemArea = equipment.ItemData.MountingArea;
 
-                                // 3. 아이템의 부위(itemArea)와 슬롯의 부위(dropArea)가 일치하는지 확인!
                                 if (itemArea == dropArea)
                                 {
                                     m_vm.EquipCommand.Execute((dropArea, droppedItem));
@@ -74,18 +72,24 @@ namespace DesktopCompanion.Views
                                 }
                                 else
                                 {
-                                    Debug.LogWarning($"❌ 장착 불가: 이 아이템은 {itemArea}용입니다. ({dropArea}에는 장착 불가)");
+                                    Debug.LogWarning($"❌ 장착 거부: {itemArea} 아이템을 {dropArea} 칸에 넣을 수 없습니다.");
+                                    // 여기에서 필요시 m_itemPickupController.CancelPickup() 등으로 아이콘을 원래 자리로 돌려보내는 로직 추가 가능
                                 }
                             }
                         }
                     },
+
+                    // 3. 드래그 시작: 장착 해제 및 아이템 들기 (안전 검사 추가)
                     onBeginDragAction: dragArea =>
                     {
                         EntityHandle equippedItem = m_vm.GetEquippedHandleForArea(dragArea);
 
-                        if (!equippedItem.Equals(default(EntityHandle)) && m_itemPickupController != null)
+                        // 장비가 실제로 있고, 컨트롤러가 비어있을 때만 시작
+                        if (!equippedItem.Equals(default(EntityHandle)) && m_itemPickupController != null && !m_itemPickupController.HasItem)
                         {
+                            // 마우스에 아이콘을 띄우고
                             m_itemPickupController.BeginPickup(ItemType.Equipment, -1, equippedItem, null);
+                            // 현재 칸에서 아이템을 제거(장착 해제)
                             m_vm.EquipCommand.Execute((dragArea, default(EntityHandle)));
                         }
                     }
