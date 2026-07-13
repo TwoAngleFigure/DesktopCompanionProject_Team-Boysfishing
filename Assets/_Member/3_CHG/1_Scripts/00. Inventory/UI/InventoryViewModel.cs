@@ -9,6 +9,7 @@ namespace DesktopCompanion.Views
     public class InventoryViewModel : UIViewModelBase
     {
         private InventorySystem m_inventorySystem;
+        private PlayerSystem m_playerSystem;
 
         private ItemType m_currentTab = ItemType.Fish;
 
@@ -33,6 +34,7 @@ namespace DesktopCompanion.Views
         public override void Bind()
         {
             m_inventorySystem = SystemManager.GetSystem<InventorySystem>();
+            m_playerSystem = SystemManager.GetSystem<PlayerSystem>();
 
             SelectTabCommand = new RelayCommand<ItemType>(SelectTab);
             SelectSlotCommand = new RelayCommand<int>(SelectSlot);
@@ -351,6 +353,23 @@ namespace DesktopCompanion.Views
                 CurrentTab.Value,
                 fromIndex,
                 toIndex);
+        }
+
+        public void EquipEquipment(EntityHandle handle)
+        {
+            if (m_playerSystem == null || EntityManager == null)
+            {
+                return;
+            }
+
+            Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(handle);
+
+            if (equipment == null)
+            {
+                return;
+            }
+
+            m_playerSystem.Equip(equipment.ItemData.MountingArea, handle);
         }
     }
 }

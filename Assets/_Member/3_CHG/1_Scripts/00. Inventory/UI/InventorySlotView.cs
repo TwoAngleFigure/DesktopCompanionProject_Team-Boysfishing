@@ -24,8 +24,13 @@ namespace DesktopCompanion.Views
         [SerializeField] private GameObject m_moveSourceFrame;
         [SerializeField] private GameObject m_moveTargetFrame;
 
+        private const float DoubleClickInterval = 0.3f;
+
         private int m_slotIndex;
-        private Action<int> m_onClicked;
+        private float m_lastClickTime = -1f;
+
+        private Action<int> m_onClick;
+        private Action<int> m_onDoubleClick;
 
         private void Awake()
         {
@@ -35,18 +40,14 @@ namespace DesktopCompanion.Views
             }
         }
 
-        public void Initialize(int slotIndex, Action<int> onClicked)
+        public void Initialize(int slotIndex, Action<int> onClick, Action<int> onDoubleClick)
         {
             m_slotIndex = slotIndex;
-            m_onClicked = onClicked;
+            m_onClick = onClick;
+            m_onDoubleClick = onDoubleClick;
 
-            if (m_button == null)
-            {
-                return;
-            }
-
-            m_button.onClick.RemoveAllListeners();
-            m_button.onClick.AddListener(() => m_onClicked?.Invoke(m_slotIndex));
+            m_button.onClick.RemoveListener(HandleClick);
+            m_button.onClick.AddListener(HandleClick);
         }
 
         public void Set(InventorySlotViewData data, Sprite icon)
@@ -180,6 +181,22 @@ namespace DesktopCompanion.Views
             {
                 m_moveSourceFrame.SetActive(isPickupSource);
             }
+        }
+
+        private void HandleClick()
+        {
+            float currentTime = Time.unscaledTime;
+            bool isDoubleClick = currentTime - m_lastClickTime <= DoubleClickInterval;
+
+            if (isDoubleClick)
+            {
+                m_lastClickTime = -1f;
+                m_onDoubleClick?.Invoke(m_slotIndex);
+                return;
+            }
+
+            m_lastClickTime = currentTime;
+            m_onClick?.Invoke(m_slotIndex);
         }
     }
 }

@@ -123,7 +123,7 @@ namespace DesktopCompanion.Views
                 InventorySlotView slotView = Instantiate(m_slotPrefab, m_slotRoot);
                 int slotIndex = m_slotViews.Count;
 
-                slotView.Initialize(slotIndex, OnSlotClicked);
+                slotView.Initialize(slotIndex, OnSlotClicked, OnSlotDoubleClicked);
                 m_slotViews.Add(slotView);
             }
 
@@ -376,6 +376,33 @@ namespace DesktopCompanion.Views
             ClearPickup();
 
             Close();
+        }
+
+        private void OnSlotDoubleClicked(int slotIndex)
+        {
+            List<InventorySlotViewData> slots = m_vm.Slots.Value;
+
+            if (slots == null || slotIndex < 0 || slotIndex >= slots.Count)
+            {
+                return;
+            }
+
+            InventorySlotViewData slotData = slots[slotIndex];
+
+            if (slotData == null || slotData.IsEmpty)
+            {
+                return;
+            }
+
+            if (slotData.ItemType != ItemType.Equipment)
+            {
+                return;
+            }
+
+            // 첫 클릭에서 시작된 아이템 픽업 상태를 제거합니다.
+            m_itemPickupController?.ClearPickup();
+
+            m_vm.EquipEquipment(slotData.Handle);
         }
     }
 }
