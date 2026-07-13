@@ -105,3 +105,14 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# Personal docs (plans, notes) — not shared
+/Docs/
+
+# CustomPackage: tarball(추후 URL)로 배포하므로 패키지 소스 폴더는 리포에 커밋하지 않는다.
+# (의존성 선언인 Packages/manifest.json·packages-lock.json은 커밋 대상 — 여기서 제외하지 않음)
+/Packages/com.twoanglefigure.fishingresource/
+
+# 개별 다운로드 리소스 — Git 공유 안 함(각자 로컬)
+/[Aa]ssets/Resource/
+/[Aa]ssets/Resource.meta
