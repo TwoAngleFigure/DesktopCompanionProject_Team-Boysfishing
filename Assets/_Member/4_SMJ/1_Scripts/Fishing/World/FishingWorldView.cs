@@ -5,9 +5,12 @@ using DesktopCompanion.Views;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using DG.Tweening;
 
 public class FishingWorldView : WorldViewBase
 {
+    [SerializeField] private CanvasGroup m_popupCanvasGroup;
+
     [Header("Model")]
     [SerializeField] private Transform m_spawnPoint;
     [SerializeField] private Transform m_modelRoot;
@@ -17,10 +20,15 @@ public class FishingWorldView : WorldViewBase
     [SerializeField] private GameObject m_popupRoot;
     [SerializeField] private TMP_Text m_fishInfoText;
     [SerializeField] private Image[] m_qualityStars;
+    [SerializeField] private float m_popupHoldDuration = 1.5f;
+    [SerializeField] private float m_popupFadeDuration = 0.4f;
+
 
     private FishingSystem m_fishingSystem;
     private ItemData_Fish m_currentFishData;
     private GameObject m_currentModel;
+    private DitherFade m_currentModelFade;
+    private Sequence m_popupSequence;
 
 
     public override void Bind()
@@ -40,6 +48,16 @@ public class FishingWorldView : WorldViewBase
 
     public override void Unbind()
     {
+        m_popupSequence?.Kill();
+        m_popupSequence = null;
+
+        ClearCurrentModel();
+
+        if (m_popupRoot != null)
+        {
+            m_popupRoot.SetActive(false);
+        }
+
         if (m_fishingSystem != null)
         {
             m_fishingSystem.OnBattleStarted -= HandleBattleStarted;
@@ -74,11 +92,6 @@ public class FishingWorldView : WorldViewBase
             {
                 m_qualityStars[i].gameObject.SetActive(i < starCount);
             }
-        }
-
-        if (m_popupRoot != null)
-        {
-            m_popupRoot.SetActive(true);
         }
     }
     private void HandleBattleStarted(EntityHandle battleFishHandle)
@@ -129,17 +142,63 @@ public class FishingWorldView : WorldViewBase
         m_currentModel = Instantiate(prefab, position, rotation, parent);
         m_currentModel.transform.localScale = m_modelScale;
 
+        m_currentModelFade =
+            m_currentModel.GetComponent<DitherFade>();
+
+        if (m_currentModelFade == null)
+        {
+            Debug.LogWarning(
+                "[FishingWorldView] 생성된 물고기 모델에 DitherFade가 없습니다."
+            );
+        }
+
         UpdateCatchPopup(fish);
+        PlayCatchPopup();
 
         Debug.Log($"[FishingWorldView] 물고기 모델 생성: {fish.Name}, key={modelKey}");
     }
 
-    private void ClearCurrentModel()
+       private void ClearCurrentModel()
     {
         if (m_currentModel != null)
         {
             Destroy(m_currentModel);
             m_currentModel = null;
         }
+
+        m_currentModelFade = null;
+    }
+
+    private void PlayCatchPopup()
+    {
+        m_popupSequence?.Kill();
+
+        m_popupCanvasGroup.alpha = 1f;
+        m_currentModelFade?.SetFadeImmediate(1f);
+        m_popupRoot.SetActive(true);
+
+        m_popupSequence = DOTween.Sequence()
+            .AppendInterval(m_popupHoldDuration)
+            .Append(
+                m_popupCanvasGroup
+                    .DOFade(0f, m_popupFadeDuration)
+                    .SetEase(Ease.InQuad)
+            );
+
+        if (m_currentModelFade != null)
+        {
+            m_popupSequence.Join(
+                m_currentModelFade.DOFadeOut(m_popupFadeDuration)
+            );
+        }
+
+        m_popupSequence
+            .SetLink(gameObject)
+            .OnComplete(() =>
+            {
+                ClearCurrentModel();
+                m_popupRoot.SetActive(false);
+                m_popupCanvasGroup.alpha = 1f;
+            });
     }
 }
