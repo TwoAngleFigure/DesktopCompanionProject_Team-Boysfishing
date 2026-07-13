@@ -1,7 +1,8 @@
-using DesktopCompanion.Data;
+﻿using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
 using DesktopCompanion.Systems;
 using DesktopCompanion.Views;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,15 +13,15 @@ namespace DesktopCompanion.Views
     {
         private readonly EquipmentViewModel m_vm = new();
 
-        [Header("UI ����")]
+        [Header("UI 연결")]
         [SerializeField] private TextMeshProUGUI m_allStatsText;
         [SerializeField] private EquipmentSlotWidget[] m_slots;
 
-        // [�߰���] �� ���â �ؽ�Ʈ 2���� ������ ��ĭ!
+        // [추가됨] 배 장비창 텍스트 2개를 연결할 빈칸!
         [Header("Ship Equip UI")]
         [SerializeField] private TextMeshProUGUI m_engineSpeedText;
         [SerializeField] private TextMeshProUGUI m_storageSizeText;
-        [SerializeField] private Button m_storageUpgradeBtn;//�׽�Ʈ��
+        [SerializeField] private Button m_storageUpgradeBtn;//테스트용
 
         [Header("Inventory Link")]
         [SerializeField] private ItemPickupController m_itemPickupController;
@@ -54,8 +55,28 @@ namespace DesktopCompanion.Views
                         if (m_itemPickupController != null && m_itemPickupController.HasItem)
                         {
                             EntityHandle droppedItem = m_itemPickupController.PickedHandle;
-                            m_vm.EquipCommand.Execute((dropArea, droppedItem));
-                            m_itemPickupController.ClearPickup();
+
+                            // 1. EntityHandle을 통해 실제 장비 엔티티를 가져옵니다.
+                            Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(droppedItem);
+
+                            if (equipment != null)
+                            {
+                                // 2. [중요] 해당 장비의 '장착 부위(Area)' 정보를 가져옵니다.
+                                // *주의: 여기서 'ItemData.MountingArea' 부분은 실제 ItemData_Equipment 스크립트에
+                                // 정의된 변수명(예: EquipArea, MountingArea 등)으로 바꿔야 합니다!
+                                EquipmentMountingArea itemArea = equipment.ItemData.MountingArea;
+
+                                // 3. 아이템의 부위(itemArea)와 슬롯의 부위(dropArea)가 일치하는지 확인!
+                                if (itemArea == dropArea)
+                                {
+                                    m_vm.EquipCommand.Execute((dropArea, droppedItem));
+                                    m_itemPickupController.ClearPickup();
+                                }
+                                else
+                                {
+                                    Debug.LogWarning($"❌ 장착 불가: 이 아이템은 {itemArea}용입니다. ({dropArea}에는 장착 불가)");
+                                }
+                            }
                         }
                     },
                     onBeginDragAction: dragArea =>
@@ -107,7 +128,7 @@ namespace DesktopCompanion.Views
                 m_allStatsText.text = m_vm.GetAllStatsFormattedText();
             }
 
-            // [�߰���] ����â�� ���ŵ� ��, �� ���â�� �ؽ�Ʈ�� �ڵ����� �ֽ� ������ �޾ƿɴϴ�!
+            // [추가됨] 스탯창이 갱신될 때, 배 장비창의 텍스트도 자동으로 최신 스탯을 받아옵니다!
             if (m_engineSpeedText != null)
             {
                 m_engineSpeedText.text = m_vm.GetEngineSpeedText();
@@ -126,3 +147,4 @@ namespace DesktopCompanion.Views
         }
     }
 }
+
