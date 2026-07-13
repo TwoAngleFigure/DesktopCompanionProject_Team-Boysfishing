@@ -21,6 +21,7 @@ namespace DesktopCompanion.Systems
 
         public event Action<EntityHandle> OnStatChanged;
 
+        public EntityHandle playersystem => playerHandle;
         #region Stats
 
         [Header("Battle")]
