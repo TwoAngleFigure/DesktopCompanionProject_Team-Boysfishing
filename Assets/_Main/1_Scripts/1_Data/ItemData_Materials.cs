@@ -6,5 +6,9 @@ namespace DesktopCompanion.Data
     [CreateAssetMenu(menuName = "DesktopCompanion/Item/Materials")]
     public class ItemData_Materials : ItemData
     {
+        [Header("Aquarium")]
+        [SerializeField] private int m_aquariumRequiredPoints = 1;   // 재료 1개 생산에 필요한 누적 포인트
+
+        public int AquariumRequiredPoints => Mathf.Max(1, m_aquariumRequiredPoints);   // 0/음수 방지(나눗셈 안전)
     }
 }

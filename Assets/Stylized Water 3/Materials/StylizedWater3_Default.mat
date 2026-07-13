@@ -313,7 +313,7 @@ Material:
     - _WaveHeight: 0.1
     - _WaveMaxLayers: 64
     - _WaveNormalStr: 0.1
-    - _WaveSpeed: 2.3999996
+    - _WaveSpeed: 1.7999998
     - _WaveSteepness: 0
     - _WaveTint: 0
     - _WavesOn: 1
