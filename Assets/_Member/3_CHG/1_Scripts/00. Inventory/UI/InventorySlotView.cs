@@ -1,7 +1,8 @@
-using System;
 using DesktopCompanion.Data;
+using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DesktopCompanion.Views
@@ -28,6 +29,7 @@ namespace DesktopCompanion.Views
 
         private int m_slotIndex;
         private float m_lastClickTime = -1f;
+        private bool m_canDoubleClick;
 
         private Action<int> m_onClick;
         private Action<int> m_onDoubleClick;
@@ -46,6 +48,12 @@ namespace DesktopCompanion.Views
             m_onClick = onClick;
             m_onDoubleClick = onDoubleClick;
 
+            if (m_button == null)
+            {
+                Debug.LogError($"[InventorySlotView] Button is not assigned. slotIndex: {slotIndex}");
+                return;
+            }
+
             m_button.onClick.RemoveListener(HandleClick);
             m_button.onClick.AddListener(HandleClick);
         }
@@ -57,6 +65,8 @@ namespace DesktopCompanion.Views
                 SetEmpty(data);
                 return;
             }
+
+            m_canDoubleClick = data.ItemType == ItemType.Equipment;
 
             if (m_emptyRoot != null)
             {
@@ -186,17 +196,28 @@ namespace DesktopCompanion.Views
         private void HandleClick()
         {
             float currentTime = Time.unscaledTime;
-            bool isDoubleClick = currentTime - m_lastClickTime <= DoubleClickInterval;
+
+            bool isDoubleClick = m_canDoubleClick && m_lastClickTime >= 0f && currentTime - m_lastClickTime <= DoubleClickInterval;
 
             if (isDoubleClick)
             {
                 m_lastClickTime = -1f;
+
                 m_onDoubleClick?.Invoke(m_slotIndex);
                 return;
             }
 
-            m_lastClickTime = currentTime;
+            m_lastClickTime = m_canDoubleClick ? currentTime : -1f;
+
             m_onClick?.Invoke(m_slotIndex);
+        }
+
+        private void OnDestroy()
+        {
+            if (m_button != null)
+            {
+                m_button.onClick.RemoveListener(HandleClick);
+            }
         }
     }
 }

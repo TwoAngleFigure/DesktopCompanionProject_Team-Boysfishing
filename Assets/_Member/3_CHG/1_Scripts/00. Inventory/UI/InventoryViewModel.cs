@@ -59,6 +59,7 @@ namespace DesktopCompanion.Views
             }
 
             m_inventorySystem = null;
+            m_playerSystem = null;
         }
 
         private void HandleInventoryChanged()

@@ -399,7 +399,6 @@ namespace DesktopCompanion.Views
                 return;
             }
 
-            // 첫 클릭에서 시작된 아이템 픽업 상태를 제거합니다.
             m_itemPickupController?.ClearPickup();
 
             m_vm.EquipEquipment(slotData.Handle);
