@@ -136,7 +136,9 @@ namespace DesktopCompanion.Core
                         posY = value;
                         break;
                     default:
-                        item[name] = value;   // 단순 값 그대로
+                        // 단순 스칼라. 정수형 실수(예: 50.0)는 정수로 복원한다(int 필드 로드 안전).
+                        // XlsxSheetReader의 셀 단위 복원과 동일 규칙을 외부 시트맵(Google Sheets 등) 경로에도 적용.
+                        item[name] = NormalizeScalar(value);
                         break;
                 }
             }
@@ -439,6 +441,22 @@ namespace DesktopCompanion.Core
             => token == null || token.Type == JTokenType.Null ? null
              : token.Type == JTokenType.String ? token.Value<string>()
              : token.ToString();
+
+        // 정수형 실수(소수부 0, 예: 50.0)를 정수 토큰으로 복원한다. 그 외(진짜 소수·문자열 등)는 그대로.
+        // 목적: int C# 필드에 float 리터럴이 들어가 JsonReaderException이 나는 것을 방지(§15.7).
+        // 진짜 float 필드에 정수 토큰이 들어가도 로드에는 문제없다(Newtonsoft가 int→float 허용).
+        private static JToken NormalizeScalar(JToken value)
+        {
+            if (value != null && value.Type == JTokenType.Float)
+            {
+                double d = value.Value<double>();
+                if (!double.IsInfinity(d) && d == Math.Floor(d))
+                {
+                    return new JValue((long)d);
+                }
+            }
+            return value;
+        }
 
         private static int? GetInt(JToken token)
         {

@@ -7,6 +7,13 @@ using UnityEngine.UI;
 
 namespace DesktopCompanion.Views
 {
+    public enum ItemPickupSource
+    {
+        None,
+        Inventory,
+        Equipment
+    }
+
     public class ItemPickupController : MonoBehaviour
     {
         [Header("Pickup Icon")]
@@ -16,9 +23,14 @@ namespace DesktopCompanion.Views
 
         public bool HasItem { get; private set; }
 
-        public ItemType SourceSlotType { get; private set; }
+        public ItemPickupSource Source { get; private set; }
 
+        //Source가 인벤토리일 때 출처
+        public ItemType SourceSlotType { get; private set; }
         public int SourceSlotIndex { get; private set; } = -1;
+
+        //Source가 장비창일 때 출처
+        public EquipmentMountingArea SourceEquipmentArea { get; private set; }
 
         public EntityHandle PickedHandle { get; private set; }
 
@@ -68,10 +80,19 @@ namespace DesktopCompanion.Views
             }
         }
 
+        /// <summary>
+        /// 인벤토리 슬롯의 아이템 선택
+        /// </summary>
         public void BeginPickup(ItemType sourceSlotType, int sourceSlotIndex, EntityHandle pickedHandle, Sprite icon)
         {
+            Source = ItemPickupSource.Inventory;
+
             SourceSlotType = sourceSlotType;
             SourceSlotIndex = sourceSlotIndex;
+
+            //쓰지 않는 정보 초기화
+            SourceEquipmentArea = default;
+
             PickedHandle = pickedHandle;
             HasItem = true;
 
@@ -84,7 +105,36 @@ namespace DesktopCompanion.Views
             if (m_iconRoot != null)
             {
                 m_iconRoot.gameObject.SetActive(true);
+                m_iconRoot.SetAsLastSibling();
+            }
 
+            OnPickupChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// 장비창에 장착된 아이템 선택
+        /// </summary>
+        public void BeginEquipmentPickup(EquipmentMountingArea sourceEquipmentArea, EntityHandle pickedHandle, Sprite icon)
+        {
+            Source = ItemPickupSource.Equipment;
+
+            //쓰지 않는 정보 초기화
+            SourceSlotType = default;
+            SourceSlotIndex = -1;
+
+            SourceEquipmentArea = sourceEquipmentArea;
+            PickedHandle = pickedHandle;
+            HasItem = true;
+
+            if (m_iconImage != null)
+            {
+                m_iconImage.sprite = icon;
+                m_iconImage.enabled = icon != null;
+            }
+
+            if (m_iconRoot != null)
+            {
+                m_iconRoot.gameObject.SetActive(true);
                 m_iconRoot.SetAsLastSibling();
             }
 
@@ -93,8 +143,12 @@ namespace DesktopCompanion.Views
 
         public void ClearPickup()
         {
+            Source = ItemPickupSource.None;
+
             SourceSlotType = default;
             SourceSlotIndex = -1;
+            SourceEquipmentArea = default;
+
             PickedHandle = default;
             HasItem = false;
 

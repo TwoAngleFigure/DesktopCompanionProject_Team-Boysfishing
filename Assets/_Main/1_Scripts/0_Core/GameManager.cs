@@ -120,17 +120,21 @@ namespace DesktopCompanion.Core
 
         // 팀원이 만든 System을 여기서 등록한다. SystemManager가 EntityManager/자기 자신을 주입한다.
         // (구체 System 타입을 아는 곳은 composition root인 GameManager뿐)
-        // 초기화 순서 = Register 호출 순서: PlayerSystem → InventorySystem → FishingSystem → StageSystem.
+        // 초기화 순서 = Register 호출 순서: PlayerSystem → InventorySystem → FishingSystem → StageSystem → AquariumSystem.
         // (2단계 초기화로 순서 민감도는 낮지만, 같은 phase 내 tie-break를 위해 결정적으로 고정)
         private void RegisterSystems()
         {
             m_systemManager.Register(new DesktopCompanion.Systems.PlayerSystem());
+
+            m_systemManager.Register(new DesktopCompanion.Systems.CurrencySystem());
 
             m_systemManager.Register(new DesktopCompanion.Systems.InventorySystem());
 
             m_systemManager.Register(new DesktopCompanion.Systems.FishingSystem());
 
             m_systemManager.Register(new DesktopCompanion.Systems.StageSystem());
+
+            m_systemManager.Register(new DesktopCompanion.Systems.AquariumSystem());   // Inventory 이후(생산물 지급 의존)
         }
 
         // Data 타입 ↔ Entity 매핑 등록. 새 계열은 여기 한 줄 추가(EntityManager 본체는 불변).

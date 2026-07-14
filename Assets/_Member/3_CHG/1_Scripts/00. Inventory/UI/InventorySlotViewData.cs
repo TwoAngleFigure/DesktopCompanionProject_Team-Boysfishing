@@ -17,22 +17,29 @@ namespace DesktopCompanion.Views
         public string IconKey;
         public int DataId;
 
+        // 아이템 공통
+        public int Tier;
+        public int UnitSellPrice;
+
+        // 물고기
         public float Size;
+        public ItemRarity Rarity;
         public ItemQuality Quality;
+
+        // 장비
+        public EquipmentMountingArea MountingArea;
         public int UpgradeLevel;
+
+        // 재료 및 소모품
         public int Quantity;
+
+        public string GradeText;
+        public string EffectText;
+        public string SellPriceText;
 
         public bool IsSelected;
 
-        // TEMP: Drag-Drop 도입 시 수정
-        public bool IsMoveSource;
-        public bool IsMoveMode;
-
-        public static InventorySlotViewData Empty(
-            int slotIndex,
-            ItemType slotType,
-            bool isSelected,
-            bool isMoveMode)
+        public static InventorySlotViewData Empty(int slotIndex, ItemType slotType, bool isSelected)
         {
             return new InventorySlotViewData
             {
@@ -48,16 +55,23 @@ namespace DesktopCompanion.Views
                 IconKey = string.Empty,
                 DataId = 0,
 
+                Tier = 0,
+                UnitSellPrice = 0,
+
                 Size = 0f,
+                Rarity = ItemRarity.Normal,
                 Quality = ItemQuality.OneStar,
+
+                MountingArea = default,
                 UpgradeLevel = 0,
+
                 Quantity = 0,
 
-                IsSelected = isSelected,
+                GradeText = string.Empty,
+                EffectText = string.Empty,
+                SellPriceText = string.Empty,
 
-                // TEMP: Drag-Drop 도입 시 수정
-                IsMoveSource = false,
-                IsMoveMode = isMoveMode
+                IsSelected = isSelected
             };
         }
     }

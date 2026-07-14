@@ -69,5 +69,6 @@ namespace DesktopCompanion.Views
 
         public bool IsTraveling => m_stageSystem?.IsTraveling ?? false;
         public float RemainingTravelTime => m_stageSystem?.RemainingTravelTime ?? 0f;
+        public StageData CurrentStageData => m_stageSystem?.CurrentStageData;
     }
 }
