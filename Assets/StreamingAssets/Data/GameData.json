@@ -12,7 +12,11 @@
       "id": 300001
     },
     "m_aquariumProduceTime": 60,
-    "m_aquariumDecreaseCount": 5
+    "m_aquariumDecreaseCount": 5,
+    "m_aquariumCapacity": 2,
+    "m_aquariumProduceAmount": 10,
+    "m_star": 1,
+    "m_size": 30
   },
   {
     "type": "ItemData_Fish",
@@ -27,7 +31,11 @@
       "id": 300002
     },
     "m_aquariumProduceTime": 90,
-    "m_aquariumDecreaseCount": 8
+    "m_aquariumDecreaseCount": 8,
+    "m_aquariumCapacity": 3,
+    "m_aquariumProduceAmount": 20,
+    "m_star": 3,
+    "m_size": 45
   },
   {
     "type": "ItemData_Materials",
@@ -35,7 +43,8 @@
     "m_name": "멸치살",
     "m_type": "Materials",
     "m_tier": 1,
-    "m_basePrice": 10
+    "m_basePrice": 10,
+    "m_aquariumRequiredPoints": 100
   },
   {
     "type": "ItemData_Materials",
@@ -43,7 +52,54 @@
     "m_name": "새우살",
     "m_type": "Materials",
     "m_tier": 1,
-    "m_basePrice": 20
+    "m_basePrice": 20,
+    "m_aquariumRequiredPoints": 150
+  },
+  {
+    "type": "AquariumUpgradeData",
+    "m_id": 1,
+    "m_name": "아쿠아리움 Lv1",
+    "m_maxCapacity": 50,
+    "m_upgradeCost": 0
+  },
+  {
+    "type": "AquariumUpgradeData",
+    "m_id": 2,
+    "m_name": "아쿠아리움 Lv2",
+    "m_maxCapacity": 8,
+    "m_upgradeCost": 500,
+    "m_materialCosts": [
+      {
+        "m_material": {
+          "type": "ItemData_Materials",
+          "id": 300001
+        },
+        "m_count": 10
+      }
+    ]
+  },
+  {
+    "type": "AquariumUpgradeData",
+    "m_id": 3,
+    "m_name": "아쿠아리움 Lv3",
+    "m_maxCapacity": 12,
+    "m_upgradeCost": 1500,
+    "m_materialCosts": [
+      {
+        "m_material": {
+          "type": "ItemData_Materials",
+          "id": 300001
+        },
+        "m_count": 20
+      },
+      {
+        "m_material": {
+          "type": "ItemData_Materials",
+          "id": 300002
+        },
+        "m_count": 8
+      }
+    ]
   },
   {
     "type": "ItemData_Equipment",
