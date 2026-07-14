@@ -3,7 +3,6 @@ using DesktopCompanion.Data;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace DesktopCompanion.Views
@@ -20,11 +19,6 @@ namespace DesktopCompanion.Views
 
         [Header("State")]
         [SerializeField] private GameObject m_emptyRoot;
-        [SerializeField] private GameObject m_selectedFrame;
-
-        [Header("Pickup State")]
-        [FormerlySerializedAs("m_moveSourceFrame")]
-        [SerializeField] private GameObject m_pickupSourceFrame;
 
         private const float DoubleClickInterval = 0.3f;
 
@@ -96,11 +90,6 @@ namespace DesktopCompanion.Views
             {
                 m_subInfoText.text = GetSubInfoText(data);
             }
-
-            if (m_selectedFrame != null)
-            {
-                m_selectedFrame.SetActive(data.IsSelected);
-            }
         }
 
         private void SetEmpty(InventorySlotViewData data)
@@ -127,11 +116,6 @@ namespace DesktopCompanion.Views
             if (m_subInfoText != null)
             {
                 m_subInfoText.text = string.Empty;
-            }
-
-            if (m_selectedFrame != null)
-            {
-                m_selectedFrame.SetActive(data != null && data.IsSelected);
             }
         }
 
@@ -182,9 +166,9 @@ namespace DesktopCompanion.Views
 
         public void SetPickupSource(bool isPickupSource)
         {
-            if (m_pickupSourceFrame != null)
+            if (m_iconImage != null)
             {
-                m_pickupSourceFrame.SetActive(isPickupSource);
+                 m_iconImage.enabled = !isPickupSource && m_iconImage.sprite != null; 
             }
         }
 

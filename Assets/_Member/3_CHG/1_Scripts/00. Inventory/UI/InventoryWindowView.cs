@@ -21,12 +21,6 @@ namespace DesktopCompanion.Views
         [SerializeField] private Transform m_slotRoot;
         [SerializeField] private InventorySlotView m_slotPrefab;
 
-        [Header("Selected Item Detail Panel")]
-        [SerializeField] private GameObject m_detailPanel;
-        [SerializeField] private Image m_detailIconImage;
-        [SerializeField] private TMP_Text m_detailNameText;
-        [SerializeField] private TMP_Text m_detailInfoText;
-
         [Header("Gold")]
         [SerializeField] private TMP_Text m_goldText;
 
@@ -47,7 +41,6 @@ namespace DesktopCompanion.Views
             m_vm.Bind();
 
             m_vm.Slots.Bind(RefreshSlotViews);
-            m_vm.SelectedSlot.Bind(RefreshDetailPanel);
             m_vm.Gold.Bind(RefreshGoldText);
 
             if (m_itemPickupController != null)
@@ -96,7 +89,6 @@ namespace DesktopCompanion.Views
             }
 
             m_vm.Slots.Unbind(RefreshSlotViews);
-            m_vm.SelectedSlot.Unbind(RefreshDetailPanel);
             m_vm.Gold.Unbind(RefreshGoldText);
 
             if (m_fishTabButton != null)
@@ -321,7 +313,7 @@ namespace DesktopCompanion.Views
 
             Sprite icon = GetIcon(hoveredSlot);
 
-            m_itemTooltip.Show(hoveredSlot, icon);
+            m_itemTooltip.Show(hoveredSlot);
         }
 
         private void ClearHoveredTooltip()
@@ -348,84 +340,6 @@ namespace DesktopCompanion.Views
             return null;
         }
 
-        private void RefreshDetailPanel(InventorySlotViewData selected)
-        {
-            bool hasItem = selected != null && !selected.IsEmpty;
-
-            if (m_detailPanel != null)
-            {
-                m_detailPanel.SetActive(true);
-            }
-
-            if (!hasItem)
-            {
-                ClearDetailPanel();
-                return;
-            }
-
-            Sprite icon = GetIcon(selected);
-
-            if (m_detailIconImage != null)
-            {
-                m_detailIconImage.sprite = icon;
-                m_detailIconImage.enabled = icon != null;
-            }
-
-            if (m_detailNameText != null)
-            {
-                m_detailNameText.text = selected.ItemName;
-            }
-
-            if (m_detailInfoText != null)
-            {
-                m_detailInfoText.text = BuildDetailText(selected);
-            }
-        }
-
-        private void ClearDetailPanel()
-        {
-            if (m_detailIconImage != null)
-            {
-                m_detailIconImage.sprite = null;
-                m_detailIconImage.enabled = false;
-            }
-
-            if (m_detailNameText != null)
-            {
-                m_detailNameText.text = "선택된 아이템 없음";
-            }
-
-            if (m_detailInfoText != null)
-            {
-                m_detailInfoText.text = string.Empty;
-            }
-        }
-
-        private string BuildDetailText(InventorySlotViewData selected)
-        {
-            StringBuilder builder = new();
-
-            AppendDetailLine(builder, selected.GradeText);
-            AppendDetailLine(builder, selected.EffectText);
-            AppendDetailLine(builder, selected.SellPriceText);
-
-            return builder.ToString();
-        }
-
-        private void AppendDetailLine(StringBuilder builder, string text)
-        {
-            if (string.IsNullOrEmpty(text))
-            {
-                return;
-            }
-
-            if (builder.Length > 0)
-            {
-                builder.AppendLine();
-            }
-
-            builder.Append(text);
-        }
 
         private void BeginPickup(InventorySlotViewData slotData)
         {
