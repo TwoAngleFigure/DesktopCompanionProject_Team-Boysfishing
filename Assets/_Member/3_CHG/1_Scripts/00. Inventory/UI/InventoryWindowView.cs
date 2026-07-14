@@ -212,7 +212,7 @@ namespace DesktopCompanion.Views
                 return;
             }
 
-            // ÇöÀç Áı°í ÀÖ´Â ¾ÆÀÌÅÛÀÌ ¾øÀ¸¸é »õ Pickup ½ÃÀÛ
+            // í˜„ì¬ ì§‘ê³  ìˆëŠ” ì•„ì´í…œì´ ì—†ìœ¼ë©´ ìƒˆ Pickup ì‹œì‘
             if (!m_itemPickupController.HasItem)
             {
                 if (clickedSlot.IsEmpty)
@@ -225,13 +225,13 @@ namespace DesktopCompanion.Views
                 return;
             }
 
-            // ´Ù¸¥ ÀÎº¥Åä¸® ÅÇÀÇ ½½·Ô°ú´Â ±³È¯ ±İÁö
+            // ë‹¤ë¥¸ ì¸ë²¤í† ë¦¬ íƒ­ì˜ ìŠ¬ë¡¯ê³¼ëŠ” êµí™˜ ê¸ˆì§€
             if (m_itemPickupController.SourceSlotType != clickedSlot.SlotType)
             {
                 return;
             }
 
-            // Ãâ¹ß ½½·ÔÀ» ´Ù½Ã Å¬¸¯ÇÏ¸é Pickup Ãë¼Ò
+            // ì¶œë°œ ìŠ¬ë¡¯ì„ ë‹¤ì‹œ í´ë¦­í•˜ë©´ Pickup ì·¨ì†Œ
             if (m_itemPickupController.SourceSlotIndex == slotIndex)
             {
                 m_itemPickupController.ClearPickup();
@@ -312,7 +312,7 @@ namespace DesktopCompanion.Views
 
             InventorySlotViewData hoveredSlot = slots[m_hoveredSlotIndex];
 
-            // ºó ½½·Ô¿£ Tooltip ¹ÌÇ¥½Ã
+            // ë¹ˆ ìŠ¬ë¡¯ì—” Tooltip ë¯¸í‘œì‹œ
             if (hoveredSlot == null || hoveredSlot.IsEmpty)
             {
                 ClearHoveredTooltip();
@@ -339,7 +339,13 @@ namespace DesktopCompanion.Views
                 return null;
             }
 
-            return AssetProvider.Get<Sprite>(slotData.IconKey);
+            if (AssetProvider.TryGet<Sprite>(slotData.IconKey, out var icon))
+            {
+                return icon;
+            }
+            
+            Debug.LogWarning($"[Inventory] Icon not found for key: {slotData.IconKey}. Returning null.");
+            return null;
         }
 
         private void RefreshDetailPanel(InventorySlotViewData selected)
@@ -386,7 +392,7 @@ namespace DesktopCompanion.Views
 
             if (m_detailNameText != null)
             {
-                m_detailNameText.text = "¼±ÅÃµÈ ¾ÆÀÌÅÛ ¾øÀ½";
+                m_detailNameText.text = "ì„ íƒëœ ì•„ì´í…œ ì—†ìŒ";
             }
 
             if (m_detailInfoText != null)
@@ -527,8 +533,8 @@ namespace DesktopCompanion.Views
                 return;
             }
 
-            // Ãµ ´ÜÀ§ ½°Ç¥·Î Ç¥½Ã
-            // ¿¹: 1000 -> 1,000
+            // ì²œ ë‹¨ìœ„ ì‰¼í‘œë¡œ í‘œì‹œ
+            // ì˜ˆ: 1000 -> 1,000
             m_goldText.text = gold.ToString("N0");
         }
     }

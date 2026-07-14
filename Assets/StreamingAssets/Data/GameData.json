@@ -259,7 +259,7 @@
     "type": "PlayerData",
     "m_id": 1,
     "m_name": "Player",
-    "m_baseDamagePerClick": 1,
+    "m_baseDamagePerClick": 10,
     "m_baseManualDamagePerHitMultiply": 1,
     "m_baseBattleTimeVariable": 10,
     "m_baseCriticalChance": 0.05,
