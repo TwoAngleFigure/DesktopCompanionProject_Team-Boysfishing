@@ -217,6 +217,28 @@ namespace DesktopCompanion.Views
                 return;
             }
 
+            // 장비창에서 선택한 장비를 인벤토리에 내려놓는 경우
+            if (m_itemPickupController.Source == ItemPickupSource.Equipment)
+            {
+                // 장비탭 한정
+                if (clickedSlot.SlotType != ItemType.Equipment)
+                {
+                    return;
+                }
+
+                bool placed = m_vm.PlaceEquippedItemAtSlot(
+                    m_itemPickupController.SourceEquipmentArea,
+                    slotIndex);
+
+                if (placed)
+                {
+                    ClearHoveredTooltip();
+                    m_itemPickupController.ClearPickup();
+                }
+
+                return;
+            }
+
             // 다른 인벤토리 탭의 슬롯과는 교환 금지
             if (m_itemPickupController.SourceSlotType != clickedSlot.SlotType)
             {
@@ -266,9 +288,13 @@ namespace DesktopCompanion.Views
             }
 
             ClearHoveredTooltip();
-            m_itemPickupController?.ClearPickup();
 
-            m_vm.EquipEquipment(slotData.Handle);
+            bool equipped = m_vm.EquipEquipmentAtSlot(slotIndex);
+
+            if (equipped)
+            {
+                m_itemPickupController?.ClearPickup();
+            }
         }
 
         private void OnSlotPointerEntered(int slotIndex)
@@ -409,7 +435,12 @@ namespace DesktopCompanion.Views
 
         private void OnEquipmentTabClicked()
         {
-            ClearPickup();
+            // 인벤토리에서 집은 아이템은 탭 변경 시 취소
+            if (m_itemPickupController != null && m_itemPickupController.HasItem && m_itemPickupController.Source == ItemPickupSource.Inventory)
+            {
+                m_itemPickupController.ClearPickup();
+            }
+
             ClearHoveredTooltip();
 
             m_vm.SelectTabCommand.Execute(ItemType.Equipment);
