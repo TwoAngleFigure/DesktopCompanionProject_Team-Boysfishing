@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4945223346026452647}
   - component: {fileID: 1045052723150630618}
   m_Layer: 0
-  m_Name: StageData_600001_Model
+  m_Name: StageData_600002_Model
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -56,23 +56,23 @@ MonoBehaviour:
   m_blueprintList:
   - m_assetKey: Dummy_Rock
     m_layerDepth: 1
-    m_spawnTriggerX: 0
-    m_targetWorldX: -15
-    m_targetCameraX: -15
+    m_spawnTriggerX: -55
+    m_targetWorldX: -85
+    m_targetCameraX: -85
     m_targetLocalY: -1.08
     m_isSpawned: 0
   - m_assetKey: Dummy_Lighthouse
     m_layerDepth: 2
-    m_spawnTriggerX: 0
-    m_targetWorldX: -15
-    m_targetCameraX: -15
+    m_spawnTriggerX: -55
+    m_targetWorldX: -85
+    m_targetCameraX: -85
     m_targetLocalY: -2.08
     m_isSpawned: 0
   - m_assetKey: Dummy_Buoy
     m_layerDepth: 0
-    m_spawnTriggerX: 0
-    m_targetWorldX: -15
-    m_targetCameraX: -15
+    m_spawnTriggerX: -55
+    m_targetWorldX: -85
+    m_targetCameraX: -85
     m_targetLocalY: -5.5
     m_isSpawned: 0
 --- !u!1 &606873470048552616

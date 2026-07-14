@@ -16,6 +16,7 @@ namespace DesktopCompanion.Systems
         private Vector2 m_currentLogicalPosition;
         private float m_currentSpeed;
         private float m_remainingTravelTime;
+        private float m_totalTravelTime;
 
         public event Action<int> OnStageChanged;
         public event Action<int, float> OnTravelStarted;
@@ -80,6 +81,7 @@ namespace DesktopCompanion.Systems
 
             m_targetStageDataId = targetDataId;
             m_remainingTravelTime = duration;
+            m_totalTravelTime = duration;
             m_isTraveling = true;
 
             OnTravelStarted?.Invoke(targetDataId, duration);
@@ -122,6 +124,8 @@ namespace DesktopCompanion.Systems
         }
 
         public StageData CurrentStageData => DataManager.GetData<StageData>(m_currentStageDataId);
+        public StageData TargetStageData => DataManager.GetData<StageData>(m_targetStageDataId);
+        public float TravelProgress => m_isTraveling && m_totalTravelTime > 0f ? (1f - (m_remainingTravelTime / m_totalTravelTime)) : 0f;
         public bool IsTraveling => m_isTraveling;
         public float RemainingTravelTime => m_remainingTravelTime;
         public Vector2 CurrentLogicalPosition => m_currentLogicalPosition;

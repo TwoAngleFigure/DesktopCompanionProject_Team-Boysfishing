@@ -1,7 +1,8 @@
-using UnityEngine;
-using DesktopCompanion.Systems;
-using DesktopCompanion.Core;
 using DesktopCompanion.Controllers;
+using DesktopCompanion.Core;
+using DesktopCompanion.Data;
+using DesktopCompanion.Systems;
+using UnityEngine;
 
 namespace DesktopCompanion.Views
 {
@@ -29,16 +30,30 @@ namespace DesktopCompanion.Views
 
         private void Update()
         {
-            if (m_vm == null) return;
+            if (m_vm == null || SystemManager == null) return;
 
             if (m_shipController != null)
             {
                 m_shipController.SetTraveling(m_vm.IsTraveling);
             }
 
-            if (m_vm.CurrentStageData == null) return;
+            var stageSystem = SystemManager.GetSystem<StageSystem>();
+            if (stageSystem == null) return;
 
-            string currentStageKey = AssetKeys.Of(m_vm.CurrentStageData, AssetUsage.Model);
+            StageData activeStageData;
+            if (stageSystem.IsTraveling)
+            {
+                activeStageData = (stageSystem.TravelProgress < 0.5f) ?
+                    stageSystem.CurrentStageData : stageSystem.TargetStageData;
+            }
+            else
+            {
+                activeStageData = stageSystem.CurrentStageData;
+            }
+
+            if (activeStageData == null) return;
+
+            string currentStageKey = AssetKeys.Of(activeStageData, AssetUsage.Model);
 
             if (m_lastLoadedAssetKey != currentStageKey)
             {
@@ -48,13 +63,19 @@ namespace DesktopCompanion.Views
 
         private void LoadStage(string stageAssetKey)
         {
-            ClearCurrentStage();
-            m_lastLoadedAssetKey = stageAssetKey;
+            bool isFirstLoad = string.IsNullOrEmpty(m_lastLoadedAssetKey);
 
-            if (m_shipController != null)
+            ClearCurrentStage();
+
+            if (isFirstLoad)
             {
-                m_shipController.ResetToOrigin();
+                if (m_shipController != null)
+                {
+                    m_shipController.ResetToOrigin();
+                }
             }
+
+            m_lastLoadedAssetKey = stageAssetKey;
 
             if (AssetProvider != null && AssetProvider.TryGet(stageAssetKey, out GameObject stagePrefab))
             {

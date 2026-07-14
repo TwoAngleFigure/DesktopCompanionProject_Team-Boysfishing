@@ -16,8 +16,13 @@ namespace DesktopCompanion.Views
         [Tooltip("배가 왼쪽으로 가니까 음수 값(-150 등)이 들어갑니다.")]
         public float m_spawnTriggerX;
 
-        [Header("레이어 내 최종 로컬 X좌표")]
-        public float m_targetLocalX;
+        [Header("오브젝트가 정렬될 최종 월드 X좌표")]
+        [Tooltip("배가 멈추는 위치인 -300 등을 입력하세요.")]
+        public float m_targetWorldX;
+
+        [Header("정렬되는 순간의 최종 카메라 X좌표")]
+        [Tooltip("배가 멈췄을 때 카메라의 실제 월드 X좌표를 입력하세요.")]
+        public float m_targetCameraX;
 
         [Header("레이어 내 최종 로컬 Y좌표 (높이)")]
         public float m_targetLocalY = 0f;
@@ -48,6 +53,8 @@ namespace DesktopCompanion.Views
         public void InitProvider(AssetProvider provider)
         {
             m_assetProvider = provider;
+
+            ForceInitialSpawnCheck();
         }
         private void Start()
         {
@@ -75,6 +82,29 @@ namespace DesktopCompanion.Views
             }
         }
 
+        private void ForceInitialSpawnCheck()
+        {
+            if (m_cameraTransform == null && Camera.main != null)
+            {
+                m_cameraTransform = Camera.main.transform;
+            }
+
+            if (m_cameraTransform == null) return;
+
+            float currentCamX = m_cameraTransform.position.x;
+
+            UpdateParallax(currentCamX);
+
+            foreach (var data in m_blueprintList)
+            {
+                if (!data.m_isSpawned && currentCamX <= data.m_spawnTriggerX)
+                {
+                    SpawnProp(data);
+                    data.m_isSpawned = true;
+                }
+            }
+        }
+
         private void UpdateParallax(float camX)
         {
             if (m_nearLayer) m_nearLayer.position = new Vector3(camX * m_nearParallax, 0f, m_nearLayer.position.z);
@@ -92,9 +122,9 @@ namespace DesktopCompanion.Views
             {
                 GameObject obj = Instantiate(prefab, parentLayer);
 
-                float convertedLocalX = data.m_targetLocalX * (1f - parallaxFactor);
+                float convertedLocalX = data.m_targetWorldX - (data.m_targetCameraX * parallaxFactor);
 
-                obj.transform.localPosition = new Vector3(data.m_targetLocalX, data.m_targetLocalY, 0f);
+                obj.transform.localPosition = new Vector3(convertedLocalX, data.m_targetLocalY, 0f);
 
                 WorldProp prop = obj.GetComponent<WorldProp>();
                 if (prop != null)
