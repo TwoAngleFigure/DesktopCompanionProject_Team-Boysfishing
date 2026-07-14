@@ -17,6 +17,8 @@ namespace DesktopCompanion.Systems
         private Entity_Player entity_Player;
         private InventorySystem m_inventorySystem;
 
+        public EntityHandle PlayerHandle => playerHandle;
+
         public event Action<EntityHandle> OnStatChanged;
 
         #region Stats
