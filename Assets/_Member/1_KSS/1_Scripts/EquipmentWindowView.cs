@@ -1,4 +1,4 @@
-﻿using DesktopCompanion.Data;
+using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
 using DesktopCompanion.Systems;
 using DesktopCompanion.Views;
@@ -46,10 +46,58 @@ namespace DesktopCompanion.Views
             foreach (var slot in m_slots)
             {
                 slot.Bind(
-                    // 1. 클릭: 장착 해제 (이전과 동일)
                     onClickAction: clickedArea =>
                     {
-                        m_vm.EquipCommand.Execute((clickedArea, default(EntityHandle)));
+                        EntityHandle equippedItem = m_vm.GetEquippedHandleForArea(clickedArea);
+
+                        if (m_itemPickupController == null) return;
+
+                        if (!m_itemPickupController.HasItem)
+                        {
+                            // 1. 선택 없음 + 장착된 장비 슬롯 클릭 -> 장비 선택 (실제 장비는 해제되지 않음)
+                            if (!equippedItem.Equals(default(EntityHandle)))
+                            {
+                                Sprite icon = null;
+                                Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(equippedItem);
+                                if (equipment != null && equipment.ItemData != null && !string.IsNullOrEmpty(equipment.ItemData.AssetKey))
+                                {
+                                    AssetProvider.TryGet<Sprite>(equipment.ItemData.AssetKey, out icon);
+                                }
+                                m_itemPickupController.BeginEquipmentPickup(clickedArea, equippedItem, icon);
+                            }
+                        }
+                        else
+                        {
+                            if (m_itemPickupController.Source == ItemPickupSource.Equipment)
+                            {
+                                // 장비창 장비 선택 중
+                                if (m_itemPickupController.SourceEquipmentArea == clickedArea)
+                                {
+                                    // 2. 같은 슬롯 클릭 -> 선택 취소
+                                    m_itemPickupController.ClearPickup();
+                                }
+                                // 3. 다른 장비 슬롯 클릭 -> 무반응
+                            }
+                            else if (m_itemPickupController.Source == ItemPickupSource.Inventory)
+                            {
+                                // 인벤토리 장비 선택 중
+                                EntityHandle pickedItem = m_itemPickupController.PickedHandle;
+                                Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(pickedItem);
+
+                                if (equipment != null)
+                                {
+                                    EquipmentMountingArea itemArea = equipment.ItemData.MountingArea;
+
+                                    if (itemArea == clickedArea)
+                                    {
+                                        // 4. 같은 장착 부위 슬롯 클릭 -> EquipCommand 실행, 선택 해제
+                                        m_vm.EquipCommand.Execute((clickedArea, pickedItem));
+                                        m_itemPickupController.ClearPickup();
+                                    }
+                                    // 5. 다른 장착 부위 슬롯 클릭 -> 무반응, 선택 유지
+                                }
+                            }
+                        }
                     },
 
                     // 2. 드롭: 장착 (규격 검사 추가!)
@@ -72,8 +120,14 @@ namespace DesktopCompanion.Views
                                 }
                                 else
                                 {
-                                    Debug.LogWarning($"❌ 장착 거부: {itemArea} 아이템을 {dropArea} 칸에 넣을 수 없습니다.");
-                                    // 여기에서 필요시 m_itemPickupController.CancelPickup() 등으로 아이콘을 원래 자리로 돌려보내는 로직 추가 가능
+                                    Debug.LogWarning($"장착 불가: {itemArea} 아이템을 {dropArea} 칸에 장착할 수 없습니다.");
+                                    
+                                    // 원래 위치로 되돌리기 (취소 처리)
+                                    if (m_itemPickupController.Source == ItemPickupSource.Equipment)
+                                    {
+                                        m_vm.EquipCommand.Execute((m_itemPickupController.SourceEquipmentArea, droppedItem));
+                                    }
+                                    m_itemPickupController.ClearPickup();
                                 }
                             }
                         }
@@ -84,12 +138,19 @@ namespace DesktopCompanion.Views
                     {
                         EntityHandle equippedItem = m_vm.GetEquippedHandleForArea(dragArea);
 
-                        // 장비가 실제로 있고, 컨트롤러가 비어있을 때만 시작
                         if (!equippedItem.Equals(default(EntityHandle)) && m_itemPickupController != null && !m_itemPickupController.HasItem)
                         {
-                            // 마우스에 아이콘을 띄우고
-                            m_itemPickupController.BeginPickup(ItemType.Equipment, -1, equippedItem, null);
-                            // 현재 칸에서 아이템을 제거(장착 해제)
+                            Sprite icon = null;
+                            Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(equippedItem);
+                            if (equipment != null && equipment.ItemData != null && !string.IsNullOrEmpty(equipment.ItemData.AssetKey))
+                            {
+                                AssetProvider.TryGet<Sprite>(equipment.ItemData.AssetKey, out icon);
+                            }
+
+                            // 장비 전용 픽업 메서드 호출 (아이콘 포함)
+                            m_itemPickupController.BeginEquipmentPickup(dragArea, equippedItem, icon);
+                            
+                            // 빈 칸으로 만들기(장비 해제)
                             m_vm.EquipCommand.Execute((dragArea, default(EntityHandle)));
                         }
                     }
