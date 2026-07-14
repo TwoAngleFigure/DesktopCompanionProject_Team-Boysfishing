@@ -185,7 +185,19 @@ namespace DesktopCompanion.Views
             foreach (var slot in m_slots)
             {
                 string itemName = m_vm.GetItemNameForArea(slot.Area);
-                slot.RefreshSlotUI(itemName);
+                EntityHandle equippedItem = m_vm.GetEquippedHandleForArea(slot.Area);
+                
+                Sprite icon = null;
+                if (!equippedItem.Equals(default(EntityHandle)))
+                {
+                    Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(equippedItem);
+                    if (equipment != null && equipment.ItemData != null && !string.IsNullOrEmpty(equipment.ItemData.AssetKey))
+                    {
+                        AssetProvider.TryGet<Sprite>(equipment.ItemData.AssetKey, out icon);
+                    }
+                }
+
+                slot.RefreshSlotUI(itemName, icon);
             }
 
             if (m_allStatsText != null)

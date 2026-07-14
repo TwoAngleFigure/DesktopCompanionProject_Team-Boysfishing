@@ -318,18 +318,17 @@ namespace DesktopCompanion.Systems
         /// </summary>
         public string GetEquippedItemName(EquipmentMountingArea area)
         {
-            // [예외 처리] 플레이어 엔티티가 없거나 핸들이 비어있을 경우 텍스트 에러 방지용 "Empty Slot" 반환
-            if (playerHandle.Value == Guid.Empty) return "Empty Slot";
+            // [예외 처리] 플레이어 엔티티가 없거나 핸들이 비어있을 경우 널포인터 에러 방지용으로 null 반환
+            if (playerHandle.Value == Guid.Empty) return null;
 
             Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
             if (player != null && player.Equipped.TryGetValue(area, out EntityHandle handle))
             {
                 Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(handle);
-                // 장비 데이터가 유효하면 해당 장비의 이름을 반환하고, 없으면 "Empty Slot" 반환
-                return equipment != null ? equipment.Name : "Empty Slot";
+                // 장비 엔티티가 유효하면 해당 장비의 이름을 반환하고, 없으면 null 반환
+                return equipment != null ? equipment.Name : null;
             }
-
-            return "Empty Slot";
+            return null;
         }
 
         /// <summary>
@@ -365,10 +364,10 @@ namespace DesktopCompanion.Systems
             // 플레이어의 골드가 업그레이드 비용보다 같거나 많은지 확인
             if (player != null && player.Gold >= m_currentStorageUpgradeCost)
             {
-                // 1. 골드 차감(테스트용)
-                //player.Gold -= m_currentStorageUpgradeCost;
+                // 1. 골드 차감
+                player.AddGold(-m_currentStorageUpgradeCost);
 
-                // 2. 인벤토리 칸 수 1 증가
+                // 2. 인벤토리 크기 1 증가
                 m_bonusInventorySize += 1;
 
                 // 3. 다음 업그레이드 비용 1.25배 계산 
