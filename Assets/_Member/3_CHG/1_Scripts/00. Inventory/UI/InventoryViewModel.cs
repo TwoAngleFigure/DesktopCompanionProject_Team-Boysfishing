@@ -725,21 +725,124 @@ namespace DesktopCompanion.Views
             return m_inventorySystem.SwapSlots(CurrentTab.Value, fromIndex, toIndex);
         }
 
-        public void EquipEquipment(EntityHandle handle)
+        public bool EquipEquipmentAtSlot(int slotIndex)
         {
-            if (m_playerSystem == null || EntityManager == null)
+            if (m_playerSystem == null || m_inventorySystem == null || EntityManager == null)
             {
-                return;
+                return false;
             }
 
-            Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(handle);
+            if (!m_inventorySystem.GetHandleAt(ItemType.Equipment, slotIndex, out EntityHandle equipmentHandle))
+            {
+                return false;
+            }
+
+            Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(equipmentHandle);
 
             if (equipment == null || equipment.ItemData == null)
             {
-                return;
+                return false;
             }
 
-            m_playerSystem.Equip(equipment.ItemData.MountingArea, handle);
+            m_playerSystem.Equip(equipment.ItemData.MountingArea, equipmentHandle);
+            return true;
+        }
+
+        public bool PlaceEquippedItemAtSlot(EquipmentMountingArea sourceArea, int targetSlotIndex)
+        {
+            if (m_playerSystem == null || m_inventorySystem == null || EntityManager == null)
+            {
+                return false;
+            }
+
+            int slotCount = m_inventorySystem.GetMaxSlotCount(ItemType.Equipment);
+
+            if (targetSlotIndex < 0 || targetSlotIndex >= slotCount)
+            {
+                return false;
+            }
+
+            // 해제 전, 현재 장착 중인 장비 핸들 보관
+            EntityHandle beforeEquipHandle = m_playerSystem.GetEquippedItemHandle(sourceArea);
+
+            if (beforeEquipHandle.Equals(default(EntityHandle)))
+            {
+                return false;
+            }
+
+            // 사용자가 클릭한 인벤토리 슬롯 장비 조회
+            bool hasTargetItem = m_inventorySystem.GetHandleAt(
+                ItemType.Equipment,
+                targetSlotIndex,
+                out EntityHandle targetHandle);
+
+            // 클릭한 슬롯에 장비가 있다면 같은 장착 부위인지 확인
+            if (hasTargetItem)
+            {
+                Entity_Equipment targetEquipment = EntityManager.Get<Entity_Equipment>(targetHandle);
+
+                if (targetEquipment == null || targetEquipment.ItemData == null)
+                {
+                    return false;
+                }
+
+                // 다른 부위 장비는 교환 불가
+                if (targetEquipment.ItemData.MountingArea != sourceArea)
+                {
+                    return false;
+                }
+
+                m_playerSystem.Equip(sourceArea, targetHandle);
+            }
+            else
+            {
+                // 빈 슬롯 클릭 -> 기존 장비만 해제
+                m_playerSystem.Equip(sourceArea, default(EntityHandle));
+            }
+
+            // 해제 장비가 반환된 인벤토리 슬롯 탐색
+            int returnedSlotIndex = FindEquipmentSlotIndex(beforeEquipHandle);
+
+            if (returnedSlotIndex < 0)
+            {
+                return false;
+            }
+
+            if (returnedSlotIndex == targetSlotIndex)
+            {
+                return true;
+            }
+
+            // 해제장비를 사용자가 클릭한 슬롯으로 이동
+            return m_inventorySystem.SwapSlots(
+                ItemType.Equipment,
+                returnedSlotIndex,
+                targetSlotIndex);
+        }
+
+        private int FindEquipmentSlotIndex(EntityHandle handle)
+        {
+            if (m_inventorySystem == null)
+            {
+                return -1;
+            }
+
+            int slotCount = m_inventorySystem.GetMaxSlotCount(ItemType.Equipment);
+
+            for (int i = 0; i < slotCount; i++)
+            {
+                if (!m_inventorySystem.GetHandleAt(ItemType.Equipment, i, out EntityHandle slotHandle))
+                {
+                    continue;
+                }
+
+                if (slotHandle.Equals(handle))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
     }
 }

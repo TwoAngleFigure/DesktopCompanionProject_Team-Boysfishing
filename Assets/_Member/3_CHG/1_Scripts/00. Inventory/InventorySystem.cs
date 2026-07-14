@@ -5,17 +5,13 @@ using System;
 using UnityEngine;
 
 namespace DesktopCompanion.Systems
-{
-    /// <summary>
-    /// 인벤토리 시스템.
-    /// - EntityHandle을 슬롯 배열에 보관
-    /// - 아이템 추가 / 삭제 / 수량 소모 / 슬롯 교환
-    /// - 저장 / 복원
-    /// - 인벤토리 변경 이벤트 발행
-    /// </summary>
+{ 
     public class InventorySystem : SystemBase, ISaveable
     {
         private const int FallbackInventorySize = 20;
+        private const int ExpandableInventoryInitialSize = 35;
+        private const int ExpandableInventoryExpandSize = 5;
+        private const int ExpandableInventoryRemainingSlots = 5;
         private const bool EnableInventoryDebugLog = true;
 
         private EntityHandle[] m_fishSlots;
@@ -24,10 +20,8 @@ namespace DesktopCompanion.Systems
 
         private PlayerSystem m_playerSystem;
 
-        // UI 갱신용 이벤트.
         public event Action OnInventoryChanged;
 
-        // 프로토타입용 즉시 저장 요청 이벤트.
         public event Action OnInventorySaveRequested;
 
         private InventorySave m_loadedSave;
@@ -43,11 +37,13 @@ namespace DesktopCompanion.Systems
         {
             m_playerSystem = SystemManager.GetSystem<PlayerSystem>();
 
-            int inventorySize = GetCurrentInventorySize();
+            int fishInventorySize = GetCurrentInventorySize();
+            int equipmentInventorySize = GetInitialExpandableInventorySize(ItemType.Equipment);
+            int materialInventorySize = GetInitialExpandableInventorySize(ItemType.Materials);
 
-            m_fishSlots = CreateSlots(inventorySize);
-            m_equipmentSlots = CreateSlots(inventorySize);
-            m_materialSlots = CreateSlots(inventorySize);
+            m_fishSlots = CreateSlots(fishInventorySize);
+            m_equipmentSlots = CreateSlots(equipmentInventorySize);
+            m_materialSlots = CreateSlots(materialInventorySize);
 
             if (m_loadedSave != null)
             {
@@ -57,7 +53,7 @@ namespace DesktopCompanion.Systems
 
             m_playerSystem.OnStatChanged += HandlePlayerStatChanged;
 
-            LogDebug($"PostInitialize complete. slotSize: {inventorySize}");
+            LogDebug($"PostInitialize complete. fishSlots: {fishInventorySize}, equipmentSlots: {equipmentInventorySize}, materialSlots: {materialInventorySize}");
         }
 
         /// <summary>
@@ -155,6 +151,9 @@ namespace DesktopCompanion.Systems
                 return true;
             }
 
+            ExpandInventoryIfNeeded(slotType);
+
+            slots = GetSlotArray(slotType);
             int emptyIndex = FindEmptySlotIndex(slots);
 
             if (emptyIndex < 0)
@@ -164,6 +163,7 @@ namespace DesktopCompanion.Systems
             }
 
             slots[emptyIndex] = itemHandle;
+            ExpandInventoryIfNeeded(slotType);
 
             LogDebug($"TryAddItem success. slotType: {slotType}, itemType: {itemType}, slotIndex: {emptyIndex}, dataId: {itemEntity.DataId}, name: {itemEntity.Name}, handle: {itemHandle}");
             NotifyInventoryChanged($"Add item / slotType: {slotType}, itemType: {itemType}, slotIndex: {emptyIndex}, dataId: {itemEntity.DataId}", true);
@@ -838,6 +838,98 @@ namespace DesktopCompanion.Systems
             return itemType;
         }
 
+        private int GetInitialExpandableInventorySize(ItemType itemType)
+        {
+            ItemType slotType = NormalizeSlotType(itemType);
+
+            if (!IsExpandableInventoryType(slotType) || m_loadedSave == null || m_loadedSave.slots == null)
+            {
+                return ExpandableInventoryInitialSize;
+            }
+
+            int highestSlotIndex = -1;
+            int savedSlotCount = 0;
+
+            for (int i = 0; i < m_loadedSave.slots.Count; i++)
+            {
+                InventorySave.SlotSave slotSave = m_loadedSave.slots[i];
+
+                if (NormalizeSlotType(slotSave.itemType) != slotType)
+                {
+                    continue;
+                }
+
+                savedSlotCount++;
+                highestSlotIndex = Math.Max(highestSlotIndex, slotSave.slotIndex);
+            }
+
+            int requiredUsedSlotCount = Math.Max(highestSlotIndex + 1, savedSlotCount);
+
+            // 빈 슬롯이 5개가 되는 순간 한 줄 추가
+            // -> 복원 직후에는 최소 6개의 빈 슬롯이 남도록 계산
+            int requiredSlotCount = requiredUsedSlotCount + ExpandableInventoryRemainingSlots + 1;
+            int roundedSlotCount = RoundUpToMultiple(requiredSlotCount, ExpandableInventoryExpandSize);
+
+            return Math.Max(ExpandableInventoryInitialSize, roundedSlotCount);
+        }
+
+        private void ExpandInventoryIfNeeded(ItemType itemType)
+        {
+            ItemType slotType = NormalizeSlotType(itemType);
+
+            if (!IsExpandableInventoryType(slotType))
+            {
+                return;
+            }
+
+            EntityHandle[] slots = GetSlotArray(slotType);
+            int remainingSlotCount = slots.Length - GetUsedSlotCount(slotType);
+
+            if (remainingSlotCount > ExpandableInventoryRemainingSlots)
+            {
+                return;
+            }
+
+            int previousSlotSize = slots.Length;
+            int nextSlotSize = previousSlotSize + ExpandableInventoryExpandSize;
+
+            ResizeExpandableInventory(slotType, nextSlotSize);
+
+            LogDebug($"Expandable inventory expanded. slotType: {slotType}, before: {previousSlotSize}, after: {nextSlotSize}, remainingBeforeExpand: {remainingSlotCount}");
+        }
+
+        private void ResizeExpandableInventory(ItemType itemType, int slotSize)
+        {
+            ItemType slotType = NormalizeSlotType(itemType);
+
+            switch (slotType)
+            {
+                case ItemType.Equipment:
+                    Array.Resize(ref m_equipmentSlots, slotSize);
+                    break;
+
+                case ItemType.Materials:
+                    Array.Resize(ref m_materialSlots, slotSize);
+                    break;
+            }
+        }
+
+        private bool IsExpandableInventoryType(ItemType itemType)
+        {
+            ItemType slotType = NormalizeSlotType(itemType);
+            return slotType == ItemType.Equipment || slotType == ItemType.Materials;
+        }
+
+        private int RoundUpToMultiple(int value, int multiple)
+        {
+            if (value <= 0)
+            {
+                return multiple;
+            }
+
+            return ((value + multiple - 1) / multiple) * multiple;
+        }
+
         private int GetCurrentInventorySize()
         {
             if (m_playerSystem == null)
@@ -944,34 +1036,24 @@ namespace DesktopCompanion.Systems
             return ItemQuality.OneStar;
         }
 
-        private bool ResizeSlots(int slotSize)
+        private bool ResizeFishSlots(int slotSize)
         {
             if (slotSize <= 0)
             {
-                LogWarning($"ResizeSlots failed. Invalid slot size: {slotSize}");
+                LogWarning($"ResizeFishSlots failed. Invalid slot size: {slotSize}");
                 return false;
             }
 
-            if (!CanResizeSlots(slotSize))
+            if (!CanResizeSlotArray(m_fishSlots, slotSize))
             {
-                LogWarning($"ResizeSlots failed. Items exist outside next slot size. nextSize: {slotSize}");
+                LogWarning($"ResizeFishSlots failed. Fish exist outside next slot size. nextSize: {slotSize}");
                 return false;
             }
 
             Array.Resize(ref m_fishSlots, slotSize);
-            Array.Resize(ref m_equipmentSlots, slotSize);
-            Array.Resize(ref m_materialSlots, slotSize);
-
-            NotifyInventoryChanged($"Resize inventory / slotSize: {slotSize}", false);
+            NotifyInventoryChanged($"Resize fish inventory / slotSize: {slotSize}", false);
 
             return true;
-        }
-
-        private bool CanResizeSlots(int nextSlotSize)
-        {
-            return CanResizeSlotArray(m_fishSlots, nextSlotSize)
-                && CanResizeSlotArray(m_equipmentSlots, nextSlotSize)
-                && CanResizeSlotArray(m_materialSlots, nextSlotSize);
         }
 
         private bool CanResizeSlotArray(EntityHandle[] slots, int nextSlotSize)
@@ -1002,9 +1084,9 @@ namespace DesktopCompanion.Systems
         {
             int nextInventorySize = GetCurrentInventorySize();
 
-            bool result = ResizeSlots(nextInventorySize);
+            bool result = ResizeFishSlots(nextInventorySize);
 
-            LogDebug($"InventorySize stat changed. " + $"nextSize: {nextInventorySize}, resizeResult: {result}");
+            LogDebug($"Fish inventory size stat changed. nextSize: {nextInventorySize}, resizeResult: {result}");
         }
 
 #if UNITY_EDITOR

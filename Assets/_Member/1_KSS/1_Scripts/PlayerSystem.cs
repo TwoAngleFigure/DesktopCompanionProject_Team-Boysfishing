@@ -3,8 +3,8 @@ using DesktopCompanion.Core;
 using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
 using DesktopCompanion.Systems;
-// [세이브 관련 주석 처리]
-// using DesktopCompanion.Save; 
+// [세이브 관련 주석 처리 해제]
+using DesktopCompanion.Save; 
 using UnityEngine;
 
 namespace DesktopCompanion.Systems
@@ -12,9 +12,10 @@ namespace DesktopCompanion.Systems
     /// <summary>
     /// 플레이어의 기본 스탯을 관리하고, 장비 장착에 따른 스탯 변화를 실시간으로 계산하는 시스템입니다.
     /// </summary>
-    // [세이브 관련 주석 처리] ISaveable 상속 비활성화
-    public class PlayerSystem : SystemBase //, ISaveable
+    // [세이브 관련 주석 처리 해제] ISaveable 상속 활성화
+    public class PlayerSystem : SystemBase, ISaveable
     {
+        private PlayerSave m_loadedSave;
         private EntityHandle playerHandle;
         private Entity_Player entity_Player;
         private InventorySystem m_inventorySystem;
@@ -69,29 +70,82 @@ namespace DesktopCompanion.Systems
 
         #endregion
 
-        // [세이브 관련 주석 처리] Save 영역 전체를 블록 주석(/* */)으로 비활성화
-        /*
         #region Save
 
         public string SaveId => "player_system_stats";
-        public Type StateType => typeof(string);
+        public Type StateType => typeof(PlayerSave);
 
         public object CaptureState()
         {
-            return "stats_calculated_dynamically";
+            PlayerSave save = new PlayerSave();
+            
+            if (entity_Player != null)
+            {
+                save.currentLicense = entity_Player.CurrentLicense;
+                save.gold = entity_Player.Gold;
+
+                foreach (var kvp in entity_Player.Equipped)
+                {
+                    if (kvp.Value.Value != Guid.Empty)
+                    {
+                        Entity_Equipment equip = EntityManager.Get<Entity_Equipment>(kvp.Value);
+                        if (equip != null)
+                        {
+                            save.equippedItems.Add(new PlayerSave.EquippedItemSave
+                            {
+                                area = kvp.Key,
+                                handle = kvp.Value.ToString(),
+                                dataId = equip.DataId,
+                                upgradeLevel = equip.UpgradeLevel
+                            });
+                        }
+                    }
+                }
+            }
+
+            save.bonusInventorySize = m_bonusInventorySize;
+            save.currentStorageUpgradeCost = m_currentStorageUpgradeCost;
+
+            return save;
         }
 
         public void RestoreState(object state)
         {
-            // R1: 복원 단계에서는 원시 상태만 다룬다. 최종 스탯 계산(CaculatedStat)은
-            // 복원 이후 Phase 2(PostInitialize)에서 수행되어 저장값을 반영하므로 여기서 호출하지 않는다.
+            if (state is PlayerSave save)
+            {
+                m_loadedSave = save;
+                Debug.Log("[PlayerSystem] Player save loaded pending PostInitialize.");
+            }
+        }
 
-            // [디버그] 저장 데이터 복원 확인용 로그
-            Debug.Log("[PlayerSystem] 세이브 데이터 복원 완료! 원시 상태 로드 성공.");
+        private void RestoreLoadedSave()
+        {
+            if (entity_Player != null)
+            {
+                entity_Player.SetLicense(m_loadedSave.currentLicense);
+                entity_Player.SetGold(m_loadedSave.gold);
+
+                foreach (var equipSave in m_loadedSave.equippedItems)
+                {
+                    if (EntityHandle.TryParse(equipSave.handle, out EntityHandle parsedHandle))
+                    {
+                        EntityHandle restoredHandle = EntityManager.Restore<ItemData_Equipment>(parsedHandle, equipSave.dataId);
+                        if (EntityManager.Get(restoredHandle) is Entity_Equipment equip)
+                        {
+                            equip.SetUpgradeLevel(Math.Max(0, equipSave.upgradeLevel));
+                            entity_Player.Equip(equipSave.area, restoredHandle);
+                        }
+                    }
+                }
+            }
+
+            m_bonusInventorySize = m_loadedSave.bonusInventorySize;
+            m_currentStorageUpgradeCost = m_loadedSave.currentStorageUpgradeCost;
+            
+            Debug.Log("[PlayerSystem] Player save restored successfully.");
         }
 
         #endregion
-        */
 
         public override void Initialize()
         {
@@ -103,6 +157,13 @@ namespace DesktopCompanion.Systems
         {
             m_inventorySystem = SystemManager.GetSystem<InventorySystem>();
             Entity_Player entity_Player = EntityManager.Get<Entity_Player>(playerHandle);
+            
+            if (m_loadedSave != null)
+            {
+                RestoreLoadedSave();
+                m_loadedSave = null;
+            }
+
             m_startingLicense = entity_Player.CurrentLicense;
             m_startingGold = entity_Player.Gold;
 
@@ -257,18 +318,17 @@ namespace DesktopCompanion.Systems
         /// </summary>
         public string GetEquippedItemName(EquipmentMountingArea area)
         {
-            // [예외 처리] 플레이어 엔티티가 없거나 핸들이 비어있을 경우 텍스트 에러 방지용 "Empty Slot" 반환
-            if (playerHandle.Value == Guid.Empty) return "Empty Slot";
+            // [예외 처리] 플레이어 엔티티가 없거나 핸들이 비어있을 경우 널포인터 에러 방지용으로 null 반환
+            if (playerHandle.Value == Guid.Empty) return null;
 
             Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
             if (player != null && player.Equipped.TryGetValue(area, out EntityHandle handle))
             {
                 Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(handle);
-                // 장비 데이터가 유효하면 해당 장비의 이름을 반환하고, 없으면 "Empty Slot" 반환
-                return equipment != null ? equipment.Name : "Empty Slot";
+                // 장비 엔티티가 유효하면 해당 장비의 이름을 반환하고, 없으면 null 반환
+                return equipment != null ? equipment.Name : null;
             }
-
-            return "Empty Slot";
+            return null;
         }
 
         /// <summary>
@@ -304,10 +364,10 @@ namespace DesktopCompanion.Systems
             // 플레이어의 골드가 업그레이드 비용보다 같거나 많은지 확인
             if (player != null && player.Gold >= m_currentStorageUpgradeCost)
             {
-                // 1. 골드 차감(테스트용)
-                //player.Gold -= m_currentStorageUpgradeCost;
+                // 1. 골드 차감
+                player.AddGold(-m_currentStorageUpgradeCost);
 
-                // 2. 인벤토리 칸 수 1 증가
+                // 2. 인벤토리 크기 1 증가
                 m_bonusInventorySize += 1;
 
                 // 3. 다음 업그레이드 비용 1.25배 계산 

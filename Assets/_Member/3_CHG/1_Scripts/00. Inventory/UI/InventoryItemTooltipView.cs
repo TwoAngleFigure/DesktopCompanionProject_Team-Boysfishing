@@ -12,12 +12,10 @@ namespace DesktopCompanion.Views
         [SerializeField] private RectTransform m_tooltipRoot;
         [SerializeField] private CanvasGroup m_canvasGroup;
 
-        [Header("Item Info")]
-        [SerializeField] private Image m_iconImage;
+        [Header("Texts")]
         [SerializeField] private TMP_Text m_itemNameText;
         [SerializeField] private TMP_Text m_gradeText;
         [SerializeField] private TMP_Text m_effectText;
-        [SerializeField] private TMP_Text m_sellPriceText;
 
         [Header("Position")]
         [SerializeField] private Vector2 m_pointerOffset = new(18f, -18f);
@@ -58,26 +56,23 @@ namespace DesktopCompanion.Views
 
         private void Update()
         {
-            if (!m_isVisible)
+            if (m_isVisible)
             {
-                return;
+                FollowPointer();
             }
-
-            FollowPointer();
         }
 
-        public void Show(InventorySlotViewData data, Sprite icon)
+        public void Show(InventorySlotViewData data)
         {
-            if (data == null || data.IsEmpty || m_tooltipRoot == null)
+            if (!gameObject.activeSelf)
+            {
+                gameObject.SetActive(true);
+            }
+
+            if (data == null || data.IsEmpty || m_tooltipRoot == null || m_canvasGroup == null)
             {
                 Hide();
                 return;
-            }
-
-            if (m_iconImage != null)
-            {
-                m_iconImage.sprite = icon;
-                m_iconImage.enabled = icon != null;
             }
 
             if (m_itemNameText != null)
@@ -95,21 +90,10 @@ namespace DesktopCompanion.Views
                 m_effectText.text = data.EffectText;
             }
 
-            if (m_sellPriceText != null)
-            {
-                m_sellPriceText.text = data.SellPriceText;
-            }
-
-            m_tooltipRoot.gameObject.SetActive(true);
-
-            // Canvas 안에서 다른 UI보다 위에 그려지도록
-            m_tooltipRoot.SetAsLastSibling();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(m_tooltipRoot);
 
             m_isVisible = true;
-
-            // Layout Group과 Content Size Fitter의 크기 즉시 갱신
-            Canvas.ForceUpdateCanvases();
-            LayoutRebuilder.ForceRebuildLayoutImmediate(m_tooltipRoot);
+            m_canvasGroup.alpha = 1f;
 
             FollowPointer();
         }
@@ -118,15 +102,9 @@ namespace DesktopCompanion.Views
         {
             m_isVisible = false;
 
-            if (m_iconImage != null)
+            if (m_canvasGroup != null)
             {
-                m_iconImage.sprite = null;
-                m_iconImage.enabled = false;
-            }
-
-            if (m_tooltipRoot != null)
-            {
-                m_tooltipRoot.gameObject.SetActive(false);
+                m_canvasGroup.alpha = 0f;
             }
         }
 
@@ -143,15 +121,16 @@ namespace DesktopCompanion.Views
                 ? null
                 : m_canvas.worldCamera;
 
-            bool converted = RectTransformUtility.ScreenPointToLocalPointInRectangle(m_canvasRect, screenPosition, eventCamera, out Vector2 localPosition);
-
-            if (!converted)
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    m_canvasRect,
+                    screenPosition,
+                    eventCamera,
+                    out Vector2 localPosition))
             {
                 return;
             }
 
             Vector2 targetPosition = localPosition + m_pointerOffset;
-
             m_tooltipRoot.anchoredPosition = ClampInsideCanvas(targetPosition);
         }
 
@@ -163,7 +142,6 @@ namespace DesktopCompanion.Views
 
             float minX = canvasBounds.xMin + tooltipBounds.width * pivot.x;
             float maxX = canvasBounds.xMax - tooltipBounds.width * (1f - pivot.x);
-
             float minY = canvasBounds.yMin + tooltipBounds.height * pivot.y;
             float maxY = canvasBounds.yMax - tooltipBounds.height * (1f - pivot.y);
 

@@ -21,12 +21,6 @@ namespace DesktopCompanion.Views
         [SerializeField] private Transform m_slotRoot;
         [SerializeField] private InventorySlotView m_slotPrefab;
 
-        [Header("Selected Item Detail Panel")]
-        [SerializeField] private GameObject m_detailPanel;
-        [SerializeField] private Image m_detailIconImage;
-        [SerializeField] private TMP_Text m_detailNameText;
-        [SerializeField] private TMP_Text m_detailInfoText;
-
         [Header("Gold")]
         [SerializeField] private TMP_Text m_goldText;
 
@@ -47,7 +41,6 @@ namespace DesktopCompanion.Views
             m_vm.Bind();
 
             m_vm.Slots.Bind(RefreshSlotViews);
-            m_vm.SelectedSlot.Bind(RefreshDetailPanel);
             m_vm.Gold.Bind(RefreshGoldText);
 
             if (m_itemPickupController != null)
@@ -96,7 +89,6 @@ namespace DesktopCompanion.Views
             }
 
             m_vm.Slots.Unbind(RefreshSlotViews);
-            m_vm.SelectedSlot.Unbind(RefreshDetailPanel);
             m_vm.Gold.Unbind(RefreshGoldText);
 
             if (m_fishTabButton != null)
@@ -225,6 +217,28 @@ namespace DesktopCompanion.Views
                 return;
             }
 
+            // 장비창에서 선택한 장비를 인벤토리에 내려놓는 경우
+            if (m_itemPickupController.Source == ItemPickupSource.Equipment)
+            {
+                // 장비탭 한정
+                if (clickedSlot.SlotType != ItemType.Equipment)
+                {
+                    return;
+                }
+
+                bool placed = m_vm.PlaceEquippedItemAtSlot(
+                    m_itemPickupController.SourceEquipmentArea,
+                    slotIndex);
+
+                if (placed)
+                {
+                    ClearHoveredTooltip();
+                    m_itemPickupController.ClearPickup();
+                }
+
+                return;
+            }
+
             // 다른 인벤토리 탭의 슬롯과는 교환 금지
             if (m_itemPickupController.SourceSlotType != clickedSlot.SlotType)
             {
@@ -274,9 +288,13 @@ namespace DesktopCompanion.Views
             }
 
             ClearHoveredTooltip();
-            m_itemPickupController?.ClearPickup();
 
-            m_vm.EquipEquipment(slotData.Handle);
+            bool equipped = m_vm.EquipEquipmentAtSlot(slotIndex);
+
+            if (equipped)
+            {
+                m_itemPickupController?.ClearPickup();
+            }
         }
 
         private void OnSlotPointerEntered(int slotIndex)
@@ -321,7 +339,7 @@ namespace DesktopCompanion.Views
 
             Sprite icon = GetIcon(hoveredSlot);
 
-            m_itemTooltip.Show(hoveredSlot, icon);
+            m_itemTooltip.Show(hoveredSlot);
         }
 
         private void ClearHoveredTooltip()
@@ -348,84 +366,6 @@ namespace DesktopCompanion.Views
             return null;
         }
 
-        private void RefreshDetailPanel(InventorySlotViewData selected)
-        {
-            bool hasItem = selected != null && !selected.IsEmpty;
-
-            if (m_detailPanel != null)
-            {
-                m_detailPanel.SetActive(true);
-            }
-
-            if (!hasItem)
-            {
-                ClearDetailPanel();
-                return;
-            }
-
-            Sprite icon = GetIcon(selected);
-
-            if (m_detailIconImage != null)
-            {
-                m_detailIconImage.sprite = icon;
-                m_detailIconImage.enabled = icon != null;
-            }
-
-            if (m_detailNameText != null)
-            {
-                m_detailNameText.text = selected.ItemName;
-            }
-
-            if (m_detailInfoText != null)
-            {
-                m_detailInfoText.text = BuildDetailText(selected);
-            }
-        }
-
-        private void ClearDetailPanel()
-        {
-            if (m_detailIconImage != null)
-            {
-                m_detailIconImage.sprite = null;
-                m_detailIconImage.enabled = false;
-            }
-
-            if (m_detailNameText != null)
-            {
-                m_detailNameText.text = "선택된 아이템 없음";
-            }
-
-            if (m_detailInfoText != null)
-            {
-                m_detailInfoText.text = string.Empty;
-            }
-        }
-
-        private string BuildDetailText(InventorySlotViewData selected)
-        {
-            StringBuilder builder = new();
-
-            AppendDetailLine(builder, selected.GradeText);
-            AppendDetailLine(builder, selected.EffectText);
-            AppendDetailLine(builder, selected.SellPriceText);
-
-            return builder.ToString();
-        }
-
-        private void AppendDetailLine(StringBuilder builder, string text)
-        {
-            if (string.IsNullOrEmpty(text))
-            {
-                return;
-            }
-
-            if (builder.Length > 0)
-            {
-                builder.AppendLine();
-            }
-
-            builder.Append(text);
-        }
 
         private void BeginPickup(InventorySlotViewData slotData)
         {
@@ -495,7 +435,12 @@ namespace DesktopCompanion.Views
 
         private void OnEquipmentTabClicked()
         {
-            ClearPickup();
+            // 인벤토리에서 집은 아이템은 탭 변경 시 취소
+            if (m_itemPickupController != null && m_itemPickupController.HasItem && m_itemPickupController.Source == ItemPickupSource.Inventory)
+            {
+                m_itemPickupController.ClearPickup();
+            }
+
             ClearHoveredTooltip();
 
             m_vm.SelectTabCommand.Execute(ItemType.Equipment);
