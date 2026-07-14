@@ -3,15 +3,17 @@ using DesktopCompanion.Core;
 using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
 using DesktopCompanion.Systems;
-using DesktopCompanion.Save;
+// [세이브 관련 주석 처리]
+// using DesktopCompanion.Save; 
 using UnityEngine;
 
 namespace DesktopCompanion.Systems
 {
     /// <summary>
-    /// �÷��̾��� �ɷ�ġ�� �����ϰ�, ��� ������ ���� ���� ��ȭ�� �ǽð����� ����ϴ� �ý����Դϴ�.
+    /// 플레이어의 기본 스탯을 관리하고, 장비 장착에 따른 스탯 변화를 실시간으로 계산하는 시스템입니다.
     /// </summary>
-    public class PlayerSystem : SystemBase, ISaveable
+    // [세이브 관련 주석 처리] ISaveable 상속 비활성화
+    public class PlayerSystem : SystemBase //, ISaveable
     {
         private EntityHandle playerHandle;
         private Entity_Player entity_Player;
@@ -21,6 +23,7 @@ namespace DesktopCompanion.Systems
 
         public event Action<EntityHandle> OnStatChanged;
 
+        public EntityHandle PlayerHandle=> playerHandle;
         #region Stats
 
         [Header("Battle")]
@@ -67,6 +70,8 @@ namespace DesktopCompanion.Systems
 
         #endregion
 
+        // [세이브 관련 주석 처리] Save 영역 전체를 블록 주석(/* */)으로 비활성화
+        /*
         #region Save
 
         public string SaveId => "player_system_stats";
@@ -81,11 +86,13 @@ namespace DesktopCompanion.Systems
         {
             // R1: 복원 단계에서는 원시 상태만 다룬다. 최종 스탯 계산(CaculatedStat)은
             // 복원 이후 Phase 2(PostInitialize)에서 수행되어 저장값을 반영하므로 여기서 호출하지 않는다.
-            // [������] ������ Ȯ�ο� �α״� �ѱ۷�
-            Debug.Log("[PlayerSystem] ���̺� �ε� �Ϸ�! ��� ���� ���� �Ϸ�.");
+
+            // [디버그] 저장 데이터 복원 확인용 로그
+            Debug.Log("[PlayerSystem] 세이브 데이터 복원 완료! 원시 상태 로드 성공.");
         }
 
         #endregion
+        */
 
         public override void Initialize()
         {
@@ -125,11 +132,18 @@ namespace DesktopCompanion.Systems
 
         public void CaculatedStat()
         {
+            // 여기서 캐릭터의 기본 스탯은 어떠한 경우에도 무조건 갱신됩니다!
             InitializeStat();
 
             foreach (EntityHandle equitmentHandle in entity_Player.Equipped.Values)
             {
+                // 🛡️ [방어 코드 1] 슬롯이 비어있으면 해당 칸의 추가 스탯 계산만 건너뜁니다.
+                if (equitmentHandle.Value == Guid.Empty) continue;
+
                 Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(equitmentHandle);
+
+                // 🛡️ [방어 코드 2] 장비 데이터가 null인 경우 해당 칸 무시 (NullReferenceException 완벽 차단)
+                if (equipment == null) continue;
 
                 foreach (StatModifier stat in equipment.CurrentModifiers)
                 {
@@ -178,6 +192,7 @@ namespace DesktopCompanion.Systems
                 }
             }
 
+            m_baseInventorySize += m_bonusInventorySize;
             OnStatChanged?.Invoke(playerHandle);
         }
 
@@ -203,46 +218,113 @@ namespace DesktopCompanion.Systems
         {
             Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
 
-            if (player.Equipped.TryGetValue(area, out EntityHandle beforeEquipHandle))
+            // 🛡️ [추가된 방어 코드] 기존에 낀 장비도 없고, 새로 장착할 장비도 빈 값(클릭만 한 상태)이면 불필요한 로직 없이 조용히 종료!
+            bool hasEquippedItem = player.Equipped.TryGetValue(area, out EntityHandle beforeEquipHandle) && beforeEquipHandle.Value != Guid.Empty;
+            if (!hasEquippedItem && afterEquipHandle.Value == Guid.Empty)
+            {
+                return;
+            }
+
+            // 1. 기존 장비 해제 후 인벤토리 반환
+            if (hasEquippedItem)
             {
                 player.Unequip(area);
                 m_inventorySystem?.AddItem(beforeEquipHandle);
             }
 
-            if (m_inventorySystem != null)
+            // 2. 새로 장착할 아이템이 빈 값이 아닐 때만 인벤토리에서 제거 시도
+            if (afterEquipHandle.Value != Guid.Empty && m_inventorySystem != null)
             {
                 bool isRemoved = TryFindAndRemoveFromInventory(m_inventorySystem, afterEquipHandle);
                 if (!isRemoved)
                 {
-                    // [������] ������ Ȯ�ο� �α״� �ѱ۷�
-                    Debug.LogWarning("�κ��丮���� �ش� �������� ã�� �� ���ų� ������ �����߽��ϴ�.");
+                    // [경고] 장착하려는 아이템이 인벤토리에 없을 경우 경고 로그 출력
+                    Debug.LogWarning("[PlayerSystem] 인벤토리에서 장착할 아이템을 찾을 수 없거나 제거에 실패했습니다.");
                 }
             }
 
+            // 3. 새 아이템 장착 (빈 값이면 빈 값대로 덮어씌워서 완벽한 해제 상태로 만듦)
             player.Equip(area, afterEquipHandle);
+
+            // 4. 스탯 재계산 (기본 스탯 + 장착 장비 스탯 안전하게 갱신)
             CaculatedStat();
 
-            // [������] ������ Ȯ�ο� �α״� �ѱ۷�
-            Debug.Log($"{area} ������ ���ο� ��� �����Ǿ����ϴ�.");
+            // [디버그] 정상적으로 장착되었음을 알리는 로그 출력
+            Debug.Log($"[PlayerSystem] {area} 슬롯 장비 갱신 완료.");
         }
 
         /// <summary>
-        /// Ư�� ������ ������ ����� �̸��� ��ȯ�մϴ�. (UI ���� ǥ�ÿ�)
+        /// 특정 장비 슬롯에 장착된 아이템의 이름을 반환합니다. (UI 표시용)
         /// </summary>
         public string GetEquippedItemName(EquipmentMountingArea area)
         {
-            // [����] UI�� �ٷ� �Ѿ�� �ؽ�Ʈ�� ��� �����Ͽ� ��Ʈ ���� ����
+            // [예외 처리] 플레이어 엔티티가 없거나 핸들이 비어있을 경우 텍스트 에러 방지용 "Empty Slot" 반환
             if (playerHandle.Value == Guid.Empty) return "Empty Slot";
 
             Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
             if (player != null && player.Equipped.TryGetValue(area, out EntityHandle handle))
             {
                 Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(handle);
-                // ����� ���� �̸�(������)�� ������ ����
+                // 장비 데이터가 유효하면 해당 장비의 이름을 반환하고, 없으면 "Empty Slot" 반환
                 return equipment != null ? equipment.Name : "Empty Slot";
             }
 
             return "Empty Slot";
+        }
+
+        /// <summary>
+        /// 특정 구역에 장착된 장비의 실제 데이터(EntityHandle)를 반환합니다. (드래그 탈착용)
+        /// </summary>
+        public EntityHandle GetEquippedItemHandle(EquipmentMountingArea area)
+        {
+            if (playerHandle.Value == Guid.Empty) return default;
+
+            Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
+            if (player != null && player.Equipped.TryGetValue(area, out EntityHandle handle))
+            {
+                return handle;
+            }
+
+            return default;
+        }
+        // =========================================================
+        // 물고기 창고 강화 로직 (골드 소모 및 1.25배 비용 증가)
+        // =========================================================
+        private int m_bonusInventorySize = 0; // 강화로 영구적으로 늘어난 인벤토리 칸 수
+
+        // [나중에 수정할 부분] 현재 0으로 두어 무한 테스트 가능. 실전 시 100 등으로 변경!
+        private int m_currentStorageUpgradeCost = 0;
+        private float m_storageUpgradeCostMultiplier = 1.25f; // 비용 1.25배 증가
+
+        public void UpgradeFishStorage()
+        {
+            if (playerHandle.Value == Guid.Empty) return;
+
+            Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
+
+            // 플레이어의 골드가 업그레이드 비용보다 같거나 많은지 확인
+            if (player != null && player.Gold >= m_currentStorageUpgradeCost)
+            {
+                // 1. 골드 차감(테스트용)
+                //player.Gold -= m_currentStorageUpgradeCost;
+
+                // 2. 인벤토리 칸 수 1 증가
+                m_bonusInventorySize += 1;
+
+                // 3. 다음 업그레이드 비용 1.25배 계산 
+                // (Mathf.CeilToInt를 써서 소수점은 올림 처리합니다. 예: 125.5 골드 -> 126 골드)
+                // 현재는 0 * 1.25 이므로 계속 0이 됩니다.
+                m_currentStorageUpgradeCost = Mathf.CeilToInt(m_currentStorageUpgradeCost * m_storageUpgradeCostMultiplier);
+
+                // 4. 스탯 재계산 및 UI/인벤토리 자동 확장 방송(OnStatChanged) 송출!
+                CaculatedStat();
+
+                Debug.Log($"[물고기 창고] 강화 성공! 총 추가 칸 수: {m_bonusInventorySize} / 다음 필요 골드: {m_currentStorageUpgradeCost}");
+            }
+            else
+            {
+                Debug.LogWarning($"[물고기 창고] 골드가 부족합니다! (필요 골드: {m_currentStorageUpgradeCost} / 보유 골드: {player?.Gold})");
+            }
         }
     }
 }

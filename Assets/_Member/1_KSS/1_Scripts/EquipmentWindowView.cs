@@ -1,8 +1,11 @@
+ï»¿using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
+using DesktopCompanion.Systems;
 using DesktopCompanion.Views;
-using UnityEngine;
-using UnityEngine.UI; // ¹öÆ° ÄÄÆ÷³ÍÆ®¿ë
+using System;
 using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace DesktopCompanion.Views
 {
@@ -10,11 +13,19 @@ namespace DesktopCompanion.Views
     {
         private readonly EquipmentViewModel m_vm = new();
 
-        [Header("UI ¿¬°á")]
-        [SerializeField] private TextMeshProUGUI m_damageText;
+        [Header("UI ì—°ê²°")]
+        [SerializeField] private TextMeshProUGUI m_allStatsText;
         [SerializeField] private EquipmentSlotWidget[] m_slots;
 
-        // [ÅÇ ±â´É] Ãß°¡µÈ º¯¼öµé
+        // [ì¶”ê°€ë¨] ë°° ì¥ë¹„ì°½ í…ìŠ¤íŠ¸ 2ê°œë¥¼ ì—°ê²°í•  ë¹ˆì¹¸!
+        [Header("Ship Equip UI")]
+        [SerializeField] private TextMeshProUGUI m_engineSpeedText;
+        [SerializeField] private TextMeshProUGUI m_storageSizeText;
+        [SerializeField] private Button m_storageUpgradeBtn;//í…ŒìŠ¤íŠ¸ìš©
+
+        [Header("Inventory Link")]
+        [SerializeField] private ItemPickupController m_itemPickupController;
+
         [Header("Tab Buttons")]
         [SerializeField] private Button m_tabPlayerEquipBtn;
         [SerializeField] private Button m_tabShipEquipBtn;
@@ -27,39 +38,75 @@ namespace DesktopCompanion.Views
 
         public override void Bind()
         {
-            // Inject ¿¡·¯ ¾È ³ªµµ·Ï »ç¿ëÀÚ´Ô ¿øº» ±×´ë·Î 2°³ ´Ù ³ÖÀ½
             m_vm.Inject(SystemManager, EntityManager);
             m_vm.Bind();
 
-            // 1. °ø°İ·Â ÅØ½ºÆ® ¹ÙÀÎµù
-            m_vm.Damage.Bind(damageValue => m_damageText.text = $"°ø°İ·Â: {damageValue}");
+            m_vm.OnEquipmentChanged += RefreshUI;
 
-            // 2. ºä¸ğµ¨ÀÇ 'Àåºñ º¯°æ ÀÌº¥Æ®' ±¸µ¶ (UI ÀÚµ¿ °»½Å)
-            m_vm.OnEquipmentChanged += RefreshAllSlots;
-
-            // 3. ½½·Ô Å¬¸¯ ÀÌº¥Æ® ¿¬°á
             foreach (var slot in m_slots)
             {
-                slot.Bind(clickedArea =>
-                {
-                    m_vm.EquipCommand.Execute((clickedArea, default(EntityHandle)));
-                });
+                slot.Bind(
+                    // 1. í´ë¦­: ì¥ì°© í•´ì œ (ì´ì „ê³¼ ë™ì¼)
+                    onClickAction: clickedArea =>
+                    {
+                        m_vm.EquipCommand.Execute((clickedArea, default(EntityHandle)));
+                    },
+
+                    // 2. ë“œë¡­: ì¥ì°© (ê·œê²© ê²€ì‚¬ ì¶”ê°€!)
+                    onDropAction: dropArea =>
+                    {
+                        if (m_itemPickupController != null && m_itemPickupController.HasItem)
+                        {
+                            EntityHandle droppedItem = m_itemPickupController.PickedHandle;
+                            Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(droppedItem);
+
+                            if (equipment != null)
+                            {
+                                // âš ï¸ ì£¼ì˜: ë³€ìˆ˜ëª…(MountingArea)ì´ ì—ëŸ¬ë‚˜ë©´ ItemData_Equipmentì˜ ì‹¤ì œ ë³€ìˆ˜ëª…ìœ¼ë¡œ ìˆ˜ì •í•˜ì„¸ìš”!
+                                EquipmentMountingArea itemArea = equipment.ItemData.MountingArea;
+
+                                if (itemArea == dropArea)
+                                {
+                                    m_vm.EquipCommand.Execute((dropArea, droppedItem));
+                                    m_itemPickupController.ClearPickup();
+                                }
+                                else
+                                {
+                                    Debug.LogWarning($"âŒ ì¥ì°© ê±°ë¶€: {itemArea} ì•„ì´í…œì„ {dropArea} ì¹¸ì— ë„£ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
+                                    // ì—¬ê¸°ì—ì„œ í•„ìš”ì‹œ m_itemPickupController.CancelPickup() ë“±ìœ¼ë¡œ ì•„ì´ì½˜ì„ ì›ë˜ ìë¦¬ë¡œ ëŒë ¤ë³´ë‚´ëŠ” ë¡œì§ ì¶”ê°€ ê°€ëŠ¥
+                                }
+                            }
+                        }
+                    },
+
+                    // 3. ë“œë˜ê·¸ ì‹œì‘: ì¥ì°© í•´ì œ ë° ì•„ì´í…œ ë“¤ê¸° (ì•ˆì „ ê²€ì‚¬ ì¶”ê°€)
+                    onBeginDragAction: dragArea =>
+                    {
+                        EntityHandle equippedItem = m_vm.GetEquippedHandleForArea(dragArea);
+
+                        // ì¥ë¹„ê°€ ì‹¤ì œë¡œ ìˆê³ , ì»¨íŠ¸ë¡¤ëŸ¬ê°€ ë¹„ì–´ìˆì„ ë•Œë§Œ ì‹œì‘
+                        if (!equippedItem.Equals(default(EntityHandle)) && m_itemPickupController != null && !m_itemPickupController.HasItem)
+                        {
+                            // ë§ˆìš°ìŠ¤ì— ì•„ì´ì½˜ì„ ë„ìš°ê³ 
+                            m_itemPickupController.BeginPickup(ItemType.Equipment, -1, equippedItem, null);
+                            // í˜„ì¬ ì¹¸ì—ì„œ ì•„ì´í…œì„ ì œê±°(ì¥ì°© í•´ì œ)
+                            m_vm.EquipCommand.Execute((dragArea, default(EntityHandle)));
+                        }
+                    }
+                );
             }
 
-            // 4. ÅÇ ¹öÆ° Å¬¸¯ ÀÌº¥Æ® ¿¬°á
-            m_tabPlayerEquipBtn.onClick.AddListener(() => SwitchTab(0));
-            m_tabShipEquipBtn.onClick.AddListener(() => SwitchTab(1));
-            m_tabStatsBtn.onClick.AddListener(() => SwitchTab(2));
-
-            // ÃÊ±âÈ­: ½½·Ô ÀÌ¸§µé ºÒ·¯¿À°í, 1¹ø ÅÇ(ÇÃ·¹ÀÌ¾î Àåºñ) °­Á¦·Î ÄÑ±â
-            RefreshAllSlots();
+            if (m_tabPlayerEquipBtn != null) m_tabPlayerEquipBtn.onClick.AddListener(() => SwitchTab(0));
+            if (m_tabShipEquipBtn != null) m_tabShipEquipBtn.onClick.AddListener(() => SwitchTab(1));
+            if (m_tabStatsBtn != null) m_tabStatsBtn.onClick.AddListener(() => SwitchTab(2));
+            if (m_storageUpgradeBtn != null) m_storageUpgradeBtn.onClick.AddListener(() => SystemManager.GetSystem<PlayerSystem>().UpgradeFishStorage());
+            RefreshUI();
             SwitchTab(0);
         }
 
         public override void Unbind()
         {
-            m_vm.Damage.Unbind(damageValue => m_damageText.text = $"°ø°İ·Â: {damageValue}");
-            m_vm.OnEquipmentChanged -= RefreshAllSlots;
+            m_vm.OnEquipmentChanged -= RefreshUI;
             m_vm.Unbind();
 
             foreach (var slot in m_slots)
@@ -67,22 +114,35 @@ namespace DesktopCompanion.Views
                 slot.Unbind();
             }
 
-            m_tabPlayerEquipBtn.onClick.RemoveAllListeners();
-            m_tabShipEquipBtn.onClick.RemoveAllListeners();
-            m_tabStatsBtn.onClick.RemoveAllListeners();
+            if (m_tabPlayerEquipBtn != null) m_tabPlayerEquipBtn.onClick.RemoveAllListeners();
+            if (m_tabShipEquipBtn != null) m_tabShipEquipBtn.onClick.RemoveAllListeners();
+            if (m_tabStatsBtn != null) m_tabStatsBtn.onClick.RemoveAllListeners();
         }
 
-        // ¸ğµç ½½·ÔÀÇ ÅØ½ºÆ®(ÀÌ¸§)¸¦ »õ·Î°íÄ§ ÇÏ´Â ÇÔ¼ö
-        private void RefreshAllSlots()
+        private void RefreshUI()
         {
             foreach (var slot in m_slots)
             {
                 string itemName = m_vm.GetItemNameForArea(slot.Area);
                 slot.RefreshSlotUI(itemName);
             }
+
+            if (m_allStatsText != null)
+            {
+                m_allStatsText.text = m_vm.GetAllStatsFormattedText();
+            }
+
+            // [ì¶”ê°€ë¨] ìŠ¤íƒ¯ì°½ì´ ê°±ì‹ ë  ë•Œ, ë°° ì¥ë¹„ì°½ì˜ í…ìŠ¤íŠ¸ë„ ìë™ìœ¼ë¡œ ìµœì‹  ìŠ¤íƒ¯ì„ ë°›ì•„ì˜µë‹ˆë‹¤!
+            if (m_engineSpeedText != null)
+            {
+                m_engineSpeedText.text = m_vm.GetEngineSpeedText();
+            }
+            if (m_storageSizeText != null)
+            {
+                m_storageSizeText.text = m_vm.GetStorageSizeText();
+            }
         }
 
-        // ÅÇ È­¸é ÀüÈ¯ ÇÔ¼ö
         private void SwitchTab(int tabIndex)
         {
             if (m_playerEquipPanel != null) m_playerEquipPanel.SetActive(tabIndex == 0);
@@ -91,3 +151,4 @@ namespace DesktopCompanion.Views
         }
     }
 }
+
