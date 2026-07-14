@@ -59,7 +59,7 @@
     "type": "AquariumUpgradeData",
     "m_id": 1,
     "m_name": "아쿠아리움 Lv1",
-    "m_maxCapacity": 50,
+    "m_maxCapacity": 5,
     "m_upgradeCost": 0
   },
   {
@@ -272,7 +272,7 @@
     "m_baseGoldGettingMultiply": 1,
     "m_baseMapMovementSpeedPerTime": 10,
     "m_baseInventorySize": 20,
-    "m_startingLicense": 1,
+    "m_startingLicense": 10,
     "m_startingGold": 0
   },
   {
@@ -330,6 +330,36 @@
         },
         "m_count": 1,
         "m_probability": 0.1
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500003,
+    "m_name": "참돔",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100002
+    },
+    "m_maxHp": 200,
+    "m_battleTimeVariable": 20,
+    "m_minSize": 30,
+    "m_maxSize": 100,
+    "m_qualityThresholds": [
+      10.0,
+      30.0,
+      50.0,
+      80.0
+    ],
+    "m_isBoss": false,
+    "m_bossDrops": [
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200001
+        },
+        "m_count": 1,
+        "m_probability": 0.8
       }
     ]
   },
@@ -399,9 +429,9 @@
           {
             "m_fish": {
               "type": "BattleFishData",
-              "id": 500001
+              "id": 500003
             },
-            "m_weight": 60.0
+            "m_weight": 70.0
           }
         ]
       }
