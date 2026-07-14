@@ -126,6 +126,8 @@ namespace DesktopCompanion.Core
         {
             m_systemManager.Register(new DesktopCompanion.Systems.PlayerSystem());
 
+            m_systemManager.Register(new DesktopCompanion.Systems.CurrencySystem());
+
             m_systemManager.Register(new DesktopCompanion.Systems.InventorySystem());
 
             m_systemManager.Register(new DesktopCompanion.Systems.FishingSystem());
