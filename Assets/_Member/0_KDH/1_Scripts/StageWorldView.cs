@@ -1,12 +1,16 @@
 using UnityEngine;
 using DesktopCompanion.Systems;
 using DesktopCompanion.Core;
+using DesktopCompanion.Controllers;
 
 namespace DesktopCompanion.Views
 {
     public class StageWorldView : UIViewBase
     {
         private readonly StageViewModel m_vm = new();
+
+        [Header("배 컨트롤러 연결")]
+        public ShipController m_shipController;
 
         private GameObject m_currentStageInstance;
         private string m_lastLoadedAssetKey = "";
@@ -27,6 +31,11 @@ namespace DesktopCompanion.Views
         {
             if (m_vm == null) return;
 
+            if (m_shipController != null)
+            {
+                m_shipController.SetTraveling(m_vm.IsTraveling);
+            }
+
             if (m_vm.CurrentStageData == null) return;
 
             string currentStageKey = AssetKeys.Of(m_vm.CurrentStageData, AssetUsage.Model);
@@ -42,6 +51,11 @@ namespace DesktopCompanion.Views
             ClearCurrentStage();
             m_lastLoadedAssetKey = stageAssetKey;
 
+            if (m_shipController != null)
+            {
+                m_shipController.ResetToOrigin();
+            }
+
             if (AssetProvider != null && AssetProvider.TryGet(stageAssetKey, out GameObject stagePrefab))
             {
                 m_currentStageInstance = Instantiate(stagePrefab, Vector3.zero, Quaternion.identity, transform);
@@ -51,10 +65,6 @@ namespace DesktopCompanion.Views
                 {
                     blueprint.InitProvider(AssetProvider);
                     Debug.Log($"[StageWorldView] {stageAssetKey} 맵 로드 완료 및 권한 주입 성공!");
-                }
-                else
-                {
-                    Debug.LogWarning($"[StageWorldView] {stageAssetKey} 프리팹에 StageBlueprint가 없습니다!");
                 }
             }
         }

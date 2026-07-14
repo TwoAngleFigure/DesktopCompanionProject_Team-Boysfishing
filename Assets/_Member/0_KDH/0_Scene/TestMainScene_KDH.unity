@@ -171,6 +171,24 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5250599954485322735, guid: 36fb9f6430bbd68429a426436ef8e637, type: 3}
   m_PrefabInstance: {fileID: 7233504053959552619}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &699590063 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1279468749159923727, guid: 36fb9f6430bbd68429a426436ef8e637, type: 3}
+  m_PrefabInstance: {fileID: 7233504053959552619}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &699590066
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 699590063}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b0d766570e6e3314c800baf34b0c72ad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Controllers.ShipController
+  m_speed: 10
 --- !u!4 &916857351 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2256107072568812797, guid: 0c18333fb257e1449b879180f529986f, type: 3}
@@ -433,6 +451,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5db5709f0d66ace488a0ae748ce8b8b4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Views.StageWorldView
+  m_shipController: {fileID: 699590066}
 --- !u!4 &1774262072
 Transform:
   m_ObjectHideFlags: 0
@@ -634,25 +653,41 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 4870835454605120243, guid: 36fb9f6430bbd68429a426436ef8e637, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -6.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4870835454605120243, guid: 36fb9f6430bbd68429a426436ef8e637, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4870835454605120243, guid: 36fb9f6430bbd68429a426436ef8e637, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -53.7
+      objectReference: {fileID: 0}
     - target: {fileID: 4957090536556872736, guid: 36fb9f6430bbd68429a426436ef8e637, type: 3}
       propertyPath: m_LocalPosition.x
       value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 4957090536556872736, guid: 36fb9f6430bbd68429a426436ef8e637, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -4.4200177
+      value: -4.4365234
       objectReference: {fileID: 0}
     - target: {fileID: 4957090536556872736, guid: 36fb9f6430bbd68429a426436ef8e637, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.9999892
+      value: 0.9999861
       objectReference: {fileID: 0}
     - target: {fileID: 4957090536556872736, guid: 36fb9f6430bbd68429a426436ef8e637, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0.0038512652
+      value: -0.005273218
+      objectReference: {fileID: 0}
+    - target: {fileID: 4957090536556872736, guid: 36fb9f6430bbd68429a426436ef8e637, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 4957090536556872736, guid: 36fb9f6430bbd68429a426436ef8e637, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.0026023025
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 5250599954485322735, guid: 36fb9f6430bbd68429a426436ef8e637, type: 3}
       propertyPath: m_LocalScale.x
@@ -761,12 +796,15 @@ PrefabInstance:
       insertIndex: 1
       addedObject: {fileID: 66687195}
     - targetCorrespondingSourceObject: {fileID: 8941498426628265134, guid: 36fb9f6430bbd68429a426436ef8e637, type: 3}
-      insertIndex: 3
+      insertIndex: -1
       addedObject: {fileID: 916857351}
     - targetCorrespondingSourceObject: {fileID: 5250599954485322735, guid: 36fb9f6430bbd68429a426436ef8e637, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1152690575}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1279468749159923727, guid: 36fb9f6430bbd68429a426436ef8e637, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 699590066}
   m_SourcePrefab: {fileID: 100100000, guid: 36fb9f6430bbd68429a426436ef8e637, type: 3}
 --- !u!1001 &8565220895549380454
 PrefabInstance:
