@@ -9,14 +9,20 @@ using UnityEngine.UI;
 
 public class FishingWorldView : WorldViewBase
 {
-    [SerializeField] private CanvasGroup m_popupCanvasGroup;
+    [Header("Catch Path")]
+    [SerializeField] private FishingCatchPathEffect m_catchPathEffect;
 
-    [Header("Model")]
+    [SerializeField] private Vector3 m_flightModelScale = Vector3.one;
+
+    [SerializeField] private Vector3 m_flightModelLocalEulerAngles = Vector3.zero;
+
+    [Header("Popup Model")]
     [SerializeField] private Transform m_spawnPoint;
     [SerializeField] private Transform m_modelRoot;
     [SerializeField] private Vector3 m_modelScale = Vector3.one;
 
     [Header("Catch Popup")]
+    [SerializeField] private CanvasGroup m_popupCanvasGroup;
     [SerializeField] private GameObject m_popupRoot;
     [SerializeField] private TMP_Text m_fishInfoText;
     [SerializeField] private Image[] m_qualityStars;
@@ -27,6 +33,7 @@ public class FishingWorldView : WorldViewBase
 
     private FishingSystem m_fishingSystem;
     private GameObject m_currentModel;
+    private GameObject m_currentFlightModel;
     private DitherFade m_currentModelFade;
     private Sequence m_popupSequence;
 
@@ -36,8 +43,7 @@ public class FishingWorldView : WorldViewBase
     {
         if (m_popupRoot != null)
         {
-            m_popupShownLocalPosition =
-                m_popupRoot.transform.localPosition;
+            m_popupShownLocalPosition = m_popupRoot.transform.localPosition;
         }
     }
 
@@ -59,6 +65,7 @@ public class FishingWorldView : WorldViewBase
         m_popupSequence?.Kill();
         m_popupSequence = null;
 
+        ClearCurrentFlightModel();
         ClearCurrentModel();
 
         if (m_popupRoot != null)
@@ -149,7 +156,6 @@ public class FishingWorldView : WorldViewBase
 
     private void HandleFishCaught(EntityHandle fishHandle)
     {
-        Debug.Log("Fish Get!!!!!!!!");
         Entity_Fish fish = EntityManager.Get<Entity_Fish>(fishHandle);
 
         if (fish == null)
@@ -158,27 +164,92 @@ public class FishingWorldView : WorldViewBase
             return;
         }
 
+        GameObject fishPrefab = GetFishModelPrefab(fish.ItemData);
+
+        if (fishPrefab != null)
+        {
+            PlayCatchPath(fishPrefab);
+        }
+
         ClearCurrentModel();
         UpdateCatchPopup(fish);
-        CreateCaughtFishModel(fish.ItemData);
+        CreateCaughtFishModel(fishPrefab);
         PlayResultPopup();
     }
 
-    private void CreateCaughtFishModel(ItemData_Fish fishData)
+    private GameObject GetFishModelPrefab(ItemData_Fish fishData)
     {
-
         if (fishData == null)
         {
-            Debug.LogWarning("[FishingWorldView] 잡힌 물고기의 Data가 없음");
-            return;
+            Debug.LogWarning(
+                "[FishingWorldView] " +
+                "잡힌 물고기의 Data가 없습니다.");
+            return null;
         }
 
-        string modelKey = AssetKeys.Of(fishData, AssetUsage.Model);
+        string modelKey = AssetKeys.Of(fishData,AssetUsage.Model);
+
         GameObject prefab = AssetProvider.Get<GameObject>(modelKey);
 
         if (prefab == null)
         {
-            Debug.LogWarning($"[FishingWorldView] 물고기 모델 프리팹을 찾을 수 없음: key={modelKey}");
+            Debug.LogWarning($"[FishingWorldView] 물고기 모델 프리팹을 찾을 수 없습니다: " +
+                $"key={modelKey}");
+        }
+
+        return prefab;
+    }
+
+    private void PlayCatchPath(GameObject fishPrefab)
+    {
+        if (m_catchPathEffect == null)
+        {
+            Debug.LogWarning(
+                "[FishingWorldView] " +
+                "Catch Path Effect가 연결되지 않았습니다.");
+            return;
+        }
+
+        ClearCurrentFlightModel();
+
+        // FishingCatchPathEffect가 붙어 있는
+        // FishingCatchPathRoot 아래에 연출 모델을 생성한다.
+        Transform flightParent = m_catchPathEffect.transform;
+
+        m_currentFlightModel = Instantiate(fishPrefab, flightParent);
+
+        Transform flightTransform = m_currentFlightModel.transform;
+
+        flightTransform.localRotation = Quaternion.Euler(m_flightModelLocalEulerAngles);
+
+        flightTransform.localScale = m_flightModelScale;
+
+        GameObject flightModel = m_currentFlightModel;
+
+        bool started = m_catchPathEffect.Play(flightTransform,() =>
+            {
+                if (m_currentFlightModel == flightModel)
+                {
+                    m_currentFlightModel = null;
+                }
+
+                if (flightModel != null)
+                {
+                    Destroy(flightModel);
+                }
+            });
+
+        if (!started)
+        {
+            ClearCurrentFlightModel();
+        }
+    }
+
+
+    private void CreateCaughtFishModel(GameObject prefab)
+    {
+        if (prefab == null)
+        {
             return;
         }
 
@@ -199,7 +270,16 @@ public class FishingWorldView : WorldViewBase
             );
         }
 
-        Debug.Log($"[FishingWorldView] 물고기 모델 생성: {fishData.Name}, key={modelKey}");
+    }
+    private void ClearCurrentFlightModel()
+    {
+        m_catchPathEffect?.Stop();
+
+        if (m_currentFlightModel != null)
+        {
+            Destroy(m_currentFlightModel);
+            m_currentFlightModel = null;
+        }
     }
 
     private void ClearCurrentModel()
@@ -217,6 +297,7 @@ public class FishingWorldView : WorldViewBase
     {
         if (m_popupRoot == null || m_popupCanvasGroup == null)
         {
+            ClearCurrentModel();
             Debug.LogWarning("[FishingWorldView] 결과 팝업 참조가 설정되지 않았습니다.");
             return;
         }

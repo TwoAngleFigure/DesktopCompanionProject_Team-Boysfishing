@@ -116,3 +116,7 @@ InitTestScene*.unity*
 # 개별 다운로드 리소스 — Git 공유 안 함(각자 로컬)
 /[Aa]ssets/Resource/
 /[Aa]ssets/Resource.meta
+
+# Addressables 설정 폴더 전체 — Git 공유 안 함(각자 로컬 관리)
+/[Aa]ssets/AddressableAssetsData/
+/[Aa]ssets/AddressableAssetsData.meta
