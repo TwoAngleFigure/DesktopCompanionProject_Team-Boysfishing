@@ -5,7 +5,7 @@ using DesktopCompanion.Data;
 
 namespace DesktopCompanion.Views
 {
-    public class WorldMapUIView : UIViewBase
+    public class WorldMapUIView : UIWindowBase
     {
         [Header("동적 생성 인프라 설정")]
         [SerializeField] private GameObject m_nodePrefab; 
