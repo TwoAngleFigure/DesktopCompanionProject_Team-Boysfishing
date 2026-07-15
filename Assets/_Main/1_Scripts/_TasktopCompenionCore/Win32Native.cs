@@ -138,6 +138,7 @@ namespace DesktopCompanion
 
         // ---- 전역 마우스 버튼(클릭관통·포커스와 무관하게 판독) ----
         public const int VK_LBUTTON = 0x01;
+        public const int VK_RBUTTON = 0x02;
 
         [DllImport("user32.dll")]
         public static extern short GetAsyncKeyState(int vKey);

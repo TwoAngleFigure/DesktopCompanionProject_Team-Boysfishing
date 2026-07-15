@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using DesktopCompanion.Core;
 
 namespace DesktopCompanion.Views
@@ -7,12 +8,22 @@ namespace DesktopCompanion.Views
     /// <summary>
     /// 'UI'의 중앙 관리자(WorldManager와 동형). 도메인 구독은 갖지 않는다 —
     /// 개별 UI는 팀원이 UIViewBase/UIWindowBase를 상속해 만들고, System 구독은 각 ViewModel 안에서.
-    /// UIManager는 유닛의 호스트/레지스트리 + 공통 의존성 공급자 + 활성 윈도우 관리자다.
+    /// UIManager는 유닛의 호스트/레지스트리 + 공통 의존성 공급자 + 활성 윈도우 관리자 + 자동 배치자다.
     /// </summary>
     public class UIManager : MonoBehaviour
     {
         private static UIManager s_instance;   // 유닛 자가 등록 접근점
         private static readonly List<UIViewBase> s_pending = new();   // Initialize 전(씬 로드)에 등록 시도한 뷰 대기
+
+        [Header("Window Layout")]
+        [Tooltip("창 사이 간격(px)")]
+        [SerializeField] private float m_windowPadding = 10f;
+        [Tooltip("첫 창 오른쪽 가장자리와 화면 우측 사이 여백(px)")]
+        [SerializeField] private float m_rightMargin = 20f;
+        [Tooltip("세로 중앙에서의 y 오프셋(px)")]
+        [SerializeField] private float m_verticalCenterOffset = 0f;
+        [Tooltip("자동 배치 on/off")]
+        [SerializeField] private bool m_autoLayout = true;
 
         private SystemManager m_systemManager;
         private EntityManager m_entityManager;
@@ -29,8 +40,9 @@ namespace DesktopCompanion.Views
                 return;
             }
             RegisterInternal(view);
-            // 윈도우가 이미 활성이면 활성 스택에도 반영한다(OnEnable의 PushActiveWindow도 s_instance null로 유실됐을 수 있음).
-            if (view is UIWindowBase window && window.isActiveAndEnabled)
+            // 이미 '표시 중'인 윈도우만 활성 스택에 반영한다(OnEnable의 Push가 s_instance null로 유실됐을 수 있음).
+            // ※ IsShown 기준: CanvasGroup 창은 활성이어도 숨김(닫힘)이면 스택에 넣지 않는다.
+            if (view is UIWindowBase window && window.IsShown)
             {
                 PushActiveWindowInternal(window);
             }
@@ -138,9 +150,10 @@ namespace DesktopCompanion.Views
         {
             m_activeWindows.Remove(window);   // 재진입 시 중복 방지
             m_activeWindows.Add(window);      // 최근 열림 = 맨 뒤
+            RelayoutWindows();
         }
 
-        /// <summary>윈도우가 꺼질 때(OnDisable) 호출 — 스택에서 제거.</summary>
+        /// <summary>윈도우가 꺼질 때(OnDisable/Hide) 호출 — 스택에서 제거.</summary>
         public static void RemoveActiveWindow(UIWindowBase window)
         {
             if (s_instance == null || window == null)
@@ -148,7 +161,50 @@ namespace DesktopCompanion.Views
                 return;
             }
 
-            s_instance.m_activeWindows.Remove(window);
+            s_instance.RemoveActiveWindowInternal(window);
+        }
+
+        private void RemoveActiveWindowInternal(UIWindowBase window)
+        {
+            if (m_activeWindows.Remove(window))
+            {
+                RelayoutWindows();
+            }
+        }
+
+        /// <summary>
+        /// 활성 창을 우측→좌측으로 재배치(오래된 것=우측 가장자리·세로 중앙, 최근=좌측). 빈틈 제거.
+        /// 대상 창은 고정 크기 + Canvas(또는 전체화면 루트) 직속 자식이어야 앵커(1,0.5)가 화면 우측·세로중앙과 일치.
+        /// </summary>
+        private void RelayoutWindows()
+        {
+            if (!m_autoLayout)
+            {
+                return;
+            }
+
+            float x = -m_rightMargin;
+            for (int i = 0; i < m_activeWindows.Count; i++)
+            {
+                UIWindowBase w = m_activeWindows[i];
+                if (w == null || !w.ParticipatesInLayout)
+                {
+                    continue;   // 배치 예외 창은 건너뜀(닫기 스택에는 계속 참여)
+                }
+
+                if (w.transform is not RectTransform rt)
+                {
+                    continue;
+                }
+
+                rt.anchorMin = rt.anchorMax = new Vector2(1f, 0.5f);   // 우측·세로중앙 기준
+                rt.pivot = new Vector2(1f, 0.5f);
+                LayoutRebuilder.ForceRebuildLayoutImmediate(rt);        // 동적 크기(ContentSizeFitter) 대응
+                float width = rt.rect.width;
+
+                rt.anchoredPosition = new Vector2(x, m_verticalCenterOffset);
+                x -= (width + m_windowPadding);                         // 다음 창은 왼쪽으로
+            }
         }
 
         /// <summary>
@@ -163,7 +219,10 @@ namespace DesktopCompanion.Views
             }
 
             UIWindowBase top = m_activeWindows[m_activeWindows.Count - 1];
-            top.Close();   // SetActive(false) → OnDisable → RemoveActiveWindow
+            top.Close();   // → Hide() (HideMode에 따라 CanvasGroup 숨김 또는 SetActive(false)) → RemoveActiveWindow
         }
+
+        /// <summary>최상단(최근) 창 닫기 요청(정적 통로 — 우클릭 입력 등에서 호출).</summary>
+        public static void RequestCloseTopWindow() => s_instance?.CloseTopWindow();
     }
 }
