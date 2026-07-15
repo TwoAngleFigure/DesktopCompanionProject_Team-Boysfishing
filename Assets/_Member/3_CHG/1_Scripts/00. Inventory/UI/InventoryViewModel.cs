@@ -10,12 +10,12 @@ namespace DesktopCompanion.Views
 {
     public class InventoryViewModel : UIViewModelBase
     {
-        // 현재 물고기 데이터에는 생산 수량 필드가 없으므로 1개로 고정. 차후 수정
         private const int AquariumProduceCount = 1;
 
         private InventorySystem m_inventorySystem;
         private PlayerSystem m_playerSystem;
         private CurrencySystem m_currencySystem;
+        private ShopSystem m_shopSystem;
 
         private ItemType m_currentTab = ItemType.Fish;
         private int m_selectedSlotIndex = -1;
@@ -35,6 +35,7 @@ namespace DesktopCompanion.Views
             m_inventorySystem = SystemManager.GetSystem<InventorySystem>();
             m_playerSystem = SystemManager.GetSystem<PlayerSystem>();
             m_currencySystem = SystemManager.GetSystem<CurrencySystem>();
+            m_shopSystem = SystemManager.GetSystem<ShopSystem>();
 
             SelectTabCommand = new RelayCommand<ItemType>(SelectTab);
             SelectSlotCommand = new RelayCommand<int>(SelectSlot);
@@ -70,6 +71,7 @@ namespace DesktopCompanion.Views
             m_inventorySystem = null;
             m_playerSystem = null;
             m_currencySystem = null;
+            m_shopSystem = null;
         }
 
         private void HandleGoldChanged(int currentGold)
@@ -488,6 +490,11 @@ namespace DesktopCompanion.Views
 
         private int CalculateUnitSellPrice(InventorySlotViewData viewData, ItemData itemData)
         {
+            if (m_shopSystem != null)
+            {
+                return m_shopSystem.CalculateSellGold(viewData.Handle, 1);
+            }
+
             return itemData.BasePrice;
         }
 
