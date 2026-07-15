@@ -3568,10 +3568,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3902092948679073735, guid: 58a74630da6246b4ab7ce739c9cf08f7, type: 3}
-      propertyPath: m_SortingOrder
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 4518863603074501852, guid: 58a74630da6246b4ab7ce739c9cf08f7, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -3580,14 +3576,24 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4571939350597627288, guid: 58a74630da6246b4ab7ce739c9cf08f7, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4571939350597627288, guid: 58a74630da6246b4ab7ce739c9cf08f7, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4571939350597627288, guid: 58a74630da6246b4ab7ce739c9cf08f7, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7768487740857999495, guid: 58a74630da6246b4ab7ce739c9cf08f7, type: 3}
       propertyPath: m_Name
       value: Canvas_Fishing
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects:
-    - {fileID: 6305507998092084015, guid: 58a74630da6246b4ab7ce739c9cf08f7, type: 3}
-    - {fileID: 8308526968816304969, guid: 58a74630da6246b4ab7ce739c9cf08f7, type: 3}
+    m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 58a74630da6246b4ab7ce739c9cf08f7, type: 3}
@@ -10985,7 +10991,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1285282641735575300, guid: 2b7625b59cbf6674889ac77456edc5ef, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -1.9788818
+      value: -1.9790039
       objectReference: {fileID: 0}
     - target: {fileID: 1285282641735575300, guid: 2b7625b59cbf6674889ac77456edc5ef, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -12794,10 +12800,6 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3260559563426033245, guid: 5bcb969c47766104e8f20a829cdff774, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 23.19
-      objectReference: {fileID: 0}
     - target: {fileID: 3897617740173490056, guid: 5bcb969c47766104e8f20a829cdff774, type: 3}
       propertyPath: m_Name
       value: ---Fishing---
@@ -13255,8 +13257,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 74827879233646106}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.00012165611, y: -0.0000027747128, z: -0.002652364, w: 0.9999965}
-  m_LocalPosition: {x: -0.000005605692, y: -0.006729964, z: 0.000013605569}
+  m_LocalRotation: {x: -0.0010270253, y: -0, z: -0.0004164719, w: 0.9999994}
+  m_LocalPosition: {x: -1.8667147e-13, y: -4.482208e-10, z: -0.00000021821279}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
