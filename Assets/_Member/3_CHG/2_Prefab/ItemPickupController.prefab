@@ -139,4 +139,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Views.ItemPickupController
   m_canvas: {fileID: 0}
   m_iconRoot: {fileID: 1145474851032206287}
-  m_iconImage: {fileID: 0}
+  m_iconImage: {fileID: 5051592431341732594}

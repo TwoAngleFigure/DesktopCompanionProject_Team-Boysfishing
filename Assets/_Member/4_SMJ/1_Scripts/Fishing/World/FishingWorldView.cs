@@ -149,6 +149,7 @@ public class FishingWorldView : WorldViewBase
 
     private void HandleFishCaught(EntityHandle fishHandle)
     {
+        Debug.Log("Fish Get!!!!!!!!");
         Entity_Fish fish = EntityManager.Get<Entity_Fish>(fishHandle);
 
         if (fish == null)

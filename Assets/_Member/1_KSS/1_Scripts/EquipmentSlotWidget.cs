@@ -4,29 +4,30 @@ using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.EventSystems; // [Ãß°¡µÊ] µå·¡±× ¾Ø µå·Ó ÀÌº¥Æ®¸¦ °¨ÁöÇÏ±â À§ÇÑ ÇÊ¼ö ³×ÀÓ½ºÆäÀÌ½º
+using UnityEngine.EventSystems; // [ì¶”ê°€ë¨] ë“œë˜ê·¸ ì•¤ ë“œë¡­ ì´ë²¤íŠ¸ë¥¼ ê°ì§€í•˜ê¸° ìœ„í•œ í•„ìˆ˜ ë„¤ì„ìŠ¤í˜ì´ìŠ¤
 
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// ÀåºñÃ¢ÀÇ °³º° ½½·ÔÀ» ´ã´çÇÏ´Â Àç»ç¿ë °¡´ÉÇÑ À§Á¬(UI ÄÄÆ÷³ÍÆ®)ÀÔ´Ï´Ù.
+    /// ì¥ë¹„ì°½ì˜ ê°œë³„ ìŠ¬ë¡¯ì„ ë‹´ë‹¹í•˜ëŠ” ì¬ì‚¬ìš© ê°€ëŠ¥í•œ ìœ„ì ¯(UI ì»´í¬ë„ŒíŠ¸)ì…ë‹ˆë‹¤.
     /// </summary>
-    // [¼öÁ¤µÊ] ¸¶¿ì½º µå·Ó(IDropHandler), µå·¡±× ½ÃÀÛ(IBeginDragHandler), µå·¡±× Áß(IDragHandler) ÀÎÅÍÆäÀÌ½º »ó¼Ó
+    // [ìˆ˜ì •ë¨] ë§ˆìš°ìŠ¤ ë“œë¡­(IDropHandler), ë“œë˜ê·¸ ì‹œì‘(IBeginDragHandler), ë“œë˜ê·¸ ì¤‘(IDragHandler) ì¸í„°í˜ì´ìŠ¤ ìƒì†
     public class EquipmentSlotWidget : MonoBehaviour, IDropHandler, IBeginDragHandler, IDragHandler
     {
         [SerializeField] private EquipmentMountingArea m_area;
         [SerializeField] private Button m_slotButton;
         [SerializeField] private TextMeshProUGUI m_itemNameText;
+        [SerializeField] private Image m_iconImage; // [ì¶”ê°€] ì¥ì°©ëœ ì•„ì´í…œì˜ ì•„ì´ì½˜ì„ í‘œì‹œí•  ì´ë¯¸ì§€
 
         public EquipmentMountingArea Area => m_area;
 
-        // View(»óÀ§ ½ºÅ©¸³Æ®)·Î ÀÌº¥Æ®¸¦ Àü´ŞÇÒ Äİ¹é ÇÔ¼öµé
+        // View(ìƒìœ„ ìŠ¤í¬ë¦½íŠ¸)ë¡œ ì´ë²¤íŠ¸ë¥¼ ì „ë‹¬í•  ì½œë°± í•¨ìˆ˜ë“¤
         private Action<EquipmentMountingArea> m_onClickAction;
         private Action<EquipmentMountingArea> m_onDropAction;
         private Action<EquipmentMountingArea> m_onBeginDragAction;
 
-        // [¼öÁ¤µÊ] Å¬¸¯»Ó¸¸ ¾Æ´Ï¶ó, µå·Ó°ú µå·¡±× ÀÌº¥Æ®µµ ¿ÜºÎ¿¡¼­ ¿¬°áÇÒ ¼ö ÀÖµµ·Ï ¸Å°³º¯¼ö Ãß°¡
-        // (±âÁ¸ ÄÚµå¿ÍÀÇ È£È¯¼ºÀ» À§ÇØ = null Ã³¸®ÇÏ¿© ¿¡·¯¸¦ ¹æÁöÇß½À´Ï´Ù)
+        // [ìˆ˜ì •ë¨] í´ë¦­ë¿ë§Œ ì•„ë‹ˆë¼, ë“œë¡­ê³¼ ë“œë˜ê·¸ ì´ë²¤íŠ¸ë„ ì™¸ë¶€ì—ì„œ ì—°ê²°í•  ìˆ˜ ìˆë„ë¡ ë§¤ê°œë³€ìˆ˜ ì¶”ê°€
+        // (ê¸°ì¡´ ì½”ë“œì™€ì˜ í˜¸í™˜ì„±ì„ ìœ„í•´ = null ì²˜ë¦¬í•˜ì—¬ ì—ëŸ¬ë¥¼ ë°©ì§€í–ˆìŠµë‹ˆë‹¤)
         public void Bind(
             Action<EquipmentMountingArea> onClickAction,
             Action<EquipmentMountingArea> onDropAction = null,
@@ -47,20 +48,28 @@ namespace DesktopCompanion.Views
             m_onBeginDragAction = null;
         }
 
-        public void RefreshSlotUI(string itemName)
+        public void RefreshSlotUI(string itemName, Sprite icon)
         {
             if (m_itemNameText != null)
             {
                 m_itemNameText.text = itemName;
             }
+
+            // [ì¶”ê°€] ì•„ì´ì½˜ ì—…ë°ì´íŠ¸
+            if (m_iconImage != null)
+            {
+                m_iconImage.sprite = icon;
+                // ì•„ì´ì½˜ì´ ìˆìœ¼ë©´ í™œì„±í™”(ë˜ëŠ” íˆ¬ëª…ë„ 100%), ì—†ìœ¼ë©´ ë¹„í™œì„±í™”(íˆ¬ëª…ë„ 0%) ë“± ì ì ˆíˆ ì²˜ë¦¬
+                m_iconImage.enabled = icon != null;
+            }
         }
 
         // ========================================================
-        // À¯´ÏÆ¼ µå·¡±× ¾Ø µå·Ó ÀÌº¥Æ® °¨Áö ¼¾¼­ (EventSystems)
+        // ìœ ë‹ˆí‹° ë“œë˜ê·¸ ì•¤ ë“œë¡­ ì´ë²¤íŠ¸ ê°ì§€ ì„¼ì„œ (EventSystems)
         // ========================================================
 
         /// <summary>
-        /// 1. ÀÎº¥Åä¸®¿¡¼­ ²ø°í ¿Â ¾ÆÀÌÅÛÀ» ³» À§¿¡ ¶³¾î¶ß·ÈÀ» ¶§ (Drop)
+        /// 1. ì¸ë²¤í† ë¦¬ì—ì„œ ëŒê³  ì˜¨ ì•„ì´í…œì„ ë‚´ ìœ„ì— ë–¨ì–´ëœ¨ë ¸ì„ ë•Œ (Drop)
         /// </summary>
         public void OnDrop(PointerEventData eventData)
         {
@@ -68,7 +77,7 @@ namespace DesktopCompanion.Views
         }
 
         /// <summary>
-        /// 2. ³» ½½·Ô¿¡ ÀåÂøµÈ Àåºñ¸¦ Å¬¸¯ÇØ¼­ ÀÎº¥Åä¸®·Î ²ø±â ½ÃÀÛÇÒ ¶§ (Begin Drag)
+        /// 2. ë‚´ ìŠ¬ë¡¯ì— ì¥ì°©ëœ ì¥ë¹„ë¥¼ í´ë¦­í•´ì„œ ì¸ë²¤í† ë¦¬ë¡œ ëŒê¸° ì‹œì‘í•  ë•Œ (Begin Drag)
         /// </summary>
         public void OnBeginDrag(PointerEventData eventData)
         {
@@ -76,12 +85,12 @@ namespace DesktopCompanion.Views
         }
 
         /// <summary>
-        /// 3. µå·¡±× ÁßÀÏ ¶§ (Unity ±ÔÄ¢»ó IBeginDragHandler¸¦ ¾²·Á¸é IDragHandlerµµ ÇÔ²² ±¸ÇöÇØ¾ß ÇÕ´Ï´Ù)
+        /// 3. ë“œë˜ê·¸ ì¤‘ì¼ ë•Œ (Unity ê·œì¹™ìƒ IBeginDragHandlerë¥¼ ì“°ë ¤ë©´ IDragHandlerë„ í•¨ê»˜ êµ¬í˜„í•´ì•¼ í•©ë‹ˆë‹¤)
         /// </summary>
         public void OnDrag(PointerEventData eventData)
         {
-            // ½ÇÁ¦ ¸¶¿ì½º¸¦ µû¶ó´Ù´Ï´Â ¾ÆÀÌÄÜ ÀÌµ¿ Ã³¸®´Â 
-            // ÆÀ¿øºĞÀÌ ¸¸µå½Å ItemPickupController¿¡¼­ ´ã´çÇÏ¹Ç·Î ¿©±â´Â ºñ¿öµÓ´Ï´Ù.
+            // ì‹¤ì œ ë§ˆìš°ìŠ¤ë¥¼ ë”°ë¼ë‹¤ë‹ˆëŠ” ì•„ì´ì½˜ ì´ë™ ì²˜ë¦¬ëŠ” 
+            // íŒ€ì›ë¶„ì´ ë§Œë“œì‹  ItemPickupControllerì—ì„œ ë‹´ë‹¹í•˜ë¯€ë¡œ ì—¬ê¸°ëŠ” ë¹„ì›Œë‘¡ë‹ˆë‹¤.
         }
     }
 }
