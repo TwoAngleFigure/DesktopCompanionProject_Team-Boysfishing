@@ -337,9 +337,22 @@ namespace DesktopCompanion.Views
                 return;
             }
 
-            Sprite icon = GetIcon(hoveredSlot);
+            if (m_hoveredSlotIndex >= m_slotViews.Count)
+            {
+                ClearHoveredTooltip();
+                return;
+            }
 
-            m_itemTooltip.Show(hoveredSlot);
+            RectTransform slotRect =
+                m_slotViews[m_hoveredSlotIndex].transform as RectTransform;
+
+            if (slotRect == null)
+            {
+                ClearHoveredTooltip();
+                return;
+            }
+
+            m_itemTooltip.Show(hoveredSlot, slotRect);
         }
 
         private void ClearHoveredTooltip()

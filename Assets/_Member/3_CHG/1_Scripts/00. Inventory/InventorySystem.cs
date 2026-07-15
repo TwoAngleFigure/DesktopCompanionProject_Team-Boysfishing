@@ -9,7 +9,7 @@ namespace DesktopCompanion.Systems
     public class InventorySystem : SystemBase, ISaveable
     {
         private const int FallbackInventorySize = 20;
-        private const int ExpandableInventoryInitialSize = 35;
+        private const int ExpandableInventoryInitialSize = 25;
         private const int ExpandableInventoryExpandSize = 5;
         private const int ExpandableInventoryRemainingSlots = 5;
         private const bool EnableInventoryDebugLog = true;

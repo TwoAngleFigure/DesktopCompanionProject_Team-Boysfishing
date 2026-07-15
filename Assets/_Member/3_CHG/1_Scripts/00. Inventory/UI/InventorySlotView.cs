@@ -16,6 +16,7 @@ namespace DesktopCompanion.Views
         [SerializeField] private Image m_iconImage;
         [SerializeField] private TMP_Text m_quantityText;
         [SerializeField] private TMP_Text m_subInfoText;
+        [SerializeField] private GameObject m_fishStarImage;
 
         [Header("State")]
         [SerializeField] private GameObject m_emptyRoot;
@@ -90,6 +91,11 @@ namespace DesktopCompanion.Views
             {
                 m_subInfoText.text = GetSubInfoText(data);
             }
+
+            if (m_fishStarImage != null)
+            {
+                m_fishStarImage.SetActive(data.ItemType == ItemType.Fish);
+            }
         }
 
         private void SetEmpty(InventorySlotViewData data)
@@ -117,6 +123,11 @@ namespace DesktopCompanion.Views
             {
                 m_subInfoText.text = string.Empty;
             }
+
+            if (m_fishStarImage != null)
+            {
+                m_fishStarImage.SetActive(false);
+            }
         }
 
         private string GetSubInfoText(InventorySlotViewData data)
@@ -124,7 +135,7 @@ namespace DesktopCompanion.Views
             switch (data.ItemType)
             {
                 case ItemType.Fish:
-                    return GetQualityText(data.Quality);
+                    return GetQualityNumberText(data.Quality);
 
                 case ItemType.Equipment:
                     return data.UpgradeLevel > 0
@@ -140,28 +151,16 @@ namespace DesktopCompanion.Views
             }
         }
 
-        private string GetQualityText(ItemQuality quality)
+        private string GetQualityNumberText(ItemQuality quality)
         {
-            switch (quality)
+            int qualityNumber = (int)quality;
+
+            if (qualityNumber < 1 || qualityNumber > 5)
             {
-                case ItemQuality.OneStar:
-                    return "¡Ú";
-
-                case ItemQuality.TwoStar:
-                    return "¡Ú¡Ú";
-
-                case ItemQuality.ThreeStar:
-                    return "¡Ú¡Ú¡Ú";
-
-                case ItemQuality.FourStar:
-                    return "¡Ú¡Ú¡Ú¡Ú";
-
-                case ItemQuality.FiveStar:
-                    return "¡Ú¡Ú¡Ú¡Ú¡Ú";
-
-                default:
-                    return string.Empty;
+                return string.Empty;
             }
+
+            return qualityNumber.ToString();
         }
 
         public void SetPickupSource(bool isPickupSource)

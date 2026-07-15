@@ -753,6 +753,5 @@ MonoBehaviour:
   m_iconImage: {fileID: 5072222001210860975}
   m_quantityText: {fileID: 2444894870059109342}
   m_subInfoText: {fileID: 5544590497199492253}
+  m_fishStarImage: {fileID: 176298054508362052}
   m_emptyRoot: {fileID: 2713770433478105678}
-  m_selectedFrame: {fileID: 4889328392718330174}
-  m_pickupSourceFrame: {fileID: 1692171869109409426}
