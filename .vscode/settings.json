@@ -67,5 +67,6 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "DesktopCompanionProject_Team-Boysfishing.slnx"
+    "dotnet.defaultSolution": "DesktopCompanionProject_Team-Boysfishing.slnx",
+    "git.ignoreLimitWarning": true
 }

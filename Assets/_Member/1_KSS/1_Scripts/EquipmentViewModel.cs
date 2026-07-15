@@ -2,19 +2,19 @@ using DesktopCompanion.Systems;
 using DesktopCompanion.Entities;
 using DesktopCompanion.Data;
 using DesktopCompanion.Views;
-using System; // ActionÀ» »ç¿ëÇÏ±â À§ÇØ Ãß°¡
+using System; // Actionì„ ì‚¬ìš©í•˜ê¸° ìœ„í•´ ì¶”ê°€
 
 public class EquipmentViewModel : UIViewModelBase
 {
     private PlayerSystem m_playerSystem;
 
-    // 1. È­¸é¿¡ ¹ÙÀÎµùÇÒ µ¥ÀÌÅÍ (¿¹: °ø°İ·Â)
+    // 1. í™”ë©´ì— ë°”ì¸ë”©í•  ë°ì´í„° (ì˜ˆ: ê³µê²©ë ¥)
     public readonly BindableProperty<int> Damage = new(0);
 
-    // 2. È­¸é¿¡¼­ ´©¸¦ ¹öÆ°ÀÇ ¸í·É (Àåºñ ÀåÂø ¸í·É)
+    // 2. í™”ë©´ì—ì„œ ëˆ„ë¥¼ ë²„íŠ¼ì˜ ëª…ë ¹ (ì¥ë¹„ ì¥ì°© ëª…ë ¹)
     public RelayCommand<(EquipmentMountingArea area, EntityHandle handle)> EquipCommand { get; private set; }
 
-    // [Ãß°¡µÊ] View¿¡°Ô "Àåºñ ¹Ù²î¾úÀ¸´Ï UI »õ·Î°íÄ§ÇØ!" ¶ó°í ¾Ë·ÁÁÙ ÀÌº¥Æ®
+    // [ì¶”ê°€ë¨] Viewì—ê²Œ "ì¥ë¹„ ë°”ë€Œì—ˆìœ¼ë‹ˆ UI ìƒˆë¡œê³ ì¹¨í•´!" ë¼ê³  ì•Œë ¤ì¤„ ì´ë²¤íŠ¸
     public event Action OnEquipmentChanged;
 
     public RelayCommand UpgradeStorageCommand { get; private set; }
@@ -31,11 +31,11 @@ public class EquipmentViewModel : UIViewModelBase
             () => m_playerSystem?.UpgradeFishStorage()
         );
 
-        // PlayerSystemÀÇ ½ºÅÈ º¯°æ ÀÌº¥Æ®¸¦ ±¸µ¶
+        // PlayerSystemì˜ ìŠ¤íƒ¯ ë³€ê²½ ì´ë²¤íŠ¸ë¥¼ êµ¬ë…
         if (m_playerSystem != null)
         {
             m_playerSystem.OnStatChanged += OnStatChanged;
-            RefreshStats(); // Ã³À½ Ä×À» ¶§ ÃÊ±â°ª °»½Å
+            RefreshStats(); // ì²˜ìŒ ì¼°ì„ ë•Œ ì´ˆê¸°ê°’ ê°±ì‹ 
         }
     }
 
@@ -45,16 +45,16 @@ public class EquipmentViewModel : UIViewModelBase
         m_playerSystem = null;
     }
 
-    // ½Ã½ºÅÛ¿¡¼­ ½ºÅÈ º¯°æ ÀÌº¥Æ®°¡ ³¯¾Æ¿À¸é ½ÇÇàµÇ´Â ÇÔ¼ö
+    // ì‹œìŠ¤í…œì—ì„œ ìŠ¤íƒ¯ ë³€ê²½ ì´ë²¤íŠ¸ê°€ ë‚ ì•„ì˜¤ë©´ ì‹¤í–‰ë˜ëŠ” í•¨ìˆ˜
     private void OnStatChanged(EntityHandle handle)
     {
         RefreshStats();
 
-        // [Ãß°¡µÊ] ½ºÅÈÀÌ º¯Çß´Ù´Â °Ç Àåºñ°¡ º¯Çß´Ù´Â ¶æÀÌ¹Ç·Î, View¿¡°Ô UI °»½Å ½ÅÈ£¸¦ º¸³À´Ï´Ù.
+        // [ì¶”ê°€ë¨] ìŠ¤íƒ¯ì´ ë³€í–ˆë‹¤ëŠ” ê±´ ì¥ë¹„ê°€ ë³€í–ˆë‹¤ëŠ” ëœ»ì´ë¯€ë¡œ, Viewì—ê²Œ UI ê°±ì‹  ì‹ í˜¸ë¥¼ ë³´ëƒ…ë‹ˆë‹¤.
         OnEquipmentChanged?.Invoke();
     }
 
-    // ÃÖ½Å ½ºÅÈÀ» °¡Á®¿Í¼­ BindableProperty¿¡ ³Ö¾îÁÜ -> UI°¡ ¾Ë¾Æ¼­ ¹Ù²ñ!
+    // ìµœì‹  ìŠ¤íƒ¯ì„ ê°€ì ¸ì™€ì„œ BindablePropertyì— ë„£ì–´ì¤Œ -> UIê°€ ì•Œì•„ì„œ ë°”ë€œ!
     private void RefreshStats()
     {
         if (m_playerSystem != null)
@@ -63,50 +63,72 @@ public class EquipmentViewModel : UIViewModelBase
         }
     }
 
-    // [Ãß°¡µÊ] View°¡ Æ¯Á¤ ½½·ÔÀÇ Àåºñ ÀÌ¸§À» ¹°¾îº¼ ¶§, PlayerSystem¿¡¼­ ²¨³»¼­ ´ë´äÇØÁÖ´Â ÇÔ¼ö
     public string GetItemNameForArea(EquipmentMountingArea area)
     {
-        return m_playerSystem != null ? m_playerSystem.GetEquippedItemName(area) : "Empty Slot";
+        string itemName = m_playerSystem != null ? m_playerSystem.GetEquippedItemName(area) : null;
+        if (!string.IsNullOrEmpty(itemName))
+        {
+            return itemName;
+        }
+
+        // ì¥ì°©ëœ ì¥ë¹„ê°€ ì—†ì„ ë•Œ ê¸°ë³¸ ë¶€ìœ„ ì´ë¦„ ë°˜í™˜
+        return area switch
+        {
+            EquipmentMountingArea.FishingRod => "ë‚šì‹œëŒ€",
+            EquipmentMountingArea.FishingLine => "ë‚šì‹œì¤„",
+            EquipmentMountingArea.Reel => "ë¦´",
+            EquipmentMountingArea.Lure => "ë£¨ì–´",
+            EquipmentMountingArea.Hat => "ëª¨ì",
+            EquipmentMountingArea.Uniform => "ì˜·",
+            EquipmentMountingArea.Gloves => "ì¥ê°‘",
+            EquipmentMountingArea.Engine => "ë°° ì—”ì§„",
+            EquipmentMountingArea.Storage => "ë¬¼ê³ ê¸°ì°½ê³ ",
+            EquipmentMountingArea.GPS => "GPS",
+            EquipmentMountingArea.Bait => "ë¯¸ë¼",
+            EquipmentMountingArea.Groundbait => "ë–¡ë°¥",
+            _ => "ë¹ˆ ìŠ¬ë¡¯"
+        };
     }
     public EntityHandle GetEquippedHandleForArea(EquipmentMountingArea area)
     {
         return m_playerSystem != null ? m_playerSystem.GetEquippedItemHandle(area) : default;
     }
-    // [Ãß°¡µÊ] View°¡ ½ºÅÈ Ã¢À» ¿­°Å³ª Àåºñ¸¦ ¹Ù²Ü ¶§, ¸ğµç ½ºÅÈÀ» ¿¹»Ú°Ô Æ÷¸ËÆÃÇØ¼­ ³Ñ°ÜÁİ´Ï´Ù.
+
+    // [ì¶”ê°€] Viewê°€ ìŠ¤íƒ¯ ì°½ì„ ì¼œê±°ë‚˜ íƒ­ì„ ë°”ê¿€ ë•Œ, ì „ì²´ ìŠ¤íƒ¯ì„ ê°€ê³µí•´ì„œ ë„˜ê²¨ì¤ë‹ˆë‹¤.
     public string GetAllStatsFormattedText()
     {
-        if (m_playerSystem == null) return "½ºÅÈ Á¤º¸¸¦ ºÒ·¯¿À´Â Áß...";
+        if (m_playerSystem == null) return "ìŠ¤íƒ¯ ì •ë³´ë¥¼ ë¶ˆëŸ¬ì˜¤ëŠ” ì¤‘...";
 
-        // C#ÀÇ ¹®ÀÚ¿­ º¸°£($)°ú ÁÙ¹Ù²Ş(\n)À» È°¿ëÇØ ÇÏ³ªÀÇ °Å´ëÇÑ ÅØ½ºÆ®·Î ¹­½À´Ï´Ù.
+        // C#ì˜ ë¬¸ìì—´ ë³´ê°„($)ê³¼ ì¤„ë°”ê¿ˆ(\n)ì„ í™œìš©í•´ í•˜ë‚˜ì˜ ê±°ëŒ€í•œ í…ìŠ¤íŠ¸ë¡œ ë¬¶ìŠµë‹ˆë‹¤.
         string stats =
-            $"<color=#5BC0EB><b>[ ÀüÅõ ½ºÅÈ ]</b></color>\n" +
-            $"Å¬¸¯ µ¥¹ÌÁö :  {m_playerSystem.BaseDamagePerClick}\n" +
-            $"¼öµ¿ Å¸°İ ¹èÀ² :  {m_playerSystem.BaseManualDamagePerHitMultiply}\n" +
-            $"Å©¸®Æ¼ÄÃ È®·ü :  {m_playerSystem.BaseCriticalChance}%\n" +
-            $"Å©¸®Æ¼ÄÃ ¹èÀ² :  {m_playerSystem.BaseCriticalMultiply}¹è\n" +
-            $"ÀüÅõ ½Ã°£ º¯¼ö :  {m_playerSystem.BaseBattleTimeVariable}\n\n" +
+            $"<color=#5BC0EB><b>[ ì „íˆ¬ ìŠ¤íƒ¯ ]</b></color>\n" +
+            $"í´ë¦­ ë°ë¯¸ì§€ :  {m_playerSystem.BaseDamagePerClick}\n" +
+            $"ìˆ˜ë™ íƒ€ê²© ë°°ìœ¨ :  {m_playerSystem.BaseManualDamagePerHitMultiply}\n" +
+            $"í¬ë¦¬í‹°ì»¬ í™•ë¥  :  {m_playerSystem.BaseCriticalChance}%\n" +
+            $"í¬ë¦¬í‹°ì»¬ ë°°ìœ¨ :  {m_playerSystem.BaseCriticalMultiply}ë°°\n" +
+            $"ì „íˆ¬ ì‹œê°„ ë³€ìˆ˜ :  {m_playerSystem.BaseBattleTimeVariable}\n\n" +
 
-            $"<color=#9BC53D><b>[ ÀÚµ¿ ÀüÅõ ]</b></color>\n" +
-            $"ÀÚµ¿ °ø°İ ÄğÅ¸ÀÓ :  {m_playerSystem.BaseAutoBattleCooltime}ÃÊ\n" +
-            $"ÀÚµ¿ °ø°İ ¼Óµµ :  {m_playerSystem.BaseAutoSpeedPerTime}\n" +
-            $"ÀÚµ¿ Å¸°İ ¹èÀ² :  {m_playerSystem.BaseAutoDamagePerHitMultiply}\n\n" +
+            $"<color=#9BC53D><b>[ ìë™ ì „íˆ¬ ]</b></color>\n" +
+            $"ìë™ ê³µê²© ì¿¨íƒ€ì„ :  {m_playerSystem.BaseAutoBattleCooltime}ì´ˆ\n" +
+            $"ìë™ ê³µê²© ì†ë„ :  {m_playerSystem.BaseAutoSpeedPerTime}\n" +
+            $"ìë™ íƒ€ê²© ë°°ìœ¨ :  {m_playerSystem.BaseAutoDamagePerHitMultiply}\n\n" +
 
-            $"<color=#FDE74C><b>[ º¸»ó ¹× ±âÅ¸ ]</b></color>\n" +
-            $"´ë¾î ³¬½Ã È®·ü :  {m_playerSystem.BaseProbabilityAtFishSize}\n" +
-            $"Èñ±Í¾î ³¬½Ã È®·ü :  {m_playerSystem.BaseProbabilityAtFishRarity}\n" +
-            $"°ñµå È¹µæ ¹èÀ² :  {m_playerSystem.BaseGoldGettingMultiply}¹è\n" +
-            $"ÀÌµ¿ ¼Óµµ :  {m_playerSystem.BaseMapMovementSpeedPerTime}\n" +
-            $"ÀÎº¥Åä¸® Å©±â :  {m_playerSystem.BaseInventorySize}Ä­";
+            $"<color=#FDE74C><b>[ ë³´ìƒ ë° ê¸°íƒ€ ]</b></color>\n" +
+            $"ëŒ€ì–´ ë‚šì‹œ í™•ë¥  :  {m_playerSystem.BaseProbabilityAtFishSize}\n" +
+            $"í¬ê·€ì–´ ë‚šì‹œ í™•ë¥  :  {m_playerSystem.BaseProbabilityAtFishRarity}\n" +
+            $"ê³¨ë“œ íšë“ ë°°ìœ¨ :  {m_playerSystem.BaseGoldGettingMultiply}ë°°\n" +
+            $"ì´ë™ ì†ë„ :  {m_playerSystem.BaseMapMovementSpeedPerTime}\n" +
+            $"ì¸ë²¤í† ë¦¬ í¬ê¸° :  {m_playerSystem.BaseInventorySize}ì¹¸";
 
         return stats;
     }
     public string GetEngineSpeedText()
     {
-        return m_playerSystem != null ? $"ÀÌµ¿ ¼Óµµ: {m_playerSystem.BaseMapMovementSpeedPerTime}" : "ÀÌµ¿ ¼Óµµ: 0";
+        return m_playerSystem != null ? $"ì´ë™ ì†ë„: {m_playerSystem.BaseMapMovementSpeedPerTime}" : "ì´ë™ ì†ë„: 0";
     }
 
     public string GetStorageSizeText()
     {
-        return m_playerSystem != null ? $"¹°°í±â Ã¢°í: {m_playerSystem.BaseInventorySize}Ä­" : "¹°°í±â Ã¢°í: 0Ä­";
+        return m_playerSystem != null ? $"ë¬¼ê³ ê¸° ì°½ê³ : {m_playerSystem.BaseInventorySize}ì¹¸" : "ë¬¼ê³ ê¸° ì°½ê³ : 0ì¹¸";
     }
 }
