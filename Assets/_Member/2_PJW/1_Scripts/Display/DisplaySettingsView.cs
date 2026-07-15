@@ -9,7 +9,7 @@ namespace DesktopCompanion.Views
     /// 표시 설정은 게임 System과 무관하므로 System-바인딩 VM 없이 DisplayModeController를 직접 구동한다.
     /// UIViewBase를 상속해 UI 프레임워크 수명(자가 등록·Bind)에 올라탄다(전체화면 UI 캔버스 배치).
     /// </summary>
-    public class DisplaySettingsView : UIViewBase
+    public class DisplaySettingsView : UIWindowBase
     {
         [Header("Controller")]
         [SerializeField] private DisplayModeController m_controller;
