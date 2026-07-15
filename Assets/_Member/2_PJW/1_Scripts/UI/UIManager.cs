@@ -15,9 +15,6 @@ namespace DesktopCompanion.Views
         private static UIManager s_instance;   // 유닛 자가 등록 접근점
         private static readonly List<UIViewBase> s_pending = new();   // Initialize 전(씬 로드)에 등록 시도한 뷰 대기
 
-        /// <summary>UIManager.Initialize가 끝나 부팅된 상태인지(씬 로드 시점과 구분용).</summary>
-        public static bool IsBooted => s_instance != null;
-
         [Header("Window Layout")]
         [Tooltip("창 사이 간격(px)")]
         [SerializeField] private float m_windowPadding = 10f;
@@ -43,8 +40,9 @@ namespace DesktopCompanion.Views
                 return;
             }
             RegisterInternal(view);
-            // 윈도우가 이미 활성이면 활성 스택에도 반영한다(OnEnable의 PushActiveWindow도 s_instance null로 유실됐을 수 있음).
-            if (view is UIWindowBase window && window.isActiveAndEnabled)
+            // 이미 '표시 중'인 윈도우만 활성 스택에 반영한다(OnEnable의 Push가 s_instance null로 유실됐을 수 있음).
+            // ※ IsShown 기준: CanvasGroup 창은 활성이어도 숨김(닫힘)이면 스택에 넣지 않는다.
+            if (view is UIWindowBase window && window.IsShown)
             {
                 PushActiveWindowInternal(window);
             }

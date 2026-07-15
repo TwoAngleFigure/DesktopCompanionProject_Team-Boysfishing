@@ -4,14 +4,14 @@ namespace DesktopCompanion.Views
 {
     /// <summary>
     /// 윈도우형 UI(인벤토리 등)만 상속하는 베이스. 일반 UI(HUD 등)는 UIViewBase를 그대로 쓴다.
-    /// 활성(=표시)에 연동해 UIManager의 활성 윈도우 스택에 참여한다.
-    /// 우클릭 닫기(UIManager.CloseTopWindow)는 이 스택의 top(가장 최근 열린 창)을 닫는다.
+    /// 표시(=열림)에 연동해 UIManager의 활성 윈도우 스택에 참여한다. 우클릭 닫기는 이 스택의 top을 닫는다.
     ///
-    /// 창 on/off는 <see cref="HideMode"/>로 선택한다(인스펙터 토글):
-    ///  - Deactivate(기본): GameObject SetActive(false) — 현행과 동일. OnDisable→Unbind로 숨김 중 System 수신·렌더 0(단 페이드 불가·재바인드 비용).
-    ///  - CanvasGroup: alpha0+blocksRaycasts off — 즉시·페이드·상태 보존(단 VM 바인드 유지 → 숨김 중 CPU 소모).
-    /// 두 방식의 성능/비용 분석은 계획 Docs/Plan/10_WindowUIManagement.md 참고.
-    /// ※ Bind/Unbind는 기존 경로(UIViewBase 등록/OnDisable)만 담당한다 — Show/Hide는 바인드를 이중으로 건드리지 않는다.
+    /// 창 on/off는 <see cref="HideMode"/>로 선택한다(인스펙터 토글). 모드별 개폐 방식이 다르다:
+    ///  - Deactivate(기본): GameObject SetActive로 개폐. 닫힘 = 씬에서 '비활성'으로 두거나 Hide()로 SetActive(false).
+    ///    OnEnable→Register/Bind/Push, OnDisable→Unbind/Remove.
+    ///  - CanvasGroup: GameObject는 '항상 활성' 유지, CanvasGroup(alpha·blocksRaycasts)으로만 개폐.
+    ///    OnEnable은 등록 목적 1회. 초기 표시는 <see cref="m_openOnStart"/>로 결정(기본 숨김). SetActive는 건드리지 않는다.
+    /// 성능/비용 분석은 Docs/Plan/10_WindowUIManagement.md 참고. Bind/Unbind는 UIViewBase 등록/OnDisable 경로만 담당.
     /// </summary>
     public abstract class UIWindowBase : UIViewBase
     {
@@ -21,7 +21,7 @@ namespace DesktopCompanion.Views
         [Tooltip("자동 배치(우측→좌측) 참여 여부. false면 자체 위치 유지(닫기 스택에는 계속 참여)")]
         [SerializeField] private bool m_participateInLayout = true;
 
-        [Tooltip("숨김 방식. Deactivate=SetActive(기본, 현행 동일) / CanvasGroup=alpha0(즉시·페이드·상태보존)")]
+        [Tooltip("개폐 방식. Deactivate=SetActive(기본) / CanvasGroup=항상 활성+alpha(즉시·페이드·상태보존)")]
         [SerializeField] private HideMode m_hideMode = HideMode.Deactivate;
 
         [Tooltip("CanvasGroup 모드용. 비우면 필요 시 자동 추가")]
@@ -30,73 +30,80 @@ namespace DesktopCompanion.Views
         [Tooltip("(선택) 창 전용 Canvas — CanvasGroup 숨김 시 렌더 제외해 드로우콜 절감")]
         [SerializeField] private Canvas m_ownCanvas;
 
-        [Tooltip("Play 시작 시 열린 상태로 둘지. 기본 false = 닫힘(씬에서 활성으로 둬도 Play 시 닫힘, 버튼/코드로 Show)")]
+        [Tooltip("CanvasGroup 모드에서 Play 시작 시 열린 채로 둘지(기본 false=숨김). " +
+                 "Deactivate 모드는 씬의 활성상태가 곧 초기상태(비활성=닫힘).")]
         [SerializeField] private bool m_openOnStart = false;
-
-        private bool m_lifecycleActive;   // base.OnEnable(등록·바인드)을 실제로 탄 상태인지
 
         /// <summary>자동 배치 참여 여부(UIManager가 읽음).</summary>
         public bool ParticipatesInLayout => m_participateInLayout;
 
-        /// <summary>현재 표시(보이고 입력 받는) 상태인지.</summary>
+        /// <summary>현재 표시(열려서 보이고 입력 받는) 상태인지. CanvasGroup 숨김은 false.</summary>
         public bool IsShown => gameObject.activeSelf && (m_canvasGroup == null || m_canvasGroup.blocksRaycasts);
 
         protected override void OnEnable()
         {
-            // 씬 로드 시(부팅 전) 활성 창은 초기 표시하지 않는다. base(Register/Bind) 호출 전에 닫아
-            // 플래시와 'Unbind-without-Bind'를 모두 회피한다. 나중에 Show()(부팅 후)면 정상 오픈.
-            if (!UIManager.IsBooted && !m_openOnStart)
-            {
-                gameObject.SetActive(false);
-                return;
-            }
+            base.OnEnable();   // UIViewBase: 자가 등록(부팅 시 Bind)
 
-            base.OnEnable();                    // UIViewBase: 자가 등록(→ Bind)
-            m_lifecycleActive = true;
             if (m_hideMode == HideMode.CanvasGroup)
             {
-                SetVisible(true);               // 활성화 = 표시(CanvasGroup 모드에서 이전 Hide의 alpha0 초기화)
+                // GameObject는 활성 유지. 초기 표시는 openOnStart로 결정(기본 숨김) → SetActive는 안 건드림.
+                if (m_openOnStart)
+                {
+                    SetVisible(true);
+                    UIManager.PushActiveWindow(this);
+                }
+                else
+                {
+                    SetVisible(false);   // 활성이지만 닫힘(스택 밖)
+                }
             }
-            UIManager.PushActiveWindow(this);   // 최근 열림 = 스택 top
+            else // Deactivate: 활성 = 열림
+            {
+                UIManager.PushActiveWindow(this);
+            }
         }
 
         protected override void OnDisable()
         {
-            // OnEnable에서 초기-닫힘으로 base를 안 탄 경우엔 Register/Bind가 없으므로 Unregister/Unbind도 스킵.
-            if (!m_lifecycleActive)
-            {
-                return;
-            }
-            m_lifecycleActive = false;
             UIManager.RemoveActiveWindow(this); // 스택에서 제거
             base.OnDisable();                   // UIViewBase: Unbind + Unregister
         }
 
-        /// <summary>창을 켠다. 비활성이면 활성화(→OnEnable), 이미 활성(CanvasGroup 숨김)이면 표시+스택 등록.</summary>
+        /// <summary>창을 켠다(모드별 방식).</summary>
         public void Show()
         {
-            if (!gameObject.activeSelf)
-            {
-                gameObject.SetActive(true);     // → OnEnable에서 Register+Bind(+표시)+Push
-                return;
-            }
             if (m_hideMode == HideMode.CanvasGroup)
             {
+                if (!gameObject.activeSelf)
+                {
+                    gameObject.SetActive(true);   // 비활성이었다면 활성화(OnEnable에서 등록/바인드)
+                }
                 SetVisible(true);
-            }
-            UIManager.PushActiveWindow(this);   // 멱등(Remove 후 Add)
-        }
-
-        /// <summary>창을 끈다. HideMode에 따라 CanvasGroup 숨김 또는 SetActive(false).</summary>
-        public void Hide()
-        {
-            if (m_hideMode == HideMode.Deactivate)
-            {
-                gameObject.SetActive(false);    // → OnDisable에서 Remove + Unbind
+                UIManager.PushActiveWindow(this);
                 return;
             }
-            SetVisible(false);                  // CanvasGroup: 오브젝트·VM 유지
-            UIManager.RemoveActiveWindow(this);
+
+            // Deactivate
+            if (!gameObject.activeSelf)
+            {
+                gameObject.SetActive(true);       // → OnEnable에서 Register+Bind+Push
+            }
+            else
+            {
+                UIManager.PushActiveWindow(this); // 이미 활성이면 스택 top으로
+            }
+        }
+
+        /// <summary>창을 끈다(모드별 방식). CanvasGroup은 오브젝트 유지, Deactivate는 SetActive(false).</summary>
+        public void Hide()
+        {
+            if (m_hideMode == HideMode.CanvasGroup)
+            {
+                SetVisible(false);
+                UIManager.RemoveActiveWindow(this);
+                return;
+            }
+            gameObject.SetActive(false);          // → OnDisable에서 Remove + Unbind
         }
 
         /// <summary>이 윈도우를 닫는다(팀원 호출 지점 유지 — 본문만 Hide로).</summary>
@@ -110,7 +117,7 @@ namespace DesktopCompanion.Views
             m_canvasGroup.blocksRaycasts = on;
             if (m_ownCanvas != null)
             {
-                m_ownCanvas.enabled = on;       // (선택) 드로우콜 절감
+                m_ownCanvas.enabled = on;         // (선택) 드로우콜 절감
             }
         }
 
