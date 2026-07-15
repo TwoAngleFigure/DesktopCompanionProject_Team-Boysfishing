@@ -1,5 +1,6 @@
 using DesktopCompanion.Entities;
 using DesktopCompanion.Systems;
+using UnityEngine;
 
 namespace DesktopCompanion.Views
 {
@@ -7,11 +8,11 @@ namespace DesktopCompanion.Views
     {
         private FishingSystem m_fishingSystem;
 
-        public readonly BindableProperty<string> StateText = new("Stopped");
+        public readonly BindableProperty<string> StateText = new("대기 중");
         public readonly BindableProperty<string> HpText = new("-");
         public readonly BindableProperty<float> HpRatio = new(0f);
-        public readonly BindableProperty<string> ResultText = new("");
-        public readonly BindableProperty<string> CatchInfoText = new("획득 정보: -");
+        public readonly BindableProperty<float> BattleTimeRemainingRatio = new(0f);
+        public readonly BindableProperty<bool> IsBattleGaugeVisible = new(false);
         public readonly BindableProperty<string> ToggleButtonText = new("낚시 시작");
 
         public RelayCommand ToggleFishingState { get; private set; }
@@ -19,8 +20,6 @@ namespace DesktopCompanion.Views
 
         // Debug HUD
         public readonly BindableProperty<string> DebugWaitTimeText = new("입질 대기: -");
-
-        public readonly BindableProperty<string> DebugBattleTimeText = new("전투 시간: -");
 
         public override void Bind()
         {
@@ -33,15 +32,12 @@ namespace DesktopCompanion.Views
             }
 
             m_fishingSystem.OnStateChanged += HandleStateChanged;
-            m_fishingSystem.OnBattleStarted += HandleBattleStarted;
             m_fishingSystem.OnBattleHpChanged += HandleBattleHpChanged;
-            m_fishingSystem.OnFishCaught += HandleFishCaught;
-            m_fishingSystem.OnBattleFailed += HandleBattleFailed;
             ToggleFishingState = new RelayCommand(ToggleFishing);
             ManualAttack = new RelayCommand(ExecuteManualAttack, CanManualAttack);
 
             HandleStateChanged(m_fishingSystem.State);
-            RefreshDebugTime();
+            RefreshRuntimeValues();
         }
 
         public override void Unbind()
@@ -49,30 +45,44 @@ namespace DesktopCompanion.Views
             if (m_fishingSystem != null)
             {
                 m_fishingSystem.OnStateChanged -= HandleStateChanged;
-                m_fishingSystem.OnBattleStarted -= HandleBattleStarted;
                 m_fishingSystem.OnBattleHpChanged -= HandleBattleHpChanged;
-                m_fishingSystem.OnFishCaught -= HandleFishCaught;
-                m_fishingSystem.OnBattleFailed -= HandleBattleFailed;
             }
 
             m_fishingSystem = null;
         }
 
-        // Debug HUD
-        public void RefreshDebugTime()
+        public void RefreshRuntimeValues()
         {
             if (m_fishingSystem == null)
             {
                 DebugWaitTimeText.Value = "대기 시간: -";
-                DebugBattleTimeText.Value = "전투 시간: -";
+                BattleTimeRemainingRatio.Value = 0f;
                 return;
             }
 
-            DebugWaitTimeText.Value =
-                $"대기 시간: {m_fishingSystem.WaitDuration:0.0}초 / {ClampZero(m_fishingSystem.WaitTimeRemaining):0.0}초";
+            if (m_fishingSystem.State == FishingState.Waiting)
+            {
+                DebugWaitTimeText.Value =
+                    $"대기 시간: " +
+                    $"{m_fishingSystem.WaitDuration:0.0}초 / " +
+                    $"{ClampZero(m_fishingSystem.WaitTimeRemaining):0.0}초";
+            }
+            else
+            {
+                DebugWaitTimeText.Value = "대기 시간: -";
+            }
 
-            DebugBattleTimeText.Value =
-                $"전투 시간: {m_fishingSystem.BattleDuration:0.0}초 / {ClampZero(m_fishingSystem.BattleTimeRemaining):0.0}초";
+            if (m_fishingSystem.State == FishingState.Battling &&
+                m_fishingSystem.BattleDuration > 0f)
+            {
+                BattleTimeRemainingRatio.Value = Mathf.Clamp01(
+                    m_fishingSystem.BattleTimeRemaining /
+                    m_fishingSystem.BattleDuration);
+            }
+            else
+            {
+                BattleTimeRemainingRatio.Value = 0f;
+            }
         }
 
         private void HandleStateChanged(FishingState state)
@@ -80,67 +90,39 @@ namespace DesktopCompanion.Views
             switch (state)
             {
                 case FishingState.Stopped:
-                    StateText.Value = $"현재 상태: {state}";
-                    HpText.Value = "-";
+                    StateText.Value = "휴식 중";
+                    HpText.Value = "";
                     HpRatio.Value = 0f;
+                    BattleTimeRemainingRatio.Value = 0f;
+                    IsBattleGaugeVisible.Value = false;
                     ToggleButtonText.Value = "낚시 시작";
                     break;
 
                 case FishingState.Waiting:
-                    StateText.Value = $"현재 상태: {state}";
-                    HpText.Value = "-";
+                    StateText.Value = "낚시 중";
+                    HpText.Value = "";
                     HpRatio.Value = 0f;
+                    BattleTimeRemainingRatio.Value = 0f;
+                    IsBattleGaugeVisible.Value = false;
+
                     ToggleButtonText.Value = "낚시 중지";
                     break;
 
                 case FishingState.Battling:
-                    StateText.Value = $"현재 상태: {state}";
+                    StateText.Value = "낚시 중";
+                    BattleTimeRemainingRatio.Value = 1f;
+                    IsBattleGaugeVisible.Value = true;
                     ToggleButtonText.Value = "낚시 중지";
                     break;
             }
         }
 
-        private void HandleBattleStarted(EntityHandle fishHandle)
-        {
-            ResultText.Value = "결과: -";
-            CatchInfoText.Value = "획득 정보: -";
-        }
-
         private void HandleBattleHpChanged(EntityHandle fishHandle, int currentHp, int maxHp)
         {
-            HpText.Value = $"{currentHp} / {maxHp}";
+            HpText.Value = $"{currentHp}";
             HpRatio.Value = maxHp > 0 ? (float)currentHp / maxHp : 0f;
         }
 
-        private void HandleFishCaught(EntityHandle fishHandle)
-        {
-            Entity_Fish fish = EntityManager.Get<Entity_Fish>(fishHandle);
-
-            if (fish == null)
-            {
-                ResultText.Value = "결과: 포획 성공";
-                CatchInfoText.Value = "획득 정보: -";
-                HpText.Value = "-";
-                HpRatio.Value = 0f;
-                return;
-            }
-
-            ResultText.Value = $"결과: {fish.Name} 포획 성공";
-            CatchInfoText.Value =                
-                $"크기: {fish.Size:0.00}\n" +
-                $"품질: {fish.Quality}\n" +
-                $"희귀도: {fish.Rarity}";
-            HpText.Value = "-";
-            HpRatio.Value = 0f;
-        }
-
-        private void HandleBattleFailed(EntityHandle fishHandle)
-        {
-            ResultText.Value = "결과: 포획 실패";
-            CatchInfoText.Value = "획득 정보: -";
-            HpText.Value = "-";
-            HpRatio.Value = 0f;
-        }
 
         private void ToggleFishing()
         {

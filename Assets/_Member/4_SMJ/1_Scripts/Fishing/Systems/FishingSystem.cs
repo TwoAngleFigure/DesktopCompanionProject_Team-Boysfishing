@@ -12,12 +12,18 @@ namespace DesktopCompanion.Systems
         Waiting,
         Battling
     }
+    public enum FishingResultType
+    {
+        Success,
+        Failed,
+        InventoryFull
+    }
 
     public class FishingSystem : SystemBase, ITickable
     {
         private StageSystem m_stageSystem;
         private PlayerSystem m_playerSystem;
-        private InventorySystem m_inventorySystem;
+        private FishingRewardProcessor m_rewardProcessor;
 
         private float baseBattleDuration = 10f;
         private float minBattleDuration = 2f;
@@ -33,9 +39,7 @@ namespace DesktopCompanion.Systems
         #region Events
 
         public event Action<FishingState> OnStateChanged;
-        public event Action<EntityHandle> OnBattleStarted;
-        public event Action<EntityHandle> OnFishCaught;
-        public event Action<EntityHandle> OnBattleFailed;
+        public event Action<EntityHandle, FishingResultType> OnFishingResult;
         public event Action<EntityHandle, int, int> OnBattleHpChanged;
 
         #endregion
@@ -47,7 +51,7 @@ namespace DesktopCompanion.Systems
         public float WaitDuration => m_waitDuration; // Debug 남은 시간 확인용
         public float WaitTimeRemaining => m_waitTimer;
 
-        
+
         public float BattleDuration => m_battleDuration; // Debug 남은 시간 확인용
         public float BattleTimeRemaining => m_battleTimer;
         public EntityHandle CurrentBattleFish => m_currentBattleFish;
@@ -70,7 +74,14 @@ namespace DesktopCompanion.Systems
         {
             m_stageSystem = SystemManager.GetSystem<StageSystem>();
             m_playerSystem = SystemManager.GetSystem<PlayerSystem>();
-            m_inventorySystem = SystemManager.GetSystem<InventorySystem>();
+            InventorySystem inventorySystem = SystemManager.GetSystem<InventorySystem>();
+
+            if (inventorySystem != null)
+            {
+                m_rewardProcessor = new FishingRewardProcessor(
+                    EntityManager,
+                    inventorySystem);
+            }
 
             if (m_stageSystem != null)
             {
@@ -139,7 +150,7 @@ namespace DesktopCompanion.Systems
 
         public void ManualAttack()
         {
-            if(m_state != FishingState.Battling)
+            if (m_state != FishingState.Battling)
             {
                 Debug.Log("[FishingSystem] 수동 공격 실패: 전투 중이 아닙니다.");
                 return;
@@ -209,13 +220,12 @@ namespace DesktopCompanion.Systems
             ItemQuality quality = fishData.GetQuality(size);
             battleFish.SetRollResult(size, quality);
 
-            m_battleDuration = CalculateBattleDuration(fishData);
+            m_battleDuration = CalculateBattleDuration(fishData, size);
             m_battleTimer = m_battleDuration;
             m_autoAttackTimer = 0f;
 
             ChangeState(FishingState.Battling);
 
-            OnBattleStarted?.Invoke(m_currentBattleFish);
             OnBattleHpChanged?.Invoke(m_currentBattleFish, battleFish.CurrentHp, fishData.MaxHp);
             Debug.Log($"[FishingSystem] 전투 시작: {fishData.Name}, HP={battleFish.CurrentHp}/{fishData.MaxHp}, Size={size:0.00}, Quality={quality}, 제한시간={m_battleTimer:0.00}초");
         }
@@ -228,8 +238,7 @@ namespace DesktopCompanion.Systems
             if (battleFish == null)
             {
                 Debug.LogWarning("[FishingSystem] 데미지 적용 실패: 현재 전투 물고기가 없습니다.");
-                ClearCurrentBattleFish();
-                ScheduleNextFishing();
+                FailBattle("현재 전투 물고기 없음");
                 return;
             }
 
@@ -253,40 +262,43 @@ namespace DesktopCompanion.Systems
             {
                 ClearCurrentBattleFish();
                 ScheduleNextFishing();
+                OnFishingResult?.Invoke(default, FishingResultType.Failed);
                 return;
             }
 
-            EntityHandle caughtHandle = CreateCaughtFish(battleFish);
-
-            if (caughtHandle.Value == Guid.Empty)
+            if (m_rewardProcessor == null)
             {
-                Debug.LogWarning("[FishingSystem] 낚시 성공 처리 실패: 포획 물고기 Entity 생성 실패");
+                Debug.LogWarning("[FishingSystem] 보상 처리기를 사용할 수 없어 물고기를 지급할 수 없습니다.");
                 ClearCurrentBattleFish();
                 ScheduleNextFishing();
+                OnFishingResult?.Invoke(default, FishingResultType.Failed);
                 return;
             }
 
-            if (m_inventorySystem == null)
+            FishingRewardResult rewardResult = m_rewardProcessor.TryGrantCaughtFish(
+                battleFish.BattleData.ItemFish,
+                battleFish.Size,
+                battleFish.Quality,
+                out EntityHandle caughtHandle);
+
+            if (rewardResult != FishingRewardResult.Success)
             {
-                Debug.LogWarning("[FishingSystem] InventorySystem을 찾을 수 없어 물고기를 지급할 수 없습니다.");
-                EntityManager.Destroy(caughtHandle);
+                FishingResultType resultType =
+                    rewardResult == FishingRewardResult.InventoryFull
+                        ? FishingResultType.InventoryFull
+                        : FishingResultType.Failed;
+
+                Debug.LogWarning($"[FishingSystem] 포획 물고기 지급 실패: result={rewardResult}");
                 ClearCurrentBattleFish();
                 ScheduleNextFishing();
+                OnFishingResult?.Invoke(default, resultType);
                 return;
             }
 
-            bool added = m_inventorySystem.AddItem(caughtHandle);
-
-            if (!added)
+            if (battleFish.BattleData.IsBoss)
             {
-                Debug.LogWarning($"[FishingSystem] 인벤토리 지급 실패: {battleFish.BattleData.ItemFish.Name}");
-                EntityManager.Destroy(caughtHandle);
-                ClearCurrentBattleFish();
-                ScheduleNextFishing();
-                return;
+                m_rewardProcessor?.Process(battleFish.BattleData.BossDrops);
             }
-
-            OnFishCaught?.Invoke(caughtHandle);
 
             Debug.Log($"[FishingSystem] 낚시 성공 및 인벤토리 지급: {battleFish.BattleData.ItemFish.Name}, " +
                 $"Size={battleFish.Size:0.00}, " +
@@ -294,38 +306,16 @@ namespace DesktopCompanion.Systems
 
             ClearCurrentBattleFish();
             ScheduleNextFishing();
+            OnFishingResult?.Invoke(caughtHandle, FishingResultType.Success);
         }
 
         private void FailBattle(string reason)
         {
-            Entity_BattleFish battleFish = EntityManager.Get<Entity_BattleFish>(m_currentBattleFish);
-
-            OnBattleFailed?.Invoke(m_currentBattleFish);
-
             Debug.Log($"[FishingSystem] 포획 실패: reason={reason}");
 
             ClearCurrentBattleFish();
             ScheduleNextFishing();
-        }
-
-        private EntityHandle CreateCaughtFish(Entity_BattleFish battleFish)
-        {
-            if (battleFish.BattleData.ItemFish == null)
-            {
-                Debug.LogWarning("[FishingSystem] BattleFishData에 ItemFish가 연결되어 있지 않습니다.");
-                return default;
-            }
-
-            EntityHandle fishHandle = EntityManager.Create<ItemData_Fish>(battleFish.BattleData.ItemFish.ID);
-            Entity_Fish fish = EntityManager.Get<Entity_Fish>(fishHandle);
-
-            if (fish == null)
-            {
-                return default;
-            }
-
-            fish.SetRollResult(battleFish.Size, battleFish.Quality);
-            return fishHandle;
+            OnFishingResult?.Invoke(default, FishingResultType.Failed);
         }
 
         private void ScheduleNextFishing()
@@ -461,7 +451,7 @@ namespace DesktopCompanion.Systems
             return UnityEngine.Random.Range(minSize, maxSize);
         }
 
-        private float CalculateBattleDuration(BattleFishData fishData)
+        private float CalculateBattleDuration(BattleFishData fishData, float fishSize)
         {
             if (m_playerSystem == null)
             {
@@ -470,7 +460,19 @@ namespace DesktopCompanion.Systems
             }
 
 
-            float duration = baseBattleDuration + m_playerSystem.BaseBattleTimeVariable - fishData.BattleTimeVariable;
+            float variableRatio = (float)m_playerSystem.BaseBattleTimeVariable / fishData.BattleTimeVariable;
+
+            float normalizedSize = Mathf.InverseLerp(fishData.MinSize, fishData.MaxSize, fishSize);
+
+            float sizeRatio = Mathf.Lerp(
+                1.3f, // 최소 크기: 시간 30% 증가
+                0.7f, // 최대 크기: 시간 30% 감소
+                normalizedSize);
+
+            float duration =
+                baseBattleDuration *
+                variableRatio *
+                sizeRatio;
 
             return Mathf.Max(minBattleDuration, duration);
         }
