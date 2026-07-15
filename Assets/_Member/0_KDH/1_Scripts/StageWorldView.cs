@@ -1,8 +1,8 @@
-using DesktopCompanion.Controllers;
-using DesktopCompanion.Core;
-using DesktopCompanion.Data;
-using DesktopCompanion.Systems;
 using UnityEngine;
+using DesktopCompanion.Systems;
+using DesktopCompanion.Core;
+using DesktopCompanion.Controllers;
+using DesktopCompanion.Data;
 
 namespace DesktopCompanion.Views
 {
@@ -15,6 +15,16 @@ namespace DesktopCompanion.Views
 
         private GameObject m_currentStageInstance;
         private string m_lastLoadedAssetKey = "";
+
+        private bool m_hasSpawnedTarget = false;
+        private StageData m_activeJourneyTargetData = null;
+
+        private string m_visualDepartureAssetKey = "";
+
+        private float m_absoluteStartCamX = 0f;
+        private float m_absoluteTargetCamX = 0f;
+
+        private const float CLEAR_START_MAP_DISTANCE = 35f;
 
         public override void Bind()
         {
@@ -40,24 +50,65 @@ namespace DesktopCompanion.Views
             var stageSystem = SystemManager.GetSystem<StageSystem>();
             if (stageSystem == null) return;
 
-            StageData activeStageData;
             if (stageSystem.IsTraveling)
             {
-                activeStageData = (stageSystem.TravelProgress < 0.5f) ?
-                    stageSystem.CurrentStageData : stageSystem.TargetStageData;
+                if (m_activeJourneyTargetData != stageSystem.TargetStageData)
+                {
+                    m_activeJourneyTargetData = stageSystem.TargetStageData;
+                    m_hasSpawnedTarget = false;
+
+                    m_visualDepartureAssetKey = string.IsNullOrEmpty(m_lastLoadedAssetKey)
+                        ? AssetKeys.Of(stageSystem.CurrentStageData, AssetUsage.Model)
+                        : m_lastLoadedAssetKey;
+
+                    m_absoluteStartCamX = Camera.main != null ? Camera.main.transform.position.x : 0f;
+
+                    float totalDuration = stageSystem.RemainingTravelTime;
+                    float shipSpeed = m_shipController != null ? m_shipController.m_speed : 5f;
+
+                    m_absoluteTargetCamX = m_absoluteStartCamX - (totalDuration * shipSpeed);
+                }
+
+                float currentCamX = Camera.main != null ? Camera.main.transform.position.x : 0f;
+                float traveledDistance = m_absoluteStartCamX - currentCamX;
+                bool shouldShowTargetMap = traveledDistance >= CLEAR_START_MAP_DISTANCE;
+
+                if (shouldShowTargetMap)
+                {
+                    if (!m_hasSpawnedTarget)
+                    {
+                        string targetAssetKey = AssetKeys.Of(stageSystem.TargetStageData, AssetUsage.Model);
+                        LoadStage(targetAssetKey);
+                        m_hasSpawnedTarget = true;
+                    }
+                }
+                else
+                {
+                    if (m_lastLoadedAssetKey != m_visualDepartureAssetKey)
+                    {
+                        LoadStage(m_visualDepartureAssetKey);
+                    }
+                }
             }
             else
             {
-                activeStageData = stageSystem.CurrentStageData;
-            }
+                m_activeJourneyTargetData = null;
+                m_hasSpawnedTarget = false;
+                m_visualDepartureAssetKey = "";
 
-            if (activeStageData == null) return;
+                if (stageSystem.CurrentStageData != null)
+                {
+                    bool isArrived = Vector2.Distance(stageSystem.CurrentLogicalPosition, stageSystem.CurrentStageData.MapPosition) <= 0.001f;
 
-            string currentStageKey = AssetKeys.Of(activeStageData, AssetUsage.Model);
-
-            if (m_lastLoadedAssetKey != currentStageKey)
-            {
-                LoadStage(currentStageKey);
+                    if (isArrived)
+                    {
+                        string currentAssetKey = AssetKeys.Of(stageSystem.CurrentStageData, AssetUsage.Model);
+                        if (m_lastLoadedAssetKey != currentAssetKey)
+                        {
+                            LoadStage(currentAssetKey);
+                        }
+                    }
+                }
             }
         }
 
@@ -84,8 +135,17 @@ namespace DesktopCompanion.Views
                 StageBlueprint blueprint = m_currentStageInstance.GetComponent<StageBlueprint>();
                 if (blueprint != null)
                 {
-                    blueprint.InitProvider(AssetProvider);
-                    Debug.Log($"[StageWorldView] {stageAssetKey} 맵 로드 완료 및 권한 주입 성공!");
+                    float startX = m_absoluteStartCamX;
+                    float targetX = m_absoluteTargetCamX;
+
+                    if (isFirstLoad)
+                    {
+                        startX = Camera.main != null ? Camera.main.transform.position.x : 0f;
+                        targetX = startX;
+                    }
+
+                    blueprint.InitProvider(AssetProvider, startX, targetX, isFirstLoad);
+                    Debug.Log($"[StageWorldView] {stageAssetKey} 맵 로드 성공! (구간: {startX} ➡️ {targetX})");
                 }
             }
         }

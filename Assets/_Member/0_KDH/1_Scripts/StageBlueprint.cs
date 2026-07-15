@@ -12,22 +12,21 @@ namespace DesktopCompanion.Views
         public string m_assetKey;
         public LayerDepth m_layerDepth;
 
-        [Header("생성 트리거 X좌표 (카메라가 이 위치를 지날 때 생성)")]
-        [Tooltip("배가 왼쪽으로 가니까 음수 값(-150 등)이 들어갑니다.")]
-        public float m_spawnTriggerX;
+        [Header("절대 거리 스폰 설정")]
+        [Tooltip("목적지 도착 몇 유닛(물리 거리) 전에 이 오브젝트를 스폰할 것인가? (Far=55, Mid=40, Near=25)")]
+        public float m_spawnDistanceTrigger = 40f;
 
-        [Header("오브젝트가 정렬될 최종 월드 X좌표")]
-        [Tooltip("배가 멈추는 위치인 -300 등을 입력하세요.")]
-        public float m_targetWorldX;
-
-        [Header("정렬되는 순간의 최종 카메라 X좌표")]
-        [Tooltip("배가 멈췄을 때 카메라의 실제 월드 X좌표를 입력하세요.")]
-        public float m_targetCameraX;
+        [Tooltip("배가 멈췄을 때 카메라 중심으로부터의 거리 오차(Offset). (화면 정중앙은 0, 화면 좌측 끝 정렬은 대략 -15)")]
+        public float m_targetWorldOffsetFromCamera = 0f;
 
         [Header("레이어 내 최종 로컬 Y좌표 (높이)")]
         public float m_targetLocalY = 0f;
 
         [HideInInspector] public bool m_isSpawned = false;
+
+        [HideInInspector] public float m_spawnTriggerX;
+        [HideInInspector] public float m_targetWorldX;
+        [HideInInspector] public float m_targetCameraX;
     }
 
     public class StageBlueprint : MonoBehaviour
@@ -50,11 +49,30 @@ namespace DesktopCompanion.Views
 
         private AssetProvider m_assetProvider;
 
-        public void InitProvider(AssetProvider provider)
+        public void InitProvider(AssetProvider provider, float startCamX, float targetCamX, bool isFirstLoad)
         {
             m_assetProvider = provider;
 
-            ForceInitialSpawnCheck();
+            float totalDistance = targetCamX - startCamX;
+
+            foreach (var data in m_blueprintList)
+            {
+                data.m_isSpawned = false;
+
+                if (isFirstLoad)
+                {
+                    data.m_targetCameraX = startCamX;
+                    data.m_targetWorldX = startCamX + data.m_targetWorldOffsetFromCamera;
+                    data.m_spawnTriggerX = startCamX;
+                }
+                else
+                {
+                    data.m_spawnTriggerX = targetCamX + data.m_spawnDistanceTrigger;
+                    data.m_targetCameraX = targetCamX;
+                    data.m_targetWorldX = targetCamX + data.m_targetWorldOffsetFromCamera;
+                }
+            }
+            ForceInitialSpawnCheck(isFirstLoad);
         }
         private void Start()
         {
@@ -82,7 +100,7 @@ namespace DesktopCompanion.Views
             }
         }
 
-        private void ForceInitialSpawnCheck()
+        private void ForceInitialSpawnCheck(bool isFirstLoad)
         {
             if (m_cameraTransform == null && Camera.main != null)
             {
@@ -97,7 +115,7 @@ namespace DesktopCompanion.Views
 
             foreach (var data in m_blueprintList)
             {
-                if (!data.m_isSpawned && currentCamX <= data.m_spawnTriggerX)
+                if (!data.m_isSpawned && (isFirstLoad || currentCamX <= data.m_spawnTriggerX))
                 {
                     SpawnProp(data);
                     data.m_isSpawned = true;

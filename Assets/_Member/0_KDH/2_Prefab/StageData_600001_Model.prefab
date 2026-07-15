@@ -51,30 +51,36 @@ MonoBehaviour:
   m_midLayer: {fileID: 4138306769929329630}
   m_farLayer: {fileID: 3900178508738883329}
   m_nearParallax: 0
-  m_midParallax: 0.5
-  m_farParallax: 0.8
+  m_midParallax: 0.35
+  m_farParallax: 0.65
   m_blueprintList:
   - m_assetKey: Dummy_Rock
     m_layerDepth: 1
+    m_spawnDistanceTrigger: 40
+    m_targetWorldOffsetFromCamera: 0
+    m_targetLocalY: -1
+    m_isSpawned: 0
     m_spawnTriggerX: 0
     m_targetWorldX: -15
     m_targetCameraX: -15
-    m_targetLocalY: -1.08
-    m_isSpawned: 0
   - m_assetKey: Dummy_Lighthouse
     m_layerDepth: 2
+    m_spawnDistanceTrigger: 55
+    m_targetWorldOffsetFromCamera: 0
+    m_targetLocalY: -2
+    m_isSpawned: 0
     m_spawnTriggerX: 0
     m_targetWorldX: -15
     m_targetCameraX: -15
-    m_targetLocalY: -2.08
-    m_isSpawned: 0
   - m_assetKey: Dummy_Buoy
     m_layerDepth: 0
+    m_spawnDistanceTrigger: 25
+    m_targetWorldOffsetFromCamera: 0
+    m_targetLocalY: -5.5
+    m_isSpawned: 0
     m_spawnTriggerX: 0
     m_targetWorldX: -15
     m_targetCameraX: -15
-    m_targetLocalY: -5.5
-    m_isSpawned: 0
 --- !u!1 &606873470048552616
 GameObject:
   m_ObjectHideFlags: 0
