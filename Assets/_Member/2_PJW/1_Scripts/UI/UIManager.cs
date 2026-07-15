@@ -15,6 +15,9 @@ namespace DesktopCompanion.Views
         private static UIManager s_instance;   // 유닛 자가 등록 접근점
         private static readonly List<UIViewBase> s_pending = new();   // Initialize 전(씬 로드)에 등록 시도한 뷰 대기
 
+        /// <summary>UIManager.Initialize가 끝나 부팅된 상태인지(씬 로드 시점과 구분용).</summary>
+        public static bool IsBooted => s_instance != null;
+
         [Header("Window Layout")]
         [Tooltip("창 사이 간격(px)")]
         [SerializeField] private float m_windowPadding = 10f;

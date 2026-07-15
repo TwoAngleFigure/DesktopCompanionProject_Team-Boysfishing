@@ -30,6 +30,11 @@ namespace DesktopCompanion.Views
         [Tooltip("(선택) 창 전용 Canvas — CanvasGroup 숨김 시 렌더 제외해 드로우콜 절감")]
         [SerializeField] private Canvas m_ownCanvas;
 
+        [Tooltip("Play 시작 시 열린 상태로 둘지. 기본 false = 닫힘(씬에서 활성으로 둬도 Play 시 닫힘, 버튼/코드로 Show)")]
+        [SerializeField] private bool m_openOnStart = false;
+
+        private bool m_lifecycleActive;   // base.OnEnable(등록·바인드)을 실제로 탄 상태인지
+
         /// <summary>자동 배치 참여 여부(UIManager가 읽음).</summary>
         public bool ParticipatesInLayout => m_participateInLayout;
 
@@ -38,7 +43,16 @@ namespace DesktopCompanion.Views
 
         protected override void OnEnable()
         {
+            // 씬 로드 시(부팅 전) 활성 창은 초기 표시하지 않는다. base(Register/Bind) 호출 전에 닫아
+            // 플래시와 'Unbind-without-Bind'를 모두 회피한다. 나중에 Show()(부팅 후)면 정상 오픈.
+            if (!UIManager.IsBooted && !m_openOnStart)
+            {
+                gameObject.SetActive(false);
+                return;
+            }
+
             base.OnEnable();                    // UIViewBase: 자가 등록(→ Bind)
+            m_lifecycleActive = true;
             if (m_hideMode == HideMode.CanvasGroup)
             {
                 SetVisible(true);               // 활성화 = 표시(CanvasGroup 모드에서 이전 Hide의 alpha0 초기화)
@@ -48,6 +62,12 @@ namespace DesktopCompanion.Views
 
         protected override void OnDisable()
         {
+            // OnEnable에서 초기-닫힘으로 base를 안 탄 경우엔 Register/Bind가 없으므로 Unregister/Unbind도 스킵.
+            if (!m_lifecycleActive)
+            {
+                return;
+            }
+            m_lifecycleActive = false;
             UIManager.RemoveActiveWindow(this); // 스택에서 제거
             base.OnDisable();                   // UIViewBase: Unbind + Unregister
         }
