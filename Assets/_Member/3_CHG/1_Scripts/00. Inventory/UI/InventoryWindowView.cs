@@ -394,7 +394,9 @@ namespace DesktopCompanion.Views
                 return;
             }
 
-            m_itemTooltip.Show(hoveredSlot, slotRect);
+            Sprite icon = GetIcon(hoveredSlot);
+
+            m_itemTooltip.Show(hoveredSlot, icon, slotRect);
         }
 
         private void ClearHoveredTooltip()

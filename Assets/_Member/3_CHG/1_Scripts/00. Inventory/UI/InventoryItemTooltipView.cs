@@ -11,7 +11,8 @@ namespace DesktopCompanion.Views
         [SerializeField] private RectTransform m_tooltipRoot;
         [SerializeField] private CanvasGroup m_canvasGroup;
 
-        [Header("Texts")]
+        [Header("Contents")]
+        [SerializeField] private Image m_itemIcon; 
         [SerializeField] private TMP_Text m_itemNameText;
         [SerializeField] private TMP_Text m_gradeText;
         [SerializeField] private TMP_Text m_effectText;
@@ -69,7 +70,7 @@ namespace DesktopCompanion.Views
             PositionBesideSlot(m_targetSlot);
         }
 
-        public void Show(InventorySlotViewData data, RectTransform slotRect)
+        public void Show(InventorySlotViewData data, Sprite icon, RectTransform slotRect)
         {
             if (data == null
                 || data.IsEmpty
@@ -93,6 +94,12 @@ namespace DesktopCompanion.Views
             if (m_effectText != null)
             {
                 m_effectText.text = data.EffectText;
+            }
+
+            if(m_itemIcon != null)
+            {
+                m_itemIcon.sprite = icon;
+                m_itemIcon.enabled = icon != null;
             }
 
             if (!m_tooltipRoot.gameObject.activeSelf)
@@ -126,6 +133,13 @@ namespace DesktopCompanion.Views
             if (m_canvasGroup != null)
             {
                 m_canvasGroup.alpha = 0f;
+            }
+
+            // 이전 아이템 Sprite가 남지 않도록 초기화
+            if (m_itemIcon != null)
+            {
+                m_itemIcon.sprite = null;
+                m_itemIcon.enabled = false;
             }
         }
 
