@@ -1,5 +1,46 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-5421014974146620761
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4f96080ccd587e4cb9b7f94d6839b49, type: 3}
+  m_Name: BFPixelizerFeature
+  m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Rendering.BFPixelizerFeature
+  m_Active: 1
+  _pixelatedLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+--- !u!114 &-3972208432397481627
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ef6d2d7bf3633e4baf72310f121f717, type: 3}
+  m_Name: PixelisationFeature
+  m_EditorClassIdentifier: ProPixelizer::ProPixelizer.PixelisationFeature
+  m_Active: 1
+  UseDepthTestingForIDOutlines: 1
+  DepthTestThreshold: 0.001
+  UseNormalsForEdgeDetection: 1
+  NormalEdgeDetectionSensitivity: 1
+  GenerateWarnings: 1
+  PixelizationShaders:
+    PixelizationMap: {fileID: 4800000, guid: 8dd346b62451e76418dabc2355815f15, type: 3}
+    CopyDepth: {fileID: 4800000, guid: 5854eec6cff8aa8449c5f14562cf9c11, type: 3}
+    CopyMainTexAndDepth: {fileID: 4800000, guid: 4fdd965c0d64e16468688f87fbca597d, type: 3}
+    ApplyPixelizationMap: {fileID: 4800000, guid: f47f4f650fb29834684600d9a95f41c7, type: 3}
+  OutlineShaders:
+    OutlineDetection: {fileID: 4800000, guid: c59878161c7e0ad40b0661b47620d0e5, type: 3}
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -27,7 +68,8 @@ MonoBehaviour:
   m_RendererFeatures:
   - {fileID: 7833122117494664109}
   - {fileID: 822515723918110478}
-  m_RendererFeatureMap: ad6b866f10d7b46c
+  - {fileID: -5421014974146620761}
+  m_RendererFeatureMap: ad6b866f10d7b46c0eef4f6ab1296a0ba7d2ea4f9aafc4b4
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   m_AssetVersion: 3
@@ -69,6 +111,17 @@ MonoBehaviour:
   m_Name: StylizedWater3.StylizedWaterRenderFeature
   m_EditorClassIdentifier: sc.stylizedwater3.runtime::StylizedWater3.StylizedWaterRenderFeature
   m_Active: 1
+  dynamicEffectsSettings:
+    enabled: 1
+    renderRange: 500
+    fadePercentage: 10
+    texelsPerUnit: 8
+    maxResolution: 4096
+    enableDisplacement: 1
+    enableNormals: 1
+    halfResolutionNormals: 0
+    normalMipmaps: 1
+    ignoreSceneView: 0
   transparencyRefraction: 0
   screenSpaceReflectionSettings:
     allow: 1
