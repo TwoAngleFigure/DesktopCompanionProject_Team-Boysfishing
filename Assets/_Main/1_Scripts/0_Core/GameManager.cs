@@ -130,6 +130,8 @@ namespace DesktopCompanion.Core
 
             m_systemManager.Register(new DesktopCompanion.Systems.InventorySystem());
 
+            m_systemManager.Register(new DesktopCompanion.Systems.ShopSystem());
+
             m_systemManager.Register(new DesktopCompanion.Systems.FishingSystem());
 
             m_systemManager.Register(new DesktopCompanion.Systems.StageSystem());

@@ -16,15 +16,19 @@ namespace DesktopCompanion.Views
         [SerializeField] private Image m_iconImage;
         [SerializeField] private TMP_Text m_quantityText;
         [SerializeField] private TMP_Text m_subInfoText;
+        [SerializeField] private GameObject m_fishStarImage;
 
         [Header("State")]
         [SerializeField] private GameObject m_emptyRoot;
+        [SerializeField] private GameObject m_sellSelectedIcon;
+        [SerializeField] private TMP_Text m_sellSelectedAmountText;
 
         private const float DoubleClickInterval = 0.3f;
 
         private int m_slotIndex;
         private float m_lastClickTime = -1f;
         private bool m_canDoubleClick;
+        private bool m_isSellMode;
 
         private Action<int> m_onClick;
         private Action<int> m_onDoubleClick;
@@ -90,6 +94,11 @@ namespace DesktopCompanion.Views
             {
                 m_subInfoText.text = GetSubInfoText(data);
             }
+
+            if (m_fishStarImage != null)
+            {
+                m_fishStarImage.SetActive(data.ItemType == ItemType.Fish);
+            }
         }
 
         private void SetEmpty(InventorySlotViewData data)
@@ -117,6 +126,13 @@ namespace DesktopCompanion.Views
             {
                 m_subInfoText.text = string.Empty;
             }
+
+            if (m_fishStarImage != null)
+            {
+                m_fishStarImage.SetActive(false);
+            }
+
+            SetSellSelection(false, 0, false);
         }
 
         private string GetSubInfoText(InventorySlotViewData data)
@@ -124,7 +140,7 @@ namespace DesktopCompanion.Views
             switch (data.ItemType)
             {
                 case ItemType.Fish:
-                    return GetQualityText(data.Quality);
+                    return GetQualityNumberText(data.Quality);
 
                 case ItemType.Equipment:
                     return data.UpgradeLevel > 0
@@ -140,40 +156,63 @@ namespace DesktopCompanion.Views
             }
         }
 
-        private string GetQualityText(ItemQuality quality)
+        private string GetQualityNumberText(ItemQuality quality)
         {
-            switch (quality)
+            int qualityNumber = (int)quality;
+
+            if (qualityNumber < 1 || qualityNumber > 5)
             {
-                case ItemQuality.OneStar:
-                    return "¡Ú";
-
-                case ItemQuality.TwoStar:
-                    return "¡Ú¡Ú";
-
-                case ItemQuality.ThreeStar:
-                    return "¡Ú¡Ú¡Ú";
-
-                case ItemQuality.FourStar:
-                    return "¡Ú¡Ú¡Ú¡Ú";
-
-                case ItemQuality.FiveStar:
-                    return "¡Ú¡Ú¡Ú¡Ú¡Ú";
-
-                default:
-                    return string.Empty;
+                return string.Empty;
             }
+
+            return qualityNumber.ToString();
         }
 
         public void SetPickupSource(bool isPickupSource)
         {
             if (m_iconImage != null)
             {
-                 m_iconImage.enabled = !isPickupSource && m_iconImage.sprite != null; 
+                m_iconImage.enabled = !isPickupSource && m_iconImage.sprite != null;
+            }
+        }
+
+        public void SetSellMode(bool isSellMode)
+        {
+            m_isSellMode = isSellMode;
+
+            if (isSellMode)
+            {
+                m_lastClickTime = -1f;
+            }
+        }
+
+        public void SetSellSelection(bool isSelected, int selectedAmount, bool showAmount)
+        {
+            if (m_sellSelectedIcon != null)
+            {
+                m_sellSelectedIcon.SetActive(isSelected);
+            }
+
+            if (m_sellSelectedAmountText != null)
+            {
+                bool showText = isSelected && showAmount;
+
+                m_sellSelectedAmountText.gameObject.SetActive(showText);
+                m_sellSelectedAmountText.text = showText
+                    ? selectedAmount.ToString()
+                    : string.Empty;
             }
         }
 
         private void HandleClick()
         {
+            if (m_isSellMode)
+            {
+                m_lastClickTime = -1f;
+                m_onClick?.Invoke(m_slotIndex);
+                return;
+            }
+
             float currentTime = Time.unscaledTime;
 
             bool isDoubleClick =
