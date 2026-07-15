@@ -30,6 +30,9 @@ namespace DesktopCompanion.Views
         [Header("Item Pickup")]
         [SerializeField] private ItemPickupController m_itemPickupController;
 
+        [Header("Sell")]
+        [SerializeField] private InventorySellView m_sellView;
+
         private readonly InventoryViewModel m_vm = new();
         private readonly List<InventorySlotView> m_slotViews = new();
 
@@ -42,6 +45,17 @@ namespace DesktopCompanion.Views
 
             m_vm.Slots.Bind(RefreshSlotViews);
             m_vm.Gold.Bind(RefreshGoldText);
+
+            if (m_sellView != null)
+            {
+                m_sellView.OnSellVisualStateChanged += RefreshSellSlotVisuals;
+                m_sellView.OnSellModeChanged += HandleSellModeChanged;
+                m_sellView.Bind(SystemManager, EntityManager);
+            }
+            else
+            {
+                Debug.LogError("[InventoryWindowView] InventorySellView is not assigned.");
+            }
 
             if (m_itemPickupController != null)
             {
@@ -88,6 +102,13 @@ namespace DesktopCompanion.Views
                 m_itemPickupController.ClearPickup();
             }
 
+            if (m_sellView != null)
+            {
+                m_sellView.OnSellVisualStateChanged -= RefreshSellSlotVisuals;
+                m_sellView.OnSellModeChanged -= HandleSellModeChanged;
+                m_sellView.Unbind();
+            }
+
             m_vm.Slots.Unbind(RefreshSlotViews);
             m_vm.Gold.Unbind(RefreshGoldText);
 
@@ -132,10 +153,13 @@ namespace DesktopCompanion.Views
                 Sprite icon = GetIcon(slotData);
 
                 m_slotViews[i].Set(slotData, icon);
+                ApplySellSlotVisual(m_slotViews[i], slotData);
             }
 
             for (int i = slots.Count; i < m_slotViews.Count; i++)
             {
+                m_slotViews[i].SetSellMode(false);
+                m_slotViews[i].SetSellSelection(false, 0, false);
                 m_slotViews[i].gameObject.SetActive(false);
             }
 
@@ -194,6 +218,19 @@ namespace DesktopCompanion.Views
 
             if (clickedSlot == null)
             {
+                return;
+            }
+
+            if (m_sellView != null && m_sellView.IsSellMode)
+            {
+                ClearPickup();
+                ClearHoveredTooltip();
+
+                if (!clickedSlot.IsEmpty)
+                {
+                    m_sellView.HandleSlotClick(clickedSlot);
+                }
+
                 return;
             }
 
@@ -268,6 +305,11 @@ namespace DesktopCompanion.Views
 
         private void OnSlotDoubleClicked(int slotIndex)
         {
+            if (m_sellView != null && m_sellView.IsSellMode)
+            {
+                return;
+            }
+
             List<InventorySlotViewData> slots = m_vm.Slots.Value;
 
             if (slots == null || slotIndex < 0 || slotIndex >= slots.Count)
@@ -337,9 +379,22 @@ namespace DesktopCompanion.Views
                 return;
             }
 
-            Sprite icon = GetIcon(hoveredSlot);
+            if (m_hoveredSlotIndex >= m_slotViews.Count)
+            {
+                ClearHoveredTooltip();
+                return;
+            }
 
-            m_itemTooltip.Show(hoveredSlot);
+            RectTransform slotRect =
+                m_slotViews[m_hoveredSlotIndex].transform as RectTransform;
+
+            if (slotRect == null)
+            {
+                ClearHoveredTooltip();
+                return;
+            }
+
+            m_itemTooltip.Show(hoveredSlot, slotRect);
         }
 
         private void ClearHoveredTooltip()
@@ -361,7 +416,7 @@ namespace DesktopCompanion.Views
             {
                 return icon;
             }
-            
+
             Debug.LogWarning($"[Inventory] Icon not found for key: {slotData.IconKey}. Returning null.");
             return null;
         }
@@ -425,6 +480,56 @@ namespace DesktopCompanion.Views
             }
         }
 
+        private void ApplySellSlotVisual(InventorySlotView slotView, InventorySlotViewData slotData)
+        {
+            if (slotView == null)
+            {
+                return;
+            }
+
+            bool isSellMode = m_sellView != null && m_sellView.IsSellMode;
+            slotView.SetSellMode(isSellMode);
+
+            int selectedAmount = slotData != null && !slotData.IsEmpty && m_sellView != null
+                ? m_sellView.GetSelectedAmount(slotData.Handle)
+                : 0;
+
+            bool showAmount =
+                slotData != null
+                && (slotData.ItemType == ItemType.Materials
+                    || slotData.ItemType == ItemType.Consumables);
+
+            slotView.SetSellSelection(selectedAmount > 0, selectedAmount, showAmount);
+        }
+
+        private void RefreshSellSlotVisuals()
+        {
+            List<InventorySlotViewData> slots = m_vm.Slots.Value;
+
+            if (slots == null)
+            {
+                return;
+            }
+
+            int visibleCount = Mathf.Min(slots.Count, m_slotViews.Count);
+
+            for (int i = 0; i < visibleCount; i++)
+            {
+                ApplySellSlotVisual(m_slotViews[i], slots[i]);
+            }
+        }
+
+        private void HandleSellModeChanged(bool isSellMode)
+        {
+            if (isSellMode)
+            {
+                ClearPickup();
+                ClearHoveredTooltip();
+            }
+
+            RefreshSellSlotVisuals();
+        }
+
         private void OnFishTabClicked()
         {
             ClearPickup();
@@ -467,6 +572,7 @@ namespace DesktopCompanion.Views
         {
             ClearPickup();
             ClearHoveredTooltip();
+            m_sellView?.ResetSellState();
 
             Close();
         }

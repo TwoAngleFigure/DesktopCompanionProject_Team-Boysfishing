@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 1613850803205600386}
   - component: {fileID: 226514954835060356}
   - component: {fileID: 141993857154169456}
-  - component: {fileID: 4332125460351796967}
   m_Layer: 0
   m_Name: Dummy_Lighthouse
   m_TagString: Untagged
@@ -108,7 +107,7 @@ CapsuleCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
@@ -129,31 +128,3 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Views.WorldProp
   m_destroyMargin: 5
---- !u!114 &4332125460351796967
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9146294467502439288}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 95144392e6eede14cafa2d339e5c1ee9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: sc.stylizedwater3.runtime::StylizedWater3.AlignToWater
-  heightInterface:
-    method: 0
-    waterObject: {fileID: 0}
-    autoFind: 1
-    waveProfile: {fileID: 0}
-    waterLevelSource: 1
-    waterLevelTransform: {fileID: 0}
-    waterLevel: 0
-  surfaceSize: {x: 3, y: 3}
-  followTarget: {fileID: 0}
-  heightOffset: 0
-  rollAmount: 0.1
-  rotation: 0
-  smoothing: 0.1
-  heightValue: 0
-  rigidbody: {fileID: 0}

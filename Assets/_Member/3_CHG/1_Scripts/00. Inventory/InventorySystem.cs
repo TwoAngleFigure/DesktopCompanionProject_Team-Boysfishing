@@ -5,11 +5,11 @@ using System;
 using UnityEngine;
 
 namespace DesktopCompanion.Systems
-{ 
+{
     public class InventorySystem : SystemBase, ISaveable
     {
         private const int FallbackInventorySize = 20;
-        private const int ExpandableInventoryInitialSize = 35;
+        private const int ExpandableInventoryInitialSize = 25;
         private const int ExpandableInventoryExpandSize = 5;
         private const int ExpandableInventoryRemainingSlots = 5;
         private const bool EnableInventoryDebugLog = true;
@@ -19,10 +19,20 @@ namespace DesktopCompanion.Systems
         private EntityHandle[] m_materialSlots;
 
         private PlayerSystem m_playerSystem;
+        private ShopSystem m_shopSystem;
+
+        private bool m_autoSellEnabled;
+        private ItemQuality m_maxAutoSellQuality = ItemQuality.OneStar;
+        private ItemRarity m_maxAutoSellRarity = ItemRarity.Normal;
 
         public event Action OnInventoryChanged;
 
         public event Action OnInventorySaveRequested;
+        public event Action OnAutoSellFilterChanged;
+
+        public bool AutoSellEnabled => m_autoSellEnabled;
+        public ItemQuality MaxAutoSellQuality => m_maxAutoSellQuality;
+        public ItemRarity MaxAutoSellRarity => m_maxAutoSellRarity;
 
         private InventorySave m_loadedSave;
 
@@ -36,6 +46,12 @@ namespace DesktopCompanion.Systems
         public override void PostInitialize()
         {
             m_playerSystem = SystemManager.GetSystem<PlayerSystem>();
+            m_shopSystem = SystemManager.GetSystem<ShopSystem>();
+
+            if (m_shopSystem == null)
+            {
+                LogWarning("ShopSystem not found.");
+            }
 
             int fishInventorySize = GetCurrentInventorySize();
             int equipmentInventorySize = GetInitialExpandableInventorySize(ItemType.Equipment);
@@ -111,6 +127,22 @@ namespace DesktopCompanion.Systems
             return true;
         }
 
+        public void SetAutoSellFilter(bool enabled, ItemQuality maxQuality, ItemRarity maxRarity)
+        {
+            if (m_autoSellEnabled == enabled
+                && m_maxAutoSellQuality == maxQuality
+                && m_maxAutoSellRarity == maxRarity)
+            {
+                return;
+            }
+
+            m_autoSellEnabled = enabled;
+            m_maxAutoSellQuality = maxQuality;
+            m_maxAutoSellRarity = maxRarity;
+
+            OnAutoSellFilterChanged?.Invoke();
+        }
+
         public bool AddItem(EntityHandle itemHandle)
         {
             LogDebug($"TryAddItem called. handle: {itemHandle}");
@@ -139,6 +171,29 @@ namespace DesktopCompanion.Systems
             {
                 LogWarning($"TryAddItem failed. Unsupported entity type: {itemEntity.GetType().Name}");
                 return false;
+            }
+
+            if (itemEntity is Entity_Fish fish && ShouldSellFish(fish))
+            {
+                if (m_shopSystem == null)
+                {
+                    LogWarning("TryAddItem failed. ShopSystem not found.");
+                    return false;
+                }
+
+                bool sold = m_shopSystem.SellAcquiredItem(itemHandle, out int earnedGold);
+
+                if (sold)
+                {
+                    LogDebug($"Fish sold before inventory add. dataId: {fish.DataId}, name: {fish.Name}, earnedGold: {earnedGold}");
+                    RequestSave();
+                }
+                else
+                {
+                    LogWarning($"TryAddItem failed. Fish sale failed. dataId: {fish.DataId}, name: {fish.Name}");
+                }
+
+                return sold;
             }
 
             EntityHandle[] slots = GetSlotArray(itemType);
@@ -171,7 +226,7 @@ namespace DesktopCompanion.Systems
             return true;
         }
 
-        public bool RemoveAt(ItemType itemType, int slotIndex, bool destroyEntity = false)
+        public bool RemoveAt(ItemType itemType, int slotIndex, bool destroyEntity = false, bool requestSave = true)
         {
             EntityHandle[] slots = GetSlotArray(itemType);
             ItemType slotType = NormalizeSlotType(itemType);
@@ -197,7 +252,7 @@ namespace DesktopCompanion.Systems
             }
 
             LogDebug($"TryRemoveAt success. itemType: {itemType}, slotIndex: {slotIndex}, destroyEntity: {destroyEntity}");
-            NotifyInventoryChanged($"Remove item / itemType: {itemType}, slotIndex: {slotIndex}", true);
+            NotifyInventoryChanged($"Remove item / itemType: {itemType}, slotIndex: {slotIndex}", requestSave);
             return true;
         }
 
@@ -228,7 +283,7 @@ namespace DesktopCompanion.Systems
             return true;
         }
 
-        public bool RemoveQuantityAt(ItemType itemType, int slotIndex, int amount, bool destroyEntityWhenZero = true)
+        public bool RemoveQuantityAt(ItemType itemType, int slotIndex, int amount, bool destroyEntityWhenZero = true, bool requestSave = true)
         {
             if (amount <= 0)
             {
@@ -269,13 +324,40 @@ namespace DesktopCompanion.Systems
                 SetStackQuantity(entity, nextQuantity);
 
                 LogDebug($"TryRemoveQuantityAt success. dataId: {entity.DataId}, name: {entity.Name}, before: {currentQuantity}, remove: {amount}, after: {nextQuantity}");
-                NotifyInventoryChanged($"Decrease quantity / dataId: {entity.DataId}, amount: {amount}", true);
+                NotifyInventoryChanged($"Decrease quantity / dataId: {entity.DataId}, amount: {amount}", requestSave);
 
                 return true;
             }
 
             LogDebug($"TryRemoveQuantityAt zero. dataId: {entity.DataId}, name: {entity.Name}, before: {currentQuantity}, remove: {amount}. Slot will be removed.");
-            return RemoveAt(itemType, slotIndex, destroyEntityWhenZero);
+            return RemoveAt(itemType, slotIndex, destroyEntityWhenZero, requestSave);
+        }
+
+        public bool RemoveByHandle(EntityHandle handle, int amount, bool requestSave = true)
+        {
+            if (amount <= 0)
+            {
+                return false;
+            }
+
+            if (!FindSlotByHandle(handle, out ItemType slotType, out int slotIndex))
+            {
+                return false;
+            }
+
+            Entity entity = EntityManager.Get(handle);
+
+            if (entity is Entity_Materials || entity is Entity_Consumables)
+            {
+                return RemoveQuantityAt(slotType, slotIndex, amount, true, requestSave);
+            }
+
+            if (entity is Entity_Fish || entity is Entity_Equipment)
+            {
+                return amount == 1 && RemoveAt(slotType, slotIndex, true, requestSave);
+            }
+
+            return false;
         }
 
         //item이 인벤토리에 몇 개 있는지 반환
@@ -431,6 +513,11 @@ namespace DesktopCompanion.Systems
                 return;
             }
 
+            RequestSave();
+        }
+
+        public void RequestSave()
+        {
             LogDebug("Save requested by inventory change.");
             OnInventorySaveRequested?.Invoke();
         }
@@ -777,6 +864,89 @@ namespace DesktopCompanion.Systems
             return entity;
         }
 
+        private bool ShouldSellFish(Entity_Fish fish)
+        {
+            return IsAutoSellTarget(fish) || IsFishInventoryFull();
+        }
+
+        private bool IsAutoSellTarget(Entity_Fish fish)
+        {
+            if (!m_autoSellEnabled)
+            {
+                return false;
+            }
+
+            return fish.Quality <= m_maxAutoSellQuality
+                && fish.Rarity <= m_maxAutoSellRarity;
+        }
+
+        private bool IsFishInventoryFull()
+        {
+            return FindEmptySlotIndex(m_fishSlots) < 0;
+        }
+
+        public bool CanRemoveByHandle(EntityHandle handle, int amount)
+        {
+            if (amount <= 0 || !FindSlotByHandle(handle, out _, out _))
+            {
+                return false;
+            }
+
+            Entity entity = EntityManager.Get(handle);
+
+            if (entity is Entity_Materials materials)
+            {
+                return amount <= materials.Quantity;
+            }
+
+            if (entity is Entity_Consumables consumables)
+            {
+                return amount <= consumables.Quantity;
+            }
+
+            return amount == 1 && (entity is Entity_Fish || entity is Entity_Equipment);
+        }
+
+        private bool FindSlotByHandle(EntityHandle targetHandle, out ItemType slotType, out int slotIndex)
+        {
+            if (FindHandleIndex(m_fishSlots, targetHandle, out slotIndex))
+            {
+                slotType = ItemType.Fish;
+                return true;
+            }
+
+            if (FindHandleIndex(m_equipmentSlots, targetHandle, out slotIndex))
+            {
+                slotType = ItemType.Equipment;
+                return true;
+            }
+
+            if (FindHandleIndex(m_materialSlots, targetHandle, out slotIndex))
+            {
+                slotType = ItemType.Materials;
+                return true;
+            }
+
+            slotType = default;
+            slotIndex = -1;
+            return false;
+        }
+
+        private bool FindHandleIndex(EntityHandle[] slots, EntityHandle targetHandle, out int slotIndex)
+        {
+            for (int i = 0; i < slots.Length; i++)
+            {
+                if (slots[i].Equals(targetHandle))
+                {
+                    slotIndex = i;
+                    return true;
+                }
+            }
+
+            slotIndex = -1;
+            return false;
+        }
+
         private bool GetItemType(Entity entity, out ItemType itemType)
         {
             itemType = default;
@@ -1088,65 +1258,5 @@ namespace DesktopCompanion.Systems
 
             LogDebug($"Fish inventory size stat changed. nextSize: {nextInventorySize}, resizeResult: {result}");
         }
-
-#if UNITY_EDITOR
-        public void DebugPrintSlots()
-        {
-            Debug.Log("========== Inventory Slots ==========");
-            DebugPrintSlotArray("Fish", m_fishSlots);
-            DebugPrintSlotArray("Equipment", m_equipmentSlots);
-            DebugPrintSlotArray("Materials + Consumables", m_materialSlots);
-            Debug.Log("=====================================");
-        }
-
-        private void DebugPrintSlotArray(string title, EntityHandle[] slots)
-        {
-            Debug.Log($"--- {title} ---");
-
-            for (int i = 0; i < slots.Length; i++)
-            {
-                if (IsEmptyHandle(slots[i]))
-                {
-                    Debug.Log($"[{i}] Empty");
-                    continue;
-                }
-
-                Entity entity = EntityManager.Get(slots[i]);
-
-                if (entity == null)
-                {
-                    Debug.LogWarning($"[{i}] Missing Entity / handle: {slots[i]}");
-                    continue;
-                }
-
-                Debug.Log($"[{i}] {entity.GetType().Name} / DataId: {entity.DataId} / Name: {entity.Name} / Handle: {slots[i]} {GetDebugEntityExtraInfo(entity)}");
-            }
-        }
-
-        private string GetDebugEntityExtraInfo(Entity entity)
-        {
-            if (entity is Entity_Fish fish)
-            {
-                return $"/ Size: {fish.Size} / Quality: {fish.Quality}";
-            }
-
-            if (entity is Entity_Equipment equipment)
-            {
-                return $"/ UpgradeLevel: {equipment.UpgradeLevel}";
-            }
-
-            if (entity is Entity_Materials materials)
-            {
-                return $"/ Quantity: {materials.Quantity}";
-            }
-
-            if (entity is Entity_Consumables consumables)
-            {
-                return $"/ Quantity: {consumables.Quantity}";
-            }
-
-            return string.Empty;
-        }
-#endif
     }
 }
