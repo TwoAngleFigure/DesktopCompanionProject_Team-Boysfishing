@@ -2,10 +2,10 @@ using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
 using DesktopCompanion.Systems;
 using DesktopCompanion.Views;
-using UnityEngine;
-using TMPro;
-using UnityEngine.UI;
 using DG.Tweening;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
 public class FishingWorldView : WorldViewBase
 {
@@ -26,7 +26,6 @@ public class FishingWorldView : WorldViewBase
     [SerializeField] private float m_popupExitDuration = 0.4f;
 
     private FishingSystem m_fishingSystem;
-    private ItemData_Fish m_currentFishData;
     private GameObject m_currentModel;
     private DitherFade m_currentModelFade;
     private Sequence m_popupSequence;
@@ -48,13 +47,11 @@ public class FishingWorldView : WorldViewBase
 
         if (m_fishingSystem == null)
         {
-            Debug.LogWarning("[FishingCatchWorldView] FishingSystemÀ» Ã£À» ¼ö ¾ø½À´Ï´Ù.");
+            Debug.LogWarning("[FishingCatchWorldView] FishingSystemì„ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
             return;
         }
 
-        m_fishingSystem.OnBattleStarted += HandleBattleStarted;
-        m_fishingSystem.OnFishCaught += HandleFishCaught;
-
+        m_fishingSystem.OnFishingResult += HandleFishingResult;
     }
 
     public override void Unbind()
@@ -71,14 +68,22 @@ public class FishingWorldView : WorldViewBase
 
         if (m_fishingSystem != null)
         {
-            m_fishingSystem.OnBattleStarted -= HandleBattleStarted;
-            m_fishingSystem.OnFishCaught -= HandleFishCaught;
+            m_fishingSystem.OnFishingResult -= HandleFishingResult;
         }
 
-        m_currentFishData = null;
         m_fishingSystem = null;
     }
 
+    private string GetResultText(FishingResultType resultType)
+    {
+        return resultType switch
+        {
+            FishingResultType.Failed => "ë‚šì‹œ ì‹¤íŒ¨",
+            FishingResultType.InventoryFull => "ì¸ë²¤í† ë¦¬ ë¶€ì¡±",
+            _ => string.Empty
+        };
+
+    }
     private void UpdateCatchPopup(Entity_Fish fish)
     {
         if (fish == null)
@@ -91,32 +96,55 @@ public class FishingWorldView : WorldViewBase
             m_fishInfoText.text = $"{fish.Name} / {fish.Size:0.00} cm";
         }
 
-        int starCount = Mathf.Clamp(
-            (int)fish.Quality,
-            1,
-            m_qualityStars.Length
-        );
+        SetQualityStars((int)fish.Quality);
+    }
+
+    private void SetQualityStars(int count)
+    {
+        if (m_qualityStars == null)
+        {
+            return;
+        }
+
+        int visibleCount = Mathf.Clamp(
+            count,
+            0,
+            m_qualityStars.Length);
 
         for (int i = 0; i < m_qualityStars.Length; i++)
         {
             if (m_qualityStars[i] != null)
             {
-                m_qualityStars[i].gameObject.SetActive(i < starCount);
+                m_qualityStars[i].gameObject.SetActive(
+                    i < visibleCount);
             }
         }
     }
-    private void HandleBattleStarted(EntityHandle battleFishHandle)
-    {
-        Entity_BattleFish battleFish = EntityManager.Get<Entity_BattleFish>(battleFishHandle);
 
-        if (battleFish == null)
+    private void UpdateFailurePopup(FishingResultType resultType)
+    {
+        if (m_fishInfoText != null)
         {
-            Debug.LogWarning("[FishingWorldView] ÀüÅõ ¹°°í±â Entity¸¦ Ã£À» ¼ö ¾øÀ½");
-            m_currentFishData = null;
+            m_fishInfoText.text = GetResultText(resultType);
+        }
+
+        SetQualityStars(0);
+    }
+
+
+    private void HandleFishingResult(
+        EntityHandle fishHandle,
+        FishingResultType resultType)
+    {
+        if (resultType == FishingResultType.Success)
+        {
+            HandleFishCaught(fishHandle);
             return;
         }
 
-        m_currentFishData = battleFish.BattleData.ItemFish;
+        ClearCurrentModel();
+        UpdateFailurePopup(resultType);
+        PlayResultPopup();
     }
 
     private void HandleFishCaught(EntityHandle fishHandle)
@@ -125,26 +153,33 @@ public class FishingWorldView : WorldViewBase
 
         if (fish == null)
         {
-            Debug.LogWarning("[FishingWorldView] ÀâÈù ¹°°í±â Entity¸¦ Ã£À» ¼ö ¾øÀ½");
-            return;
-        }
-
-        if (m_currentFishData == null)
-        {
-            Debug.LogWarning("[FishingWorldView] ÀúÀåµÈ ¹°°í±â Data°¡ ¾øÀ½");
-            return;
-        }
-
-        string modelKey = AssetKeys.Of(m_currentFishData, AssetUsage.Model);
-        GameObject prefab = AssetProvider.Get<GameObject>(modelKey);
-
-        if (prefab == null)
-        {
-            Debug.LogWarning($"[FishingWorldView] ¹°°í±â ¸ğµ¨ ÇÁ¸®ÆÕÀ» Ã£À» ¼ö ¾øÀ½: key={modelKey}");
+            Debug.LogWarning("[FishingWorldView] ì¡íŒ ë¬¼ê³ ê¸° Entityë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŒ");
             return;
         }
 
         ClearCurrentModel();
+        UpdateCatchPopup(fish);
+        CreateCaughtFishModel(fish.ItemData);
+        PlayResultPopup();
+    }
+
+    private void CreateCaughtFishModel(ItemData_Fish fishData)
+    {
+
+        if (fishData == null)
+        {
+            Debug.LogWarning("[FishingWorldView] ì¡íŒ ë¬¼ê³ ê¸°ì˜ Dataê°€ ì—†ìŒ");
+            return;
+        }
+
+        string modelKey = AssetKeys.Of(fishData, AssetUsage.Model);
+        GameObject prefab = AssetProvider.Get<GameObject>(modelKey);
+
+        if (prefab == null)
+        {
+            Debug.LogWarning($"[FishingWorldView] ë¬¼ê³ ê¸° ëª¨ë¸ í”„ë¦¬íŒ¹ì„ ì°¾ì„ ìˆ˜ ì—†ìŒ: key={modelKey}");
+            return;
+        }
 
         Transform parent = m_modelRoot != null ? m_modelRoot : transform;
         Vector3 position = m_spawnPoint != null ? m_spawnPoint.position : transform.position;
@@ -159,14 +194,11 @@ public class FishingWorldView : WorldViewBase
         if (m_currentModelFade == null)
         {
             Debug.LogWarning(
-                "[FishingWorldView] »ı¼ºµÈ ¹°°í±â ¸ğµ¨¿¡ DitherFade°¡ ¾ø½À´Ï´Ù."
+                "[FishingWorldView] ìƒì„±ëœ ë¬¼ê³ ê¸° ëª¨ë¸ì— DitherFadeê°€ ì—†ìŠµë‹ˆë‹¤."
             );
         }
 
-        UpdateCatchPopup(fish);
-        PlayCatchPopup();
-
-        Debug.Log($"[FishingWorldView] ¹°°í±â ¸ğµ¨ »ı¼º: {fish.Name}, key={modelKey}");
+        Debug.Log($"[FishingWorldView] ë¬¼ê³ ê¸° ëª¨ë¸ ìƒì„±: {fishData.Name}, key={modelKey}");
     }
 
     private void ClearCurrentModel()
@@ -180,8 +212,14 @@ public class FishingWorldView : WorldViewBase
         m_currentModelFade = null;
     }
 
-    private void PlayCatchPopup()
+    private void PlayResultPopup()
     {
+        if (m_popupRoot == null || m_popupCanvasGroup == null)
+        {
+            Debug.LogWarning("[FishingWorldView] ê²°ê³¼ íŒì—… ì°¸ì¡°ê°€ ì„¤ì •ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.");
+            return;
+        }
+
         m_popupSequence?.Kill();
 
         Transform popupTransform = m_popupRoot.transform;
@@ -189,7 +227,7 @@ public class FishingWorldView : WorldViewBase
         float hiddenY =
             m_popupShownLocalPosition.y - m_popupMoveDistance;
 
-        // ¾Æ·¡ÂÊ ½ÃÀÛ À§Ä¡
+        // ì•„ë˜ìª½ ì‹œì‘ ìœ„ì¹˜
         popupTransform.localPosition = new Vector3(
             m_popupShownLocalPosition.x,
             hiddenY,
@@ -198,14 +236,14 @@ public class FishingWorldView : WorldViewBase
 
         m_popupRoot.SetActive(true);
 
-        // SetActive ½Ã DitherFade ÀÚµ¿ Àç»ıÀÌ ½ÃÀÛµÉ ¼ö ÀÖÀ¸¹Ç·Î
-        // È°¼ºÈ­ ÀÌÈÄ ´Ù½Ã ÃÊ±âÈ­ÇÑ´Ù.
+        // SetActive ì‹œ DitherFade ìë™ ì¬ìƒì´ ì‹œì‘ë  ìˆ˜ ìˆìœ¼ë¯€ë¡œ
+        // í™œì„±í™” ì´í›„ ë‹¤ì‹œ ì´ˆê¸°í™”í•œë‹¤.
         m_popupCanvasGroup.alpha = 0f;
         m_currentModelFade?.SetFadeImmediate(0f);
 
         m_popupSequence = DOTween.Sequence();
 
-        // ¾Æ·¡¿¡¼­ ¿Ã¶ó¿À¸é¼­ ÆĞ³Î°ú ¸ğµ¨ ÆäÀÌµå ÀÎ
+        // ì•„ë˜ì—ì„œ ì˜¬ë¼ì˜¤ë©´ì„œ íŒ¨ë„ê³¼ ëª¨ë¸ í˜ì´ë“œ ì¸
         m_popupSequence
             .Append(
                 popupTransform
@@ -228,10 +266,10 @@ public class FishingWorldView : WorldViewBase
             );
         }
 
-        // À¯Áö
+        // ìœ ì§€
         m_popupSequence.AppendInterval(m_popupHoldDuration);
 
-        // ¾Æ·¡·Î ³»·Á°¡¸é¼­ ÆĞ³Î°ú ¸ğµ¨ ÆäÀÌµå ¾Æ¿ô
+        // ì•„ë˜ë¡œ ë‚´ë ¤ê°€ë©´ì„œ íŒ¨ë„ê³¼ ëª¨ë¸ í˜ì´ë“œ ì•„ì›ƒ
         m_popupSequence
             .Append(
                 popupTransform
@@ -257,7 +295,7 @@ public class FishingWorldView : WorldViewBase
             {
                 ClearCurrentModel();
 
-                // ´ÙÀ½ Àç»ıÀ» À§ÇØ ¿ø·¡ À§Ä¡·Î º¹±¸
+                // ë‹¤ìŒ ì¬ìƒì„ ìœ„í•´ ì›ë˜ ìœ„ì¹˜ë¡œ ë³µêµ¬
                 popupTransform.localPosition =
                     m_popupShownLocalPosition;
 

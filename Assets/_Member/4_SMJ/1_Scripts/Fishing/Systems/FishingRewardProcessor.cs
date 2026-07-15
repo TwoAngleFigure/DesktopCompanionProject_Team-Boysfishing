@@ -5,6 +5,13 @@ using UnityEngine;
 
 namespace DesktopCompanion.Systems
 {
+    public enum FishingRewardResult
+    {
+        Success,
+        InventoryFull,
+        Failed
+    }
+
     public class FishingRewardProcessor
     {
         private readonly EntityManager m_entityManager;
@@ -18,7 +25,7 @@ namespace DesktopCompanion.Systems
             m_inventorySystem = inventorySystem;
         }
 
-        public bool TryGrantCaughtFish(
+        public FishingRewardResult TryGrantCaughtFish(
             ItemData_Fish itemData,
             float size,
             ItemQuality quality,
@@ -29,7 +36,12 @@ namespace DesktopCompanion.Systems
             if (itemData == null)
             {
                 Debug.LogWarning("[FishingRewardProcessor] 포획 물고기 데이터가 없습니다.");
-                return false;
+                return FishingRewardResult.Failed;
+            }
+
+            if (IsFishInventoryFull())
+            {
+                return FishingRewardResult.InventoryFull;
             }
 
             EntityHandle handle = m_entityManager.Create<ItemData_Fish>(itemData.ID);
@@ -38,18 +50,25 @@ namespace DesktopCompanion.Systems
             if (fish == null)
             {
                 m_entityManager.Destroy(handle);
-                return false;
+                return FishingRewardResult.Failed;
             }
 
             fish.SetRollResult(size, quality);
 
             if (!TryAddItem(handle))
             {
-                return false;
+                Debug.LogWarning("[FishingRewardProcessor] 빈 슬롯 확인 후 인벤토리 추가에 실패했습니다.");
+                return FishingRewardResult.Failed;
             }
 
             caughtHandle = handle;
-            return true;
+            return FishingRewardResult.Success;
+        }
+
+        private bool IsFishInventoryFull()
+        {
+            return m_inventorySystem.GetUsedSlotCount(ItemType.Fish) >=
+                   m_inventorySystem.GetMaxSlotCount(ItemType.Fish);
         }
 
         public void Process(ItemDrop[] drops)
