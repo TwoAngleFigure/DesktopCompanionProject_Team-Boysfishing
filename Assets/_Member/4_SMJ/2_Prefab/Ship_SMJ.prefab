@@ -42,6 +42,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2701691181569335098}
+  - component: {fileID: 584305578757902851}
   m_Layer: 0
   m_Name: FishingCatchPathRoot
   m_TagString: Untagged
@@ -68,6 +69,28 @@ Transform:
   - {fileID: 1684971547539989783}
   m_Father: {fileID: 992483745519535407}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &584305578757902851
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1678567967562306563}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d80bbbc553ab83f449656ea3e37c5f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FishingCatchPathEffect
+  m_surfaceExitEffect: {fileID: 3875355491224310476}
+  m_startPoint: {fileID: 2361171963670912329}
+  m_pathPoints:
+  - {fileID: 7802165813052820078}
+  - {fileID: 4591236146714514385}
+  m_endPoint: {fileID: 1684971547539989783}
+  m_duration: 1
+  m_resolution: 10
+  m_gizmoPathColor: {r: 0, g: 1, b: 1, a: 1}
+  m_gizmoPointRadius: 0.05
 --- !u!1 &2464823338506710318
 GameObject:
   m_ObjectHideFlags: 0
@@ -411,7 +434,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5815759825791117958}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.0010270253, y: -0, z: 0.0004164719, w: 0.9999994}
+  m_LocalRotation: {x: 0.0010297068, y: -0.00000043132994, z: 0.0004188859, w: 0.9999994}
   m_LocalPosition: {x: 40.6, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -422,7 +445,7 @@ Transform:
   - {fileID: 1822270674294477076}
   - {fileID: 2701691181569335098}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0.118, y: 0, z: 0.048}
 --- !u!114 &3789689970226623165
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -492,8 +515,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8700265874142918279}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.00012613815, y: -0.000002863278, z: -0.0028390824, w: 0.999996}
-  m_LocalPosition: {x: 0.000040946547, y: 0.0491587, z: -0.00014408771}
+  m_LocalRotation: {x: 0.00046108384, y: 0.00000016188113, z: 0.0003445967, w: 0.9999999}
+  m_LocalPosition: {x: 0.000043524393, y: 0.052253556, z: -0.00015044471}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -586,6 +609,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: bc2ee21eca184fd478b614bd96d2fc1a, type: 3}
+--- !u!114 &3875355491224310476 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1827169705746508312, guid: bc2ee21eca184fd478b614bd96d2fc1a, type: 3}
+  m_PrefabInstance: {fileID: 3212032334210070740}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7c39f65af4f19b4ab9f56be149d5272, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FishingCatchSplashEffect
 --- !u!4 &6046330966149597853 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 9186093753727873609, guid: bc2ee21eca184fd478b614bd96d2fc1a, type: 3}
