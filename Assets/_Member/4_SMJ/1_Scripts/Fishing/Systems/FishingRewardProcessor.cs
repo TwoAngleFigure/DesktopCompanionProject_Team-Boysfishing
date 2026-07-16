@@ -25,7 +25,7 @@ namespace DesktopCompanion.Systems
             m_inventorySystem = inventorySystem;
         }
 
-        public FishingRewardResult TryGrantCaughtFish(
+        public FishingRewardResult TryCreateCaughtFish(
             ItemData_Fish itemData,
             float size,
             ItemQuality quality,
@@ -55,14 +55,19 @@ namespace DesktopCompanion.Systems
 
             fish.SetRollResult(size, quality);
 
-            if (!TryAddItem(handle))
-            {
-                Debug.LogWarning("[FishingRewardProcessor] 빈 슬롯 확인 후 인벤토리 추가에 실패했습니다.");
-                return FishingRewardResult.Failed;
-            }
-
             caughtHandle = handle;
             return FishingRewardResult.Success;
+        }
+
+        public FishingRewardResult TryFinalizeCaughtFish(EntityHandle caughtHandle)
+        {
+            if (TryAddItem(caughtHandle))
+            {
+                return FishingRewardResult.Success;
+            }
+
+            Debug.LogWarning("[FishingRewardProcessor] 포획 물고기 인벤토리 지급에 실패했습니다.");
+            return FishingRewardResult.Failed;
         }
 
         private bool IsFishInventoryFull()
