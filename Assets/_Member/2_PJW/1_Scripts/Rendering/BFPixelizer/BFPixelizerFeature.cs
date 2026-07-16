@@ -104,6 +104,33 @@ namespace DesktopCompanion.Rendering
         private static readonly int s_offDepthProp = Shader.PropertyToID("_BFP_OffDepth");
         private static readonly int s_cellSizeProp = Shader.PropertyToID("_BFP_CellSize");
         private static readonly int s_depthEpsProp = Shader.PropertyToID("_BFP_DepthEps");
+        private static readonly int s_spriteRotProp = Shader.PropertyToID("_BFP_SpriteRot");
+        private static readonly int s_spritePivotProp = Shader.PropertyToID("_BFP_SpritePivot");
+        private static readonly int s_spriteAxisProp = Shader.PropertyToID("_BFP_SpriteAxis");
+        private static readonly int s_spriteDepthRangeProp = Shader.PropertyToID("_BFP_SpriteDepthRange");
+
+        // 앰비언트 SH(unity_SH*) — cmd.DrawRenderer는 드로우별 프로브 데이터를 실어주지 않아
+        // 잔여값(때때로 0 = 검은 앰비언트)을 물려받으므로, 스프라이트 패스에서 직접 공급한다.
+        private static readonly int[] s_shProps =
+        {
+            Shader.PropertyToID("unity_SHAr"), Shader.PropertyToID("unity_SHAg"), Shader.PropertyToID("unity_SHAb"),
+            Shader.PropertyToID("unity_SHBr"), Shader.PropertyToID("unity_SHBg"), Shader.PropertyToID("unity_SHBb"),
+            Shader.PropertyToID("unity_SHC"),
+        };
+
+        private readonly Vector4[] _shConstants = new Vector4[7];
+
+        /// <summary>RenderSettings.ambientProbe를 셰이더 SH 상수(표준 패킹)로 변환.</summary>
+        private void UpdateAmbientShConstants()
+        {
+            UnityEngine.Rendering.SphericalHarmonicsL2 sh = RenderSettings.ambientProbe;
+            for (int c = 0; c < 3; c++)
+            {
+                _shConstants[c] = new Vector4(sh[c, 3], sh[c, 1], sh[c, 2], sh[c, 0] - sh[c, 6]);
+                _shConstants[3 + c] = new Vector4(sh[c, 4], sh[c, 5], sh[c, 6] * 3f, sh[c, 7]);
+            }
+            _shConstants[6] = new Vector4(sh[0, 8], sh[1, 8], sh[2, 8], 1f);
+        }
 
         private Material _compositeMaterial;
         private Material _downsampleMaterial;
@@ -166,9 +193,25 @@ namespace DesktopCompanion.Rendering
         {
             public List<PixelizedSpriteObject.DrawEntry> Draws;
             public Matrix4x4 AlignedView;
-            public Matrix4x4 AlignedProjGpu;
+            public Matrix4x4 AlignedProj;   // 비GPU — 플립은 렌더 함수에서 실제 타깃 UV 원점으로 결정
             public Matrix4x4 RestoreView;
-            public Matrix4x4 RestoreProjGpu;
+            public Matrix4x4 RestoreProj;   // 비GPU
+            public Vector4[] AmbientSh;     // unity_SH* 7개(DrawRenderer는 프로브를 안 실어줌)
+        }
+
+        private class SpriteCompositePassData
+        {
+            public TextureHandle LowColor;
+            public TextureHandle LowMeta;
+            public TextureHandle LowDepth;
+            public Material Material;
+            public float CellSize;
+            public float DepthEpsilon;
+            public Vector4 SpriteRot;       // 롤 행렬 뷰 공간 2x2 그대로
+            public Vector2 PivotNdc01;      // 비GPU 투영 기준(y위) — raster 변환은 렌더 함수에서
+            public Vector2 CenterCell;
+            public Vector2 TargetSize;
+            public Vector4 DepthRange;      // (스프라이트 near, far, 카메라 near, far) — 깊이 재매핑
         }
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
@@ -224,7 +267,11 @@ namespace DesktopCompanion.Rendering
 
             // ── Pass 1: 대상 머티리얼(커스텀 태그) 오프스크린 렌더 ──
             var drawingSettings = CreateDrawingSettings(s_pixelizedTags, renderingData, cameraData, lightData, cameraData.defaultOpaqueSortFlags);
-            var filteringSettings = new FilteringSettings(RenderQueueRange.opaque);
+            var filteringSettings = new FilteringSettings(RenderQueueRange.opaque)
+            {
+                // 스프라이트 모드 오브젝트는 v2(화면 격자) 경로에서 제외.
+                renderingLayerMask = ~PixelizedSpriteObject.RenderingLayerBit,
+            };
             var rendererListParams = new RendererListParams(renderingData.cullResults, drawingSettings, filteringSettings);
             var rendererList = renderGraph.CreateRendererList(rendererListParams);
 
@@ -239,6 +286,11 @@ namespace DesktopCompanion.Rendering
                 builder.SetRenderAttachment(offColor, 0, AccessFlags.Write);
                 builder.SetRenderAttachment(offMeta, 1, AccessFlags.Write);
                 builder.SetRenderAttachmentDepth(offDepth, AccessFlags.Write);
+                // 그림자 수신 샘플링 의존 선언(RenderObjectsPass와 동일 패턴).
+                if (resourceData.mainShadowsTexture.IsValid())
+                    builder.UseTexture(resourceData.mainShadowsTexture, AccessFlags.Read);
+                if (resourceData.additionalShadowsTexture.IsValid())
+                    builder.UseTexture(resourceData.additionalShadowsTexture, AccessFlags.Read);
                 builder.AllowGlobalStateModification(true); // _BFP_ScreenSize/_BFP_PixelScale/_BFP_CellSize — 정점 스냅에 필요
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc((OffscreenPassData data, RasterGraphContext context) =>
@@ -306,11 +358,8 @@ namespace DesktopCompanion.Rendering
                 });
             }
 
-            // ── S0(계획 14): 오브젝트 공간 모드 — 정렬 공간 스프라이트 렌더 ──
-            // 각 PixelizedSpriteObject를 "-θ 롤 정렬 뷰"의 전용 버퍼에 3D 렌더한다.
-            // S0 검증: Frame Debugger에서 오브젝트가 회전 중에도 버퍼 안에서 수평(축 정렬)으로 보이면 통과.
-            // (S0 단계에서는 화면 합성 없음 — 오브젝트는 기존 v2 경로로 계속 표시된다.)
-            RecordSpriteObjectPasses(renderGraph, cameraData);
+            // ── 오브젝트 공간 모드(계획 14): 정렬 렌더 → 다운샘플 → 회전 배치 합성 ──
+            RecordSpriteObjectPasses(renderGraph, cameraData, resourceData, cellSizeRt);
 
             // ── Pass 4: 셀 깊이를 _CameraDepthTexture에 되쓰기 ──
             // SW3 물의 수중 투영(반투명·흡수)은 _CameraDepthTexture로 "물 아래 무엇이 있는지"를
@@ -336,8 +385,8 @@ namespace DesktopCompanion.Rendering
             }
         }
 
-        /// <summary>계획 14 S0: 스프라이트 모드 오브젝트별 정렬 공간 렌더 패스 기록.</summary>
-        private void RecordSpriteObjectPasses(RenderGraph renderGraph, UniversalCameraData cameraData)
+        /// <summary>계획 14: 스프라이트 모드 오브젝트별 [정렬 렌더 → 다운샘플 → 회전 배치 합성] 기록.</summary>
+        private void RecordSpriteObjectPasses(RenderGraph renderGraph, UniversalCameraData cameraData, UniversalResourceData resourceData, int cellSizeRt)
         {
             if (PixelizedSpriteObject.Active.Count == 0)
                 return;
@@ -348,9 +397,11 @@ namespace DesktopCompanion.Rendering
             // 메인 카메라와 같은 픽셀 밀도로 스프라이트 버퍼 해상도 산출.
             float pixelsPerWorldUnit = cameraData.cameraTargetDescriptor.height / (2f * camera.orthographicSize);
 
-            // 복원용 카메라 행렬(정점 스냅과 동일 규약 — 계획 11 함정 ②: raster pass 안에서는 GPU 변환 수동).
+            // 복원용 카메라 행렬(비GPU) — GPU 변환(플립)은 렌더 함수에서 실제 타깃 UV 원점으로 결정.
             Matrix4x4 restoreView = cameraData.GetViewMatrix();
-            Matrix4x4 restoreProjGpu = GL.GetGPUProjectionMatrix(cameraData.GetProjectionMatrix(), true);
+            Matrix4x4 restoreProj = cameraData.GetProjectionMatrix();
+
+            UpdateAmbientShConstants();
 
             foreach (PixelizedSpriteObject spriteObject in PixelizedSpriteObject.Active)
             {
@@ -365,18 +416,22 @@ namespace DesktopCompanion.Rendering
                 Matrix4x4 roll = Matrix4x4.Rotate(Quaternion.AngleAxis(thetaDeg, Vector3.forward));
                 Matrix4x4 alignedView = roll * restoreView;
 
-                // 피벗 중심의 소형 정사영(회전 불변 반경).
+                // 회전 불변 반경 → 버퍼 크기(셀 배수·짝수 셀 — 중심(피벗)이 항상 셀 경계에 놓여 격자 위상 고정).
                 float radius = spriteObject.GetRadiusWS();
+                int spriteSizePx = Mathf.Clamp(Mathf.CeilToInt(2f * radius * pixelsPerWorldUnit), 16, cameraData.cameraTargetDescriptor.height);
+                int cellCount = (spriteSizePx + cellSizeRt - 1) / cellSizeRt;
+                cellCount = ((cellCount + 3) / 4) * 4; // 4셀 단위 반올림(짝수 보장) — 이동 중 버퍼 크기 요동으로 인한 RG 재컴파일 완화
+                spriteSizePx = cellCount * cellSizeRt;
+
+                // 피벗 중심의 소형 정사영 — 창 크기는 버퍼 픽셀 수에 맞춰(메인 카메라와 동일 픽셀 밀도).
+                float halfSizeWorld = spriteSizePx / (2f * pixelsPerWorldUnit);
                 Vector3 pivotVS = alignedView.MultiplyPoint3x4(spriteObject.PivotWS);
                 float near = -pivotVS.z - radius;
                 float far = -pivotVS.z + radius;
                 Matrix4x4 alignedProj = Matrix4x4.Ortho(
-                    pivotVS.x - radius, pivotVS.x + radius,
-                    pivotVS.y - radius, pivotVS.y + radius,
+                    pivotVS.x - halfSizeWorld, pivotVS.x + halfSizeWorld,
+                    pivotVS.y - halfSizeWorld, pivotVS.y + halfSizeWorld,
                     Mathf.Max(0.01f, near), far);
-                Matrix4x4 alignedProjGpu = GL.GetGPUProjectionMatrix(alignedProj, true);
-
-                int spriteSizePx = Mathf.Clamp(Mathf.CeilToInt(2f * radius * pixelsPerWorldUnit), 16, cameraData.cameraTargetDescriptor.height);
 
                 var spriteColorDescriptor = cameraData.cameraTargetDescriptor;
                 spriteColorDescriptor.width = spriteSizePx;
@@ -399,28 +454,166 @@ namespace DesktopCompanion.Rendering
                 {
                     passData.Draws = new List<PixelizedSpriteObject.DrawEntry>(spriteObject.Draws);
                     passData.AlignedView = alignedView;
-                    passData.AlignedProjGpu = alignedProjGpu;
+                    passData.AlignedProj = alignedProj;
                     passData.RestoreView = restoreView;
-                    passData.RestoreProjGpu = restoreProjGpu;
+                    passData.RestoreProj = restoreProj;
+                    passData.AmbientSh = _shConstants;
 
                     builder.SetRenderAttachment(spriteColor, 0, AccessFlags.Write);
                     builder.SetRenderAttachment(spriteMeta, 1, AccessFlags.Write);
                     builder.SetRenderAttachmentDepth(spriteDepth, AccessFlags.Write);
+                    // 그림자 수신 샘플링 의존 선언(RenderObjectsPass와 동일) — 미선언 시 RG 컴파일에 따라
+                    // 바인딩이 무효가 되어 라이팅이 검게 나오는 불규칙 증상이 발생한다.
+                    if (resourceData.mainShadowsTexture.IsValid())
+                        builder.UseTexture(resourceData.mainShadowsTexture, AccessFlags.Read);
+                    if (resourceData.additionalShadowsTexture.IsValid())
+                        builder.UseTexture(resourceData.additionalShadowsTexture, AccessFlags.Read);
                     builder.AllowGlobalStateModification(true); // 행렬·_BFP_ScreenSize 변경
-                    builder.AllowPassCulling(false);            // S0: 출력 미소비(FD 검증용)
+                    builder.AllowPassCulling(false);
                     builder.SetRenderFunc((SpritePassData data, RasterGraphContext context) =>
                     {
+                        // ★ 근본 규칙: cmd.SetViewProjectionMatrices는 'CPU 규약(비GPU)' 행렬을 받아
+                        // 엔진이 드로우 시점에 현재 타깃에 맞춰 자동 변환한다(y-플립·reversed-Z).
+                        // GL.GetGPUProjectionMatrix를 함께 쓰면 '이중 변환'되어 상하 반전/깊이 역전이 발생한다.
+                        // (URP 자신도 비GPU로 넘김 — ScriptableRenderer.cs:188. GPU 변환 행렬이 필요한 것은
+                        //  RenderingUtils.SetViewAndProjectionMatrices 쪽이다.)
+
                         // 정렬 공간에서는 화면 격자 정점 스냅을 끈다(0 → 셰이더가 스킵).
                         context.cmd.SetGlobalVector(s_screenSizeProp, Vector4.zero);
-                        context.cmd.SetViewProjectionMatrices(data.AlignedView, data.AlignedProjGpu);
+
+                        // 앰비언트 SH 공급 — DrawRenderer 경로의 프로브 부재로 인한 '검은 앰비언트' 방지.
+                        for (int i = 0; i < s_shProps.Length; i++)
+                            context.cmd.SetGlobalVector(s_shProps[i], data.AmbientSh[i]);
+
+                        context.cmd.SetViewProjectionMatrices(data.AlignedView, data.AlignedProj);
                         context.cmd.ClearRenderTarget(true, true, Color.clear);
                         foreach (PixelizedSpriteObject.DrawEntry draw in data.Draws)
                         {
                             if (draw.Renderer != null)
                                 context.cmd.DrawRenderer(draw.Renderer, draw.Material, draw.SubMeshIndex, draw.PassIndex);
                         }
-                        // 이후 패스를 위해 카메라 행렬 복원(RenderObjectsPass restoreCamera 패턴).
-                        context.cmd.SetViewProjectionMatrices(data.RestoreView, data.RestoreProjGpu);
+                        // 이후 패스를 위해 카메라 행렬 복원 — URP 원본 설정과 동일하게 비GPU 그대로.
+                        context.cmd.SetViewProjectionMatrices(data.RestoreView, data.RestoreProj);
+                    });
+                }
+
+                // ── 스프라이트 다운샘플(1/N) ──
+                var spriteLowColorDescriptor = spriteColorDescriptor;
+                spriteLowColorDescriptor.width = cellCount;
+                spriteLowColorDescriptor.height = cellCount;
+                var spriteLowDepthDescriptor = spriteDepthDescriptor;
+                spriteLowDepthDescriptor.width = cellCount;
+                spriteLowDepthDescriptor.height = cellCount;
+
+                var spriteLowColor = UniversalRenderer.CreateRenderGraphTexture(renderGraph, spriteLowColorDescriptor, $"BFP_SpriteLow_{spriteObject.name}", false, FilterMode.Point);
+                var spriteLowMeta = UniversalRenderer.CreateRenderGraphTexture(renderGraph, spriteLowColorDescriptor, $"BFP_SpriteLowMeta_{spriteObject.name}", false, FilterMode.Point);
+                var spriteLowDepth = UniversalRenderer.CreateRenderGraphTexture(renderGraph, spriteLowDepthDescriptor, $"BFP_SpriteLowDepth_{spriteObject.name}", false, FilterMode.Point);
+
+                using (var builder = renderGraph.AddRasterRenderPass<DownsamplePassData>($"BF Pixelizer Sprite Downsample ({spriteObject.name})", out var passData))
+                {
+                    passData.OffColor = spriteColor;
+                    passData.OffMeta = spriteMeta;
+                    passData.OffDepth = spriteDepth;
+                    passData.Material = _downsampleMaterial;
+                    passData.CellSize = cellSizeRt;
+
+                    builder.UseTexture(spriteColor, AccessFlags.Read);
+                    builder.UseTexture(spriteMeta, AccessFlags.Read);
+                    builder.UseTexture(spriteDepth, AccessFlags.Read);
+                    builder.SetRenderAttachment(spriteLowColor, 0, AccessFlags.Write);
+                    builder.SetRenderAttachment(spriteLowMeta, 1, AccessFlags.Write);
+                    builder.SetRenderAttachmentDepth(spriteLowDepth, AccessFlags.Write);
+                    builder.AllowGlobalStateModification(true);
+                    builder.AllowPassCulling(false);
+                    builder.SetRenderFunc((DownsamplePassData data, RasterGraphContext context) =>
+                    {
+                        context.cmd.SetGlobalTexture(s_offMetaProp, data.OffMeta);
+                        context.cmd.SetGlobalTexture(s_offDepthProp, data.OffDepth);
+                        context.cmd.SetGlobalFloat(s_cellSizeProp, data.CellSize);
+                        Blitter.BlitTexture(context.cmd, data.OffColor, new Vector4(1f, 1f, 0f, 0f), data.Material, 0);
+                    });
+                }
+
+                // ── 회전 배치 합성 ──
+                // 피벗 NDC(비GPU, y위) — raster 변환·y부호는 렌더 함수에서 실제 UV 원점으로 결정.
+                Vector4 pivotClip = restoreProj * (restoreView * new Vector4(spriteObject.PivotWS.x, spriteObject.PivotWS.y, spriteObject.PivotWS.z, 1f));
+                Vector2 pivotNdc01 = new Vector2(pivotClip.x / pivotClip.w, pivotClip.y / pivotClip.w) * 0.5f + new Vector2(0.5f, 0.5f);
+
+                using (var builder = renderGraph.AddRasterRenderPass<SpriteCompositePassData>($"BF Pixelizer Sprite Composite ({spriteObject.name})", out var passData))
+                {
+                    passData.LowColor = spriteLowColor;
+                    passData.LowMeta = spriteLowMeta;
+                    passData.LowDepth = spriteLowDepth;
+                    passData.Material = _compositeMaterial;
+                    passData.CellSize = cellSizeRt;
+                    passData.DepthEpsilon = _depthEpsilon;
+                    passData.SpriteRot = new Vector4(roll.m00, roll.m01, roll.m10, roll.m11); // 뷰 공간 2x2 그대로
+                    passData.PivotNdc01 = pivotNdc01;
+                    passData.CenterCell = new Vector2(cellCount * 0.5f, cellCount * 0.5f);
+                    passData.TargetSize = new Vector2(cameraData.cameraTargetDescriptor.width, cameraData.cameraTargetDescriptor.height);
+                    passData.DepthRange = new Vector4(Mathf.Max(0.01f, near), far, camera.nearClipPlane, camera.farClipPlane);
+
+                    builder.UseTexture(spriteLowColor, AccessFlags.Read);
+                    builder.UseTexture(spriteLowMeta, AccessFlags.Read);
+                    builder.UseTexture(spriteLowDepth, AccessFlags.Read);
+                    builder.UseTexture(resourceData.cameraDepthTexture, AccessFlags.Read);
+                    builder.SetRenderAttachment(resourceData.activeColorTexture, 0, AccessFlags.ReadWrite);
+                    builder.SetRenderAttachmentDepth(resourceData.activeDepthTexture, AccessFlags.ReadWrite);
+                    builder.AllowGlobalStateModification(true);
+                    builder.AllowPassCulling(false);
+                    builder.SetRenderFunc((SpriteCompositePassData data, RasterGraphContext context) =>
+                    {
+                        // Play(RT 타깃) 실측: 엔진 자동 변환이 RT 렌더에 y-플립을 적용해 내용이 bottom-left(행0=월드 아래).
+                        //  → 피벗 raster y = ndc01.y × H (2차 시도에서 위치 정합이 실측 검증된 공식),
+                        //    raster→뷰 y부호 = +1, 뷰→스프라이트 행 y부호 = +1(스프라이트 버퍼도 동일 규약).
+                        float pivotRasterY = data.PivotNdc01.y * data.TargetSize.y;
+                        var spritePivot = new Vector4(data.PivotNdc01.x * data.TargetSize.x, pivotRasterY, data.CenterCell.x, data.CenterCell.y);
+                        var spriteAxis = new Vector4(1f, 1f, 0f, 0f);
+
+                        context.cmd.SetGlobalTexture(s_offMetaProp, data.LowMeta);
+                        context.cmd.SetGlobalTexture(s_offDepthProp, data.LowDepth);
+                        context.cmd.SetGlobalFloat(s_cellSizeProp, data.CellSize);
+                        context.cmd.SetGlobalFloat(s_depthEpsProp, data.DepthEpsilon);
+                        context.cmd.SetGlobalVector(s_spriteRotProp, data.SpriteRot);
+                        context.cmd.SetGlobalVector(s_spritePivotProp, spritePivot);
+                        context.cmd.SetGlobalVector(s_spriteAxisProp, spriteAxis);
+                        context.cmd.SetGlobalVector(s_spriteDepthRangeProp, data.DepthRange);
+                        Blitter.BlitTexture(context.cmd, data.LowColor, new Vector4(1f, 1f, 0f, 0f), data.Material, 2);
+                    });
+                }
+
+                // ── 스프라이트 셀 깊이 → _CameraDepthTexture 되쓰기(물 수중 투영용, v2 Pass 4와 동일 역할) ──
+                using (var builder = renderGraph.AddRasterRenderPass<SpriteCompositePassData>($"BF Pixelizer Sprite DepthTex ({spriteObject.name})", out var passData))
+                {
+                    passData.LowColor = spriteLowColor;
+                    passData.LowMeta = spriteLowMeta;
+                    passData.LowDepth = spriteLowDepth;
+                    passData.Material = _compositeMaterial;
+                    passData.CellSize = cellSizeRt;
+                    passData.SpriteRot = new Vector4(roll.m00, roll.m01, roll.m10, roll.m11);
+                    passData.PivotNdc01 = pivotNdc01;
+                    passData.CenterCell = new Vector2(cellCount * 0.5f, cellCount * 0.5f);
+                    passData.TargetSize = new Vector2(cameraData.cameraTargetDescriptor.width, cameraData.cameraTargetDescriptor.height);
+                    passData.DepthRange = new Vector4(Mathf.Max(0.01f, near), far, camera.nearClipPlane, camera.farClipPlane);
+
+                    builder.UseTexture(spriteLowColor, AccessFlags.Read);
+                    builder.UseTexture(spriteLowDepth, AccessFlags.Read);
+                    builder.SetRenderAttachmentDepth(resourceData.cameraDepthTexture, AccessFlags.ReadWrite);
+                    builder.AllowGlobalStateModification(true);
+                    builder.AllowPassCulling(false);
+                    builder.SetRenderFunc((SpriteCompositePassData data, RasterGraphContext context) =>
+                    {
+                        float pivotRasterY = data.PivotNdc01.y * data.TargetSize.y;
+                        var spritePivot = new Vector4(data.PivotNdc01.x * data.TargetSize.x, pivotRasterY, data.CenterCell.x, data.CenterCell.y);
+                        var spriteAxis = new Vector4(1f, 1f, 0f, 0f);
+
+                        context.cmd.SetGlobalTexture(s_offDepthProp, data.LowDepth);
+                        context.cmd.SetGlobalFloat(s_cellSizeProp, data.CellSize);
+                        context.cmd.SetGlobalVector(s_spriteRotProp, data.SpriteRot);
+                        context.cmd.SetGlobalVector(s_spritePivotProp, spritePivot);
+                        context.cmd.SetGlobalVector(s_spriteAxisProp, spriteAxis);
+                        context.cmd.SetGlobalVector(s_spriteDepthRangeProp, data.DepthRange);
+                        Blitter.BlitTexture(context.cmd, data.LowColor, new Vector4(1f, 1f, 0f, 0f), data.Material, 3);
                     });
                 }
             }

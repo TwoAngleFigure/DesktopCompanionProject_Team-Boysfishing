@@ -14,6 +14,9 @@ namespace DesktopCompanion.Rendering
     {
         private const string ForwardPassName = "BFPixelizedForward";
 
+        /// <summary>스프라이트 모드 렌더러 표시용 렌더링 레이어 비트 — v2(화면 격자) 경로에서 제외.</summary>
+        public const uint RenderingLayerBit = 1u << 31;
+
         public struct DrawEntry
         {
             public Renderer Renderer;
@@ -29,6 +32,7 @@ namespace DesktopCompanion.Rendering
 
         private readonly List<DrawEntry> _draws = new();
         private Renderer[] _renderers;
+        private uint[] _originalRenderingLayers;
 
         /// <summary>격자 원점(월드) = transform.position.</summary>
         public Vector3 PivotWS => transform.position;
@@ -59,12 +63,26 @@ namespace DesktopCompanion.Rendering
             if (_draws.Count == 0)
                 Debug.LogWarning("[BFPixelizer] 계층에 PixelizedLit 머티리얼 렌더러가 없습니다.", this);
 
+            // v2(화면 격자) 경로에서 제외 — 스프라이트 합성과의 이중 표시 방지.
+            _originalRenderingLayers = new uint[_renderers.Length];
+            for (int i = 0; i < _renderers.Length; i++)
+            {
+                _originalRenderingLayers[i] = _renderers[i].renderingLayerMask;
+                _renderers[i].renderingLayerMask = RenderingLayerBit;
+            }
+
             s_active.Add(this);
         }
 
         private void OnDisable()
         {
             s_active.Remove(this);
+            if (_renderers == null || _originalRenderingLayers == null) return;
+            for (int i = 0; i < _renderers.Length; i++)
+            {
+                if (_renderers[i] != null)
+                    _renderers[i].renderingLayerMask = _originalRenderingLayers[i];
+            }
         }
 
         /// <summary>피벗 기준 바운딩 반경(월드) — 어떤 회전에도 오브젝트를 담는 스프라이트 버퍼 크기 산출용.</summary>

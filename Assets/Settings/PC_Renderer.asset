@@ -15,7 +15,10 @@ MonoBehaviour:
   m_Active: 1
   _pixelSize: 3
   _depthEpsilon: 0.001
+  _autoPixelScale: 1
   _pixelScale: 2
+  _compositeShader: {fileID: 4800000, guid: 2a4ce7cf8ab0ca54cbc412d0d95d09ad, type: 3}
+  _downsampleShader: {fileID: 4800000, guid: c960f5fb6a93d084ba0af7d055d5ef35, type: 3}
 --- !u!114 &-3972208432397481627
 MonoBehaviour:
   m_ObjectHideFlags: 1

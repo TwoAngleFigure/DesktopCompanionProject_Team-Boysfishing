@@ -114,7 +114,7 @@ Material:
     - _Glossiness: 0
     - _GlossyReflections: 0
     - _Metallic: 0
-    - _ObjectId: 1
+    - _ObjectId: 2
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _PixelSize: 3

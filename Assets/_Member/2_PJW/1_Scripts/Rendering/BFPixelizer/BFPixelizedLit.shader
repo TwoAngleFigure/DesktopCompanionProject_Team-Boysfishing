@@ -118,8 +118,10 @@ Shader "BFPixelizer/PixelizedLit"
                 float3 normalWS = normalize(input.normalWS);
 
                 // 그림자 좌표는 실제(스냅 전) 월드 위치 기준 — 그림자는 부드럽게 따라온다.
+                // 반드시 '거리 페이드 포함' 오버로드 사용(URP Lit과 동일): 페이드 없는 GetMainLight(shadowCoord)는
+                // 그림자 최대 거리/케스케이드 범위 밖에서 감쇠가 0(완전 그림자)이 되어 오브젝트가 검게 나온다.
                 float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS);
-                Light mainLight = GetMainLight(shadowCoord);
+                Light mainLight = GetMainLight(shadowCoord, input.positionWS, half4(1, 1, 1, 1));
                 half lightAttenuation = mainLight.shadowAttenuation * mainLight.distanceAttenuation;
                 half3 diffuse = LightingLambert(mainLight.color * lightAttenuation, mainLight.direction, normalWS);
                 half3 ambient = SampleSH(normalWS);
