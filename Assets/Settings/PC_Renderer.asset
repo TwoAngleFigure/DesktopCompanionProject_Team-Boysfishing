@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: BFPixelizerFeature
   m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Rendering.BFPixelizerFeature
   m_Active: 1
-  _pixelatedLayers:
-    serializedVersion: 2
-    m_Bits: 16777216
+  _pixelSize: 3
+  _depthEpsilon: 0.001
+  _pixelScale: 2
 --- !u!114 &-3972208432397481627
 MonoBehaviour:
   m_ObjectHideFlags: 1
