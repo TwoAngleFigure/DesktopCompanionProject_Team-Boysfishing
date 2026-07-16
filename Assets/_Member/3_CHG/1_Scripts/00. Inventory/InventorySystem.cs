@@ -171,6 +171,13 @@ namespace DesktopCompanion.Systems
                 return false;
             }
 
+            // 스택 아이템은 수량이 1개 이상일 때만 인벤토리에 수납
+            if (GetStackQuantity(itemEntity, out int incomingQuantity) && incomingQuantity <= 0)
+            {
+                LogWarning($"TryAddItem failed. Stack quantity must be greater than zero. type: {itemEntity.GetType().Name}, dataId: {itemEntity.DataId}, quantity: {incomingQuantity}");
+                return false;
+            }
+
             if (itemEntity is Entity_Fish fish && ShouldSellFish(fish))
             {
                 if (m_shopSystem == null)
@@ -559,6 +566,13 @@ namespace DesktopCompanion.Systems
                     continue;
                 }
 
+                //런타임 상태가 잘못되었을 때 수량 보정 방지
+                if (GetStackQuantity(entity, out int quantity) && quantity <= 0)
+                {
+                    LogWarning($"CaptureSlots skipped. Stack quantity must be greater than zero. slotType: {slotType}, slotIndex: {i}, dataId: {entity.DataId}, quantity: {quantity}");
+                    continue;
+                }
+
                 InventorySave.SlotSave slotSave = CreateSlotSave(itemType, i, slots[i], entity);
                 save.slots.Add(slotSave);
 
@@ -592,11 +606,11 @@ namespace DesktopCompanion.Systems
             }
             else if (entity is Entity_Materials materials)
             {
-                slotSave.quantity = Math.Max(1, materials.Quantity);
+                slotSave.quantity = materials.Quantity;
             }
             else if (entity is Entity_Consumables consumables)
             {
-                slotSave.quantity = Math.Max(1, consumables.Quantity);
+                slotSave.quantity = consumables.Quantity;
             }
 
             return slotSave;
@@ -744,12 +758,18 @@ namespace DesktopCompanion.Systems
                 LogWarning($"TryRestoreMaterials failed. Data not found. dataId: {slotSave.dataId}");
                 return false;
             }
+            if (slotSave.quantity <= 0)
+            {
+                LogWarning($"TryRestoreMaterials failed. Quantity must be greater than zero. dataId: {slotSave.dataId}, quantity: {slotSave.quantity}");
+                return false;
+            }
 
             restoredHandle = EntityManager.Restore<ItemData_Materials>(parsedHandle, slotSave.dataId);
 
+
             if (EntityManager.Get(restoredHandle) is Entity_Materials materials)
             {
-                materials.SetQuantity(Math.Max(1, slotSave.quantity));
+                materials.SetQuantity(slotSave.quantity);
                 return true;
             }
 
@@ -765,12 +785,17 @@ namespace DesktopCompanion.Systems
                 LogWarning($"TryRestoreConsumables failed. Data not found. dataId: {slotSave.dataId}");
                 return false;
             }
+            if (slotSave.quantity <= 0)
+            {
+                LogWarning($"TryRestoreConsumables failed. Quantity must be greater than zero. dataId: {slotSave.dataId}, quantity: {slotSave.quantity}");
+                return false;
+            }
 
             restoredHandle = EntityManager.Restore<ItemData_Consumables>(parsedHandle, slotSave.dataId);
 
             if (EntityManager.Get(restoredHandle) is Entity_Consumables consumables)
             {
-                consumables.SetQuantity(Math.Max(1, slotSave.quantity));
+                consumables.SetQuantity(slotSave.quantity);
                 return true;
             }
 
