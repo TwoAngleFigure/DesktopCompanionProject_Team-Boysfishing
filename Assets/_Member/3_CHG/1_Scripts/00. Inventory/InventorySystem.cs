@@ -48,11 +48,6 @@ namespace DesktopCompanion.Systems
             m_playerSystem = SystemManager.GetSystem<PlayerSystem>();
             m_shopSystem = SystemManager.GetSystem<ShopSystem>();
 
-            if (m_shopSystem == null)
-            {
-                LogWarning("ShopSystem not found.");
-            }
-
             int fishInventorySize = GetCurrentInventorySize();
             int equipmentInventorySize = GetInitialExpandableInventorySize(ItemType.Equipment);
             int materialInventorySize = GetInitialExpandableInventorySize(ItemType.Materials);
@@ -67,7 +62,10 @@ namespace DesktopCompanion.Systems
                 m_loadedSave = null;
             }
 
-            m_playerSystem.OnStatChanged += HandlePlayerStatChanged;
+            if(m_playerSystem != null)
+            {
+                m_playerSystem.OnStatChanged += HandlePlayerStatChanged;
+            }
 
             LogDebug($"PostInitialize complete. fishSlots: {fishInventorySize}, equipmentSlots: {equipmentInventorySize}, materialSlots: {materialInventorySize}");
         }
