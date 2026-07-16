@@ -11,10 +11,12 @@ public class FishingWorldView : WorldViewBase
 {
     [Header("Catch Path")]
     [SerializeField] private FishingCatchPathEffect m_catchPathEffect;
-
     [SerializeField] private Vector3 m_flightModelScale = Vector3.one;
-
     [SerializeField] private Vector3 m_flightModelLocalEulerAngles = Vector3.zero;
+    
+    [Header("Catch Fish Size Scale")]   
+    [SerializeField] private float m_flightReferenceSizeCm = 100f;
+    [SerializeField]private float m_minFlightScale = 0.2f;
 
     [Header("Popup Model")]
     [SerializeField] private Transform m_spawnPoint;
@@ -33,6 +35,7 @@ public class FishingWorldView : WorldViewBase
 
     private FishingSystem m_fishingSystem;
     private GameObject m_currentModel;
+    private GameObject m_currentFlightRoot;
     private GameObject m_currentFlightModel;
     private DitherFade m_currentModelFade;
     private Sequence m_popupSequence;
@@ -168,7 +171,7 @@ public class FishingWorldView : WorldViewBase
 
         if (fishPrefab != null)
         {
-            PlayCatchPath(fishPrefab);
+            PlayCatchPath(fishPrefab, fish.Size);
         }
 
         ClearCurrentModel();
@@ -200,7 +203,7 @@ public class FishingWorldView : WorldViewBase
         return prefab;
     }
 
-    private void PlayCatchPath(GameObject fishPrefab)
+    private void PlayCatchPath(GameObject fishPrefab, float fishSizeCm)
     {
         if (m_catchPathEffect == null)
         {
@@ -212,32 +215,39 @@ public class FishingWorldView : WorldViewBase
 
         ClearCurrentFlightModel();
 
-        // FishingCatchPathEffect가 붙어 있는
-        // FishingCatchPathRoot 아래에 연출 모델을 생성한다.
         Transform flightParent = m_catchPathEffect.transform;
 
-        m_currentFlightModel = Instantiate(fishPrefab, flightParent);
+        m_currentFlightRoot = new GameObject("FishingCatchFlightRoot");
 
-        Transform flightTransform = m_currentFlightModel.transform;
+        Transform flightRootTransform = m_currentFlightRoot.transform;
 
-        flightTransform.localRotation = Quaternion.Euler(m_flightModelLocalEulerAngles);
+        flightRootTransform.SetParent(flightParent, false);
 
-        flightTransform.localScale = m_flightModelScale;
+        m_currentFlightModel = Instantiate(fishPrefab, flightRootTransform);
 
-        GameObject flightModel = m_currentFlightModel;
+        Transform modelTransform = m_currentFlightModel.transform;
+        modelTransform.localPosition = Vector3.zero;
+        modelTransform.localRotation = Quaternion.Euler(m_flightModelLocalEulerAngles);
 
-        bool started = m_catchPathEffect.Play(flightTransform,() =>
+        float rawScale = fishSizeCm / m_flightReferenceSizeCm;
+        float sizeScale = Mathf.Max(rawScale, m_minFlightScale);
+        modelTransform.localScale = m_flightModelScale * sizeScale;
+
+        GameObject flightRoot = m_currentFlightRoot;
+
+        bool started = m_catchPathEffect.Play(flightRootTransform, () =>
+        {
+            if (m_currentFlightRoot == flightRoot)
             {
-                if (m_currentFlightModel == flightModel)
-                {
-                    m_currentFlightModel = null;
-                }
+                m_currentFlightRoot = null;
+                m_currentFlightModel = null;
+            }
 
-                if (flightModel != null)
-                {
-                    Destroy(flightModel);
-                }
-            });
+            if (flightRoot != null)
+            {
+                Destroy(flightRoot);
+            }
+        });
 
         if (!started)
         {
@@ -275,11 +285,17 @@ public class FishingWorldView : WorldViewBase
     {
         m_catchPathEffect?.Stop();
 
-        if (m_currentFlightModel != null)
+        if (m_currentFlightRoot != null)
+        {
+            Destroy(m_currentFlightRoot);
+        }
+        else if (m_currentFlightModel != null)
         {
             Destroy(m_currentFlightModel);
-            m_currentFlightModel = null;
         }
+
+        m_currentFlightRoot = null;
+        m_currentFlightModel = null;
     }
 
     private void ClearCurrentModel()

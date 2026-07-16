@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class FishingCatchPathEffect : MonoBehaviour
 {
+    [Header("Surface Exit Effect")]
+    [SerializeField] private FishingCatchSplashEffect m_surfaceExitEffect;
+
     [Header("Path Points")]
     [SerializeField] private Transform m_startPoint;
     [SerializeField] private Transform[] m_pathPoints;
@@ -37,10 +40,11 @@ public class FishingCatchPathEffect : MonoBehaviour
 
         Stop();
 
-        target.localPosition =
-            ConvertToTargetLocalPosition(
-                target,
-                m_startPoint.position);
+        target.localPosition = ConvertToTargetLocalPosition(target, m_startPoint.position);
+
+        target.localPosition = ConvertToTargetLocalPosition(target, m_startPoint.position);
+
+        m_surfaceExitEffect?.PlayAt(m_startPoint.position);
 
         Tween createdTween = null;
 
@@ -52,6 +56,7 @@ public class FishingCatchPathEffect : MonoBehaviour
                 PathMode.Full3D,
                 m_resolution)
             .SetEase(Ease.Linear)
+            .SetLookAt(0.01f)
             .SetLink(target.gameObject)
             .OnComplete(() =>
             {
@@ -79,6 +84,8 @@ public class FishingCatchPathEffect : MonoBehaviour
         Tween tween = m_pathTween;
         m_pathTween = null;
         tween?.Kill();
+
+        m_surfaceExitEffect?.Stop();
     }
 
     private bool TryCreatePath(Transform target, out Vector3[] path)
