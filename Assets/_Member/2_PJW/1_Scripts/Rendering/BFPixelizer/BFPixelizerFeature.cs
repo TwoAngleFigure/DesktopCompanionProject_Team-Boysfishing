@@ -77,7 +77,10 @@ namespace DesktopCompanion.Rendering
         private class MetaPassData
         {
             public RendererListHandle RendererList;
+            public Vector4 ScreenSize;
         }
+
+        private static readonly int s_screenSizeProp = Shader.PropertyToID("_BFP_ScreenSize");
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
@@ -115,13 +118,16 @@ namespace DesktopCompanion.Rendering
             using (var builder = renderGraph.AddRasterRenderPass<MetaPassData>("BF Pixelizer Meta", out var passData))
             {
                 passData.RendererList = rendererList;
+                passData.ScreenSize = new Vector4(metaDescriptor.width, metaDescriptor.height, 1f / metaDescriptor.width, 1f / metaDescriptor.height);
 
                 builder.UseRendererList(rendererList);
                 builder.SetRenderAttachment(metaTexture, 0, AccessFlags.Write);
                 builder.SetRenderAttachmentDepth(metaDepthTexture, AccessFlags.Write);
-                builder.AllowPassCulling(false); // P0: 출력을 아직 소비하지 않으므로 컬링 방지 필수
+                builder.AllowGlobalStateModification(true); // _BFP_ScreenSize 전역 설정에 필요
+                builder.AllowPassCulling(false); // 출력을 아직 소비하지 않으므로 컬링 방지 필수(P2에서 resolve가 소비하면 재검토)
                 builder.SetRenderFunc((MetaPassData data, RasterGraphContext context) =>
                 {
+                    context.cmd.SetGlobalVector(s_screenSizeProp, data.ScreenSize);
                     context.cmd.ClearRenderTarget(true, true, Color.black);
                     context.cmd.DrawRendererList(data.RendererList);
                 });
