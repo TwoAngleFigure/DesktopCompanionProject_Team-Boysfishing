@@ -32,6 +32,17 @@ namespace DesktopCompanion.Core
             { "m_requiredBoss_id", ("m_requiredBoss", "BattleFishData") },   // LicenseData 해금 조건①
         };
 
+        // 모디파이어 스탯 컬럼(§04): 헤더=PlayerStat 이름, 셀="Op:Value". 스탯 이름을 행마다 타이핑하지 않아 오타 불가.
+        private static readonly HashSet<string> s_statColumns =
+            new(Enum.GetNames(typeof(DesktopCompanion.Data.PlayerStat)));
+
+        // 타입 시트 → 조립된 모디파이어를 담을 내부 필드명(구 단일 컬럼명이 하던 역할 대체).
+        private static readonly Dictionary<string, string> s_modifierField = new()
+        {
+            { "ItemData_Equipment", "m_baseModifiers" },
+            { "ItemData_Consumables", "m_modifiers" },
+        };
+
         public static JArray Normalize(JObject root, IReadOnlyDictionary<string, Type> typeMap)
         {
             var items = new JArray();
@@ -87,9 +98,9 @@ namespace DesktopCompanion.Core
                 string name = field.Name;
                 JToken value = field.Value;
 
-                if (name.StartsWith("#"))
+                if (name.StartsWith("#") || s_statColumns.Contains(name))
                 {
-                    continue;   // 표시 전용 열(D17) — 변환 제외
+                    continue;   // 표시 전용 열(D17) / 스탯 컬럼(아래에서 일괄 조립) — 개별 변환 제외
                 }
 
                 if (s_refMap.TryGetValue(name, out var mapped))
@@ -125,7 +136,9 @@ namespace DesktopCompanion.Core
                         posY = value;
                         break;
                     default:
-                        item[name] = value;   // 단순 값 그대로
+                        // 단순 스칼라. 정수형 실수(예: 50.0)는 정수로 복원한다(int 필드 로드 안전).
+                        // XlsxSheetReader의 셀 단위 복원과 동일 규칙을 외부 시트맵(Google Sheets 등) 경로에도 적용.
+                        item[name] = NormalizeScalar(value);
                         break;
                 }
             }
@@ -134,6 +147,18 @@ namespace DesktopCompanion.Core
             {
                 item["m_mapPosition"] = new JObject { ["x"] = posX ?? 0, ["y"] = posY ?? 0 };
             }
+
+            // 스탯 컬럼(헤더=스탯 이름) → 모디파이어 배열(§04). 스탯 컬럼이 있으면 이 값으로 설정하며,
+            // 레거시 단일 컬럼(m_baseModifiers/m_modifiers)이 있었다면 위 switch가 설정한 값을 대체한다(전환기 병행 지원).
+            if (s_modifierField.TryGetValue(typeName, out string modField))
+            {
+                JArray mods = BuildModifiersFromColumns(row, typeName, id);
+                if (mods != null)
+                {
+                    item[modField] = mods;
+                }
+            }
+
             return item;
         }
 
@@ -160,7 +185,10 @@ namespace DesktopCompanion.Core
                 }
 
                 var step = new JObject { ["m_goldCost"] = GetInt(row["m_goldCost"]) ?? 0 };
-                SetIfNotNull(step, "m_modifiers", ParseModifiers(row["m_modifiers"], SheetEquipmentUpgrades, equipmentId.Value));
+                // 스탯 컬럼 우선(§04), 없으면 레거시 단일 컬럼(m_modifiers)로 폴백(전환기 병행 지원).
+                JArray upgradeMods = BuildModifiersFromColumns(row, SheetEquipmentUpgrades, equipmentId.Value)
+                                     ?? ParseModifiers(row["m_modifiers"], SheetEquipmentUpgrades, equipmentId.Value);
+                SetIfNotNull(step, "m_modifiers", upgradeMods);
                 SetIfNotNull(step, "m_materialCosts", ParseMaterialCosts(row["m_materialCosts"], SheetEquipmentUpgrades, equipmentId.Value));
 
                 if (!grouped.TryGetValue(equipmentId.Value, out var list))
@@ -247,6 +275,58 @@ namespace DesktopCompanion.Core
         }
 
         // ── 압축 문자열 파서(§15.7.5) ──
+
+        // 스탯 컬럼(헤더=스탯 이름, 셀="Op:Value")들을 모아 StatModifier[]로 조립한다(§04).
+        // 헤더가 스탯 이름을 고정하므로 스탯 이름 오타가 불가능하다. 스탯 컬럼이 하나도 없으면 null.
+        private static JArray BuildModifiersFromColumns(JObject row, string context, int id)
+        {
+            JArray array = null;
+            foreach (JProperty field in row.Properties())
+            {
+                if (!s_statColumns.Contains(field.Name))
+                {
+                    continue;
+                }
+                string cell = AsString(field.Value);
+                if (string.IsNullOrWhiteSpace(cell))
+                {
+                    continue;   // 빈 셀 = 해당 스탯 수식자 없음
+                }
+
+                string[] parts = cell.Split(':');
+                if (parts.Length != 2)
+                {
+                    Debug.LogError($"[ExternalSheetNormalizer] {context}#{id} 스탯 '{field.Name}' 형식 오류 '{cell}' — 'Op:Value' 필요");
+                    continue;
+                }
+
+                string op = parts[0].Trim();
+                if (!Enum.IsDefined(typeof(DesktopCompanion.Data.ModifierOperation), op))
+                {
+                    Debug.LogError($"[ExternalSheetNormalizer] {context}#{id} 스탯 '{field.Name}' 연산 오타 '{op}' — Add/Multiply 중 하나여야 함");
+                    continue;
+                }
+
+                float value;
+                try
+                {
+                    value = ParseFloat(parts[1]);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"[ExternalSheetNormalizer] {context}#{id} 스탯 '{field.Name}' 값 파싱 실패 '{parts[1]}': {e.Message}");
+                    continue;
+                }
+
+                (array ??= new JArray()).Add(new JObject
+                {
+                    ["m_stat"] = field.Name,        // 헤더가 곧 스탯 이름(오타 불가)
+                    ["m_operation"] = op,
+                    ["m_value"] = value,
+                });
+            }
+            return array;
+        }
 
         // "Stat:Op:Value;..." → StatModifier[]
         private static JArray ParseModifiers(JToken token, string context, int id)
@@ -361,6 +441,22 @@ namespace DesktopCompanion.Core
             => token == null || token.Type == JTokenType.Null ? null
              : token.Type == JTokenType.String ? token.Value<string>()
              : token.ToString();
+
+        // 정수형 실수(소수부 0, 예: 50.0)를 정수 토큰으로 복원한다. 그 외(진짜 소수·문자열 등)는 그대로.
+        // 목적: int C# 필드에 float 리터럴이 들어가 JsonReaderException이 나는 것을 방지(§15.7).
+        // 진짜 float 필드에 정수 토큰이 들어가도 로드에는 문제없다(Newtonsoft가 int→float 허용).
+        private static JToken NormalizeScalar(JToken value)
+        {
+            if (value != null && value.Type == JTokenType.Float)
+            {
+                double d = value.Value<double>();
+                if (!double.IsInfinity(d) && d == Math.Floor(d))
+                {
+                    return new JValue((long)d);
+                }
+            }
+            return value;
+        }
 
         private static int? GetInt(JToken token)
         {

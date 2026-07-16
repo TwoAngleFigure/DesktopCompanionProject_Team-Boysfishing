@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88dcb4d74a32c694caf43c4a2064cd69, type: 3}
+  m_Name: TestPlayerData
+  m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Data.PlayerData
+  m_id: 1
+  m_name: 
+  m_assetKey: 
+  m_baseDamagePerClick: 5
+  m_baseManualDamagePerHitMultiply: 1
+  m_baseBattleTimeVariable: 10
+  m_baseCriticalChance: 0.05
+  m_baseCriticalMultiply: 1.5
+  m_baseAutoBattleCooltime: 10
+  m_baseAutoSpeedPerTime: 1
+  m_baseAutoDamagePerHitMultiply: 2
+  m_baseProbabilityAtFishSize: 0
+  m_baseProbabilityAtFishRarity: 0
+  m_baseGoldGettingMultiply: 0
+  m_baseMapMovementSpeedPerTime: 0
+  m_baseInventorySize: 20
+  m_startingLicense: 1
+  m_startingGold: 0

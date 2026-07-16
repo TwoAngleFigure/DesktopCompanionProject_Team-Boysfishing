@@ -84,5 +84,63 @@ namespace DesktopCompanion
 
         [DllImport("dwmapi.dll")]
         public static extern int DwmSetWindowAttribute(IntPtr hWnd, int attr, ref int attrValue, int attrSize);
+
+        // ---- 모니터 열거(다중 모니터: Full 모니터 선택용) ----
+        [StructLayout(LayoutKind.Sequential)]
+        public struct RECT
+        {
+            public int left;
+            public int top;
+            public int right;
+            public int bottom;
+        }
+
+        // 콜백에 넘어오는 rect가 각 모니터의 가상 데스크톱 좌표(음수 가능).
+        public delegate bool MonitorEnumProc(IntPtr hMonitor, IntPtr hdcMonitor, ref RECT lprcMonitor, IntPtr dwData);
+
+        [DllImport("user32.dll")]
+        public static extern bool EnumDisplayMonitors(IntPtr hdc, IntPtr lprcClip, MonitorEnumProc lpfnEnum, IntPtr dwData);
+
+        /// <summary>모든 모니터의 경계 rect(가상 데스크톱 좌표)를 열거 순서대로 반환한다.</summary>
+        public static System.Collections.Generic.List<RECT> GetMonitorRects()
+        {
+            var result = new System.Collections.Generic.List<RECT>();
+            // EnumDisplayMonitors는 동기 호출이라 지역 델리게이트 수명으로 충분하다.
+            MonitorEnumProc callback = (IntPtr hMon, IntPtr hdc, ref RECT rect, IntPtr data) =>
+            {
+                result.Add(rect);
+                return true; // 계속 열거
+            };
+            try
+            {
+                EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, callback, IntPtr.Zero);
+            }
+            catch (System.Exception)
+            {
+                // 비Windows/에디터 등에서 실패 시 빈 목록 → 호출부가 폴백 처리.
+            }
+            return result;
+        }
+
+        // ---- 전역 커서 위치(클릭관통 창이 마우스 메시지를 못 받아도 유효) ----
+        [StructLayout(LayoutKind.Sequential)]
+        public struct POINT
+        {
+            public int x;
+            public int y;
+        }
+
+        [DllImport("user32.dll")]
+        public static extern bool GetCursorPos(out POINT lpPoint);
+
+        [DllImport("user32.dll")]
+        public static extern bool ScreenToClient(IntPtr hWnd, ref POINT lpPoint);
+
+        // ---- 전역 마우스 버튼(클릭관통·포커스와 무관하게 판독) ----
+        public const int VK_LBUTTON = 0x01;
+        public const int VK_RBUTTON = 0x02;
+
+        [DllImport("user32.dll")]
+        public static extern short GetAsyncKeyState(int vKey);
     }
 }

@@ -12,7 +12,11 @@
       "id": 300001
     },
     "m_aquariumProduceTime": 60,
-    "m_aquariumDecreaseCount": 5
+    "m_aquariumDecreaseCount": 5,
+    "m_aquariumCapacity": 2,
+    "m_aquariumProduceAmount": 10,
+    "m_star": 1,
+    "m_size": 30
   },
   {
     "type": "ItemData_Fish",
@@ -27,7 +31,11 @@
       "id": 300002
     },
     "m_aquariumProduceTime": 90,
-    "m_aquariumDecreaseCount": 8
+    "m_aquariumDecreaseCount": 8,
+    "m_aquariumCapacity": 3,
+    "m_aquariumProduceAmount": 20,
+    "m_star": 3,
+    "m_size": 45
   },
   {
     "type": "ItemData_Materials",
@@ -35,7 +43,8 @@
     "m_name": "멸치살",
     "m_type": "Materials",
     "m_tier": 1,
-    "m_basePrice": 10
+    "m_basePrice": 10,
+    "m_aquariumRequiredPoints": 100
   },
   {
     "type": "ItemData_Materials",
@@ -43,7 +52,54 @@
     "m_name": "새우살",
     "m_type": "Materials",
     "m_tier": 1,
-    "m_basePrice": 20
+    "m_basePrice": 20,
+    "m_aquariumRequiredPoints": 150
+  },
+  {
+    "type": "AquariumUpgradeData",
+    "m_id": 1,
+    "m_name": "아쿠아리움 Lv1",
+    "m_maxCapacity": 5,
+    "m_upgradeCost": 0
+  },
+  {
+    "type": "AquariumUpgradeData",
+    "m_id": 2,
+    "m_name": "아쿠아리움 Lv2",
+    "m_maxCapacity": 8,
+    "m_upgradeCost": 500,
+    "m_materialCosts": [
+      {
+        "m_material": {
+          "type": "ItemData_Materials",
+          "id": 300001
+        },
+        "m_count": 10
+      }
+    ]
+  },
+  {
+    "type": "AquariumUpgradeData",
+    "m_id": 3,
+    "m_name": "아쿠아리움 Lv3",
+    "m_maxCapacity": 12,
+    "m_upgradeCost": 1500,
+    "m_materialCosts": [
+      {
+        "m_material": {
+          "type": "ItemData_Materials",
+          "id": 300001
+        },
+        "m_count": 20
+      },
+      {
+        "m_material": {
+          "type": "ItemData_Materials",
+          "id": 300002
+        },
+        "m_count": 8
+      }
+    ]
   },
   {
     "type": "ItemData_Equipment",
@@ -151,13 +207,6 @@
     "m_tier": 1,
     "m_basePrice": 30,
     "m_mountingArea": "Bait",
-    "m_modifiers": [
-      {
-        "m_stat": "ProbabilityAtFishSize",
-        "m_operation": "Add",
-        "m_value": 0.1
-      }
-    ],
     "m_craftMaterials": [
       {
         "m_material": {
@@ -167,7 +216,14 @@
         "m_count": 3
       }
     ],
-    "m_craftGoldCost": 50
+    "m_craftGoldCost": 50,
+    "m_modifiers": [
+      {
+        "m_stat": "ProbabilityAtFishSize",
+        "m_operation": "Add",
+        "m_value": 0.1
+      }
+    ]
   },
   {
     "type": "ItemData_Consumables",
@@ -203,7 +259,7 @@
     "type": "PlayerData",
     "m_id": 1,
     "m_name": "Player",
-    "m_baseDamagePerClick": 1,
+    "m_baseDamagePerClick": 10,
     "m_baseManualDamagePerHitMultiply": 1,
     "m_baseBattleTimeVariable": 10,
     "m_baseCriticalChance": 0.05,
@@ -216,7 +272,7 @@
     "m_baseGoldGettingMultiply": 1,
     "m_baseMapMovementSpeedPerTime": 10,
     "m_baseInventorySize": 20,
-    "m_startingLicense": 1,
+    "m_startingLicense": 10,
     "m_startingGold": 0
   },
   {
@@ -274,6 +330,36 @@
         },
         "m_count": 1,
         "m_probability": 0.1
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500003,
+    "m_name": "참돔",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100002
+    },
+    "m_maxHp": 200,
+    "m_battleTimeVariable": 20,
+    "m_minSize": 30,
+    "m_maxSize": 100,
+    "m_qualityThresholds": [
+      10.0,
+      30.0,
+      50.0,
+      80.0
+    ],
+    "m_isBoss": false,
+    "m_bossDrops": [
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200001
+        },
+        "m_count": 1,
+        "m_probability": 0.8
       }
     ]
   },
@@ -343,9 +429,9 @@
           {
             "m_fish": {
               "type": "BattleFishData",
-              "id": 500001
+              "id": 500003
             },
-            "m_weight": 60.0
+            "m_weight": 70.0
           }
         ]
       }

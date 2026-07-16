@@ -3,6 +3,7 @@ using UnityEngine;
 using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
 using DesktopCompanion.Save;
+using DesktopCompanion.Views;
 
 namespace DesktopCompanion.Core
 {
@@ -16,28 +17,42 @@ namespace DesktopCompanion.Core
         [SerializeField] private bool m_useTestData;
         [SerializeField] private List<GameData> m_testData = new();
 
+        [Header("View")]
+        [SerializeField] private WorldManager m_worldManager;
+        [SerializeField] private UIManager m_uiManager;
+
         private DataManager m_dataManager;
         private EntityManager m_entityManager;
         private SystemManager m_systemManager;
         private SaveManager m_saveManager;
-        private DesktopCompanion.Views.AssetProvider m_assetProvider;
+        private AssetProvider m_assetProvider;
 
         private void Awake()
         {
-            // 1) Data — 소스 우선순위: 테스트 주입 → StreamingAssets JSON → Resources SO (D14)
+            // 1) Data — StreamingAssets JSON → Resources SO 로드(D14).
+            //    로드 완료 후, 테스트 모드면 테스트 SO를 적용한다: 같은 (타입·ID)는 교체, 없는 ID는 추가(D9).
             m_dataManager = new DataManager();
-            m_dataManager.Load(m_useTestData ? m_testData : null);
+            m_dataManager.Load();
+            if (m_useTestData)
+            {
+                m_dataManager.OverrideWithTestData(m_testData);
+            }
 
             // 2) Entity — DataManager 주입 + 팩토리 등록
             m_entityManager = new EntityManager(m_dataManager);
             RegisterEntityFactories();
 
-            // 3) System — 의존성 주입, System 등록 후 일괄 초기화(기본 상태 구성)
+            // 3) System — 등록 후 Phase 1(Initialize): 각 System의 원시 상태 기본값만 구성
             m_systemManager = new SystemManager(m_entityManager, m_dataManager);
             RegisterSystems();
-            m_systemManager.InitializeAll();
+            m_systemManager.InitializePhase1();
 
-            // 4) Save — ISaveable 자동 등록 후 로드(저장된 가변 상태 덮어쓰기, §15.3)
+            // 4) World/UI Manager 탐색 및 할당
+            m_worldManager = FindAnyObjectByType<WorldManager>();
+            m_uiManager = FindAnyObjectByType<UIManager>();
+
+            // 5) Save — ISaveable 자동 등록 후 로드(원시 상태를 저장값으로 덮어쓰기, §15.3).
+            //    반드시 Phase 2 이전에 복원해야 파생·교차 계산이 저장값을 반영한다(R1).
             m_saveManager = new SaveManager();
             foreach (var system in m_systemManager.AllSystems)
             {
@@ -48,7 +63,8 @@ namespace DesktopCompanion.Core
             }
             m_saveManager.TryLoad();
 
-            // 5) (후속) UI / World — SystemManager 주입
+            // 6) System — Phase 2(PostInitialize): 타 System 조회·구독·파생 계산(복원값 반영)
+            m_systemManager.InitializePhase2();
         }
 
         // 부팅 2부(비동기, D18): 에셋 프리로드 → 뷰 초기화. Awake(동기 조립)와 분리.
@@ -69,7 +85,32 @@ namespace DesktopCompanion.Core
         private void OnBootCompleted()
         {
             Debug.Log("[GameManager] 부팅 완료 — 데이터·시스템·세이브·에셋 준비됨");
-            // (후속) UIManager/WorldManager 초기화 지점 — m_assetProvider·m_systemManager 주입
+
+            // View 초기화 지점 — m_systemManager·m_assetProvider 주입.
+            // WorldManager가 등록된 WorldViewBase 유닛들에 의존성을 내려주고 Bind()를 호출한다.
+            if (m_worldManager != null)
+            {
+                m_worldManager.Initialize(m_systemManager, m_entityManager, m_assetProvider);
+            }
+            else
+            {
+                Debug.LogWarning("[GameManager] WorldManager 미할당 — 씬에서 참조를 연결하세요.");
+            }
+
+            if (m_uiManager != null)
+            {
+                m_uiManager.Initialize(m_systemManager, m_entityManager, m_assetProvider);
+            }
+            else
+            {
+                Debug.LogWarning("[GameManager] UIManager 미할당 — 씬에서 참조를 연결하세요.");
+            }
+        }
+
+        // 유일한 MonoBehaviour의 프레임 루프를 ITickable System에 중계한다(System은 plain C# 유지).
+        private void Update()
+        {
+            m_systemManager?.TickAll(Time.deltaTime);
         }
 
         private void OnApplicationQuit()
@@ -79,12 +120,23 @@ namespace DesktopCompanion.Core
 
         // 팀원이 만든 System을 여기서 등록한다. SystemManager가 EntityManager/자기 자신을 주입한다.
         // (구체 System 타입을 아는 곳은 composition root인 GameManager뿐)
+        // 초기화 순서 = Register 호출 순서: PlayerSystem → InventorySystem → FishingSystem → StageSystem → AquariumSystem.
+        // (2단계 초기화로 순서 민감도는 낮지만, 같은 phase 내 tie-break를 위해 결정적으로 고정)
         private void RegisterSystems()
         {
-            // ★ Save/Load 검증용 임시 System — 검증 완료 후 이 줄과 SaveTestSystem.cs 제거 가능
-            m_systemManager.Register(new DesktopCompanion.Systems.SaveTestSystem());
+            m_systemManager.Register(new DesktopCompanion.Systems.PlayerSystem());
 
-            // 예) m_systemManager.Register(new ItemInventorySystem());
+            m_systemManager.Register(new DesktopCompanion.Systems.CurrencySystem());
+
+            m_systemManager.Register(new DesktopCompanion.Systems.InventorySystem());
+
+            m_systemManager.Register(new DesktopCompanion.Systems.ShopSystem());
+
+            m_systemManager.Register(new DesktopCompanion.Systems.FishingSystem());
+
+            m_systemManager.Register(new DesktopCompanion.Systems.StageSystem());
+
+            m_systemManager.Register(new DesktopCompanion.Systems.AquariumSystem());   // Inventory 이후(생산물 지급 의존)
         }
 
         // Data 타입 ↔ Entity 매핑 등록. 새 계열은 여기 한 줄 추가(EntityManager 본체는 불변).

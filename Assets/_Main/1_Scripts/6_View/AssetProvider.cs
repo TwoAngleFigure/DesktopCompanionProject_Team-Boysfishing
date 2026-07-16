@@ -40,18 +40,30 @@ namespace DesktopCompanion.Views
                 return;
             }
 
+            // 병렬 로드: 모든 핸들을 '먼저' 시작한 뒤 한꺼번에 대기한다.
+            // (직렬 await는 다음 로드를 이전 완료까지 미뤄 로딩 시간이 합산됨 → 벽시계 시간 급증)
+            var handles = new List<AsyncOperationHandle<Object>>(locations.Count);
+            var tasks = new List<Task>(locations.Count);
             foreach (IResourceLocation location in locations)
             {
                 AsyncOperationHandle<Object> handle = Addressables.LoadAssetAsync<Object>(location);
-                Object asset = await handle.Task;
+                handles.Add(handle);
+                tasks.Add(handle.Task);
+            }
+            await Task.WhenAll(tasks);
 
-                if (handle.Status == AsyncOperationStatus.Succeeded && asset != null)
+            for (int i = 0; i < handles.Count; i++)
+            {
+                AsyncOperationHandle<Object> handle = handles[i];
+                IResourceLocation location = locations[i];
+
+                if (handle.Status == AsyncOperationStatus.Succeeded && handle.Result != null)
                 {
                     if (!m_cache.TryGetValue(location.PrimaryKey, out List<Object> list))
                     {
                         m_cache[location.PrimaryKey] = list = new List<Object>();
                     }
-                    list.Add(asset);
+                    list.Add(handle.Result);
                     m_handles.Add(handle);
                 }
                 else

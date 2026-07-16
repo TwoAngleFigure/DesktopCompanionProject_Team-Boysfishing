@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 585c8a39bb92eee40acc4978b6484d3f, type: 3}
+  m_Name: D_Fish_01
+  m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Data.ItemData_Fish
+  m_id: 100001
+  m_name: "\uACE0\uB4F1\uC5B4"
+  m_assetKey: 
+  m_type: 0
+  m_tier: 1
+  m_basePrice: 100
+  m_rarity: 0
+  m_aquariumMaterial: {fileID: 0}
+  m_aquariumProduceTime: 0
+  m_aquariumDecreaseCount: 0

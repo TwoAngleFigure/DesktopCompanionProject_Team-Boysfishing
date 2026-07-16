@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: 457f526f44254ef78348e3d0b1cc07ec
+timeCreated: 1718291858
+AssetOrigin:
+  serializedVersion: 1
+  productId: 287769
+  packageName: Stylized Water 3
+  packageVersion: 3.2.8
+  assetPath: Assets/Stylized Water 3/Shaders/Rendering/TerrainHeight.shader
+  uploadId: 938902

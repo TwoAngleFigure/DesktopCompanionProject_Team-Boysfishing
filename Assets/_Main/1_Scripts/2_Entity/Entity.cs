@@ -39,6 +39,8 @@ namespace DesktopCompanion.Entities
 
         public ItemRarity Rarity => m_fish.Rarity;   // 종별 고정(G1) — Data에서 읽음
 
+        public ItemData_Fish ItemData => m_fish;
+
         public Entity_Fish(EntityHandle id, ItemData_Fish data) : base(id, data) => m_fish = data;
 
         /// <summary>포획 시 Entity_BattleFish의 롤 결과를 복사 주입.</summary>
@@ -59,6 +61,8 @@ namespace DesktopCompanion.Entities
         public Entity_Equipment(EntityHandle id, ItemData_Equipment data) : base(id, data)
             => m_equipment = data;
 
+        public ItemData_Equipment ItemData => m_equipment;
+
         /// <summary>현재 강화 단계의 효과(정의는 Data에서 조회).</summary>
         public StatModifier[] CurrentModifiers => m_equipment.GetModifiers(UpgradeLevel);
 
@@ -68,10 +72,14 @@ namespace DesktopCompanion.Entities
     /// <summary>재료 개체 — 스택 수량 보유(D10).</summary>
     public class Entity_Materials : Entity
     {
+        private readonly ItemData_Materials m_materials;
+
         public int Quantity { get; private set; }
 
         public Entity_Materials(EntityHandle id, ItemData_Materials data, int quantity = 1) : base(id, data)
-            => Quantity = quantity;
+            => (Quantity, m_materials) = (quantity, data);
+
+        public ItemData_Materials ItemData => m_materials;
 
         public void SetQuantity(int quantity) => Quantity = quantity;
         public void Add(int delta) => Quantity += delta;
@@ -80,10 +88,14 @@ namespace DesktopCompanion.Entities
     /// <summary>소모품 개체 — 스택 수량 보유(D10). 사용 시 감소.</summary>
     public class Entity_Consumables : Entity
     {
+        private readonly ItemData_Consumables m_consumables;
+
         public int Quantity { get; private set; }
 
         public Entity_Consumables(EntityHandle id, ItemData_Consumables data, int quantity = 1) : base(id, data)
-            => Quantity = quantity;
+            => (Quantity, m_consumables) = (quantity, data);
+
+        public ItemData_Consumables ItemData => m_consumables;
 
         public void SetQuantity(int quantity) => Quantity = quantity;
         public void Add(int delta) => Quantity += delta;

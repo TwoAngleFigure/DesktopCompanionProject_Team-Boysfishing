@@ -78,6 +78,48 @@ namespace DesktopCompanion.Core
             }
         }
 
+        /// <summary>
+        /// JSON/SO 로드 완료 후, 테스트 SO를 적용한다(수동 Play 검증, D9).
+        /// 같은 (타입·ID)가 있으면 교체하고, 없으면 신규로 추가한다.
+        /// </summary>
+        public void OverrideWithTestData(IEnumerable<GameData> testData)
+        {
+            if (testData == null)
+            {
+                return;
+            }
+
+            int overridden = 0;
+            int added = 0;
+            foreach (var data in testData)
+            {
+                if (data == null)
+                {
+                    continue;
+                }
+
+                var type = data.GetType();
+                if (!m_store.TryGetValue(type, out var table))
+                {
+                    table = new Dictionary<int, GameData>();
+                    m_store.Add(type, table);
+                }
+
+                if (table.ContainsKey(data.ID))
+                {
+                    table[data.ID] = data;   // 기존 항목을 테스트 SO로 교체
+                    overridden++;
+                }
+                else
+                {
+                    table.Add(data.ID, data);   // JSON에 없던 ID는 신규 추가
+                    added++;
+                }
+            }
+
+            Debug.Log($"[DataManager] 테스트 적용: 교체 {overridden}건, 추가 {added}건");
+        }
+
         /// <summary>구체 타입 T의 단건을 ID로 조회한다(예: GetData&lt;ItemData_Fish&gt;(1)).</summary>
         public T GetData<T>(int id) where T : GameData
             => m_store.TryGetValue(typeof(T), out var table) && table.TryGetValue(id, out var data)
