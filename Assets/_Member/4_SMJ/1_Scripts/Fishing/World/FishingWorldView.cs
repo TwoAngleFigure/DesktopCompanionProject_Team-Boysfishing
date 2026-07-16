@@ -60,6 +60,7 @@ public class FishingWorldView : WorldViewBase
             return;
         }
 
+        m_fishingSystem.OnFishCaughtPresentation += HandleFishCaught;
         m_fishingSystem.OnFishingResult += HandleFishingResult;
     }
 
@@ -78,6 +79,7 @@ public class FishingWorldView : WorldViewBase
 
         if (m_fishingSystem != null)
         {
+            m_fishingSystem.OnFishCaughtPresentation -= HandleFishCaught;
             m_fishingSystem.OnFishingResult -= HandleFishingResult;
         }
 
@@ -142,16 +144,14 @@ public class FishingWorldView : WorldViewBase
     }
 
 
-    private void HandleFishingResult(
-        EntityHandle fishHandle,
-        FishingResultType resultType)
+    private void HandleFishingResult(FishingResultType resultType)
     {
         if (resultType == FishingResultType.Success)
         {
-            HandleFishCaught(fishHandle);
             return;
         }
 
+        ClearCurrentFlightModel();
         ClearCurrentModel();
         UpdateFailurePopup(resultType);
         PlayResultPopup();

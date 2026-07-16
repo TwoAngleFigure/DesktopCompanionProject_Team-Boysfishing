@@ -39,7 +39,8 @@ namespace DesktopCompanion.Systems
         #region Events
 
         public event Action<FishingState> OnStateChanged;
-        public event Action<EntityHandle, FishingResultType> OnFishingResult;
+        public event Action<EntityHandle> OnFishCaughtPresentation;
+        public event Action<FishingResultType> OnFishingResult;
         public event Action<EntityHandle, int, int> OnBattleHpChanged;
 
         #endregion
@@ -262,7 +263,7 @@ namespace DesktopCompanion.Systems
             {
                 ClearCurrentBattleFish();
                 ScheduleNextFishing();
-                OnFishingResult?.Invoke(default, FishingResultType.Failed);
+                OnFishingResult?.Invoke(FishingResultType.Failed);
                 return;
             }
 
@@ -271,27 +272,41 @@ namespace DesktopCompanion.Systems
                 Debug.LogWarning("[FishingSystem] 보상 처리기를 사용할 수 없어 물고기를 지급할 수 없습니다.");
                 ClearCurrentBattleFish();
                 ScheduleNextFishing();
-                OnFishingResult?.Invoke(default, FishingResultType.Failed);
+                OnFishingResult?.Invoke(FishingResultType.Failed);
                 return;
             }
 
-            FishingRewardResult rewardResult = m_rewardProcessor.TryGrantCaughtFish(
+            FishingRewardResult createResult = m_rewardProcessor.TryCreateCaughtFish(
                 battleFish.BattleData.ItemFish,
                 battleFish.Size,
                 battleFish.Quality,
                 out EntityHandle caughtHandle);
 
-            if (rewardResult != FishingRewardResult.Success)
+            if (createResult != FishingRewardResult.Success)
             {
                 FishingResultType resultType =
-                    rewardResult == FishingRewardResult.InventoryFull
+                    createResult == FishingRewardResult.InventoryFull
                         ? FishingResultType.InventoryFull
                         : FishingResultType.Failed;
 
-                Debug.LogWarning($"[FishingSystem] 포획 물고기 지급 실패: result={rewardResult}");
+                Debug.LogWarning($"[FishingSystem] 포획 물고기 생성 실패: result={createResult}");
                 ClearCurrentBattleFish();
                 ScheduleNextFishing();
-                OnFishingResult?.Invoke(default, resultType);
+                OnFishingResult?.Invoke(resultType);
+                return;
+            }
+
+            OnFishCaughtPresentation?.Invoke(caughtHandle);
+
+            FishingRewardResult finalizeResult =
+                m_rewardProcessor.TryFinalizeCaughtFish(caughtHandle);
+
+            if (finalizeResult != FishingRewardResult.Success)
+            {
+                Debug.LogWarning($"[FishingSystem] 포획 물고기 지급 실패: result={finalizeResult}");
+                ClearCurrentBattleFish();
+                ScheduleNextFishing();
+                OnFishingResult?.Invoke(FishingResultType.Failed);
                 return;
             }
 
@@ -306,7 +321,7 @@ namespace DesktopCompanion.Systems
 
             ClearCurrentBattleFish();
             ScheduleNextFishing();
-            OnFishingResult?.Invoke(caughtHandle, FishingResultType.Success);
+            OnFishingResult?.Invoke(FishingResultType.Success);
         }
 
         private void FailBattle(string reason)
@@ -315,7 +330,7 @@ namespace DesktopCompanion.Systems
 
             ClearCurrentBattleFish();
             ScheduleNextFishing();
-            OnFishingResult?.Invoke(default, FishingResultType.Failed);
+            OnFishingResult?.Invoke(FishingResultType.Failed);
         }
 
         private void ScheduleNextFishing()
