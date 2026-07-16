@@ -229,8 +229,10 @@ public class FishingWorldView : WorldViewBase
         modelTransform.localPosition = Vector3.zero;
         modelTransform.localRotation = Quaternion.Euler(m_flightModelLocalEulerAngles);
 
-        float rawScale = fishSizeCm / m_flightReferenceSizeCm;
-        float sizeScale = Mathf.Max(rawScale, m_minFlightScale);
+        float normalizedSize = fishSizeCm / m_flightReferenceSizeCm;
+        float sizeScale = Mathf.Sqrt(Mathf.Max(0f, normalizedSize));
+        sizeScale = Mathf.Max(sizeScale, m_minFlightScale);
+
         modelTransform.localScale = m_flightModelScale * sizeScale;
 
         GameObject flightRoot = m_currentFlightRoot;
