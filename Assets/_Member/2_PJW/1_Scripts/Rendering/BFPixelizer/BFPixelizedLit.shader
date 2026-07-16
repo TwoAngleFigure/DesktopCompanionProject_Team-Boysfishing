@@ -16,6 +16,7 @@ Shader "BFPixelizer/PixelizedLit"
         _PixelSize("Pixel Size (V1: 전역 격자 사용 — 유보)", Range(1, 5)) = 3
         _OutlineColor("Outline Color", Color) = (0, 0, 0, 1)
         _ObjectId("Object Id (겹침 아웃라인 구분, 1~255)", Range(1, 255)) = 1
+        _RenderingLayers("Rendering Layers (수광 레이어 비트, 일반=1)", Float) = 1
     }
 
     SubShader
@@ -42,6 +43,11 @@ Shader "BFPixelizer/PixelizedLit"
             // 메인 라이트 그림자 수신 배리언트
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
             #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
+            // 추가 라이트 + 라이트 렌더링 레이어(이중 글로벌 라이트: 일반=1, 물=2 분리 지원)
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
+            #pragma multi_compile _ _LIGHT_LAYERS
+            #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -55,6 +61,7 @@ Shader "BFPixelizer/PixelizedLit"
             float _PixelSize;
             half4 _OutlineColor;
             float _ObjectId;
+            float _RenderingLayers;
             CBUFFER_END
 
             // 피처가 오프스크린 패스에서 설정하는 전역(메타 RT 크기·수퍼샘플 배율·전역 셀 크기).
@@ -117,18 +124,67 @@ Shader "BFPixelizer/PixelizedLit"
                 half4 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv) * _BaseColor;
                 float3 normalWS = normalize(input.normalWS);
 
-                // 그림자 좌표는 실제(스냅 전) 월드 위치 기준 — 그림자는 부드럽게 따라온다.
-                // 반드시 '거리 페이드 포함' 오버로드 사용(URP Lit과 동일): 페이드 없는 GetMainLight(shadowCoord)는
-                // 그림자 최대 거리/케스케이드 범위 밖에서 감쇠가 0(완전 그림자)이 되어 오브젝트가 검게 나온다.
+                // 수광 레이어: unity_RenderingLayer(드로우별)는 DrawRenderer 경로에서 신뢰 불가 → 머티리얼 프로퍼티 고정.
+                // 기존 머티리얼은 새 프로퍼티가 재직렬화 전까지 0으로 올 수 있음 → 0 = 미설정 = 기본 레이어(1)로 해석.
+                uint meshRenderingLayers = (uint)_RenderingLayers;
+                if (meshRenderingLayers == 0u)
+                    meshRenderingLayers = 1u;
+                half4 shadowMask = half4(1, 1, 1, 1);
+
+                // 그림자 좌표는 실제(스냅 전) 월드 위치 기준. '거리 페이드 포함' 오버로드 필수(범위 밖 감쇠 0 방지).
                 float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS);
-                Light mainLight = GetMainLight(shadowCoord, input.positionWS, half4(1, 1, 1, 1));
-                half lightAttenuation = mainLight.shadowAttenuation * mainLight.distanceAttenuation;
-                half3 diffuse = LightingLambert(mainLight.color * lightAttenuation, mainLight.direction, normalWS);
+
+                half3 lighting = half3(0, 0, 0);
+
+                // 메인 라이트 — 레이어 일치 시에만 수광.
+                // distanceAttenuation(=unity_LightData.z, 드로우별)은 DrawRenderer 경로에서 0 → 사용 금지.
+                Light mainLight = GetMainLight(shadowCoord, input.positionWS, shadowMask);
+                #ifdef _LIGHT_LAYERS
+                if (IsMatchingLightLayer(mainLight.layerMask, meshRenderingLayers))
+                #endif
+                {
+                    lighting += LightingLambert(mainLight.color * mainLight.shadowAttenuation, mainLight.direction, normalWS);
+                }
+
+                // 추가 라이트 — 이중 글로벌 라이트 구성에서 '메인으로 선정되지 못한' 디렉셔널이 여기로 온다.
+                #if defined(_ADDITIONAL_LIGHTS)
+                // LIGHT_LOOP_BEGIN(클러스터 경로)이 'inputData' 변수를 매크로 내부에서 직접 참조하므로 선언 필수.
+                InputData inputData = (InputData)0;
+                inputData.positionWS = input.positionWS;
+                inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionCS);
+
+                uint pixelLightCount = GetAdditionalLightsCount();
+
+                #if USE_CLUSTER_LIGHT_LOOP
+                // Forward+: 디렉셔널 추가 라이트는 클러스터 밖 선행 구간(URP Lit과 동일 패턴).
+                [loop] for (uint dirIndex = 0; dirIndex < min(URP_FP_DIRECTIONAL_LIGHTS_COUNT, MAX_VISIBLE_LIGHTS); dirIndex++)
+                {
+                    Light addDirLight = GetAdditionalLight(dirIndex, input.positionWS, shadowMask);
+                    #ifdef _LIGHT_LAYERS
+                    if (IsMatchingLightLayer(addDirLight.layerMask, meshRenderingLayers))
+                    #endif
+                    {
+                        lighting += LightingLambert(addDirLight.color * (addDirLight.distanceAttenuation * addDirLight.shadowAttenuation), addDirLight.direction, normalWS);
+                    }
+                }
+                #endif
+
+                LIGHT_LOOP_BEGIN(pixelLightCount)
+                    Light addLight = GetAdditionalLight(lightIndex, input.positionWS, shadowMask);
+                    #ifdef _LIGHT_LAYERS
+                    if (IsMatchingLightLayer(addLight.layerMask, meshRenderingLayers))
+                    #endif
+                    {
+                        lighting += LightingLambert(addLight.color * (addLight.distanceAttenuation * addLight.shadowAttenuation), addLight.direction, normalWS);
+                    }
+                LIGHT_LOOP_END
+                #endif
+
                 half3 ambient = SampleSH(normalWS);
 
                 FragOutput output;
                 // a = 커버리지 + 아웃라인 알파 인코딩: 0.5(알파0) ~ 1.0(알파1). 커버리지 판정(≥0.5)과 호환.
-                output.color = half4(albedo.rgb * (diffuse + ambient), 0.5 + saturate(_OutlineColor.a) * 0.5);
+                output.color = half4(albedo.rgb * (lighting + ambient), 0.5 + saturate(_OutlineColor.a) * 0.5);
                 output.meta = half4(_ObjectId, _OutlineColor.rgb);
                 return output;
             }
@@ -161,6 +217,7 @@ Shader "BFPixelizer/PixelizedLit"
             float _PixelSize;
             half4 _OutlineColor;
             float _ObjectId;
+            float _RenderingLayers;
             CBUFFER_END
 
             float3 _LightDirection;
