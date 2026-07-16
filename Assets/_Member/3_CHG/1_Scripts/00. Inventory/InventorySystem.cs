@@ -91,6 +91,11 @@ namespace DesktopCompanion.Systems
 
         public void SetAutoSellFilter(bool enabled, ItemQuality maxQuality, ItemRarity maxRarity)
         {
+            ApplyAutoSellFilter(enabled, maxQuality, maxRarity, true);
+        }
+
+        private void ApplyAutoSellFilter(bool enabled, ItemQuality maxQuality, ItemRarity maxRarity, bool requestSave)
+        {
             if (m_autoSellEnabled == enabled
                 && m_maxAutoSellQuality == maxQuality
                 && m_maxAutoSellRarity == maxRarity)
@@ -103,6 +108,11 @@ namespace DesktopCompanion.Systems
             m_maxAutoSellRarity = maxRarity;
 
             OnAutoSellFilterChanged?.Invoke();
+
+            if (requestSave)
+            {
+                RequestSave();
+            }
         }
 
         public bool AddItem(EntityHandle itemHandle)
@@ -165,10 +175,9 @@ namespace DesktopCompanion.Systems
                 return sold;
             }
 
-            EntityHandle[] slots = m_slotStorage.GetMutableSlots(itemType);
             ItemType slotType = InventorySlotStorage.NormalizeSlotType(itemType);
 
-            if (MergeStackableItem(itemHandle, itemEntity, slots))
+            if (MergeStackableItem(itemHandle, itemEntity))
             {
                 LogDebug($"TryAddItem merged. slotType: {slotType}, itemType: {itemType}, dataId: {itemEntity.DataId}, name: {itemEntity.Name}");
                 NotifyInventoryChanged($"Merge item / slotType: {slotType}, itemType: {itemType}, dataId: {itemEntity.DataId}", true);
@@ -331,17 +340,17 @@ namespace DesktopCompanion.Systems
                 return 0;
             }
 
-            EntityHandle[] slots = m_slotStorage.GetMutableSlots(itemType);
+            int slotCount = m_slotStorage.GetMaxSlotCount(itemType);
             int totalQuantity = 0;
 
-            for (int i = 0; i < slots.Length; i++)
+            for (int i = 0; i < slotCount; i++)
             {
-                if (IsEmptyHandle(slots[i]))
+                if (!m_slotStorage.GetHandle(itemType, i, out EntityHandle handle))
                 {
                     continue;
                 }
 
-                Entity entity = EntityManager.Get(slots[i]);
+                Entity entity = EntityManager.Get(handle);
 
                 if (entity == null || entity.DataId != dataId)
                 {
@@ -375,23 +384,23 @@ namespace DesktopCompanion.Systems
                 return false;
             }
 
-            EntityHandle[] slots = m_slotStorage.GetMutableSlots(itemType);
             ItemType slotType = InventorySlotStorage.NormalizeSlotType(itemType);
+            int slotCount = m_slotStorage.GetMaxSlotCount(itemType);
             int remainingAmount = amount;
 
-            for (int i = 0; i < slots.Length; i++)
+            for (int i = 0; i < slotCount; i++)
             {
                 if (remainingAmount <= 0)
                 {
                     break;
                 }
 
-                if (IsEmptyHandle(slots[i]))
+                if (!m_slotStorage.GetHandle(itemType, i, out EntityHandle handle))
                 {
                     continue;
                 }
 
-                Entity entity = EntityManager.Get(slots[i]);
+                Entity entity = EntityManager.Get(handle);
 
                 if (entity == null || entity.DataId != dataId)
                 {
@@ -438,7 +447,7 @@ namespace DesktopCompanion.Systems
 
         public object CaptureState()
         {
-            return m_saveLoad.Capture();
+            return m_saveLoad.Capture(m_autoSellEnabled, m_maxAutoSellQuality, m_maxAutoSellRarity);
         }
 
         public void RestoreState(object state)
@@ -494,11 +503,13 @@ namespace DesktopCompanion.Systems
 
         private void RestoreLoadedSave()
         {
-            m_saveLoad.Restore(m_loadedSave, out int restoredCount, out int failedCount);
+            InventoryAutoSellFilterState filterState = m_saveLoad.Restore(m_loadedSave, out int restoredCount, out int failedCount);
+
+            ApplyAutoSellFilter(filterState.Enabled, filterState.MaxQuality, filterState.MaxRarity, false);
             NotifyInventoryChanged($"Restore inventory / restored: {restoredCount}, failed: {failedCount}", false);
         }
 
-        private bool MergeStackableItem(EntityHandle incomingHandle, Entity incomingEntity, EntityHandle[] targetSlots)
+        private bool MergeStackableItem(EntityHandle incomingHandle, Entity incomingEntity)
         {
             if (!InventoryItemRules.GetItemType(incomingEntity, out ItemType itemType)
                 || !InventoryItemRules.GetStackQuantity(incomingEntity, out int incomingQuantity)
@@ -507,9 +518,11 @@ namespace DesktopCompanion.Systems
                 return false;
             }
 
-            for (int i = 0; i < targetSlots.Length; i++)
+            int slotCount = m_slotStorage.GetMaxSlotCount(itemType);
+
+            for (int i = 0; i < slotCount; i++)
             {
-                Entity existingEntity = GetAliveEntityOrClear(itemType, targetSlots, i);
+                Entity existingEntity = GetAliveEntityOrClear(itemType, i);
 
                 if (existingEntity == null
                     || !InventoryItemRules.MergeStack(existingEntity, incomingEntity, out int beforeQuantity, out int addedQuantity, out int afterQuantity))
@@ -527,14 +540,14 @@ namespace DesktopCompanion.Systems
             return false;
         }
 
-        private Entity GetAliveEntityOrClear(ItemType itemType, EntityHandle[] slots, int slotIndex)
+        private Entity GetAliveEntityOrClear(ItemType itemType, int slotIndex)
         {
-            if (IsEmptyHandle(slots[slotIndex]))
+            if (!m_slotStorage.GetHandle(itemType, slotIndex, out EntityHandle handle))
             {
                 return null;
             }
 
-            Entity entity = EntityManager.Get(slots[slotIndex]);
+            Entity entity = EntityManager.Get(handle);
 
             if (entity == null)
             {

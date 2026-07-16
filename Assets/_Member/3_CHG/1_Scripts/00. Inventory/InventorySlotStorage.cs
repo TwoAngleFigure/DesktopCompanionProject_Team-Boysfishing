@@ -30,7 +30,7 @@ namespace DesktopCompanion.Systems
         /// </summary>
         public EntityHandle[] GetSlotsCopy(ItemType itemType)
         {
-            EntityHandle[] sourceSlots = GetMutableSlots(itemType);
+            EntityHandle[] sourceSlots = GetSlotArray(itemType);
             EntityHandle[] copiedSlots = new EntityHandle[sourceSlots.Length];
 
             Array.Copy(sourceSlots, copiedSlots, sourceSlots.Length);
@@ -40,7 +40,7 @@ namespace DesktopCompanion.Systems
         /// <summary>
         /// InventorySystem 내부에서만 사용하는 원본 슬롯 배열
         /// </summary>
-        internal EntityHandle[] GetMutableSlots(ItemType itemType)
+        private EntityHandle[] GetSlotArray(ItemType itemType)
         {
             ItemType slotType = NormalizeSlotType(itemType);
 
@@ -62,12 +62,12 @@ namespace DesktopCompanion.Systems
 
         public int GetMaxSlotCount(ItemType itemType)
         {
-            return GetMutableSlots(itemType).Length;
+            return GetSlotArray(itemType).Length;
         }
 
         public int GetUsedSlotCount(ItemType itemType)
         {
-            EntityHandle[] slots = GetMutableSlots(itemType);
+            EntityHandle[] slots = GetSlotArray(itemType);
             int usedCount = 0;
 
             for (int i = 0; i < slots.Length; i++)
@@ -83,7 +83,7 @@ namespace DesktopCompanion.Systems
 
         public bool IsValidSlotIndex(ItemType itemType, int slotIndex)
         {
-            EntityHandle[] slots = GetMutableSlots(itemType);
+            EntityHandle[] slots = GetSlotArray(itemType);
             return slotIndex >= 0 && slotIndex < slots.Length;
         }
 
@@ -96,7 +96,7 @@ namespace DesktopCompanion.Systems
                 return false;
             }
 
-            EntityHandle[] slots = GetMutableSlots(itemType);
+            EntityHandle[] slots = GetSlotArray(itemType);
 
             if (IsEmptyHandle(slots[slotIndex]))
             {
@@ -114,7 +114,7 @@ namespace DesktopCompanion.Systems
                 return false;
             }
 
-            GetMutableSlots(itemType)[slotIndex] = handle;
+            GetSlotArray(itemType)[slotIndex] = handle;
             return true;
         }
 
@@ -127,7 +127,7 @@ namespace DesktopCompanion.Systems
                 return false;
             }
 
-            GetMutableSlots(itemType)[slotIndex] = default;
+            GetSlotArray(itemType)[slotIndex] = default;
             return true;
         }
 
@@ -138,7 +138,7 @@ namespace DesktopCompanion.Systems
                 return false;
             }
 
-            EntityHandle[] slots = GetMutableSlots(itemType);
+            EntityHandle[] slots = GetSlotArray(itemType);
             EntityHandle tempHandle = slots[toIndex];
 
             slots[toIndex] = slots[fromIndex];
@@ -181,7 +181,7 @@ namespace DesktopCompanion.Systems
 
         public int FindEmptySlotIndex(ItemType itemType)
         {
-            EntityHandle[] slots = GetMutableSlots(itemType);
+            EntityHandle[] slots = GetSlotArray(itemType);
 
             for (int i = 0; i < slots.Length; i++)
             {
@@ -200,7 +200,7 @@ namespace DesktopCompanion.Systems
         public bool ExpandIfNeeded(ItemType itemType, out int previousSlotSize, out int nextSlotSize, out int remainingSlotCount)
         {
             ItemType slotType = NormalizeSlotType(itemType);
-            EntityHandle[] slots = GetMutableSlots(slotType);
+            EntityHandle[] slots = GetSlotArray(slotType);
 
             previousSlotSize = slots.Length;
             nextSlotSize = previousSlotSize;

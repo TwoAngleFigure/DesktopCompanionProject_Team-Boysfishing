@@ -6,8 +6,23 @@ using System;
 
 namespace DesktopCompanion.Systems
 {
+    internal readonly struct InventoryAutoSellFilterState
+    {
+        public bool Enabled { get; }
+        public ItemQuality MaxQuality { get; }
+        public ItemRarity MaxRarity { get; }
+
+        public InventoryAutoSellFilterState(bool enabled, ItemQuality maxQuality, ItemRarity maxRarity)
+        {
+            Enabled = enabled;
+            MaxQuality = maxQuality;
+            MaxRarity = maxRarity;
+        }
+    }
+
     /// <summary>
-    /// 인벤토리 저장 데이터 생성,복원 담당
+    /// 인벤토리 저장 데이터 생성과 복원을 담당한다.
+    /// 인벤토리 변경 알림과 저장 요청은 InventorySystem이 담당한다.
     /// </summary>
     internal sealed class InventorySaveLoad
     {
@@ -26,28 +41,35 @@ namespace DesktopCompanion.Systems
             m_logWarning = logWarning;
         }
 
-        public InventorySave Capture()
+        public InventorySave Capture(bool autoSellEnabled, ItemQuality maxAutoSellQuality, ItemRarity maxAutoSellRarity)
         {
-            InventorySave save = new InventorySave();
+            InventorySave save = new InventorySave
+            {
+                autoSellEnabled = autoSellEnabled,
+                maxAutoSellQuality = NormalizeQuality(maxAutoSellQuality),
+                maxAutoSellRarity = NormalizeRarity(maxAutoSellRarity)
+            };
 
-            CaptureSlots(save, ItemType.Fish, m_slotStorage.GetMutableSlots(ItemType.Fish));
-            CaptureSlots(save, ItemType.Equipment, m_slotStorage.GetMutableSlots(ItemType.Equipment));
-            CaptureSlots(save, ItemType.Materials, m_slotStorage.GetMutableSlots(ItemType.Materials));
+            CaptureSlots(save, ItemType.Fish);
+            CaptureSlots(save, ItemType.Equipment);
+            CaptureSlots(save, ItemType.Materials);
 
             LogDebug($"CaptureState finished. saveSlotCount: {save.slots.Count}");
 
             return save;
         }
 
-        public void Restore(InventorySave save, out int restoredCount, out int failedCount)
+        public InventoryAutoSellFilterState Restore(InventorySave save, out int restoredCount, out int failedCount)
         {
             restoredCount = 0;
             failedCount = 0;
 
+            InventoryAutoSellFilterState filterState = GetAutoSellFilterState(save);
+
             if (save == null || save.slots == null)
             {
                 LogWarning("RestoreState failed. Save data or slot data is null.");
-                return;
+                return filterState;
             }
 
             LogDebug($"RestoreState start. savedSlotCount: {save.slots.Count}");
@@ -65,6 +87,7 @@ namespace DesktopCompanion.Systems
             }
 
             LogDebug($"RestoreState finished. restored: {restoredCount}, failed: {failedCount}");
+            return filterState;
         }
 
         public static int GetInitialExpandableInventorySize(InventorySave save, ItemType itemType)
@@ -97,20 +120,22 @@ namespace DesktopCompanion.Systems
             return InventorySlotStorage.CalculateInitialExpandableSize(highestSlotIndex, savedSlotCount);
         }
 
-        private void CaptureSlots(InventorySave save, ItemType slotType, EntityHandle[] slots)
+        private void CaptureSlots(InventorySave save, ItemType slotType)
         {
-            for (int i = 0; i < slots.Length; i++)
+            int slotCount = m_slotStorage.GetMaxSlotCount(slotType);
+
+            for (int i = 0; i < slotCount; i++)
             {
-                if (IsEmptyHandle(slots[i]))
+                if (!m_slotStorage.GetHandle(slotType, i, out EntityHandle handle))
                 {
                     continue;
                 }
 
-                Entity entity = m_entityManager.Get(slots[i]);
+                Entity entity = m_entityManager.Get(handle);
 
                 if (entity == null)
                 {
-                    LogWarning($"CaptureSlots skipped. Entity missing. slotType: {slotType}, slotIndex: {i}, handle: {slots[i]}");
+                    LogWarning($"CaptureSlots skipped. Entity missing. slotType: {slotType}, slotIndex: {i}, handle: {handle}");
                     continue;
                 }
 
@@ -127,7 +152,7 @@ namespace DesktopCompanion.Systems
                     continue;
                 }
 
-                InventorySave.SlotSave slotSave = CreateSlotSave(itemType, i, slots[i], entity);
+                InventorySave.SlotSave slotSave = CreateSlotSave(itemType, i, handle, entity);
                 save.slots.Add(slotSave);
 
                 LogDebug($"CaptureSlot. slotType: {slotType}, itemType: {itemType}, slotIndex: {i}, dataId: {entity.DataId}, name: {entity.Name}");
@@ -332,11 +357,6 @@ namespace DesktopCompanion.Systems
             return false;
         }
 
-        private static bool IsEmptyHandle(EntityHandle handle)
-        {
-            return handle.Value == Guid.Empty;
-        }
-
         private static ItemQuality NormalizeQuality(ItemQuality quality)
         {
             if (Enum.IsDefined(typeof(ItemQuality), quality))
@@ -345,6 +365,29 @@ namespace DesktopCompanion.Systems
             }
 
             return ItemQuality.OneStar;
+        }
+
+        private static ItemRarity NormalizeRarity(ItemRarity rarity)
+        {
+            if (Enum.IsDefined(typeof(ItemRarity), rarity))
+            {
+                return rarity;
+            }
+
+            return ItemRarity.Normal;
+        }
+
+        private static InventoryAutoSellFilterState GetAutoSellFilterState(InventorySave save)
+        {
+            if (save == null)
+            {
+                return new InventoryAutoSellFilterState(false, ItemQuality.OneStar, ItemRarity.Normal);
+            }
+
+            return new InventoryAutoSellFilterState(
+                save.autoSellEnabled,
+                NormalizeQuality(save.maxAutoSellQuality),
+                NormalizeRarity(save.maxAutoSellRarity));
         }
 
         private void LogDebug(string message)
