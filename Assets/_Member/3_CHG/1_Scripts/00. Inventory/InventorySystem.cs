@@ -105,17 +105,17 @@ namespace DesktopCompanion.Systems
 
         public bool AddItem(EntityHandle itemHandle)
         {
-            LogDebug($"AddItem called. handle: {itemHandle}");
+            LogDebug($"TryAddItem called. handle: {itemHandle}");
 
             if (IsEmptyHandle(itemHandle))
             {
-                LogWarning("AddItem failed. Handle is empty.");
+                LogWarning("TryAddItem failed. Handle is empty.");
                 return false;
             }
 
             if (m_slotStorage.ContainsHandle(itemHandle))
             {
-                LogWarning($"AddItem failed. Already contains handle: {itemHandle}");
+                LogWarning($"TryAddItem failed. Already contains handle: {itemHandle}");
                 return false;
             }
 
@@ -123,20 +123,20 @@ namespace DesktopCompanion.Systems
 
             if (itemEntity == null)
             {
-                LogWarning($"AddItem failed. Entity not found. handle: {itemHandle}");
+                LogWarning($"TryAddItem failed. Entity not found. handle: {itemHandle}");
                 return false;
             }
 
-            if (!GetItemType(itemEntity, out ItemType itemType))
+            if (!InventoryItemRules.GetItemType(itemEntity, out ItemType itemType))
             {
-                LogWarning($"AddItem failed. Unsupported entity type: {itemEntity.GetType().Name}");
+                LogWarning($"TryAddItem failed. Unsupported entity type: {itemEntity.GetType().Name}");
                 return false;
             }
 
             // 스택 아이템은 수량이 1개 이상일 때만 인벤토리에 수납
-            if (GetStackQuantity(itemEntity, out int incomingQuantity) && incomingQuantity <= 0)
+            if (InventoryItemRules.GetStackQuantity(itemEntity, out int incomingQuantity) && incomingQuantity <= 0)
             {
-                LogWarning($"AddItem failed. Stack quantity must be greater than zero. type: {itemEntity.GetType().Name}, dataId: {itemEntity.DataId}, quantity: {incomingQuantity}");
+                LogWarning($"TryAddItem failed. Stack quantity must be greater than zero. type: {itemEntity.GetType().Name}, dataId: {itemEntity.DataId}, quantity: {incomingQuantity}");
                 return false;
             }
 
@@ -144,7 +144,7 @@ namespace DesktopCompanion.Systems
             {
                 if (m_shopSystem == null)
                 {
-                    LogWarning("AddItem failed. ShopSystem not found.");
+                    LogWarning("TryAddItem failed. ShopSystem not found.");
                     return false;
                 }
 
@@ -157,7 +157,7 @@ namespace DesktopCompanion.Systems
                 }
                 else
                 {
-                    LogWarning($"AddItem failed. Fish sale failed. dataId: {fish.DataId}, name: {fish.Name}");
+                    LogWarning($"TryAddItem failed. Fish sale failed. dataId: {fish.DataId}, name: {fish.Name}");
                 }
 
                 return sold;
@@ -168,7 +168,7 @@ namespace DesktopCompanion.Systems
 
             if (MergeStackableItem(itemHandle, itemEntity, slots))
             {
-                LogDebug($"AddItem merged. slotType: {slotType}, itemType: {itemType}, dataId: {itemEntity.DataId}, name: {itemEntity.Name}");
+                LogDebug($"TryAddItem merged. slotType: {slotType}, itemType: {itemType}, dataId: {itemEntity.DataId}, name: {itemEntity.Name}");
                 NotifyInventoryChanged($"Merge item / slotType: {slotType}, itemType: {itemType}, dataId: {itemEntity.DataId}", true);
                 return true;
             }
@@ -179,14 +179,14 @@ namespace DesktopCompanion.Systems
 
             if (emptyIndex < 0)
             {
-                LogWarning($"AddItem failed. No empty slot. slotType: {slotType}, itemType: {itemType}, dataId: {itemEntity.DataId}, name: {itemEntity.Name}");
+                LogWarning($"TryAddItem failed. No empty slot. slotType: {slotType}, itemType: {itemType}, dataId: {itemEntity.DataId}, name: {itemEntity.Name}");
                 return false;
             }
 
             m_slotStorage.SetHandle(slotType, emptyIndex, itemHandle);
             ExpandInventoryIfNeeded(slotType);
 
-            LogDebug($"AddItem success. slotType: {slotType}, itemType: {itemType}, slotIndex: {emptyIndex}, dataId: {itemEntity.DataId}, name: {itemEntity.Name}, handle: {itemHandle}");
+            LogDebug($"TryAddItem success. slotType: {slotType}, itemType: {itemType}, slotIndex: {emptyIndex}, dataId: {itemEntity.DataId}, name: {itemEntity.Name}, handle: {itemHandle}");
             NotifyInventoryChanged($"Add item / slotType: {slotType}, itemType: {itemType}, slotIndex: {emptyIndex}, dataId: {itemEntity.DataId}", true);
 
             return true;
@@ -198,13 +198,13 @@ namespace DesktopCompanion.Systems
 
             if (!m_slotStorage.IsValidSlotIndex(itemType, slotIndex))
             {
-                LogWarning($"RemoveAt failed. Invalid slot. slotType: {slotType}, itemType: {itemType}, slotIndex: {slotIndex}");
+                LogWarning($"TryRemoveAt failed. Invalid slot. slotType: {slotType}, itemType: {itemType}, slotIndex: {slotIndex}");
                 return false;
             }
 
             if (!m_slotStorage.GetHandle(itemType, slotIndex, out EntityHandle removedHandle))
             {
-                LogWarning($"RemoveAt failed. Slot is empty. slotType: {slotType}, itemType: {itemType}, slotIndex: {slotIndex}");
+                LogWarning($"TryRemoveAt failed. Slot is empty. slotType: {slotType}, itemType: {itemType}, slotIndex: {slotIndex}");
                 return false;
             }
 
@@ -215,7 +215,7 @@ namespace DesktopCompanion.Systems
                 EntityManager.Destroy(removedHandle);
             }
 
-            LogDebug($"RemoveAt success. itemType: {itemType}, slotIndex: {slotIndex}, destroyEntity: {destroyEntity}");
+            LogDebug($"TryRemoveAt success. itemType: {itemType}, slotIndex: {slotIndex}, destroyEntity: {destroyEntity}");
             NotifyInventoryChanged($"Remove item / itemType: {itemType}, slotIndex: {slotIndex}", requestSave);
             return true;
         }
@@ -248,13 +248,13 @@ namespace DesktopCompanion.Systems
         {
             if (amount <= 0)
             {
-                LogWarning($"RemoveQuantityAt failed. Invalid amount: {amount}");
+                LogWarning($"TryRemoveQuantityAt failed. Invalid amount: {amount}");
                 return false;
             }
 
             if (!GetHandleAt(itemType, slotIndex, out EntityHandle handle))
             {
-                LogWarning($"RemoveQuantityAt failed. Handle not found. itemType: {itemType}, slotIndex: {slotIndex}");
+                LogWarning($"TryRemoveQuantityAt failed. Handle not found. itemType: {itemType}, slotIndex: {slotIndex}");
                 return false;
             }
 
@@ -262,19 +262,19 @@ namespace DesktopCompanion.Systems
 
             if (entity == null)
             {
-                LogWarning($"RemoveQuantityAt failed. Entity not found. handle: {handle}");
+                LogWarning($"TryRemoveQuantityAt failed. Entity not found. handle: {handle}");
                 return false;
             }
 
-            if (!GetStackQuantity(entity, out int currentQuantity))
+            if (!InventoryItemRules.GetStackQuantity(entity, out int currentQuantity))
             {
-                LogWarning($"RemoveQuantityAt failed. Entity is not stackable. type: {entity.GetType().Name}, dataId: {entity.DataId}, name: {entity.Name}");
+                LogWarning($"TryRemoveQuantityAt failed. Entity is not stackable. type: {entity.GetType().Name}, dataId: {entity.DataId}, name: {entity.Name}");
                 return false;
             }
 
             if (currentQuantity < amount)
             {
-                LogWarning($"RemoveQuantityAt failed. Not enough quantity. dataId: {entity.DataId}, name: {entity.Name}, current: {currentQuantity}, requested: {amount}");
+                LogWarning($"TryRemoveQuantityAt failed. Not enough quantity. dataId: {entity.DataId}, name: {entity.Name}, current: {currentQuantity}, requested: {amount}");
                 return false;
             }
 
@@ -282,15 +282,15 @@ namespace DesktopCompanion.Systems
 
             if (nextQuantity > 0)
             {
-                SetStackQuantity(entity, nextQuantity);
+                InventoryItemRules.SetStackQuantity(entity, nextQuantity);
 
-                LogDebug($"RemoveQuantityAt success. dataId: {entity.DataId}, name: {entity.Name}, before: {currentQuantity}, remove: {amount}, after: {nextQuantity}");
+                LogDebug($"TryRemoveQuantityAt success. dataId: {entity.DataId}, name: {entity.Name}, before: {currentQuantity}, remove: {amount}, after: {nextQuantity}");
                 NotifyInventoryChanged($"Decrease quantity / dataId: {entity.DataId}, amount: {amount}", requestSave);
 
                 return true;
             }
 
-            LogDebug($"RemoveQuantityAt zero. dataId: {entity.DataId}, name: {entity.Name}, before: {currentQuantity}, remove: {amount}. Slot will be removed.");
+            LogDebug($"TryRemoveQuantityAt zero. dataId: {entity.DataId}, name: {entity.Name}, before: {currentQuantity}, remove: {amount}. Slot will be removed.");
             return RemoveAt(itemType, slotIndex, destroyEntityWhenZero, requestSave);
         }
 
@@ -308,17 +308,17 @@ namespace DesktopCompanion.Systems
 
             Entity entity = EntityManager.Get(handle);
 
-            if (entity is Entity_Materials || entity is Entity_Consumables)
+            if (!InventoryItemRules.CanRemove(entity, amount))
+            {
+                return false;
+            }
+
+            if (InventoryItemRules.GetStackQuantity(entity, out _))
             {
                 return RemoveQuantityAt(slotType, slotIndex, amount, true, requestSave);
             }
 
-            if (entity is Entity_Fish || entity is Entity_Equipment)
-            {
-                return amount == 1 && RemoveAt(slotType, slotIndex, true, requestSave);
-            }
-
-            return false;
+            return RemoveAt(slotType, slotIndex, true, requestSave);
         }
 
         //item이 인벤토리에 몇 개 있는지 반환
@@ -346,7 +346,7 @@ namespace DesktopCompanion.Systems
                     continue;
                 }
 
-                if (GetStackQuantity(entity, out int quantity))
+                if (InventoryItemRules.GetStackQuantity(entity, out int quantity))
                 {
                     totalQuantity += quantity;
                 }
@@ -357,11 +357,11 @@ namespace DesktopCompanion.Systems
 
         public bool ConsumeItemByDataId(ItemType itemType, int dataId, int amount)
         {
-            LogDebug($"ConsumeItemByDataId called. itemType: {itemType}, dataId: {dataId}, amount: {amount}");
+            LogDebug($"TryConsumeItemByDataId called. itemType: {itemType}, dataId: {dataId}, amount: {amount}");
 
             if (dataId <= 0 || amount <= 0)
             {
-                LogWarning($"ConsumeItemByDataId failed. Invalid args. itemType: {itemType}, dataId: {dataId}, amount: {amount}");
+                LogWarning($"TryConsumeItemByDataId failed. Invalid args. itemType: {itemType}, dataId: {dataId}, amount: {amount}");
                 return false;
             }
 
@@ -369,7 +369,7 @@ namespace DesktopCompanion.Systems
 
             if (totalQuantity < amount)
             {
-                LogWarning($"ConsumeItemByDataId failed. Not enough quantity. itemType: {itemType}, dataId: {dataId}, current: {totalQuantity}, requested: {amount}");
+                LogWarning($"TryConsumeItemByDataId failed. Not enough quantity. itemType: {itemType}, dataId: {dataId}, current: {totalQuantity}, requested: {amount}");
                 return false;
             }
 
@@ -396,7 +396,7 @@ namespace DesktopCompanion.Systems
                     continue;
                 }
 
-                if (!GetStackQuantity(entity, out int quantity))
+                if (!InventoryItemRules.GetStackQuantity(entity, out int quantity))
                 {
                     continue;
                 }
@@ -406,7 +406,7 @@ namespace DesktopCompanion.Systems
 
                 if (nextQuantity > 0)
                 {
-                    SetStackQuantity(entity, nextQuantity);
+                    InventoryItemRules.SetStackQuantity(entity, nextQuantity);
                     LogDebug($"Consume partial stack. slotType: {slotType}, slotIndex: {i}, dataId: {dataId}, before: {quantity}, remove: {removeAmount}, after: {nextQuantity}");
                 }
                 else
@@ -423,12 +423,12 @@ namespace DesktopCompanion.Systems
 
             if (result)
             {
-                LogDebug($"ConsumeItemByDataId success. slotType: {slotType}, itemType: {itemType}, dataId: {dataId}, amount: {amount}");
+                LogDebug($"TryConsumeItemByDataId success. slotType: {slotType}, itemType: {itemType}, dataId: {dataId}, amount: {amount}");
                 NotifyInventoryChanged($"Consume item / slotType: {slotType}, itemType: {itemType}, dataId: {dataId}, amount: {amount}", true);
             }
             else
             {
-                LogWarning($"ConsumeItemByDataId failed after loop. slotType: {slotType}, itemType: {itemType}, dataId: {dataId}, amount: {amount}, remaining: {remainingAmount}");
+                LogWarning($"TryConsumeItemByDataId failed after loop. slotType: {slotType}, itemType: {itemType}, dataId: {dataId}, amount: {amount}, remaining: {remainingAmount}");
             }
 
             return result;
@@ -515,14 +515,14 @@ namespace DesktopCompanion.Systems
                     continue;
                 }
 
-                if (!GetItemType(entity, out ItemType itemType))
+                if (!InventoryItemRules.GetItemType(entity, out ItemType itemType))
                 {
                     LogWarning($"CaptureSlots skipped. Unsupported entity type: {entity.GetType().Name}");
                     continue;
                 }
 
                 //런타임 상태가 잘못되었을 때 수량 보정 방지
-                if (GetStackQuantity(entity, out int quantity) && quantity <= 0)
+                if (InventoryItemRules.GetStackQuantity(entity, out int quantity) && quantity <= 0)
                 {
                     LogWarning($"CaptureSlots skipped. Stack quantity must be greater than zero. slotType: {slotType}, slotIndex: {i}, dataId: {entity.DataId}, quantity: {quantity}");
                     continue;
@@ -638,7 +638,7 @@ namespace DesktopCompanion.Systems
 
             if (!EntityHandle.TryParse(slotSave.handle, out EntityHandle parsedHandle))
             {
-                LogWarning($"RestoreEntity failed. Handle parse failed. handle: {slotSave.handle}");
+                LogWarning($"TryRestoreEntity failed. Handle parse failed. handle: {slotSave.handle}");
                 return false;
             }
 
@@ -657,7 +657,7 @@ namespace DesktopCompanion.Systems
                     return RestoreConsumables(slotSave, parsedHandle, out restoredHandle);
 
                 default:
-                    LogWarning($"RestoreEntity failed. Unsupported itemType: {slotSave.itemType}");
+                    LogWarning($"TryRestoreEntity failed. Unsupported itemType: {slotSave.itemType}");
                     return false;
             }
         }
@@ -668,7 +668,7 @@ namespace DesktopCompanion.Systems
 
             if (DataManager.GetData<ItemData_Fish>(slotSave.dataId) == null)
             {
-                LogWarning($"RestoreFish failed. Data not found. dataId: {slotSave.dataId}");
+                LogWarning($"TryRestoreFish failed. Data not found. dataId: {slotSave.dataId}");
                 return false;
             }
 
@@ -689,7 +689,7 @@ namespace DesktopCompanion.Systems
 
             if (DataManager.GetData<ItemData_Equipment>(slotSave.dataId) == null)
             {
-                LogWarning($"RestoreEquipment failed. Data not found. dataId: {slotSave.dataId}");
+                LogWarning($"TryRestoreEquipment failed. Data not found. dataId: {slotSave.dataId}");
                 return false;
             }
 
@@ -710,12 +710,12 @@ namespace DesktopCompanion.Systems
 
             if (DataManager.GetData<ItemData_Materials>(slotSave.dataId) == null)
             {
-                LogWarning($"RestoreMaterials failed. Data not found. dataId: {slotSave.dataId}");
+                LogWarning($"TryRestoreMaterials failed. Data not found. dataId: {slotSave.dataId}");
                 return false;
             }
             if (slotSave.quantity <= 0)
             {
-                LogWarning($"RestoreMaterials failed. Quantity must be greater than zero. dataId: {slotSave.dataId}, quantity: {slotSave.quantity}");
+                LogWarning($"TryRestoreMaterials failed. Quantity must be greater than zero. dataId: {slotSave.dataId}, quantity: {slotSave.quantity}");
                 return false;
             }
 
@@ -737,12 +737,12 @@ namespace DesktopCompanion.Systems
 
             if (DataManager.GetData<ItemData_Consumables>(slotSave.dataId) == null)
             {
-                LogWarning($"RestoreConsumables failed. Data not found. dataId: {slotSave.dataId}");
+                LogWarning($"TryRestoreConsumables failed. Data not found. dataId: {slotSave.dataId}");
                 return false;
             }
             if (slotSave.quantity <= 0)
             {
-                LogWarning($"RestoreConsumables failed. Quantity must be greater than zero. dataId: {slotSave.dataId}, quantity: {slotSave.quantity}");
+                LogWarning($"TryRestoreConsumables failed. Quantity must be greater than zero. dataId: {slotSave.dataId}, quantity: {slotSave.quantity}");
                 return false;
             }
 
@@ -759,66 +759,28 @@ namespace DesktopCompanion.Systems
 
         private bool MergeStackableItem(EntityHandle incomingHandle, Entity incomingEntity, EntityHandle[] targetSlots)
         {
-            if (incomingEntity is Entity_Materials incomingMaterials)
-            {
-                return MergeMaterials(incomingHandle, incomingMaterials, targetSlots);
-            }
-
-            if (incomingEntity is Entity_Consumables incomingConsumables)
-            {
-                return MergeConsumables(incomingHandle, incomingConsumables, targetSlots);
-            }
-
-            return false;
-        }
-
-        private bool MergeMaterials(EntityHandle incomingHandle, Entity_Materials incomingMaterials, EntityHandle[] targetSlots)
-        {
-            if (incomingMaterials.Quantity <= 0)
+            if (!InventoryItemRules.GetItemType(incomingEntity, out ItemType itemType)
+                || !InventoryItemRules.GetStackQuantity(incomingEntity, out int incomingQuantity)
+                || incomingQuantity <= 0)
             {
                 return false;
             }
 
             for (int i = 0; i < targetSlots.Length; i++)
             {
-                Entity existingEntity = GetAliveEntityOrClear(ItemType.Materials, targetSlots, i);
+                Entity existingEntity = GetAliveEntityOrClear(itemType, targetSlots, i);
 
-                if (existingEntity is Entity_Materials existingMaterials && existingMaterials.DataId == incomingMaterials.DataId)
+                if (existingEntity == null
+                    || !InventoryItemRules.MergeStack(existingEntity, incomingEntity, out int beforeQuantity, out int addedQuantity, out int afterQuantity))
                 {
-                    int beforeQuantity = existingMaterials.Quantity;
-
-                    existingMaterials.Add(incomingMaterials.Quantity);
-                    EntityManager.Destroy(incomingHandle);
-
-                    LogDebug($"Merge materials. dataId: {existingMaterials.DataId}, before: {beforeQuantity}, add: {incomingMaterials.Quantity}, after: {existingMaterials.Quantity}");
-                    return true;
+                    continue;
                 }
-            }
 
-            return false;
-        }
+                EntityManager.Destroy(incomingHandle);
 
-        private bool MergeConsumables(EntityHandle incomingHandle, Entity_Consumables incomingConsumables, EntityHandle[] targetSlots)
-        {
-            if (incomingConsumables.Quantity <= 0)
-            {
-                return false;
-            }
-
-            for (int i = 0; i < targetSlots.Length; i++)
-            {
-                Entity existingEntity = GetAliveEntityOrClear(ItemType.Consumables, targetSlots, i);
-
-                if (existingEntity is Entity_Consumables existingConsumables && existingConsumables.DataId == incomingConsumables.DataId)
-                {
-                    int beforeQuantity = existingConsumables.Quantity;
-
-                    existingConsumables.Add(incomingConsumables.Quantity);
-                    EntityManager.Destroy(incomingHandle);
-
-                    LogDebug($"Merge consumables. dataId: {existingConsumables.DataId}, before: {beforeQuantity}, add: {incomingConsumables.Quantity}, after: {existingConsumables.Quantity}");
-                    return true;
-                }
+                string stackTypeName = itemType == ItemType.Materials ? "materials" : "consumables";
+                LogDebug($"Merge {stackTypeName}. dataId: {existingEntity.DataId}, before: {beforeQuantity}, add: {addedQuantity}, after: {afterQuantity}");
+                return true;
             }
 
             return false;
@@ -871,49 +833,7 @@ namespace DesktopCompanion.Systems
             }
 
             Entity entity = EntityManager.Get(handle);
-
-            if (entity is Entity_Materials materials)
-            {
-                return amount <= materials.Quantity;
-            }
-
-            if (entity is Entity_Consumables consumables)
-            {
-                return amount <= consumables.Quantity;
-            }
-
-            return amount == 1 && (entity is Entity_Fish || entity is Entity_Equipment);
-        }
-
-        private bool GetItemType(Entity entity, out ItemType itemType)
-        {
-            itemType = default;
-
-            if (entity is Entity_Fish)
-            {
-                itemType = ItemType.Fish;
-                return true;
-            }
-
-            if (entity is Entity_Equipment)
-            {
-                itemType = ItemType.Equipment;
-                return true;
-            }
-
-            if (entity is Entity_Materials)
-            {
-                itemType = ItemType.Materials;
-                return true;
-            }
-
-            if (entity is Entity_Consumables)
-            {
-                itemType = ItemType.Consumables;
-                return true;
-            }
-
-            return false;
+            return InventoryItemRules.CanRemove(entity, amount);
         }
 
         private int GetInitialExpandableInventorySize(ItemType itemType)
@@ -975,37 +895,6 @@ namespace DesktopCompanion.Systems
             }
 
             return size;
-        }
-
-        private bool GetStackQuantity(Entity entity, out int quantity)
-        {
-            quantity = 0;
-
-            if (entity is Entity_Materials materials)
-            {
-                quantity = materials.Quantity;
-                return true;
-            }
-
-            if (entity is Entity_Consumables consumables)
-            {
-                quantity = consumables.Quantity;
-                return true;
-            }
-
-            return false;
-        }
-
-        private void SetStackQuantity(Entity entity, int quantity)
-        {
-            if (entity is Entity_Materials materials)
-            {
-                materials.SetQuantity(quantity);
-            }
-            else if (entity is Entity_Consumables consumables)
-            {
-                consumables.SetQuantity(quantity);
-            }
         }
 
         private bool IsEmptyHandle(EntityHandle handle)
