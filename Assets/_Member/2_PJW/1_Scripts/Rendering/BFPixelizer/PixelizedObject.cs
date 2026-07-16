@@ -35,8 +35,12 @@ namespace DesktopCompanion.Rendering
         public int Id => _id;
         public Color OutlineColor => _outlineColor;
 
+        /// <summary>활성 대상 수 — 0이면 렌더 피처가 전체 패스를 스킵한다.</summary>
+        public static int ActiveCount { get; private set; }
+
         private void OnEnable()
         {
+            ActiveCount++;
             _id = s_nextId;
             s_nextId = s_nextId >= 255 ? 1 : s_nextId + 1;
 
@@ -57,6 +61,7 @@ namespace DesktopCompanion.Rendering
 
         private void OnDisable()
         {
+            ActiveCount--;
             if (_renderers == null) return;
             foreach (Renderer r in _renderers)
             {
