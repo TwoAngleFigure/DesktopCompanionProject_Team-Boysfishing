@@ -22,6 +22,10 @@ namespace DesktopCompanion.Systems
             public ItemQuality quality;
             public int upgradeLevel;
             public int quantity;
+
+            public bool autoSellEnabled;
+            public ItemQuality maxAutoSellQuality = ItemQuality.OneStar;
+            public ItemRarity maxAutoSellRarity = ItemRarity.Normal;
         }
     }
 }
