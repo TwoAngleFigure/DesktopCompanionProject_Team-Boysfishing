@@ -38,6 +38,8 @@ namespace DesktopCompanion.Views
 
         private int m_hoveredSlotIndex = -1;
 
+        private readonly Dictionary<string, Sprite> m_runtimeIconCache = new();
+
         public override void Bind()
         {
             m_vm.Inject(SystemManager, EntityManager);
@@ -133,6 +135,8 @@ namespace DesktopCompanion.Views
             }
 
             m_vm.Unbind();
+
+            ClearRuntimeIconCache();
         }
 
         private void RefreshSlotViews(List<InventorySlotViewData> slots)
@@ -153,6 +157,7 @@ namespace DesktopCompanion.Views
                 Sprite icon = GetIcon(slotData);
 
                 m_slotViews[i].Set(slotData, icon);
+
                 ApplySellSlotVisual(m_slotViews[i], slotData);
             }
 
@@ -414,13 +419,90 @@ namespace DesktopCompanion.Views
                 return null;
             }
 
-            if (AssetProvider.TryGet<Sprite>(slotData.IconKey, out var icon))
+            string iconKey = slotData.IconKey;
+
+            // 원래 Sprite 타입으로 정상 캐시된 경우
+            if (AssetProvider.TryGet<Sprite>(iconKey, out Sprite sprite))
             {
-                return icon;
+                return sprite;
             }
 
-            Debug.LogWarning($"[Inventory] Icon not found for key: {slotData.IconKey}. Returning null.");
+            // 이전에 Texture2D에서 변환해둔 Sprite가 있는 경우
+            if (m_runtimeIconCache.TryGetValue(iconKey, out Sprite cachedSprite)
+                && cachedSprite != null)
+            {
+                return cachedSprite;
+            }
+
+            // 빌드에서 Texture2D로 캐시된 경우
+            if (AssetProvider.TryGet<Texture2D>(iconKey, out Texture2D texture)
+                && texture != null)
+            {
+                Sprite convertedSprite = CreateSpriteFromTexture(iconKey, texture);
+
+                if (convertedSprite != null)
+                {
+                    m_runtimeIconCache[iconKey] = convertedSprite;
+                    return convertedSprite;
+                }
+            }
+
+            // 실제 캐시 타입 확인용
+            if (AssetProvider.TryGet<UnityEngine.Object>(iconKey, out UnityEngine.Object cachedAsset))
+            {
+                return null;
+            }
+
+            Debug.LogWarning(
+                $"[Inventory] Icon asset not found. key: {iconKey}");
+
             return null;
+        }
+
+        private Sprite CreateSpriteFromTexture(string iconKey, Texture2D texture)
+        {
+            if (texture == null)
+            {
+                return null;
+            }
+
+            Rect textureRect = new(
+                0f,
+                0f,
+                texture.width,
+                texture.height);
+
+            Vector2 pivot = new(0.5f, 0.5f);
+
+            Sprite sprite = Sprite.Create(
+                texture,
+                textureRect,
+                pivot,
+                100f,
+                0,
+                SpriteMeshType.FullRect);
+
+            if (sprite == null)
+            {
+                return null;
+            }
+
+            sprite.name = $"{texture.name}_RuntimeSprite";
+
+            return sprite;
+        }
+
+        private void ClearRuntimeIconCache()
+        {
+            foreach (Sprite sprite in m_runtimeIconCache.Values)
+            {
+                if (sprite != null)
+                {
+                    Destroy(sprite);
+                }
+            }
+
+            m_runtimeIconCache.Clear();
         }
 
 
