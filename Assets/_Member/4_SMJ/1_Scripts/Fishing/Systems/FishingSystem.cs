@@ -23,6 +23,7 @@ namespace DesktopCompanion.Systems
     {
         private StageSystem m_stageSystem;
         private PlayerSystem m_playerSystem;
+        private InventorySystem m_inventorySystem;
         private FishCollectionSystem m_collectionSystem;
         private FishingRewardProcessor m_rewardProcessor;
 
@@ -37,6 +38,7 @@ namespace DesktopCompanion.Systems
         private float m_waitTimer;
         private float m_battleTimer;
         private float m_autoAttackTimer;
+        private bool m_isResolvingPending;
 
         #region Events
 
@@ -70,6 +72,7 @@ namespace DesktopCompanion.Systems
             m_state = FishingState.Stopped;
             m_currentBattleFish = default;
             m_pendingCatch = default;
+            m_isResolvingPending = false;
             m_waitDuration = 0f;
             m_battleDuration = 0f;
             m_waitTimer = 0f;
@@ -82,15 +85,15 @@ namespace DesktopCompanion.Systems
         {
             m_stageSystem = SystemManager.GetSystem<StageSystem>();
             m_playerSystem = SystemManager.GetSystem<PlayerSystem>();
-            InventorySystem inventorySystem = SystemManager.GetSystem<InventorySystem>();
             m_collectionSystem = SystemManager.GetSystem<FishCollectionSystem>();
+            m_inventorySystem = SystemManager.GetSystem<InventorySystem>();
 
 
-            if (inventorySystem != null)
+            if (m_inventorySystem != null)
             {
-                m_rewardProcessor = new FishingRewardProcessor(
-                    EntityManager,
-                    inventorySystem);
+                m_rewardProcessor = new FishingRewardProcessor(EntityManager, m_inventorySystem);
+
+                m_inventorySystem.OnInventoryChanged += HandleInventoryChanged;
             }
 
             if (m_stageSystem != null)
@@ -207,6 +210,36 @@ namespace DesktopCompanion.Systems
             m_autoAttackTimer = 0f;
 
             ChangeState(FishingState.Stopped);
+        }
+
+        public bool TryClaimPendingCatch()
+        {
+            if (!HasPendingCatch ||
+                m_rewardProcessor == null ||
+                m_isResolvingPending)
+            {
+                return false;
+            }
+
+            m_isResolvingPending = true;
+
+            EntityHandle pendingHandle = m_pendingCatch;
+
+            FishingRewardResult result = m_rewardProcessor.TryFinalizeCaughtFish(pendingHandle);
+
+            if (result != FishingRewardResult.Success)
+            {
+                m_isResolvingPending = false;
+                return false;
+            }
+
+            m_pendingCatch = default;
+            m_isResolvingPending = false;
+
+            Debug.Log("[FishingSystem] Pending 물고기 지급 완료. 낚시를 재개합니다.");
+
+            StartFishing();
+            return true;
         }
 
         #region Battle Flow
@@ -622,6 +655,16 @@ namespace DesktopCompanion.Systems
             ChangeState(FishingState.Waiting);
 
             Debug.Log($"[FishingSystem] 스테이지 변경 감지: stageId={stageDataId}, 낚시 풀 갱신");
+        }
+
+        private void HandleInventoryChanged()
+        {
+            if (!HasPendingCatch || m_isResolvingPending)
+            {
+                return;
+            }
+
+            TryClaimPendingCatch();
         }
 
         #endregion
