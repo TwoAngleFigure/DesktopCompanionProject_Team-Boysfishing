@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace DesktopCompanion.Views
 {
-    public class EnhancementViewModel : UIViewModelBase
+    public class ReinforceViewModel : UIViewModelBase
     {
         private PlayerSystem m_playerSystem;
         private InventorySystem m_inventorySystem;
@@ -18,23 +18,23 @@ namespace DesktopCompanion.Views
         public readonly BindableProperty<string> RequiredMaterialText = new("");
         public readonly BindableProperty<string> StatIncreaseText = new("");
 
-        public RelayCommand EnhanceCommand { get; private set; }
+        public RelayCommand ReinforceCommand { get; private set; }
 
         public override void Bind()
         {
             m_playerSystem = SystemManager.GetSystem<PlayerSystem>();
             m_inventorySystem = SystemManager.GetSystem<InventorySystem>();
             
-            EnhanceCommand = new RelayCommand(TryEnhance);
+            ReinforceCommand = new RelayCommand(TryReinforce);
         }
 
         public void RegisterEquipment(EntityHandle handle)
         {
             SelectedEquipment.Value = handle;
-            UpdateEnhancementInfo(handle);
+            UpdateReinforcementInfo(handle);
         }
 
-        private void UpdateEnhancementInfo(EntityHandle handle)
+        private void UpdateReinforcementInfo(EntityHandle handle)
         {
             if (handle.Value == Guid.Empty)
             {
@@ -84,22 +84,39 @@ namespace DesktopCompanion.Views
             sb.AppendLine($"<color=#5BC0EB><b>[{equip.ItemData.Name}]</b></color>");
             sb.AppendLine("-------------------");
             
-            foreach (var modifier in nextStep.Modifiers)
+            // 현재 스탯 가져오기 (0강이면 기본 효과, 그 이상이면 해당 레벨의 누적 효과)
+            var currentModifiers = equip.ItemData.GetModifiers(equip.UpgradeLevel);
+
+            foreach (var nextMod in nextStep.Modifiers)
             {
-                sb.AppendLine($"{GetStatNameKR(modifier.Stat)} +{modifier.Value}");
+                // 현재 스탯에서 같은 종류의 스탯 값 찾기
+                float currValue = 0f;
+                if (currentModifiers != null)
+                {
+                    foreach (var currMod in currentModifiers)
+                    {
+                        if (currMod.Stat == nextMod.Stat)
+                        {
+                            currValue = currMod.Value;
+                            break;
+                        }
+                    }
+                }
+
+                sb.AppendLine($"{GetStatNameKR(nextMod.Stat)} : {currValue} <color=#00FF00>▶ {nextMod.Value}</color>");
             }
             
             StatIncreaseText.Value = sb.ToString();
         }
 
-        private void TryEnhance()
+        private void TryReinforce()
         {
             if (SelectedEquipment.Value.Value != Guid.Empty && m_playerSystem != null)
             {
-                bool success = m_playerSystem.TryEnhanceEquipment(SelectedEquipment.Value);
+                bool success = m_playerSystem.TryReinforceEquipment(SelectedEquipment.Value);
                 if (success)
                 {
-                    UpdateEnhancementInfo(SelectedEquipment.Value);
+                    UpdateReinforcementInfo(SelectedEquipment.Value);
                 }
             }
         }

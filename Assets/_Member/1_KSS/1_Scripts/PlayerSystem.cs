@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using DesktopCompanion.Core;
 using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
@@ -389,7 +389,7 @@ namespace DesktopCompanion.Systems
         // =========================================================
         // 장비 강화 로직
         // =========================================================
-        public bool TryEnhanceEquipment(EntityHandle equipHandle)
+        public bool TryReinforceEquipment(EntityHandle equipHandle)
         {
             Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
             Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(equipHandle);

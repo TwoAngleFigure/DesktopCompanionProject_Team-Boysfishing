@@ -1,18 +1,22 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using DesktopCompanion.Entities;
 using TMPro;
 
 namespace DesktopCompanion.Views
 {
-    public class EnhancementSlotWidget : MonoBehaviour
+    public class ReinforceSlotWidget : MonoBehaviour, IDropHandler
     {
         [SerializeField] private Image m_itemIcon;
         [SerializeField] private TextMeshProUGUI m_levelText; // "+3" 등 표시
+        [SerializeField] private TextMeshProUGUI m_itemNameText; // 아이템 이름 표시
         [SerializeField] private Button m_slotButton;
 
         public event Action<EntityHandle> OnSlotClicked;
+        public event Action OnSlotDropped;
+        
         private EntityHandle m_currentHandle;
 
         private void Awake()
@@ -23,7 +27,7 @@ namespace DesktopCompanion.Views
             }
         }
 
-        public void SetItem(EntityHandle handle, Sprite icon, int currentLevel)
+        public void SetItem(EntityHandle handle, Sprite icon, int currentLevel, string itemName = "")
         {
             m_currentHandle = handle;
             
@@ -31,6 +35,7 @@ namespace DesktopCompanion.Views
             {
                 if (m_itemIcon != null) m_itemIcon.enabled = false;
                 if (m_levelText != null) m_levelText.text = "";
+                if (m_itemNameText != null) m_itemNameText.text = "";
             }
             else
             {
@@ -43,7 +48,16 @@ namespace DesktopCompanion.Views
                 {
                     m_levelText.text = currentLevel > 0 ? $"+{currentLevel}" : "";
                 }
+                if (m_itemNameText != null)
+                {
+                    m_itemNameText.text = itemName;
+                }
             }
+        }
+
+        public void OnDrop(PointerEventData eventData)
+        {
+            OnSlotDropped?.Invoke();
         }
     }
 }
