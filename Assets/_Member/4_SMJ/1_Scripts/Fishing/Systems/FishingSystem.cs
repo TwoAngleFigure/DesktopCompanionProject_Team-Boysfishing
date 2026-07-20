@@ -23,6 +23,7 @@ namespace DesktopCompanion.Systems
     {
         private StageSystem m_stageSystem;
         private PlayerSystem m_playerSystem;
+        private FishCollectionSystem m_collectionSystem;
         private FishingRewardProcessor m_rewardProcessor;
 
         private float baseBattleDuration = 10f;
@@ -30,6 +31,7 @@ namespace DesktopCompanion.Systems
 
         private FishingState m_state;
         private EntityHandle m_currentBattleFish;
+        private EntityHandle m_pendingCatch;
         private float m_waitDuration;
         private float m_battleDuration;
         private float m_waitTimer;
@@ -57,12 +59,17 @@ namespace DesktopCompanion.Systems
         public float BattleTimeRemaining => m_battleTimer;
         public EntityHandle CurrentBattleFish => m_currentBattleFish;
 
+        public bool HasPendingCatch => m_pendingCatch.Value != Guid.Empty;
+
+        public EntityHandle PendingCatch => m_pendingCatch;
+
         #endregion
 
         public override void Initialize()
         {
             m_state = FishingState.Stopped;
             m_currentBattleFish = default;
+            m_pendingCatch = default;
             m_waitDuration = 0f;
             m_battleDuration = 0f;
             m_waitTimer = 0f;
@@ -76,6 +83,8 @@ namespace DesktopCompanion.Systems
             m_stageSystem = SystemManager.GetSystem<StageSystem>();
             m_playerSystem = SystemManager.GetSystem<PlayerSystem>();
             InventorySystem inventorySystem = SystemManager.GetSystem<InventorySystem>();
+            m_collectionSystem = SystemManager.GetSystem<FishCollectionSystem>();
+
 
             if (inventorySystem != null)
             {
@@ -166,6 +175,14 @@ namespace DesktopCompanion.Systems
 
         public void StartFishing()
         {
+            if (HasPendingCatch)
+            {
+                Debug.LogWarning(
+                    "[FishingSystem] Pending 물고기를 먼저 처리해야 합니다.");
+
+                return;
+            }
+
             if (m_state != FishingState.Stopped)
             {
                 Debug.Log($"[FishingSystem] 이미 낚시 진행 중입니다. state={m_state}");
@@ -173,7 +190,6 @@ namespace DesktopCompanion.Systems
             }
 
             ScheduleNextFishing();
-            ChangeState(FishingState.Waiting);
 
             Debug.Log($"[FishingSystem] 자동 낚시 시작 대기시간={m_waitTimer:0.00}초");
         }
@@ -217,7 +233,9 @@ namespace DesktopCompanion.Systems
                 return;
             }
 
-            float size = RollFishSize(fishData);
+            float rolledSize = RollFishSize(fishData);
+            float size = Mathf.Round(rolledSize * 10f) / 10f;
+
             ItemQuality quality = fishData.GetQuality(size);
             battleFish.SetRollResult(size, quality);
 
@@ -284,8 +302,7 @@ namespace DesktopCompanion.Systems
 
             if (createResult != FishingRewardResult.Success)
             {
-                FishingResultType resultType =
-                    createResult == FishingRewardResult.InventoryFull
+                FishingResultType resultType = createResult == FishingRewardResult.InventoryFull
                         ? FishingResultType.InventoryFull
                         : FishingResultType.Failed;
 
@@ -298,14 +315,44 @@ namespace DesktopCompanion.Systems
 
             OnFishCaughtPresentation?.Invoke(caughtHandle);
 
-            FishingRewardResult finalizeResult =
-                m_rewardProcessor.TryFinalizeCaughtFish(caughtHandle);
+            FishingRewardResult finalizeResult = m_rewardProcessor.TryFinalizeCaughtFish(caughtHandle);
+
+            if (finalizeResult == FishingRewardResult.InventoryFull)
+            {
+                if (HasPendingCatch)
+                {
+                    Debug.LogError(
+                        "[FishingSystem] 이미 Pending 물고기가 존재합니다.");
+
+                    EntityManager.Destroy(caughtHandle);
+
+                    ClearCurrentBattleFish();
+                    StopFishing();
+
+                    OnFishingResult?.Invoke(FishingResultType.Failed);
+                    return;
+                }
+
+                m_pendingCatch = caughtHandle;
+
+                Debug.Log(
+                    $"[FishingSystem] 인벤토리 부족으로 물고기를 Pending 처리합니다. " +
+                    $"handle={caughtHandle}");
+
+                StopFishing();
+
+                OnFishingResult?.Invoke(FishingResultType.InventoryFull);
+                return;
+            }
 
             if (finalizeResult != FishingRewardResult.Success)
             {
-                Debug.LogWarning($"[FishingSystem] 포획 물고기 지급 실패: result={finalizeResult}");
+                Debug.LogWarning(
+                    $"[FishingSystem] 포획 물고기 지급 실패: result={finalizeResult}");
+
                 ClearCurrentBattleFish();
                 ScheduleNextFishing();
+
                 OnFishingResult?.Invoke(FishingResultType.Failed);
                 return;
             }

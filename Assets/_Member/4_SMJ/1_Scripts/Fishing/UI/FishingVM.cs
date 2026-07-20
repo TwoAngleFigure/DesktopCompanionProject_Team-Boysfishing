@@ -18,9 +18,6 @@ namespace DesktopCompanion.Views
         public RelayCommand ToggleFishingState { get; private set; }
         public RelayCommand ManualAttack { get; private set; }
 
-        // Debug HUD
-        public readonly BindableProperty<string> DebugWaitTimeText = new("입질 대기: -");
-
         public override void Bind()
         {
             m_fishingSystem = SystemManager.GetSystem<FishingSystem>();
@@ -55,21 +52,8 @@ namespace DesktopCompanion.Views
         {
             if (m_fishingSystem == null)
             {
-                DebugWaitTimeText.Value = "대기 시간: -";
                 BattleTimeRemainingRatio.Value = 0f;
                 return;
-            }
-
-            if (m_fishingSystem.State == FishingState.Waiting)
-            {
-                DebugWaitTimeText.Value =
-                    $"대기 시간: " +
-                    $"{m_fishingSystem.WaitDuration:0.0}초 / " +
-                    $"{ClampZero(m_fishingSystem.WaitTimeRemaining):0.0}초";
-            }
-            else
-            {
-                DebugWaitTimeText.Value = "대기 시간: -";
             }
 
             if (m_fishingSystem.State == FishingState.Battling &&
@@ -149,11 +133,6 @@ namespace DesktopCompanion.Views
         private void ExecuteManualAttack()
         {
             m_fishingSystem.ManualAttack();
-        }
-
-        private float ClampZero(float value)
-        {
-            return value > 0f ? value : 0f;
         }
     }
 }
