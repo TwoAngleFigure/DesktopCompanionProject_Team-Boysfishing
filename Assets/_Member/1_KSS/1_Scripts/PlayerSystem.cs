@@ -385,5 +385,52 @@ namespace DesktopCompanion.Systems
                 Debug.LogWarning($"[물고기 창고] 골드가 부족합니다! (필요 골드: {m_currentStorageUpgradeCost} / 보유 골드: {player?.Gold})");
             }
         }
+
+        // =========================================================
+        // 장비 강화 로직
+        // =========================================================
+        public bool TryEnhanceEquipment(EntityHandle equipHandle)
+        {
+            Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
+            Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(equipHandle);
+
+            if (player == null || equipment == null) return false;
+
+            // 1. 다음 강화 데이터 조회
+            DesktopCompanion.Data.UpgradeStep nextStep = equipment.ItemData.GetNextUpgradeStep(equipment.UpgradeLevel);
+            if (nextStep == null)
+            {
+                Debug.LogWarning("최대 강화 레벨입니다.");
+                return false;
+            }
+
+            // 2. 비용 검증 (골드)
+            if (player.Gold < nextStep.GoldCost)
+            {
+                Debug.LogWarning("골드가 부족합니다.");
+                return false;
+            }
+
+            // 3. 비용 검증 (재화)
+            // (차후 InventorySystem 구조에 맞춰 실제 재화를 체크하는 로직으로 구성됩니다)
+            /*
+            foreach(var mat in nextStep.MaterialCosts) {
+                if(!m_inventorySystem.HasItem(mat.ItemDataId, mat.Count)) return false;
+            }
+            */
+
+            // 4. 비용 차감
+            player.AddGold(-nextStep.GoldCost);
+            // 재화 차감 (m_inventorySystem.RemoveItem 등)
+
+            // 5. 실제 강화 처리 (데이터는 변경하지 않고 개체의 상태만 업데이트)
+            equipment.SetUpgradeLevel(equipment.UpgradeLevel + 1);
+
+            // 6. 스탯 갱신
+            CaculatedStat();
+
+            Debug.Log($"{equipment.ItemData.Name} 장비가 +{equipment.UpgradeLevel}강으로 강화되었습니다.");
+            return true;
+        }
     }
 }
