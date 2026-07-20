@@ -2,6 +2,7 @@ using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
 using DesktopCompanion.Save;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DesktopCompanion.Systems
@@ -68,7 +69,6 @@ namespace DesktopCompanion.Systems
         /// <summary>
         /// itemType 슬롯 Read용 함수
         /// </summary>
-        /// <param name="itemType"></param>
         public EntityHandle[] GetSlots(ItemType itemType)
         {
             return m_slotStorage.GetSlotsCopy(itemType);
@@ -89,16 +89,27 @@ namespace DesktopCompanion.Systems
             return m_slotStorage.GetHandle(itemType, slotIndex, out handle);
         }
 
-        public void SetAutoSellFilter(bool enabled, ItemQuality maxQuality, ItemRarity maxRarity)
+        public bool SetAutoSellFilter(bool enabled, ItemQuality maxQuality, ItemRarity maxRarity)
         {
+            if ((int)maxQuality < (int)ItemQuality.OneStar || (int)maxQuality > (int)ItemQuality.FiveStar
+                || (int)maxRarity < (int)ItemRarity.Normal || (int)maxRarity > (int)ItemRarity.Legendary)
+            {
+                LogWarning($"SetAutoSellFilter failed. quality: {maxQuality}, rarity: {maxRarity}");
+                return false;
+            }
+
             ApplyAutoSellFilter(enabled, maxQuality, maxRarity, true);
+            return true;
+        }
+
+        public bool HasEmptySlot(ItemType itemType)
+        {
+            return m_slotStorage.FindEmptySlotIndex(itemType) >= 0;
         }
 
         private void ApplyAutoSellFilter(bool enabled, ItemQuality maxQuality, ItemRarity maxRarity, bool requestSave)
         {
-            if (m_autoSellEnabled == enabled
-                && m_maxAutoSellQuality == maxQuality
-                && m_maxAutoSellRarity == maxRarity)
+            if (m_autoSellEnabled == enabled && m_maxAutoSellQuality == maxQuality && m_maxAutoSellRarity == maxRarity)
             {
                 return;
             }
@@ -152,7 +163,7 @@ namespace DesktopCompanion.Systems
                 return false;
             }
 
-            if (itemEntity is Entity_Fish fish && ShouldSellFish(fish))
+            if (itemEntity is Entity_Fish fish && IsAutoSellTarget(fish))
             {
                 if (m_shopSystem == null)
                 {
@@ -330,6 +341,66 @@ namespace DesktopCompanion.Systems
             }
 
             return RemoveAt(slotType, slotIndex, true, requestSave);
+        }
+
+        /// <summary>
+        /// 아이템 복수 개를 삭제해야 할 때 사용하는 함수
+        /// </summary>
+        public bool RemoveByHandles(IReadOnlyCollection<ItemQuantity> items, bool requestSave = true)
+        {
+            if (items == null || items.Count == 0)
+            {
+                return false;
+            }
+
+            HashSet<EntityHandle> uniqueHandles = new();
+            List<(ItemQuantity Item, ItemType SlotType, int SlotIndex, Entity Entity, bool IsStackable, int NextQuantity)> entries = new(items.Count);
+
+            foreach (ItemQuantity item in items)
+            {
+                if (item.Amount <= 0 || !uniqueHandles.Add(item.Handle)
+                    || !m_slotStorage.FindSlot(item.Handle, out ItemType slotType, out int slotIndex))
+                {
+                    return false;
+                }
+
+                Entity entity = EntityManager.Get(item.Handle);
+
+                if (!InventoryItemRules.CanRemove(entity, item.Amount))
+                {
+                    return false;
+                }
+
+                bool isStackable = InventoryItemRules.GetStackQuantity(entity, out int currentQuantity);
+                int nextQuantity = isStackable ? currentQuantity - item.Amount : 0;
+                entries.Add((item, slotType, slotIndex, entity, isStackable, nextQuantity));
+            }
+
+            for (int i = 0; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+
+                if (entry.IsStackable && entry.NextQuantity > 0)
+                {
+                    InventoryItemRules.SetStackQuantity(entry.Entity, entry.NextQuantity);
+                    continue;
+                }
+
+                m_slotStorage.ClearHandle(entry.SlotType, entry.SlotIndex, out _);
+            }
+
+            for (int i = 0; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+
+                if (!entry.IsStackable || entry.NextQuantity <= 0)
+                {
+                    EntityManager.Destroy(entry.Item.Handle);
+                }
+            }
+
+            NotifyInventoryChanged($"Remove item batch / requestCount: {entries.Count}", requestSave);
+            return true;
         }
 
         //item이 인벤토리에 몇 개 있는지 반환
@@ -558,11 +629,6 @@ namespace DesktopCompanion.Systems
             return entity;
         }
 
-        private bool ShouldSellFish(Entity_Fish fish)
-        {
-            return IsAutoSellTarget(fish) || IsFishInventoryFull();
-        }
-
         private bool IsAutoSellTarget(Entity_Fish fish)
         {
             if (!m_autoSellEnabled)
@@ -572,11 +638,6 @@ namespace DesktopCompanion.Systems
 
             return fish.Quality <= m_maxAutoSellQuality
                 && fish.Rarity <= m_maxAutoSellRarity;
-        }
-
-        private bool IsFishInventoryFull()
-        {
-            return m_slotStorage.FindEmptySlotIndex(ItemType.Fish) < 0;
         }
 
         public bool CanRemoveByHandle(EntityHandle handle, int amount)
