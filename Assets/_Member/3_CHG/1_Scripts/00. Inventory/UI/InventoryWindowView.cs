@@ -672,5 +672,19 @@ namespace DesktopCompanion.Views
             // 예: 1000 -> 1,000
             m_goldText.text = gold.ToString("N0");
         }
+
+        //FishingSystem 참조용
+        public void OrganizeFishTab()
+        {
+            Show();
+            OnFishTabClicked();
+            EnterSellMode();
+        }
+
+
+        private void EnterSellMode()
+        {
+            m_sellView.EnterSellMode();
+        }
     }
 }

@@ -74,21 +74,25 @@ namespace DesktopCompanion.Systems
             return m_slotStorage.GetSlotsCopy(itemType);
         }
 
+        /// <summary> 슬롯 갯수를 세는 함수 </summary>
         public int GetMaxSlotCount(ItemType itemType)
         {
             return m_slotStorage.GetMaxSlotCount(itemType);
         }
 
+        /// <summary> 비어있지 않은 슬롯 갯수를 세는 함수 </summary>
         public int GetUsedSlotCount(ItemType itemType)
         {
             return m_slotStorage.GetUsedSlotCount(itemType);
         }
 
+        /// <summary> 특정 슬롯을 참조해서 핸들을 반환하는 함수 </summary>
         public bool GetHandleAt(ItemType itemType, int slotIndex, out EntityHandle handle)
         {
             return m_slotStorage.GetHandle(itemType, slotIndex, out handle);
         }
 
+        /// <summary> 자동 필터 세팅 </summary>
         public bool SetAutoSellFilter(bool enabled, ItemQuality maxQuality, ItemRarity maxRarity)
         {
             if ((int)maxQuality < (int)ItemQuality.OneStar || (int)maxQuality > (int)ItemQuality.FiveStar
@@ -102,6 +106,7 @@ namespace DesktopCompanion.Systems
             return true;
         }
 
+        /// <summary> 인벤토리에 빈 슬롯이 있는 지 확인하는 함수 </summary>
         public bool HasEmptySlot(ItemType itemType)
         {
             return m_slotStorage.FindEmptySlotIndex(itemType) >= 0;

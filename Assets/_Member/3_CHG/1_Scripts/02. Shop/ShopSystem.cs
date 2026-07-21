@@ -1,3 +1,4 @@
+using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
 using System;
 using System.Collections.Generic;
@@ -10,6 +11,11 @@ namespace DesktopCompanion.Systems
         private InventorySystem m_inventorySystem;
         private PlayerSystem m_playerSystem;
         private CurrencySystem m_currencySystem;
+
+        private IReadOnlyList<ItemData> m_products;
+
+        //기획 전 임시 구매 가격 책정용 변수. 기획 후 수정
+        private float m_priceMultiplier = 3.0f;
 
         public override void PostInitialize()
         {
@@ -31,7 +37,12 @@ namespace DesktopCompanion.Systems
             {
                 Debug.LogError("[ShopSystem] CurrencySystem not found.");
             }
+
+            //현 기획 상 상점 판매 품목은 소모품으로 한정. 기획 변경 시 수정
+            m_products = DataManager.GetAll<ItemData_Consumables>();
         }
+
+        #region sell
 
         public int CalculateSellGold(EntityHandle handle, int amount)
         {
@@ -217,5 +228,117 @@ namespace DesktopCompanion.Systems
                 ? int.MaxValue
                 : (int)finalGold;
         }
+
+        #endregion
+
+        /// <summary> 구매 가능한 목록 리스트 반환 </summary>
+        public List<ItemData> GetBuyableItems()
+        {
+            Entity_Player playerEntity = (Entity_Player)EntityManager.Get(m_playerSystem.PlayerHandle);
+            int license = playerEntity.CurrentLicense;
+            List<ItemData> buyableItem = new List<ItemData>();
+            
+            foreach(ItemData item in m_products)
+            {
+                if (item.Tier <= license)
+                    buyableItem.Add(item);
+            }
+
+            return buyableItem;
+        }
+
+        /// <summary> 아이템 구매로직. DataId와 ItemType간 검증 확실히 하여 추가할 것. </summary>
+        public bool BuyItem(ItemType type, int dataId, int amount)
+        {
+            #region Validation
+            if (!IsValidDataId(type, dataId, out int price))
+                return false;
+
+            if (amount <= 0 || (type == ItemType.Equipment && amount > 1))
+            {
+                Debug.LogWarning($"[ShopSystem] 구매하려는 갯수가 잘못되었습니다. amount : {amount}");
+                return false;
+            }
+
+            if ((type == ItemType.Materials || type == ItemType.Consumables) && m_inventorySystem.GetTotalQuantityByDataId(type, dataId) <= 0 && !m_inventorySystem.HasEmptySlot(type) ||
+                (type == ItemType.Equipment && !m_inventorySystem.HasEmptySlot(type)))
+            {
+                Debug.LogWarning($"[ShopSystem] 인벤토리에 구매하려는 아이템이 들어갈 공간이 없습니다.");
+                return false;
+            }
+
+            int totalPrice = CalculateItemPrice(price) * amount;
+
+            if(totalPrice <= 0)
+            {
+                Debug.LogWarning("[ShopSystem] 가격이 0인 상품은 존재하지 않습니다.");
+                return false;
+            }
+
+            if(m_currencySystem.CurrentGold < totalPrice)
+            {
+                Debug.LogWarning($"[ShopSystem] 구매하려는 아이템의 가격이 현재 소지한 골드보다 높습니다. 현재 소지한 골드 : {m_currencySystem.CurrentGold}, 가격 : {totalPrice}");
+                return false;
+            }
+            #endregion
+            EntityHandle itemHandle;
+            switch (type)
+            {
+                case ItemType.Materials:
+                    itemHandle = EntityManager.Create<ItemData_Materials>(dataId);
+                    Entity_Materials entity_Materials = EntityManager.Get<Entity_Materials>(itemHandle);
+                    entity_Materials.SetQuantity(amount);
+                    break;
+                case ItemType.Equipment:
+                    itemHandle = EntityManager.Create<ItemData_Equipment>(dataId); break;
+                case ItemType.Consumables:
+                    itemHandle = EntityManager.Create<ItemData_Consumables>(dataId);
+                    Entity_Consumables entity_Consumables = EntityManager.Get<Entity_Consumables>(itemHandle);
+                    entity_Consumables.SetQuantity(amount);
+                    break;
+                default:
+                    return false;
+            }
+
+            if (!m_currencySystem.AddGold(-totalPrice))
+            {
+                EntityManager.Destroy(itemHandle);
+                return false;
+            }
+
+            if (!m_inventorySystem.AddItem(itemHandle)) 
+            { 
+                EntityManager.Destroy(itemHandle);
+                if (!m_currencySystem.AddGold(totalPrice))
+                    Debug.LogError($"[ShopSystem] 구매 실패 환불 실패 : {totalPrice}");
+                return false;
+            }
+            return true;
+        }
+
+        //기획 전 임시 구매 가격 책정용 변수. 기획 후 수정
+        public int CalculateItemPrice(int basePrice)
+        {
+            float price = basePrice * m_priceMultiplier;
+
+            return (int)price;
+        }
+        
+        private bool IsValidDataId(ItemType type, int dataId, out int price)
+        {
+            foreach(ItemData item in m_products)
+            {
+                if (item.ID == dataId && item.Type == type)
+                {
+                    price = item.BasePrice;
+                    return true;
+                }
+            }
+
+            Debug.LogWarning($"[ShopSystem] 구매 상품이 올바르지 않습니다.\nID : {dataId} | ID_Type : {type}");
+            price = 0;
+            return false;
+        }
+
     }
 }

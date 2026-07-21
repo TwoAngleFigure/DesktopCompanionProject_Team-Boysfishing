@@ -386,5 +386,16 @@ namespace DesktopCompanion.Views
         {
             Unbind();
         }
+
+        //외부 참조용 판매 진입 코드
+        public void EnterSellMode()
+        {
+            if (IsSellMode)
+            {
+                return;
+            }
+
+            m_vm.SellButtonCommand.Execute();
+        }
     }
 }
