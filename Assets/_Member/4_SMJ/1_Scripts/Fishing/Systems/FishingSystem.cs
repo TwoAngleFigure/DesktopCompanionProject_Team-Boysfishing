@@ -346,6 +346,23 @@ namespace DesktopCompanion.Systems
                 return;
             }
 
+            FishCollectionUpdateResult collectionResult = default;
+
+            if (m_collectionSystem == null)
+            {
+                Debug.LogWarning(
+                    "[FishingSystem] FishCollectionSystem을 사용할 수 없습니다.");
+            }
+            else if (!m_collectionSystem.TryRegisterCatch(
+                         battleFish.BattleData.ItemFish.ID,
+                         battleFish.Quality,
+                         battleFish.Size,
+                         out collectionResult))
+            {
+                Debug.LogWarning(
+                    "[FishingSystem] 포획 물고기의 도감 반영에 실패했습니다.");
+            }
+
             OnFishCaughtPresentation?.Invoke(caughtHandle);
 
             FishingRewardResult finalizeResult = m_rewardProcessor.TryFinalizeCaughtFish(caughtHandle);
