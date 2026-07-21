@@ -214,23 +214,32 @@ namespace DesktopCompanion.Views
 
         private void ApplyMonitor(int index, bool save)
         {
-            RefreshMonitorCount();
-            index = Mathf.Clamp(index, 0, Mathf.Max(0, MonitorCount - 1));
+            // 열거는 한 번만 수행하고 개수·배치에 함께 쓴다(모니터 구성이 중간에 바뀌는 것을 방지).
+            var monitors = Win32Native.GetMonitors();
+            MonitorCount = Mathf.Max(1, monitors.Count);
+
+            index = Mathf.Clamp(index, 0, MonitorCount - 1);
             m_data.MonitorIndex = index;
 
-            var rects = Win32Native.GetMonitorRects();
-            if (m_transparentWindow != null && index < rects.Count)
+            if (m_transparentWindow != null && index < monitors.Count)
             {
-                var mr = rects[index];
-                m_transparentWindow.ApplyMonitorBounds(mr.left, mr.top, mr.right - mr.left, mr.bottom - mr.top);
+                var m = monitors[index];
+                m_transparentWindow.ApplyMonitorBounds(m.rect.left, m.rect.top, m.Width, m.Height);
             }
             if (save) Save();
         }
 
+        /// <summary>현재 선택된 모니터의 Windows 디스플레이 번호(UI 표기용). 조회 실패 시 index+1.</summary>
+        public int CurrentDisplayNumber()
+        {
+            var monitors = Win32Native.GetMonitors();
+            int i = Mathf.Clamp(m_data.MonitorIndex, 0, Mathf.Max(0, monitors.Count - 1));
+            return i < monitors.Count ? monitors[i].displayNumber : i + 1;
+        }
+
         private void RefreshMonitorCount()
         {
-            var rects = Win32Native.GetMonitorRects();
-            MonitorCount = Mathf.Max(1, rects.Count);
+            MonitorCount = Mathf.Max(1, Win32Native.GetMonitors().Count);
         }
 
         private static Vector2 ClampPos(Vector2 pos, Vector2 size)

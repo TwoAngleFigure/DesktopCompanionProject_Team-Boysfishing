@@ -70,7 +70,7 @@ namespace DesktopCompanion.Views
         private void ChangeMonitor(int delta)
         {
             int count = Mathf.Max(1, m_controller.MonitorCount);
-            int next = (m_controller.MonitorIndex + delta % count + count) % count;
+            int next = ((m_controller.MonitorIndex + delta) % count + count) % count;
             m_controller.SetMonitor(next);
             RefreshLabel();
         }
@@ -79,7 +79,8 @@ namespace DesktopCompanion.Views
         {
             if (m_monitorLabel != null)
             {
-                m_monitorLabel.text = $"Monitor {m_controller.MonitorIndex + 1} / {Mathf.Max(1, m_controller.MonitorCount)}";
+                // 번호는 Windows 디스플레이 설정의 번호와 일치시킨다(열거 순서가 아님).
+                m_monitorLabel.text = $"Monitor {m_controller.CurrentDisplayNumber()} / {Mathf.Max(1, m_controller.MonitorCount)}";
             }
             if (m_moveLabel != null)
             {
