@@ -213,8 +213,13 @@ namespace DesktopCompanion
         // 투명화를 먼저 걸면 이후 리사이즈가 이를 무효화해 배경이 불투명해진다.
         private IEnumerator ApplyMonitorBoundsRoutine(int x, int y, int width, int height)
         {
-            int w = Mathf.Max(1, width - _edgeInset);
+            // 전체화면 최적화(투명화 깨짐) 회피용 인셋은 '상단'에만 둔다.
+            // 월드는 화면 하단 밴드에 그려지므로(계획 25) 하단·좌우는 화면 끝에 정확히 붙어야 한다.
+            // 가로를 꽉 채워도 세로가 1px 모자라면 전체화면으로 인식되지 않는다.
+            int w = Mathf.Max(1, width);
             int h = Mathf.Max(1, height - _edgeInset);
+            int posX = x;
+            int posY = y + _edgeInset;
 
             // 0) 전체화면 상태(Alt+Enter 등)면 창 모드로 되돌린다. 전체화면에서는 DWM 투명화가 성립하지 않는다.
             if (Screen.fullScreen)
@@ -227,7 +232,7 @@ namespace DesktopCompanion
             }
 
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
-            _lastRequested = new RectInt(x, y, w, h);
+            _lastRequested = new RectInt(posX, posY, w, h);
 #endif
 
             // 1) 테두리 제거를 먼저 확정한다.
@@ -247,7 +252,7 @@ namespace DesktopCompanion
             const int maxCorrections = 4;
             for (int attempt = 0; attempt < maxCorrections; attempt++)
             {
-                Win32Native.SetWindowPos(_hwnd, Win32Native.HWND_TOPMOST, x, y, w, h,
+                Win32Native.SetWindowPos(_hwnd, Win32Native.HWND_TOPMOST, posX, posY, w, h,
                     Win32Native.SWP_NOACTIVATE | Win32Native.SWP_SHOWWINDOW | Win32Native.SWP_FRAMECHANGED);
 
                 // DPI 변경 메시지가 처리될 시간을 준다.
@@ -258,7 +263,7 @@ namespace DesktopCompanion
                 {
                     break;
                 }
-                if (r.left == x && r.top == y && r.right - r.left == w && r.bottom - r.top == h)
+                if (r.left == posX && r.top == posY && r.right - r.left == w && r.bottom - r.top == h)
                 {
                     break;   // 목표 물리 픽셀에 도달
                 }
