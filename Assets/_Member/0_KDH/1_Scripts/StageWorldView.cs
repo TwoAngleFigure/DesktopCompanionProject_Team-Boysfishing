@@ -107,7 +107,7 @@ namespace DesktopCompanion.Views
                 if (m_shipController != null) m_shipController.m_speed = currentSpeed;
                 stageSystem.SyncSpeed(currentSpeed);
             })
-            .SetEase(Ease.InQuad)
+            .SetEase(Ease.InOutSine)
             .SetId(this)
             .OnComplete(() =>
             {
@@ -128,7 +128,7 @@ namespace DesktopCompanion.Views
                 if (m_shipController != null) m_shipController.m_speed = currentSpeed;
                 stageSystem.SyncSpeed(currentSpeed);
             })
-            .SetEase(Ease.OutQuad)
+            .SetEase(Ease.InOutSine)
             .SetId(this)
             .OnComplete(() =>
             {
@@ -150,7 +150,7 @@ namespace DesktopCompanion.Views
                 if (m_shipController != null) m_shipController.m_speed = currentSpeed;
                 stageSystem.SyncSpeed(currentSpeed);
             })
-            .SetEase(Ease.OutQuad)
+            .SetEase(Ease.InOutSine)
             .SetId(this)
             .OnComplete(() =>
             {
