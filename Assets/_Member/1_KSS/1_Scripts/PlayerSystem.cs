@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using DesktopCompanion.Core;
 using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
@@ -55,8 +55,8 @@ namespace DesktopCompanion.Systems
         public float BaseCriticalChance => m_baseCriticalChance;
         public float BaseCriticalMultiply => m_baseCriticalMultiply;
 
-        public float BaseAutoBattleCooltime => m_baseAutoBattleCooltime;
-        public float BaseAutoSpeedPerTime => m_baseAutoSpeedPerTime;
+        public float BaseAutoBattleCooltime => Mathf.Max(0.1f, m_baseAutoBattleCooltime);
+        public float BaseAutoSpeedPerTime => 1f / Mathf.Max(0.1f, m_baseAutoSpeedPerTime);
         public float BaseAutoDamagePerHitMultiply => m_baseAutoDamagePerHitMultiply;
 
         public float BaseProbabilityAtFishSize => m_baseProbabilityAtFishSize;
@@ -225,7 +225,7 @@ namespace DesktopCompanion.Systems
                             m_baseCriticalMultiply += stat.Value;
                             break;
                         case PlayerStat.AutoBattleCooltime:
-                            m_baseAutoBattleCooltime += stat.Value;
+                            m_baseAutoBattleCooltime -= stat.Value;
                             break;
                         case PlayerStat.AutoSpeedPerTime:
                             m_baseAutoSpeedPerTime += stat.Value;
