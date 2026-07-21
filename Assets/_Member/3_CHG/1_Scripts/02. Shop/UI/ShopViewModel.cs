@@ -1,7 +1,7 @@
 using DesktopCompanion.Data;
 using DesktopCompanion.Systems;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 
 namespace DesktopCompanion.Views
@@ -16,7 +16,9 @@ namespace DesktopCompanion.Views
         public readonly BindableProperty<ShopProductViewData> SelectedProduct = new(null);
 
         public RelayCommand<int> SelectProductCommand;
-        public RelayCommand BuyCommand;
+        public RelayCommand<int> BuyCommand;
+
+        public event Action OnBuySucceeded;
 
         public override void Bind()
         {
@@ -24,7 +26,7 @@ namespace DesktopCompanion.Views
             m_currencySystem = SystemManager.GetSystem<CurrencySystem>();
 
             SelectProductCommand = new RelayCommand<int>(SelectProduct);
-            BuyCommand = new RelayCommand(BuyItem);
+            BuyCommand = new RelayCommand<int>(BuyItem);
 
             if (m_currencySystem != null)
             {
@@ -33,6 +35,7 @@ namespace DesktopCompanion.Views
             }
 
             RefreshProducts();
+            SelectedProduct.Value = null;
         }
 
         public override void Unbind()
@@ -40,18 +43,39 @@ namespace DesktopCompanion.Views
             if(m_currencySystem != null)
                 m_currencySystem.OnGoldChanged -= HandleGoldChanged;
 
+            SelectedProduct.Value = null;
             m_shopSystem = null;
             m_currencySystem = null;
         }
 
         private void SelectProduct(int dataId)
         {
+            foreach(ShopProductViewData data in Products.Value)
+            {
+                if (data.DataId == dataId)
+                {
+                    SelectedProduct.Value = data;
+                    return;
+                }
+            }
 
+            SelectedProduct.Value = null;
         }
 
-        private void BuyItem()
+        private void BuyItem(int amount)
         {
+            if (SelectedProduct.Value == null)
+                return;
 
+            if (amount <= 0)
+                return;
+
+            if(m_shopSystem != null)
+            {
+                if (m_shopSystem.BuyItem(SelectedProduct.Value.ItemType, SelectedProduct.Value.DataId, amount))
+                    OnBuySucceeded?.Invoke();
+
+            }
         }
 
         private void HandleGoldChanged(int currentGold) 
@@ -62,12 +86,19 @@ namespace DesktopCompanion.Views
         private void RefreshProducts()
         {
             List<ShopProductViewData> products = new();
-            List<ItemData> data = m_shopSystem.GetBuyableItems();
+            IReadOnlyList<ItemData> data = new List<ItemData>();
+            if(m_shopSystem != null)
+            {
+                data = m_shopSystem.GetBuyableItems();
+            }
 
             for(int i = 0; i < data.Count; i++)
             {
                 ItemData item = data[i];
-                products.Add(CreateProductViewData(item));
+                ShopProductViewData product = CreateProductViewData(item);
+                
+                if(product != null) 
+                    products.Add(product);
             }
 
             Products.Value = products;
@@ -75,7 +106,7 @@ namespace DesktopCompanion.Views
 
         private ShopProductViewData CreateProductViewData(ItemData item)
         {
-            if (m_shopSystem == null || item.Type == ItemType.Fish)
+            if (m_shopSystem == null || item == null || item.Type == ItemType.Fish)
                 return null;
 
             string iconkey = BuildIconKey(item);

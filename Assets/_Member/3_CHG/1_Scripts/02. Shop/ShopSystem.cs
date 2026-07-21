@@ -232,7 +232,7 @@ namespace DesktopCompanion.Systems
         #endregion
 
         /// <summary> 구매 가능한 목록 리스트 반환 </summary>
-        public List<ItemData> GetBuyableItems()
+        public IReadOnlyList<ItemData> GetBuyableItems()
         {
             Entity_Player playerEntity = (Entity_Player)EntityManager.Get(m_playerSystem.PlayerHandle);
             int license = playerEntity.CurrentLicense;
