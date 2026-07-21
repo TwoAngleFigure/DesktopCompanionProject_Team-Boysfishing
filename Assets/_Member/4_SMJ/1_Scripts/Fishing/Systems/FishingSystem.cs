@@ -26,6 +26,7 @@ namespace DesktopCompanion.Systems
         private InventorySystem m_inventorySystem;
         private FishCollectionSystem m_collectionSystem;
         private FishingRewardProcessor m_rewardProcessor;
+        private ShopSystem m_shopSystem;
 
         private float baseBattleDuration = 10f;
         private float minBattleDuration = 2f;
@@ -46,6 +47,7 @@ namespace DesktopCompanion.Systems
         public event Action<EntityHandle> OnFishCaughtPresentation;
         public event Action<FishingResultType> OnFishingResult;
         public event Action<EntityHandle, int, int> OnBattleHpChanged;
+        public event Action OnPendingCatchChanged;
 
         #endregion
 
@@ -87,7 +89,7 @@ namespace DesktopCompanion.Systems
             m_playerSystem = SystemManager.GetSystem<PlayerSystem>();
             m_collectionSystem = SystemManager.GetSystem<FishCollectionSystem>();
             m_inventorySystem = SystemManager.GetSystem<InventorySystem>();
-
+            m_shopSystem = SystemManager.GetSystem<ShopSystem>();
 
             if (m_inventorySystem != null)
             {
@@ -212,6 +214,7 @@ namespace DesktopCompanion.Systems
             ChangeState(FishingState.Stopped);
         }
 
+        #region Pending
         public bool TryClaimPendingCatch()
         {
             if (!HasPendingCatch ||
@@ -236,11 +239,40 @@ namespace DesktopCompanion.Systems
             m_pendingCatch = default;
             m_isResolvingPending = false;
 
+            OnPendingCatchChanged?.Invoke();
+
             Debug.Log("[FishingSystem] Pending 물고기 지급 완료. 낚시를 재개합니다.");
 
             StartFishing();
             return true;
         }
+
+        public bool TrySellPendingCatch(out int earnedGold)
+        {
+            earnedGold = 0;
+
+            if (!HasPendingCatch || m_shopSystem == null)
+            {
+                return false;
+            }
+
+            EntityHandle pendingHandle = m_pendingCatch;
+
+            if (!m_shopSystem.SellAcquiredItem(pendingHandle, out earnedGold))
+            {
+                Debug.LogWarning("[FishingSystem] Pending 물고기 판매에 실패했습니다.");
+                return false;
+            }
+
+            m_pendingCatch = default;
+
+            OnPendingCatchChanged?.Invoke();
+
+            StartFishing();
+            return true;
+        }
+        #endregion
+
 
         #region Battle Flow
 
@@ -390,6 +422,8 @@ namespace DesktopCompanion.Systems
                     $"handle={caughtHandle}");
 
                 StopFishing();
+
+                OnPendingCatchChanged?.Invoke();
 
                 OnFishingResult?.Invoke(FishingResultType.InventoryFull);
                 return;
