@@ -15,8 +15,15 @@ Shader "BFPixelizer/PixelizedLit"
         _BaseColor("Color", Color) = (1, 1, 1, 1)
         _PixelSize("Pixel Size (V1: 전역 격자 사용 — 유보)", Range(1, 5)) = 3
         _OutlineColor("Outline Color", Color) = (0, 0, 0, 1)
-        _ObjectId("Object Id (겹침 아웃라인 구분, 1~255)", Range(1, 255)) = 1
+        // ⚠ 이름에 _BFP_ 접두사 필수: 단순 `_ObjectId`는 Unity 에디터의 씬 뷰 피킹이 쓰는
+        // 전역 int 프로퍼티와 충돌해 머티리얼 값이 무시되고 항상 0으로 읽힌다.
+        _BFP_ObjectId("Object Id (겹침 아웃라인 구분, 1~255)", Range(1, 255)) = 1
         _RenderingLayers("Rendering Layers (수광 레이어 비트, 일반=1)", Float) = 1
+
+        // 알파(계획 15). 반투명으로 쓰려면 머티리얼 인스펙터의 Render Queue를
+        // Transparent(3000)로 바꿔야 한다 — 그래야 투명 트랙(물 이후 합성)으로 분류된다.
+        _Alpha("Alpha (내부 픽셀 투명도)", Range(0, 1)) = 1
+        [Toggle] _OutlineFollowsAlpha("Outline Follows Alpha (아웃라인도 함께 투명)", Float) = 0
     }
 
     SubShader
@@ -60,8 +67,10 @@ Shader "BFPixelizer/PixelizedLit"
             half4 _BaseColor;
             float _PixelSize;
             half4 _OutlineColor;
-            float _ObjectId;
+            float _BFP_ObjectId;
             float _RenderingLayers;
+            float _Alpha;
+            float _OutlineFollowsAlpha;
             CBUFFER_END
 
             // 피처가 오프스크린 패스에서 설정하는 전역(메타 RT 크기·수퍼샘플 배율·전역 셀 크기).
@@ -113,10 +122,13 @@ Shader "BFPixelizer/PixelizedLit"
                 return output;
             }
 
+            // 채널 배치(계획 15 G0). 커버리지는 meta.r(ObjectId, 배경=0)이 담당하므로
+            // color.a는 아웃라인 강도 전용이 되었다(구 0.5+a*0.5 인코딩 폐지).
             struct FragOutput
             {
-                half4 color : SV_Target0; // 라이팅 결과, a = 커버리지(1)
-                half4 meta : SV_Target1;  // R = ID, GBA = 아웃라인 색
+                half4 color : SV_Target0; // rgb = 라이팅 결과, a = 아웃라인 강도(0~1)
+                half4 meta  : SV_Target1; // r = ObjectId(0 = 배경 = 커버리지), gba = 아웃라인 RGB
+                half2 alpha : SV_Target2; // r = 오브젝트 알파, g = 아웃라인 투명도
             };
 
             FragOutput frag(Varyings input)
@@ -183,9 +195,12 @@ Shader "BFPixelizer/PixelizedLit"
                 half3 ambient = SampleSH(normalWS);
 
                 FragOutput output;
-                // a = 커버리지 + 아웃라인 알파 인코딩: 0.5(알파0) ~ 1.0(알파1). 커버리지 판정(≥0.5)과 호환.
-                output.color = half4(albedo.rgb * (lighting + ambient), 0.5 + saturate(_OutlineColor.a) * 0.5);
-                output.meta = half4(_ObjectId, _OutlineColor.rgb);
+                output.color = half4(albedo.rgb * (lighting + ambient), saturate(_OutlineColor.a));
+                output.meta = half4(_BFP_ObjectId, _OutlineColor.rgb);
+                // 아웃라인 투명도는 여기서 확정한다(토글이 합성 셰이더까지 전파될 필요 없음).
+                // OFF면 1 → 내부가 투명해져도 테두리는 불투명하게 남는다(아쿠아리움 유리 룩).
+                half objectAlpha = saturate(_Alpha);
+                output.alpha = half2(objectAlpha, _OutlineFollowsAlpha > 0.5 ? objectAlpha : 1.0);
                 return output;
             }
             ENDHLSL
@@ -216,8 +231,10 @@ Shader "BFPixelizer/PixelizedLit"
             half4 _BaseColor;
             float _PixelSize;
             half4 _OutlineColor;
-            float _ObjectId;
+            float _BFP_ObjectId;
             float _RenderingLayers;
+            float _Alpha;
+            float _OutlineFollowsAlpha;
             CBUFFER_END
 
             float3 _LightDirection;

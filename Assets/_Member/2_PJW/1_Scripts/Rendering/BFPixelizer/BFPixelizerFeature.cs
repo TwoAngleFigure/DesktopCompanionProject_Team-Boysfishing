@@ -44,7 +44,11 @@ namespace DesktopCompanion.Rendering
         private const string CompositeShaderName = "Hidden/BFPixelizer/Composite";
         private const string DownsampleShaderName = "Hidden/BFPixelizer/Downsample";
 
-        private BFPixelizerPass _pass;
+        // 불투명/투명 2트랙(계획 15): 렌더 큐로 분리한다. 이벤트가 달라 패스 인스턴스도 분리해야 한다.
+        //  - 불투명: AfterRenderingOpaques, 깊이 기록 + DepthTex 주입(현행)
+        //  - 투명(유리): AfterRenderingTransparents, 블렌딩·깊이 미기록 → 물 너머가 비친다
+        private BFPixelizerPass _opaquePass;
+        private BFPixelizerPass _transparentPass;
         private Material _compositeMaterial;
         private Material _downsampleMaterial;
 
@@ -64,7 +68,8 @@ namespace DesktopCompanion.Rendering
                 _compositeMaterial = CoreUtils.CreateEngineMaterial(_compositeShader);
             if (_downsampleShader != null)
                 _downsampleMaterial = CoreUtils.CreateEngineMaterial(_downsampleShader);
-            _pass = new BFPixelizerPass();
+            _opaquePass = new BFPixelizerPass(false);
+            _transparentPass = new BFPixelizerPass(true);
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
@@ -75,10 +80,15 @@ namespace DesktopCompanion.Rendering
                 return;
             }
 
-            _pass.Setup(_compositeMaterial, _downsampleMaterial, _pixelSize, _depthEpsilon, _autoPixelScale, _pixelScale,
+            _opaquePass.Setup(_compositeMaterial, _downsampleMaterial, _pixelSize, _depthEpsilon, _autoPixelScale, _pixelScale,
                 _worldSpaceGrid);
-            _pass.ConfigureInput(ScriptableRenderPassInput.Depth); // 가림 판정용 _CameraDepthTexture 보장
-            renderer.EnqueuePass(_pass);
+            _opaquePass.ConfigureInput(ScriptableRenderPassInput.Depth); // 가림 판정용 _CameraDepthTexture 보장
+            renderer.EnqueuePass(_opaquePass);
+
+            _transparentPass.Setup(_compositeMaterial, _downsampleMaterial, _pixelSize, _depthEpsilon, _autoPixelScale, _pixelScale,
+                _worldSpaceGrid);
+            _transparentPass.ConfigureInput(ScriptableRenderPassInput.Depth);
+            renderer.EnqueuePass(_transparentPass);
         }
 
         protected override void Dispose(bool disposing)
@@ -108,6 +118,7 @@ namespace DesktopCompanion.Rendering
         private static readonly int s_screenSizeProp = Shader.PropertyToID("_BFP_ScreenSize");
         private static readonly int s_pixelScaleProp = Shader.PropertyToID("_BFP_PixelScale");
         private static readonly int s_offMetaProp = Shader.PropertyToID("_BFP_OffMeta");
+        private static readonly int s_offAlphaProp = Shader.PropertyToID("_BFP_OffAlpha");
         private static readonly int s_offDepthProp = Shader.PropertyToID("_BFP_OffDepth");
         private static readonly int s_cellSizeProp = Shader.PropertyToID("_BFP_CellSize");
         private static readonly int s_depthEpsProp = Shader.PropertyToID("_BFP_DepthEps");
@@ -126,6 +137,9 @@ namespace DesktopCompanion.Rendering
         };
 
         private readonly Vector4[] _shConstants = new Vector4[7];
+
+        /// <summary>스프라이트 경로 프러스텀 컬링용 재사용 버퍼(매 프레임 할당 회피).</summary>
+        private readonly Plane[] _frustumPlanes = new Plane[6];
 
         /// <summary>RenderSettings.ambientProbe를 셰이더 SH 상수(표준 패킹)로 변환.</summary>
         private void UpdateAmbientShConstants()
@@ -147,10 +161,19 @@ namespace DesktopCompanion.Rendering
         private float _manualPixelScale;
         private bool _worldSpaceGrid;
         private bool _warnedSubPixel;
+        private bool _warnedDepthTexNotAttachable;
 
-        public BFPixelizerPass()
+        /// <summary>투명 트랙 여부. 큐 범위·합성 패스·주입 시점·깊이 기록 정책이 갈린다.</summary>
+        private readonly bool _transparentTrack;
+
+        public BFPixelizerPass(bool transparentTrack)
         {
-            renderPassEvent = RenderPassEvent.AfterRenderingOpaques;
+            _transparentTrack = transparentTrack;
+            // 소스 검증(UniversalRendererRenderGraph.cs 1264~1269): AfterRenderingTransparents는
+            // 투명 드로우 '이후'에 기록된다 → 유리가 물 위에 블렌딩된다.
+            renderPassEvent = transparentTrack
+                ? RenderPassEvent.AfterRenderingTransparents
+                : RenderPassEvent.AfterRenderingOpaques;
         }
 
         public void Setup(Material compositeMaterial, Material downsampleMaterial, int pixelSize, float depthEpsilon,
@@ -177,6 +200,7 @@ namespace DesktopCompanion.Rendering
         {
             public TextureHandle OffColor;
             public TextureHandle OffMeta;
+            public TextureHandle OffAlpha;
             public TextureHandle OffDepth;
             public Material Material;
             public float CellSize;
@@ -186,15 +210,18 @@ namespace DesktopCompanion.Rendering
         {
             public TextureHandle OffColor;
             public TextureHandle OffMeta;
+            public TextureHandle OffAlpha;
             public TextureHandle OffDepth;
             public Material Material;
             public float CellSize;
             public float DepthEpsilon;
+            public int CompositePassIndex; // 0 = 불투명, 4 = 투명(블렌드·깊이 미기록)
         }
 
         private class DepthTexUpdatePassData
         {
             public TextureHandle LowColor;
+            public TextureHandle LowMeta;
             public TextureHandle LowDepth;
             public Material Material;
             public float CellSize;
@@ -214,6 +241,7 @@ namespace DesktopCompanion.Rendering
         {
             public TextureHandle LowColor;
             public TextureHandle LowMeta;
+            public TextureHandle LowAlpha;
             public TextureHandle LowDepth;
             public Material Material;
             public float CellSize;
@@ -254,9 +282,32 @@ namespace DesktopCompanion.Rendering
             depthDescriptor.graphicsFormat = GraphicsFormat.None;
             depthDescriptor.depthStencilFormat = GraphicsFormat.D32_SFloat;
 
-            var offColor = UniversalRenderer.CreateRenderGraphTexture(renderGraph, colorDescriptor, "BFP_OffColor", false, FilterMode.Point);
-            var offMeta = UniversalRenderer.CreateRenderGraphTexture(renderGraph, colorDescriptor, "BFP_OffMeta", false, FilterMode.Point);
-            var offDepth = UniversalRenderer.CreateRenderGraphTexture(renderGraph, depthDescriptor, "BFP_OffDepth", false, FilterMode.Point);
+            // 알파 전용 버퍼(계획 15): r = 오브젝트 알파, g = 아웃라인 투명도. 2채널이면 충분.
+            var alphaDescriptor = colorDescriptor;
+            alphaDescriptor.colorFormat = RenderTextureFormat.RGHalf;
+
+            // _CameraDepthTexture를 깊이 어태치먼트로 쓸 수 있는지 판별한다.
+            // URP는 구성에 따라 이 텍스처를 진짜 깊이 포맷(DepthNormals 프리패스 — 예: SSAO 활성)으로
+            // 만들기도 하고, CopyDepth 경로에서 컬러 포맷(R32_SFloat)으로 만들기도 한다. 후자를
+            // SetRenderAttachmentDepth에 바인딩하면 RenderGraph 에러로 렌더링이 통째로 실패한다.
+            bool depthTexAttachable = GraphicsFormatUtility.IsDepthFormat(
+                renderGraph.GetTextureDesc(resourceData.cameraDepthTexture).format);
+            if (depthTexAttachable == false && _warnedDepthTexNotAttachable == false)
+            {
+                _warnedDepthTexNotAttachable = true;
+                Debug.LogWarning(
+                    "[BFPixelizer] _CameraDepthTexture가 깊이 포맷이 아니라 DepthTex Update를 건너뜁니다. " +
+                    "픽셀화 오브젝트가 물(SW3)의 수중 투영에 반영되지 않습니다. " +
+                    "복구하려면 렌더러에서 깊이 프리패스를 유발하는 기능(예: SSAO)을 켜세요.");
+            }
+
+            // 두 트랙이 같은 프레임에 공존하므로 버퍼 이름을 분리한다(Frame Debugger 식별용).
+            string tag = _transparentTrack ? "Tr" : "Op";
+
+            var offColor = UniversalRenderer.CreateRenderGraphTexture(renderGraph, colorDescriptor, $"BFP_{tag}_OffColor", false, FilterMode.Point);
+            var offMeta = UniversalRenderer.CreateRenderGraphTexture(renderGraph, colorDescriptor, $"BFP_{tag}_OffMeta", false, FilterMode.Point);
+            var offAlpha = UniversalRenderer.CreateRenderGraphTexture(renderGraph, alphaDescriptor, $"BFP_{tag}_OffAlpha", false, FilterMode.Point);
+            var offDepth = UniversalRenderer.CreateRenderGraphTexture(renderGraph, depthDescriptor, $"BFP_{tag}_OffDepth", false, FilterMode.Point);
 
             // 픽셀 스케일: 자동 = 카메라 타깃 해상도 ÷ 화면 해상도(Play 중 World_RT=2, 에디트 모드 백버퍼=1).
             float pixelScale = _autoPixelScale
@@ -268,17 +319,23 @@ namespace DesktopCompanion.Rendering
             var lowColorDescriptor = colorDescriptor;
             lowColorDescriptor.width = (colorDescriptor.width + cellSizeRt - 1) / cellSizeRt;
             lowColorDescriptor.height = (colorDescriptor.height + cellSizeRt - 1) / cellSizeRt;
+            var lowAlphaDescriptor = alphaDescriptor;
+            lowAlphaDescriptor.width = lowColorDescriptor.width;
+            lowAlphaDescriptor.height = lowColorDescriptor.height;
             var lowDepthDescriptor = depthDescriptor;
             lowDepthDescriptor.width = lowColorDescriptor.width;
             lowDepthDescriptor.height = lowColorDescriptor.height;
 
-            var lowColor = UniversalRenderer.CreateRenderGraphTexture(renderGraph, lowColorDescriptor, "BFP_LowColor", false, FilterMode.Point);
-            var lowMeta = UniversalRenderer.CreateRenderGraphTexture(renderGraph, lowColorDescriptor, "BFP_LowMeta", false, FilterMode.Point);
-            var lowDepth = UniversalRenderer.CreateRenderGraphTexture(renderGraph, lowDepthDescriptor, "BFP_LowDepth", false, FilterMode.Point);
+            var lowColor = UniversalRenderer.CreateRenderGraphTexture(renderGraph, lowColorDescriptor, $"BFP_{tag}_LowColor", false, FilterMode.Point);
+            var lowMeta = UniversalRenderer.CreateRenderGraphTexture(renderGraph, lowColorDescriptor, $"BFP_{tag}_LowMeta", false, FilterMode.Point);
+            var lowAlpha = UniversalRenderer.CreateRenderGraphTexture(renderGraph, lowAlphaDescriptor, $"BFP_{tag}_LowAlpha", false, FilterMode.Point);
+            var lowDepth = UniversalRenderer.CreateRenderGraphTexture(renderGraph, lowDepthDescriptor, $"BFP_{tag}_LowDepth", false, FilterMode.Point);
 
             // ── Pass 1: 대상 머티리얼(커스텀 태그) 오프스크린 렌더 ──
+            // 정렬은 투명 트랙도 불투명 기준을 쓴다 — 오프스크린 버퍼는 깊이로 해결되고,
+            // 픽셀화 오브젝트끼리의 반투명 정렬은 지원 범위 밖(계획 15 한계 항목).
             var drawingSettings = CreateDrawingSettings(s_pixelizedTags, renderingData, cameraData, lightData, cameraData.defaultOpaqueSortFlags);
-            var filteringSettings = new FilteringSettings(RenderQueueRange.opaque)
+            var filteringSettings = new FilteringSettings(_transparentTrack ? RenderQueueRange.transparent : RenderQueueRange.opaque)
             {
                 // 스프라이트 모드 오브젝트는 v2(화면 격자) 경로에서 제외.
                 renderingLayerMask = ~PixelizedSpriteObject.RenderingLayerBit,
@@ -296,6 +353,7 @@ namespace DesktopCompanion.Rendering
                 builder.UseRendererList(rendererList);
                 builder.SetRenderAttachment(offColor, 0, AccessFlags.Write);
                 builder.SetRenderAttachment(offMeta, 1, AccessFlags.Write);
+                builder.SetRenderAttachment(offAlpha, 2, AccessFlags.Write);
                 builder.SetRenderAttachmentDepth(offDepth, AccessFlags.Write);
                 // 그림자 수신 샘플링 의존 선언(RenderObjectsPass와 동일 패턴).
                 if (resourceData.mainShadowsTexture.IsValid())
@@ -319,76 +377,99 @@ namespace DesktopCompanion.Rendering
             {
                 passData.OffColor = offColor;
                 passData.OffMeta = offMeta;
+                passData.OffAlpha = offAlpha;
                 passData.OffDepth = offDepth;
                 passData.Material = _downsampleMaterial;
                 passData.CellSize = cellSizeRt;
 
                 builder.UseTexture(offColor, AccessFlags.Read);
                 builder.UseTexture(offMeta, AccessFlags.Read);
+                builder.UseTexture(offAlpha, AccessFlags.Read);
                 builder.UseTexture(offDepth, AccessFlags.Read);
                 builder.SetRenderAttachment(lowColor, 0, AccessFlags.Write);
                 builder.SetRenderAttachment(lowMeta, 1, AccessFlags.Write);
+                builder.SetRenderAttachment(lowAlpha, 2, AccessFlags.Write);
                 builder.SetRenderAttachmentDepth(lowDepth, AccessFlags.Write);
-                builder.AllowGlobalStateModification(true); // _BFP_OffMeta/_BFP_OffDepth/_BFP_CellSize
+                builder.AllowGlobalStateModification(true); // _BFP_OffMeta/_BFP_OffAlpha/_BFP_OffDepth/_BFP_CellSize
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc((DownsamplePassData data, RasterGraphContext context) =>
                 {
                     context.cmd.SetGlobalTexture(s_offMetaProp, data.OffMeta);
+                    context.cmd.SetGlobalTexture(s_offAlphaProp, data.OffAlpha);
                     context.cmd.SetGlobalTexture(s_offDepthProp, data.OffDepth);
                     context.cmd.SetGlobalFloat(s_cellSizeProp, data.CellSize);
                     Blitter.BlitTexture(context.cmd, data.OffColor, new Vector4(1f, 1f, 0f, 0f), data.Material, 0);
                 });
             }
 
-            // ── Pass 3: 합성(CellSize=N — 저해상도 셀을 업스케일 + 아웃라인 + SV_Depth) ──
-            using (var builder = renderGraph.AddRasterRenderPass<CompositePassData>("BF Pixelizer Composite", out var passData))
+            // ── Pass 3: 합성(CellSize=N — 저해상도 셀을 업스케일 + 아웃라인) ──
+            // 불투명: 패스 0(Blend Off, SV_Depth 기록) / 투명: 패스 4(알파 블렌드, 깊이 미기록).
+            string compositeName = _transparentTrack ? "BF Pixelizer Composite (Transparent)" : "BF Pixelizer Composite";
+            using (var builder = renderGraph.AddRasterRenderPass<CompositePassData>(compositeName, out var passData))
             {
                 passData.OffColor = lowColor;
                 passData.OffMeta = lowMeta;
+                passData.OffAlpha = lowAlpha;
                 passData.OffDepth = lowDepth;
                 passData.Material = _compositeMaterial;
                 passData.CellSize = cellSizeRt;
                 passData.DepthEpsilon = _depthEpsilon;
+                passData.CompositePassIndex = _transparentTrack ? 4 : 0;
 
                 builder.UseTexture(lowColor, AccessFlags.Read);
                 builder.UseTexture(lowMeta, AccessFlags.Read);
+                builder.UseTexture(lowAlpha, AccessFlags.Read);
                 builder.UseTexture(lowDepth, AccessFlags.Read);
                 builder.UseTexture(resourceData.cameraDepthTexture, AccessFlags.Read);
                 // discard 픽셀은 기존 값 유지가 필요하므로 ReadWrite(load) 바인딩.
                 builder.SetRenderAttachment(resourceData.activeColorTexture, 0, AccessFlags.ReadWrite);
-                builder.SetRenderAttachmentDepth(resourceData.activeDepthTexture, AccessFlags.ReadWrite);
+                // 투명 트랙은 ZWrite Off라 깊이 어태치먼트가 필요 없다(유리가 이후 소비자를 막지 않게).
+                if (_transparentTrack == false)
+                    builder.SetRenderAttachmentDepth(resourceData.activeDepthTexture, AccessFlags.ReadWrite);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc((CompositePassData data, RasterGraphContext context) =>
                 {
                     context.cmd.SetGlobalTexture(s_offMetaProp, data.OffMeta);
+                    context.cmd.SetGlobalTexture(s_offAlphaProp, data.OffAlpha);
                     context.cmd.SetGlobalTexture(s_offDepthProp, data.OffDepth);
                     context.cmd.SetGlobalFloat(s_cellSizeProp, data.CellSize);
                     context.cmd.SetGlobalFloat(s_depthEpsProp, data.DepthEpsilon);
-                    Blitter.BlitTexture(context.cmd, data.OffColor, new Vector4(1f, 1f, 0f, 0f), data.Material, 0);
+                    Blitter.BlitTexture(context.cmd, data.OffColor, new Vector4(1f, 1f, 0f, 0f), data.Material, data.CompositePassIndex);
                 });
             }
 
+            // 투명 트랙은 여기서 종료: 스프라이트(회전 추종) 모드와 DepthTex 주입은 불투명 전용.
+            // 유리가 깊이 텍스처에 들어가면 SW3 물의 수중 투영이 유리에 막힌다.
+            if (_transparentTrack)
+                return;
+
             // ── 오브젝트 공간 모드(계획 14): 정렬 렌더 → 다운샘플 → 회전 배치 합성 ──
-            RecordSpriteObjectPasses(renderGraph, cameraData, resourceData, cellSizeRt);
+            RecordSpriteObjectPasses(renderGraph, cameraData, resourceData, cellSizeRt, depthTexAttachable);
 
             // ── Pass 4: 셀 깊이를 _CameraDepthTexture에 되쓰기 ──
             // SW3 물의 수중 투영(반투명·흡수)은 _CameraDepthTexture로 "물 아래 무엇이 있는지"를
             // 판단한다. 커스텀 태그 오브젝트는 프리패스에 없으므로 여기서 블록 깊이를 주입한다.
+            if (depthTexAttachable == false)
+                return; // 깊이 포맷이 아니면 주입 불가(위에서 경고) — 렌더링 자체는 계속된다.
+
             using (var builder = renderGraph.AddRasterRenderPass<DepthTexUpdatePassData>("BF Pixelizer DepthTex Update", out var passData))
             {
                 passData.LowColor = lowColor;
+                passData.LowMeta = lowMeta;
                 passData.LowDepth = lowDepth;
                 passData.Material = _compositeMaterial;
                 passData.CellSize = cellSizeRt;
 
                 builder.UseTexture(lowColor, AccessFlags.Read);
+                builder.UseTexture(lowMeta, AccessFlags.Read);
                 builder.UseTexture(lowDepth, AccessFlags.Read);
                 builder.SetRenderAttachmentDepth(resourceData.cameraDepthTexture, AccessFlags.ReadWrite);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc((DepthTexUpdatePassData data, RasterGraphContext context) =>
                 {
+                    context.cmd.SetGlobalTexture(s_offMetaProp, data.LowMeta);
                     context.cmd.SetGlobalTexture(s_offDepthProp, data.LowDepth);
                     context.cmd.SetGlobalFloat(s_cellSizeProp, data.CellSize);
                     Blitter.BlitTexture(context.cmd, data.LowColor, new Vector4(1f, 1f, 0f, 0f), data.Material, 1);
@@ -443,7 +524,8 @@ namespace DesktopCompanion.Rendering
         }
 
         /// <summary>계획 14: 스프라이트 모드 오브젝트별 [정렬 렌더 → 다운샘플 → 회전 배치 합성] 기록.</summary>
-        private void RecordSpriteObjectPasses(RenderGraph renderGraph, UniversalCameraData cameraData, UniversalResourceData resourceData, int cellSizeRt)
+        private void RecordSpriteObjectPasses(RenderGraph renderGraph, UniversalCameraData cameraData, UniversalResourceData resourceData,
+            int cellSizeRt, bool depthTexAttachable)
         {
             if (PixelizedSpriteObject.Active.Count == 0)
                 return;
@@ -460,10 +542,19 @@ namespace DesktopCompanion.Rendering
 
             UpdateAmbientShConstants();
 
+            // 카메라별 컬링 — 이 경로는 cmd.DrawRenderer를 직접 호출하므로 엔진 컬링(cullResults)이
+            // 적용되지 않는다. 없으면 (a) 보이지도 않는 오브젝트에 카메라마다 풀스크린 패스 2개가
+            // 낭비되고, (b) 다른 카메라(예: 아쿠아리움) 뷰에 메인 씬 오브젝트가 누출될 수 있다.
+            GeometryUtility.CalculateFrustumPlanes(camera, _frustumPlanes);
+
             foreach (PixelizedSpriteObject spriteObject in PixelizedSpriteObject.Active)
             {
                 if (spriteObject == null || spriteObject.Draws.Count == 0)
                     continue;
+                if ((camera.cullingMask & spriteObject.RendererLayerMask) == 0)
+                    continue; // 이 카메라가 보지 않는 레이어
+                if (GeometryUtility.TestPlanesAABB(_frustumPlanes, spriteObject.GetCullingBounds()) == false)
+                    continue; // 시야 밖
 
                 // 화면면 회전각 θ: 오브젝트 up의 뷰 공간 성분. (부호/축은 S0 시각 검증으로 확정 — 계획 14)
                 Vector3 upVS = restoreView.MultiplyVector(spriteObject.UpWS);
@@ -503,8 +594,12 @@ namespace DesktopCompanion.Rendering
                 spriteDepthDescriptor.graphicsFormat = GraphicsFormat.None;
                 spriteDepthDescriptor.depthStencilFormat = GraphicsFormat.D32_SFloat;
 
+                var spriteAlphaDescriptor = spriteColorDescriptor;
+                spriteAlphaDescriptor.colorFormat = RenderTextureFormat.RGHalf;
+
                 var spriteColor = UniversalRenderer.CreateRenderGraphTexture(renderGraph, spriteColorDescriptor, $"BFP_Sprite_{spriteObject.name}", false, FilterMode.Point);
                 var spriteMeta = UniversalRenderer.CreateRenderGraphTexture(renderGraph, spriteColorDescriptor, $"BFP_SpriteMeta_{spriteObject.name}", false, FilterMode.Point);
+                var spriteAlpha = UniversalRenderer.CreateRenderGraphTexture(renderGraph, spriteAlphaDescriptor, $"BFP_SpriteAlpha_{spriteObject.name}", false, FilterMode.Point);
                 var spriteDepth = UniversalRenderer.CreateRenderGraphTexture(renderGraph, spriteDepthDescriptor, $"BFP_SpriteDepth_{spriteObject.name}", false, FilterMode.Point);
 
                 using (var builder = renderGraph.AddRasterRenderPass<SpritePassData>($"BF Pixelizer Sprite ({spriteObject.name})", out var passData))
@@ -518,6 +613,7 @@ namespace DesktopCompanion.Rendering
 
                     builder.SetRenderAttachment(spriteColor, 0, AccessFlags.Write);
                     builder.SetRenderAttachment(spriteMeta, 1, AccessFlags.Write);
+                    builder.SetRenderAttachment(spriteAlpha, 2, AccessFlags.Write);
                     builder.SetRenderAttachmentDepth(spriteDepth, AccessFlags.Write);
                     // 그림자 수신 샘플링 의존 선언(RenderObjectsPass와 동일) — 미선언 시 RG 컴파일에 따라
                     // 바인딩이 무효가 되어 라이팅이 검게 나오는 불규칙 증상이 발생한다.
@@ -558,33 +654,41 @@ namespace DesktopCompanion.Rendering
                 var spriteLowColorDescriptor = spriteColorDescriptor;
                 spriteLowColorDescriptor.width = cellCount;
                 spriteLowColorDescriptor.height = cellCount;
+                var spriteLowAlphaDescriptor = spriteAlphaDescriptor;
+                spriteLowAlphaDescriptor.width = cellCount;
+                spriteLowAlphaDescriptor.height = cellCount;
                 var spriteLowDepthDescriptor = spriteDepthDescriptor;
                 spriteLowDepthDescriptor.width = cellCount;
                 spriteLowDepthDescriptor.height = cellCount;
 
                 var spriteLowColor = UniversalRenderer.CreateRenderGraphTexture(renderGraph, spriteLowColorDescriptor, $"BFP_SpriteLow_{spriteObject.name}", false, FilterMode.Point);
                 var spriteLowMeta = UniversalRenderer.CreateRenderGraphTexture(renderGraph, spriteLowColorDescriptor, $"BFP_SpriteLowMeta_{spriteObject.name}", false, FilterMode.Point);
+                var spriteLowAlpha = UniversalRenderer.CreateRenderGraphTexture(renderGraph, spriteLowAlphaDescriptor, $"BFP_SpriteLowAlpha_{spriteObject.name}", false, FilterMode.Point);
                 var spriteLowDepth = UniversalRenderer.CreateRenderGraphTexture(renderGraph, spriteLowDepthDescriptor, $"BFP_SpriteLowDepth_{spriteObject.name}", false, FilterMode.Point);
 
                 using (var builder = renderGraph.AddRasterRenderPass<DownsamplePassData>($"BF Pixelizer Sprite Downsample ({spriteObject.name})", out var passData))
                 {
                     passData.OffColor = spriteColor;
                     passData.OffMeta = spriteMeta;
+                    passData.OffAlpha = spriteAlpha;
                     passData.OffDepth = spriteDepth;
                     passData.Material = _downsampleMaterial;
                     passData.CellSize = cellSizeRt;
 
                     builder.UseTexture(spriteColor, AccessFlags.Read);
                     builder.UseTexture(spriteMeta, AccessFlags.Read);
+                    builder.UseTexture(spriteAlpha, AccessFlags.Read);
                     builder.UseTexture(spriteDepth, AccessFlags.Read);
                     builder.SetRenderAttachment(spriteLowColor, 0, AccessFlags.Write);
                     builder.SetRenderAttachment(spriteLowMeta, 1, AccessFlags.Write);
+                    builder.SetRenderAttachment(spriteLowAlpha, 2, AccessFlags.Write);
                     builder.SetRenderAttachmentDepth(spriteLowDepth, AccessFlags.Write);
                     builder.AllowGlobalStateModification(true);
                     builder.AllowPassCulling(false);
                     builder.SetRenderFunc((DownsamplePassData data, RasterGraphContext context) =>
                     {
                         context.cmd.SetGlobalTexture(s_offMetaProp, data.OffMeta);
+                        context.cmd.SetGlobalTexture(s_offAlphaProp, data.OffAlpha);
                         context.cmd.SetGlobalTexture(s_offDepthProp, data.OffDepth);
                         context.cmd.SetGlobalFloat(s_cellSizeProp, data.CellSize);
                         Blitter.BlitTexture(context.cmd, data.OffColor, new Vector4(1f, 1f, 0f, 0f), data.Material, 0);
@@ -600,6 +704,7 @@ namespace DesktopCompanion.Rendering
                 {
                     passData.LowColor = spriteLowColor;
                     passData.LowMeta = spriteLowMeta;
+                    passData.LowAlpha = spriteLowAlpha;
                     passData.LowDepth = spriteLowDepth;
                     passData.Material = _compositeMaterial;
                     passData.CellSize = cellSizeRt;
@@ -612,6 +717,7 @@ namespace DesktopCompanion.Rendering
 
                     builder.UseTexture(spriteLowColor, AccessFlags.Read);
                     builder.UseTexture(spriteLowMeta, AccessFlags.Read);
+                    builder.UseTexture(spriteLowAlpha, AccessFlags.Read);
                     builder.UseTexture(spriteLowDepth, AccessFlags.Read);
                     builder.UseTexture(resourceData.cameraDepthTexture, AccessFlags.Read);
                     builder.SetRenderAttachment(resourceData.activeColorTexture, 0, AccessFlags.ReadWrite);
@@ -628,6 +734,7 @@ namespace DesktopCompanion.Rendering
                         var spriteAxis = new Vector4(1f, 1f, 0f, 0f);
 
                         context.cmd.SetGlobalTexture(s_offMetaProp, data.LowMeta);
+                        context.cmd.SetGlobalTexture(s_offAlphaProp, data.LowAlpha);
                         context.cmd.SetGlobalTexture(s_offDepthProp, data.LowDepth);
                         context.cmd.SetGlobalFloat(s_cellSizeProp, data.CellSize);
                         context.cmd.SetGlobalFloat(s_depthEpsProp, data.DepthEpsilon);
@@ -640,6 +747,9 @@ namespace DesktopCompanion.Rendering
                 }
 
                 // ── 스프라이트 셀 깊이 → _CameraDepthTexture 되쓰기(물 수중 투영용, v2 Pass 4와 동일 역할) ──
+                if (depthTexAttachable == false)
+                    continue; // 깊이 포맷이 아니면 주입 불가(호출부에서 경고) — 합성까지는 정상 수행됨.
+
                 using (var builder = renderGraph.AddRasterRenderPass<SpriteCompositePassData>($"BF Pixelizer Sprite DepthTex ({spriteObject.name})", out var passData))
                 {
                     passData.LowColor = spriteLowColor;
@@ -654,6 +764,7 @@ namespace DesktopCompanion.Rendering
                     passData.DepthRange = new Vector4(Mathf.Max(0.01f, near), far, camera.nearClipPlane, camera.farClipPlane);
 
                     builder.UseTexture(spriteLowColor, AccessFlags.Read);
+                    builder.UseTexture(spriteLowMeta, AccessFlags.Read);
                     builder.UseTexture(spriteLowDepth, AccessFlags.Read);
                     builder.SetRenderAttachmentDepth(resourceData.cameraDepthTexture, AccessFlags.ReadWrite);
                     builder.AllowGlobalStateModification(true);
@@ -664,6 +775,7 @@ namespace DesktopCompanion.Rendering
                         var spritePivot = new Vector4(data.PivotNdc01.x * data.TargetSize.x, pivotRasterY, data.CenterCell.x, data.CenterCell.y);
                         var spriteAxis = new Vector4(1f, 1f, 0f, 0f);
 
+                        context.cmd.SetGlobalTexture(s_offMetaProp, data.LowMeta);
                         context.cmd.SetGlobalTexture(s_offDepthProp, data.LowDepth);
                         context.cmd.SetGlobalFloat(s_cellSizeProp, data.CellSize);
                         context.cmd.SetGlobalVector(s_spriteRotProp, data.SpriteRot);
