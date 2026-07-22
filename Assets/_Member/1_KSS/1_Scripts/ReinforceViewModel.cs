@@ -99,32 +99,60 @@ namespace DesktopCompanion.Views
                 return;
             }
 
-            // --- [테스트용 코드] ---
-            // 1. 필요 골드 설정 (테스트 1 고정)
-            RequiredGold.Value = 1;
+            // 1. 필요 골드 설정
+            RequiredGold.Value = nextStep.GoldCost;
             
-            // 2. 필요 재료 문자열 완성 (테스트 소모 재료 없음)
-            RequiredMaterialText.Value = "<테스트> 소모 재료 없음";
+            // 2. 필요 재료 문자열 완성
+            if (nextStep.MaterialCosts != null && nextStep.MaterialCosts.Length > 0)
+            {
+                var mat = nextStep.MaterialCosts[0];
+                int currentMat = 0; 
+                
+                // 인벤토리 시스템의 읽기 API(GetTotalQuantityByDataId)를 활용하여 
+                // 현재 플레이어가 소지하고 있는 해당 재료의 실제 총량을 가져옵니다.
+                if (m_inventorySystem != null && mat.Material != null)
+                {
+                    currentMat = m_inventorySystem.GetTotalQuantityByDataId(DesktopCompanion.Data.ItemType.Materials, mat.Material.ID);
+                }
 
-            // 3. 스탯 증가량 문자열 완성 (기본 스탯 + 1씩 증가)
+                RequiredMaterialText.Value = $"{mat.Material?.Name ?? "재료"} {currentMat} / {mat.Count}";
+            }
+            else
+            {
+                RequiredMaterialText.Value = "필요 재료 없음";
+            }
+
+            // 3. 스탯 증가량 문자열 완성
             StringBuilder sb = new StringBuilder();
             sb.AppendLine($"<color=#5BC0EB><b>[{equip.ItemData.Name}]</b></color>");
             sb.AppendLine("-------------------");
             
-            var baseModifiers = equip.ItemData.GetModifiers(0);
+            // 현재 스탯 가져오기 (0강이면 기본 효과, 그 이상이면 해당 레벨의 누적 효과)
+            var currentModifiers = equip.ItemData.GetModifiers(equip.UpgradeLevel);
 
-            if (baseModifiers != null)
+            if (nextStep.Modifiers != null)
             {
-                foreach (var mod in baseModifiers)
+                foreach (var nextMod in nextStep.Modifiers)
                 {
-                    float currValue = mod.Value + equip.UpgradeLevel;
-                    float testNextValue = currValue + 1;
-                    sb.AppendLine($"{GetStatNameKR(mod.Stat)} : {currValue} <color=#00FF00>-> {testNextValue}</color>");
+                    // 현재 스탯에서 같은 종류의 스탯 값 찾기
+                    float currValue = 0f;
+                    if (currentModifiers != null)
+                    {
+                        foreach (var currMod in currentModifiers)
+                        {
+                            if (currMod.Stat == nextMod.Stat)
+                            {
+                                currValue = currMod.Value;
+                                break;
+                            }
+                        }
+                    }
+
+                    sb.AppendLine($"{GetStatNameKR(nextMod.Stat)} : {currValue} <color=#00FF00>-> {nextMod.Value}</color>");
                 }
             }
             
             StatIncreaseText.Value = sb.ToString();
-            // -----------------------
         }
 
         private void TryReinforce()

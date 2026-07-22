@@ -22,7 +22,7 @@ namespace DesktopCompanion.Views
         {
             if (m_itemPickupController == null)
             {
-                m_itemPickupController = GameObject.FindObjectOfType<ItemPickupController>();
+                m_itemPickupController = GameObject.FindAnyObjectByType<ItemPickupController>();
             }
 
             m_viewModel = new ReinforceViewModel();
