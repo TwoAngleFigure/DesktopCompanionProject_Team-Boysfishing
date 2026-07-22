@@ -31,6 +31,12 @@ namespace DesktopCompanion.Rendering
         [Range(1f, 4f)]
         [SerializeField] private float _pixelScale = 1f;
 
+        [Header("월드 격자 (계획 23)")]
+        [Tooltip("블록 크기를 월드 유닛 기준으로 고정한다. 해상도가 달라도 오브젝트가 같은 도트 수로 그려진다. " +
+                 "격자 기준값은 PixelGridDesign이 소유한다(640×360 · 18도트/유닛). " +
+                 "해제 시 화면 격자(_pixelSize 기준)로 동작한다 — 비교·폴백용.")]
+        [SerializeField] private bool _worldSpaceGrid = true;
+
         // 빌드 포함 보장을 위한 직렬화 참조(에디터에서 자동 할당).
         [SerializeField, HideInInspector] private Shader _compositeShader;
         [SerializeField, HideInInspector] private Shader _downsampleShader;
@@ -69,7 +75,8 @@ namespace DesktopCompanion.Rendering
                 return;
             }
 
-            _pass.Setup(_compositeMaterial, _downsampleMaterial, _pixelSize, _depthEpsilon, _autoPixelScale, _pixelScale);
+            _pass.Setup(_compositeMaterial, _downsampleMaterial, _pixelSize, _depthEpsilon, _autoPixelScale, _pixelScale,
+                _worldSpaceGrid);
             _pass.ConfigureInput(ScriptableRenderPassInput.Depth); // 가림 판정용 _CameraDepthTexture 보장
             renderer.EnqueuePass(_pass);
         }
@@ -138,13 +145,16 @@ namespace DesktopCompanion.Rendering
         private float _depthEpsilon;
         private bool _autoPixelScale;
         private float _manualPixelScale;
+        private bool _worldSpaceGrid;
+        private bool _warnedSubPixel;
 
         public BFPixelizerPass()
         {
             renderPassEvent = RenderPassEvent.AfterRenderingOpaques;
         }
 
-        public void Setup(Material compositeMaterial, Material downsampleMaterial, int pixelSize, float depthEpsilon, bool autoPixelScale, float manualPixelScale)
+        public void Setup(Material compositeMaterial, Material downsampleMaterial, int pixelSize, float depthEpsilon,
+            bool autoPixelScale, float manualPixelScale, bool worldSpaceGrid)
         {
             _compositeMaterial = compositeMaterial;
             _downsampleMaterial = downsampleMaterial;
@@ -152,6 +162,7 @@ namespace DesktopCompanion.Rendering
             _depthEpsilon = depthEpsilon;
             _autoPixelScale = autoPixelScale;
             _manualPixelScale = Mathf.Max(1f, manualPixelScale);
+            _worldSpaceGrid = worldSpaceGrid;
         }
 
         private class OffscreenPassData
@@ -253,7 +264,7 @@ namespace DesktopCompanion.Rendering
                 : _manualPixelScale;
 
             // ── 저해상도(1/N) 버퍼 — 다운샘플 출력 ──
-            int cellSizeRt = Mathf.Max(1, Mathf.RoundToInt(_pixelSize * pixelScale));
+            int cellSizeRt = Mathf.Max(1, ResolveCellSize(cameraData, pixelScale));
             var lowColorDescriptor = colorDescriptor;
             lowColorDescriptor.width = (colorDescriptor.width + cellSizeRt - 1) / cellSizeRt;
             lowColorDescriptor.height = (colorDescriptor.height + cellSizeRt - 1) / cellSizeRt;
@@ -383,6 +394,52 @@ namespace DesktopCompanion.Rendering
                     Blitter.BlitTexture(context.cmd, data.LowColor, new Vector4(1f, 1f, 0f, 0f), data.Material, 1);
                 });
             }
+        }
+
+        /// <summary>
+        /// 격자 셀 크기(RT 픽셀)를 산출한다.
+        ///
+        /// 월드 격자(계획 23): 블록의 월드 크기를 <see cref="PixelGridDesign.BlocksPerUnit"/>로 고정해
+        /// 해상도가 달라도 오브젝트가 같은 도트 수로 그려진다.
+        ///   블록(화면px) = RT_height ÷ (2 × orthographicSize) ÷ blocksPerUnit ÷ pixelScale
+        ///
+        /// 화면 블록 크기를 먼저 정수로 반올림한 뒤 배율을 곱하는 이유는, 그래야 표시 단계에서
+        /// 블록 경계가 반픽셀에 걸리지 않기 때문이다. 시야는 카메라가 고정하므로 반올림 오차는
+        /// 아트 해상도(유효 도트 밀도)가 흡수한다.
+        ///
+        /// 화면 격자(폴백): 블록이 항상 _pixelSize 화면 픽셀. 해상도별로 오브젝트의 도트 수가 달라진다.
+        /// </summary>
+        private int ResolveCellSize(UniversalCameraData cameraData, float pixelScale)
+        {
+            Camera camera = cameraData.camera;
+            if (_worldSpaceGrid == false || camera.orthographic == false || camera.orthographicSize <= 0f)
+            {
+                return Mathf.RoundToInt(_pixelSize * pixelScale);
+            }
+
+            int scaleStep = Mathf.Max(1, Mathf.RoundToInt(pixelScale));
+            float ppuRt = cameraData.cameraTargetDescriptor.height / (2f * camera.orthographicSize);
+            float exact = ppuRt / PixelGridDesign.BlocksPerUnit / scaleStep;
+
+            int blockScreenPx = Mathf.RoundToInt(exact);
+            if (blockScreenPx < 1)
+            {
+                // 도트가 물리 픽셀보다 작아지는 해상도 — 하한(1px)으로 잘리며 아트가 뭉개진다.
+                if (_warnedSubPixel == false)
+                {
+                    _warnedSubPixel = true;
+                    Debug.LogWarning(
+                        $"[BFPixelizer] 지원 하한 미만 해상도 — 블록이 {exact:F2}화면픽셀로 산출되어 1px로 제한합니다.\n" +
+                        $"  기준 도트 해상도 {PixelGridDesign.BaseDotsWide}×{PixelGridDesign.BaseDotsHigh} 기준, " +
+                        $"넓은 화면은 세로 {PixelGridDesign.BaseDotsHigh}px, 좁은 화면은 가로 {PixelGridDesign.BaseDotsWide}px 이상이 필요합니다.");
+                }
+                blockScreenPx = 1;
+            }
+            else
+            {
+                _warnedSubPixel = false;
+            }
+            return blockScreenPx * scaleStep;
         }
 
         /// <summary>계획 14: 스프라이트 모드 오브젝트별 [정렬 렌더 → 다운샘플 → 회전 배치 합성] 기록.</summary>

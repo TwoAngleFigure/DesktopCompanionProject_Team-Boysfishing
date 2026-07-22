@@ -1,20 +1,23 @@
 using UnityEngine;
+using DesktopCompanion.Rendering;
 
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 직교 카메라의 로컬 오프셋을 화면비(aspect)에 비례해 재계산하여,
-    /// 부모(배)가 항상 화면상 같은 정규화 좌표에 보이도록 고정한다(계획 19).
+    /// 직교 카메라의 로컬 오프셋을 재계산해 부모(배)의 화면 위치를 고정한다(계획 19·26).
     ///
-    /// 배경: orthographicSize는 세로 절반만 고정하고 가로는 aspect 파생값이라,
-    /// 로컬 오프셋이 상수면 해상도(모니터) 변경 시 배가 화면 밖으로 밀려난다.
-    /// 계산은 무상태(현재 aspect만 사용) — 이전 해상도·전환 경로와 무관하게 항상 같은 결과.
+    ///  - 가로: **화면 우측 끝 기준**. 배에서 우측 끝까지의 거리를 기준 화면비(16:9)에서 산출해 고정하므로,
+    ///          화면비가 넓어지면 늘어난 폭이 전부 좌측으로 간다.
+    ///  - 세로: 정규화 위치 기준. orthographicSize가 상수이므로(계획 25) 결과도 상수다.
+    ///
+    /// 계산은 무상태(현재 화면비만 사용) — 이전 해상도·전환 경로와 무관하게 항상 같은 결과.
     /// </summary>
     [RequireComponent(typeof(Camera))]
     public class CameraAspectAnchor : MonoBehaviour
     {
-        [Header("부모(배)의 목표 화면 위치 (정규화: 중앙 0, 우/상 +1)")]
-        [Tooltip("에디터에서 카메라를 원하는 배치로 두고 컨텍스트 메뉴 '현재 배치에서 정규화 좌표 역산'으로 채울 수 있다.")]
+        [Header("부모(배)의 목표 화면 위치 (기준 화면비 16:9 기준, 중앙 0 · 우/상 +1)")]
+        [Tooltip("가로는 여기서 산출한 '우측 여백'이 모든 화면비에서 유지된다. " +
+                 "에디터에서 카메라를 원하는 배치로 두고 컨텍스트 메뉴로 역산할 수 있다.")]
         [SerializeField, Range(-1f, 1f)] private float _normalizedX = 0.5f;
         [SerializeField, Range(-1f, 1f)] private float _normalizedY = -0.5f;
 
@@ -64,8 +67,13 @@ namespace DesktopCompanion.Views
             float aspect = (float)width / height;   // Camera.aspect 대신 직접 계산(지연 갱신 회피)
             float halfWidth = size * aspect;
 
+            // 가로는 '화면 우측 끝'을 기준으로 고정한다(계획 26).
+            // 배가 우하단에 있으므로 우측 여백이 구도의 기준이고, 화면비가 넓어질 때 늘어난 폭은
+            // 전부 좌측(먼 바다)으로 가야 한다. 정규화 위치로 잡으면 좌우가 함께 늘어나 우측 여백이 벌어진다.
+            float rightMargin = (1f - _normalizedX) * size * PixelGridDesign.ReferenceAspect;
+
             Vector3 localPos = transform.localPosition;
-            localPos.x = -_normalizedX * halfWidth + _worldOffset.x;
+            localPos.x = rightMargin - halfWidth + _worldOffset.x;
             localPos.y = -_normalizedY * size + _worldOffset.y;   // aspect 무관 — 초기 1회 이후 불변
             transform.localPosition = localPos;
 
@@ -109,9 +117,12 @@ namespace DesktopCompanion.Views
             }
 
             // 오프셋 몫을 제외한 나머지를 정규화 좌표로 환산한다(역산 후 Apply 결과가 현재 배치와 일치하도록).
-            _normalizedX = -(transform.localPosition.x - _worldOffset.x) / halfWidth;
+            // 가로는 우측 여백 → 기준 화면비 기준 정규화 순으로 되돌린다. 어떤 화면비에서 실행해도 같은 값이 나온다.
+            float rightMargin = (transform.localPosition.x - _worldOffset.x) + halfWidth;
+            _normalizedX = 1f - rightMargin / (size * PixelGridDesign.ReferenceAspect);
             _normalizedY = -(transform.localPosition.y - _worldOffset.y) / size;
-            Debug.Log($"[CameraAspectAnchor] 역산 완료: Nx={_normalizedX:F3}, Ny={_normalizedY:F3} (aspect={aspect:F3}, target={width}x{height})");
+            Debug.Log($"[CameraAspectAnchor] 역산 완료: Nx={_normalizedX:F3}, Ny={_normalizedY:F3} " +
+                      $"(우측 여백 {rightMargin:F2}유닛, aspect={aspect:F3}, target={width}x{height})");
 
 #if UNITY_EDITOR
             UnityEditor.EditorUtility.SetDirty(this);

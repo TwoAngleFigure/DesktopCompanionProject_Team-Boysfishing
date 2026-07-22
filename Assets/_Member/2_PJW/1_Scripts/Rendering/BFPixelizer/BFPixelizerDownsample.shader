@@ -42,9 +42,10 @@ Shader "Hidden/BFPixelizer/Downsample"
 
             FragOutput frag(Varyings input)
             {
-                int2 cell = int2(input.positionCS.xy);      // 저해상도 타깃의 픽셀 = 셀
-                int n = max(1, (int)_BFP_CellSize);
-                int2 src = cell * n + n / 2;                 // 블록 중앙 텍셀(전역 격자와 정렬)
+                // 좌표·셀 크기 모두 음수가 아니므로 uint로 계산한다(부호 있는 정수 나눗셈 회피).
+                uint2 cell = uint2(input.positionCS.xy);    // 저해상도 타깃의 픽셀 = 셀
+                uint n = max(1u, (uint)_BFP_CellSize);
+                uint2 src = cell * n + n / 2;                // 블록 중앙 텍셀(전역 격자와 정렬)
 
                 FragOutput output;
                 output.color = LOAD_TEXTURE2D_X(_BlitTexture, src);
