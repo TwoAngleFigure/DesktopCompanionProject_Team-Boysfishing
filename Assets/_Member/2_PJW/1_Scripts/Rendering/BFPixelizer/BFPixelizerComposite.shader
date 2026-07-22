@@ -46,9 +46,12 @@ Shader "Hidden/BFPixelizer/Composite"
 
             FragOutput frag(Varyings input)
             {
-                int2 p = int2(input.positionCS.xy);
-                int cellSize = max(1, (int)_BFP_CellSize);
-                int2 cell = p / cellSize;
+                // 화면 좌표·셀 크기는 항상 음수가 아니다. 부호 있는 정수 나눗셈은 GPU에서 느리므로
+                // 나눗셈만 uint로 수행하고, 이웃 셀 오프셋(음수 포함) 연산을 위해 int2로 되돌린다.
+                uint2 pu = uint2(input.positionCS.xy);
+                uint cellSize = max(1u, (uint)_BFP_CellSize);
+                int2 p = int2(pu);
+                int2 cell = int2(pu / cellSize);
 
                 half4 cellColor = LOAD_TEXTURE2D_X(_BlitTexture, cell);
                 if (cellColor.a < 0.5)
@@ -112,8 +115,9 @@ Shader "Hidden/BFPixelizer/Composite"
 
             float frag(Varyings input) : SV_Depth
             {
-                int2 p = int2(input.positionCS.xy);
-                int2 cell = p / max(1, (int)_BFP_CellSize);
+                // 좌표·셀 크기 모두 음수가 아니므로 uint 나눗셈을 쓴다(부호 있는 나눗셈 회피).
+                uint2 p = uint2(input.positionCS.xy);
+                uint2 cell = p / max(1u, (uint)_BFP_CellSize);
 
                 // _BlitTexture = 저해상도 컬러(a=커버리지)
                 if (LOAD_TEXTURE2D_X(_BlitTexture, cell).a < 0.5)

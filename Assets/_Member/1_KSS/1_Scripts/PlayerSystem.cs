@@ -55,8 +55,8 @@ namespace DesktopCompanion.Systems
         public float BaseCriticalChance => m_baseCriticalChance;
         public float BaseCriticalMultiply => m_baseCriticalMultiply;
 
-        public float BaseAutoBattleCooltime => m_baseAutoBattleCooltime;
-        public float BaseAutoSpeedPerTime => m_baseAutoSpeedPerTime;
+        public float BaseAutoBattleCooltime => Mathf.Max(0.1f, m_baseAutoBattleCooltime);
+        public float BaseAutoSpeedPerTime => 1f / Mathf.Max(0.1f, m_baseAutoSpeedPerTime);
         public float BaseAutoDamagePerHitMultiply => m_baseAutoDamagePerHitMultiply;
 
         public float BaseProbabilityAtFishSize => m_baseProbabilityAtFishSize;
@@ -225,7 +225,7 @@ namespace DesktopCompanion.Systems
                             m_baseCriticalMultiply += stat.Value;
                             break;
                         case PlayerStat.AutoBattleCooltime:
-                            m_baseAutoBattleCooltime += stat.Value;
+                            m_baseAutoBattleCooltime -= stat.Value;
                             break;
                         case PlayerStat.AutoSpeedPerTime:
                             m_baseAutoSpeedPerTime += stat.Value;
@@ -354,12 +354,20 @@ namespace DesktopCompanion.Systems
         // [나중에 수정할 부분] 현재 0으로 두어 무한 테스트 가능. 실전 시 100 등으로 변경!
         private int m_currentStorageUpgradeCost = 0;
         private float m_storageUpgradeCostMultiplier = 1.25f; // 비용 1.25배 증가
+        
+        private const int MAX_INVENTORY_SIZE = 150; // 최대 인벤토리 확장 제한
 
         public void UpgradeFishStorage()
         {
             if (playerHandle.Value == Guid.Empty) return;
 
             Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
+
+            if (player.BaseData.BaseInventorySize + m_bonusInventorySize >= MAX_INVENTORY_SIZE)
+            {
+                Debug.LogWarning($"[물고기 창고] 이미 최대 크기({MAX_INVENTORY_SIZE}칸)에 도달하여 더 이상 확장할 수 없습니다.");
+                return;
+            }
 
             // 플레이어의 골드가 업그레이드 비용보다 같거나 많은지 확인
             if (player != null && player.Gold >= m_currentStorageUpgradeCost)
@@ -384,6 +392,72 @@ namespace DesktopCompanion.Systems
             {
                 Debug.LogWarning($"[물고기 창고] 골드가 부족합니다! (필요 골드: {m_currentStorageUpgradeCost} / 보유 골드: {player?.Gold})");
             }
+        }
+
+        // =========================================================
+        // 장비 강화 로직
+        // =========================================================
+        public bool TryReinforceEquipment(EntityHandle equipHandle)
+        {
+            Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
+            Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(equipHandle);
+
+            if (player == null || equipment == null) return false;
+
+            // 1. 다음 강화 데이터 조회
+            DesktopCompanion.Data.UpgradeStep nextStep = equipment.ItemData.GetNextUpgradeStep(equipment.UpgradeLevel);
+            if (nextStep == null)
+            {
+                Debug.LogWarning("최대 강화 레벨입니다.");
+                return false;
+            }
+
+            // 2. 비용 검증 (골드)
+            if (player.Gold < nextStep.GoldCost)
+            {
+                Debug.LogWarning("골드가 부족합니다.");
+                return false;
+            }
+
+            // 3. 비용 검사 (재료)
+            if (nextStep.MaterialCosts != null)
+            {
+                foreach (var mat in nextStep.MaterialCosts)
+                {
+                    if (mat.Material != null)
+                    {
+                        if (m_inventorySystem.GetTotalQuantityByDataId(DesktopCompanion.Data.ItemType.Materials, mat.Material.ID) < mat.Count)
+                        {
+                            Debug.LogWarning("재료가 부족합니다.");
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            // 4. 비용 차감
+            player.AddGold(-nextStep.GoldCost);
+            
+            // 재료 차감
+            if (nextStep.MaterialCosts != null)
+            {
+                foreach (var mat in nextStep.MaterialCosts)
+                {
+                    if (mat.Material != null)
+                    {
+                        m_inventorySystem.ConsumeItemByDataId(DesktopCompanion.Data.ItemType.Materials, mat.Material.ID, mat.Count);
+                    }
+                }
+            }
+
+            // 5. 실제 강화 처리 (데이터는 변경하지 않고 개체의 상태만 업데이트)
+            equipment.SetUpgradeLevel(equipment.UpgradeLevel + 1);
+
+            // 6. 스탯 갱신
+            CaculatedStat();
+
+            Debug.Log($"{equipment.ItemData.Name} 장비가 +{equipment.UpgradeLevel}강으로 강화되었습니다.");
+            return true;
         }
     }
 }

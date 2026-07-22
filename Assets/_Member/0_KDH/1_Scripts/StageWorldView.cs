@@ -3,6 +3,7 @@ using DesktopCompanion.Systems;
 using DesktopCompanion.Core;
 using DesktopCompanion.Controllers;
 using DesktopCompanion.Data;
+using DG.Tweening;
 
 namespace DesktopCompanion.Views
 {
@@ -16,147 +17,213 @@ namespace DesktopCompanion.Views
         private GameObject m_currentStageInstance;
         private string m_lastLoadedAssetKey = "";
 
-        private bool m_hasSpawnedTarget = false;
-        private StageData m_activeJourneyTargetData = null;
-
-        private string m_visualDepartureAssetKey = "";
-
         private float m_absoluteStartCamX = 0f;
         private float m_absoluteTargetCamX = 0f;
 
-        private const float CLEAR_START_MAP_DISTANCE = 35f;
+        private const float DEPARTURE_TIME = 9.0f;
+        private const float ARRIVAL_TIME = 9.0f;
+        private const float STOPPING_TIME = 9.0f;
 
         public override void Bind()
         {
             m_vm.Inject(SystemManager, EntityManager);
             m_vm.Bind();
+
+            var stageSystem = SystemManager.GetSystem<StageSystem>();
+            if (stageSystem != null)
+            {
+                stageSystem.OnVoyageStateChanged += HandleVoyageStateChanged;
+                stageSystem.OnTravelStarted += HandleTravelStarted;
+                HandleVoyageStateChanged(stageSystem.CurrentState);
+            }
         }
 
         public override void Unbind()
         {
-            m_vm.Unbind();
+            if (SystemManager != null)
+            {
+                var stageSystem = SystemManager.GetSystem<StageSystem>();
+                if (stageSystem != null)
+                {
+                    stageSystem.OnVoyageStateChanged -= HandleVoyageStateChanged;
+                    stageSystem.OnTravelStarted -= HandleTravelStarted;
+                }
+            }
+
+            if (m_vm != null)
+            {
+                m_vm.Unbind();
+            }
+
+            DOTween.Kill(this);
             ClearCurrentStage();
         }
 
         private void Update()
         {
             if (m_vm == null || SystemManager == null) return;
-
-            if (m_shipController != null)
-            {
-                m_shipController.SetTraveling(m_vm.IsTraveling);
-            }
-
             var stageSystem = SystemManager.GetSystem<StageSystem>();
             if (stageSystem == null) return;
 
-            if (stageSystem.IsTraveling)
+            if (m_shipController != null) m_shipController.SetTraveling(stageSystem.IsTraveling);
+        }
+
+        private void HandleVoyageStateChanged(VoyageState newState)
+        {
+            var stageSystem = SystemManager.GetSystem<StageSystem>();
+            if (stageSystem == null) return;
+
+            switch (newState)
             {
-                if (m_activeJourneyTargetData != stageSystem.TargetStageData)
-                {
-                    m_activeJourneyTargetData = stageSystem.TargetStageData;
-                    m_hasSpawnedTarget = false;
-
-                    m_visualDepartureAssetKey = string.IsNullOrEmpty(m_lastLoadedAssetKey)
-                        ? AssetKeys.Of(stageSystem.CurrentStageData, AssetUsage.Model)
-                        : m_lastLoadedAssetKey;
-
-                    m_absoluteStartCamX = Camera.main != null ? Camera.main.transform.position.x : 0f;
-
-                    float totalDuration = stageSystem.RemainingTravelTime;
-                    float shipSpeed = m_shipController != null ? m_shipController.m_speed : 5f;
-
-                    m_absoluteTargetCamX = m_absoluteStartCamX - (totalDuration * shipSpeed);
-                }
-
-                float currentCamX = Camera.main != null ? Camera.main.transform.position.x : 0f;
-                float traveledDistance = m_absoluteStartCamX - currentCamX;
-                bool shouldShowTargetMap = traveledDistance >= CLEAR_START_MAP_DISTANCE;
-
-                if (shouldShowTargetMap)
-                {
-                    if (!m_hasSpawnedTarget)
+                case VoyageState.Anchored:
+                    if (stageSystem.CurrentStageData != null)
                     {
-                        string targetAssetKey = AssetKeys.Of(stageSystem.TargetStageData, AssetUsage.Model);
-                        LoadStage(targetAssetKey);
-                        m_hasSpawnedTarget = true;
+                        LoadStage(AssetKeys.Of(stageSystem.CurrentStageData, AssetUsage.Model), isTarget: false);
                     }
-                }
-                else
-                {
-                    if (m_lastLoadedAssetKey != m_visualDepartureAssetKey)
+                    else
                     {
-                        LoadStage(m_visualDepartureAssetKey);
+                        ClearCurrentStage();
                     }
-                }
-            }
-            else
-            {
-                m_activeJourneyTargetData = null;
-                m_hasSpawnedTarget = false;
-                m_visualDepartureAssetKey = "";
+                    break;
 
-                if (stageSystem.CurrentStageData != null)
-                {
-                    bool isArrived = Vector2.Distance(stageSystem.CurrentLogicalPosition, stageSystem.CurrentStageData.MapPosition) <= 0.001f;
+                case VoyageState.Departing:
+                    PlayDepartureSequence(stageSystem);
+                    break;
 
-                    if (isArrived)
-                    {
-                        string currentAssetKey = AssetKeys.Of(stageSystem.CurrentStageData, AssetUsage.Model);
-                        if (m_lastLoadedAssetKey != currentAssetKey)
-                        {
-                            LoadStage(currentAssetKey);
-                        }
-                    }
-                }
+                case VoyageState.Traveling:
+                    if (stageSystem.TargetStageData != null) LoadStage(AssetKeys.Of(stageSystem.TargetStageData, AssetUsage.Model), isTarget: true);
+                    break;
+
+                case VoyageState.Arriving:
+                    PlayArrivalSequence(stageSystem);
+                    break;
+
+                case VoyageState.Stopping:
+                    ClearCurrentStage();
+                    PlayStoppingSequence(stageSystem);
+                    break;
             }
         }
 
-        private void LoadStage(string stageAssetKey)
+        private void HandleTravelStarted(int targetDataId, float duration)
         {
-            bool isFirstLoad = string.IsNullOrEmpty(m_lastLoadedAssetKey);
+            var stageSystem = SystemManager.GetSystem<StageSystem>();
+            if (stageSystem == null) return;
 
+            if (stageSystem.CurrentState == VoyageState.Traveling && stageSystem.TargetStageData != null)
+            {
+                LoadStage(AssetKeys.Of(stageSystem.TargetStageData, AssetUsage.Model), isTarget: true);
+            }
+        }
+
+        private void PlayDepartureSequence(StageSystem stageSystem)
+        {
+            DOTween.Kill(this);
+            float maxSpeed = stageSystem.MaxSpeed;
+
+            if (m_shipController != null) m_shipController.m_speed = 0f;
+            stageSystem.SyncSpeed(0f);
+
+            DOVirtual.Float(0f, 1f, DEPARTURE_TIME, (v) =>
+            {
+                float currentSpeed = maxSpeed * v;
+                if (m_shipController != null) m_shipController.m_speed = currentSpeed;
+                stageSystem.SyncSpeed(currentSpeed);
+            })
+            .SetEase(Ease.InOutSine)
+            .SetId(this)
+            .OnComplete(() =>
+            {
+                if (m_shipController != null) m_shipController.m_speed = maxSpeed;
+                stageSystem.SyncSpeed(maxSpeed);
+                stageSystem.SequenceComplete_Departure();
+            });
+        }
+
+        private void PlayArrivalSequence(StageSystem stageSystem)
+        {
+            DOTween.Kill(this);
+            float maxSpeed = stageSystem.MaxSpeed;
+
+            DOVirtual.Float(1f, 0f, ARRIVAL_TIME, (v) =>
+            {
+                float currentSpeed = maxSpeed * v;
+                if (m_shipController != null) m_shipController.m_speed = currentSpeed;
+                stageSystem.SyncSpeed(currentSpeed);
+            })
+            .SetEase(Ease.InOutSine)
+            .SetId(this)
+            .OnComplete(() =>
+            {
+                if (m_shipController != null) m_shipController.m_speed = 0f;
+                stageSystem.SyncSpeed(0f);
+                stageSystem.SequenceComplete_Arrival();
+            });
+        }
+
+        private void PlayStoppingSequence(StageSystem stageSystem)
+        {
+            DOTween.Kill(this);
+            float maxSpeed = stageSystem.MaxSpeed;
+            float currentRatio = (m_shipController != null && maxSpeed > 0f) ? Mathf.Clamp01(m_shipController.m_speed / maxSpeed) : 1f;
+
+            DOVirtual.Float(currentRatio, 0f, STOPPING_TIME, (v) =>
+            {
+                float currentSpeed = maxSpeed * v;
+                if (m_shipController != null) m_shipController.m_speed = currentSpeed;
+                stageSystem.SyncSpeed(currentSpeed);
+            })
+            .SetEase(Ease.InOutSine)
+            .SetId(this)
+            .OnComplete(() =>
+            {
+                if (m_shipController != null) m_shipController.m_speed = 0f;
+                stageSystem.SyncSpeed(0f);
+                stageSystem.SequenceComplete_Stop();
+            });
+        }
+
+        private void LoadStage(string stageAssetKey, bool isTarget)
+        {
+            if (m_lastLoadedAssetKey == stageAssetKey) return;
+            bool isFirstLoad = string.IsNullOrEmpty(m_lastLoadedAssetKey) && !isTarget;
             ClearCurrentStage();
 
-            if (isFirstLoad)
-            {
-                if (m_shipController != null)
-                {
-                    m_shipController.ResetToOrigin();
-                }
-            }
+            var stageSystem = SystemManager.GetSystem<StageSystem>();
+            bool isActuallyAnchored = stageSystem != null && stageSystem.CurrentState == VoyageState.Anchored;
 
+            if (isFirstLoad && m_shipController != null) m_shipController.ResetToOrigin();
             m_lastLoadedAssetKey = stageAssetKey;
 
             if (AssetProvider != null && AssetProvider.TryGet(stageAssetKey, out GameObject stagePrefab))
             {
                 m_currentStageInstance = Instantiate(stagePrefab, Vector3.zero, Quaternion.identity, transform);
-
                 StageBlueprint blueprint = m_currentStageInstance.GetComponent<StageBlueprint>();
+
                 if (blueprint != null)
                 {
-                    float startX = m_absoluteStartCamX;
-                    float targetX = m_absoluteTargetCamX;
+                    float currentCamX = Camera.main != null ? Camera.main.transform.position.x : 0f;
 
-                    if (isFirstLoad)
+                    if (!isTarget)
                     {
-                        startX = Camera.main != null ? Camera.main.transform.position.x : 0f;
-                        targetX = startX;
+                        m_absoluteStartCamX = currentCamX;
+                        m_absoluteTargetCamX = m_absoluteStartCamX;
+                    }
+                    else
+                    {
+                        float remainingDist = stageSystem != null ? stageSystem.RemainingDistance : 0f;
+                        m_absoluteStartCamX = currentCamX;
+                        m_absoluteTargetCamX = m_absoluteStartCamX - remainingDist;
                     }
 
-                    blueprint.InitProvider(AssetProvider, startX, targetX, isFirstLoad);
-                    Debug.Log($"[StageWorldView] {stageAssetKey} 맵 로드 성공! (구간: {startX} ➡️ {targetX})");
+                    blueprint.InitProvider(AssetProvider, m_absoluteStartCamX, m_absoluteTargetCamX, isFirstLoad);
                 }
             }
         }
 
         private void ClearCurrentStage()
         {
-            if (m_currentStageInstance != null)
-            {
-                Destroy(m_currentStageInstance);
-                m_currentStageInstance = null;
-            }
+            if (m_currentStageInstance != null) { Destroy(m_currentStageInstance); m_currentStageInstance = null; }
             m_lastLoadedAssetKey = "";
         }
     }
