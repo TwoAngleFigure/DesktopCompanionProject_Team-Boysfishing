@@ -4,7 +4,7 @@ using DesktopCompanion.Core;
 
 namespace DesktopCompanion.Views
 {
-    public enum LayerDepth { Near, Mid, Far }
+    public enum LayerDepth { Near, Mid, Far, None }
 
     [System.Serializable]
     public class BlueprintData

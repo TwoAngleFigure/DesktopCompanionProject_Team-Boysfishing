@@ -13,7 +13,8 @@ namespace DesktopCompanion.Systems
         Departing, 
         Traveling,
         Arriving,
-        Stopping
+        Stopping,
+        None
     }
 
     public class StageSystem : SystemBase, ISaveable, ITickable
@@ -41,8 +42,8 @@ namespace DesktopCompanion.Systems
         public string SaveId => "stage_system";
         public Type StateType => typeof(StageSaveData);
 
-        public override void Initialize() { ForceSetInitialStage(600001); }
-        public override void PostInitialize() { }
+        public override void PostInitialize() { ForceSetInitialStage(600001); }
+        public override void Initialize() { }
 
         private void ForceSetInitialStage(int defaultDataId)
         {
