@@ -134,6 +134,8 @@ namespace DesktopCompanion.Core
 
             m_systemManager.Register(new DesktopCompanion.Systems.FishCollectionSystem());
 
+            m_systemManager.Register(new DesktopCompanion.Systems.FishingSettingSystem());
+
             m_systemManager.Register(new DesktopCompanion.Systems.FishingSystem());
 
             m_systemManager.Register(new DesktopCompanion.Systems.StageSystem());

@@ -25,6 +25,7 @@ namespace DesktopCompanion.Systems
         private PlayerSystem m_playerSystem;
         private InventorySystem m_inventorySystem;
         private FishCollectionSystem m_collectionSystem;
+        private FishingSettingSystem m_fishingSettingSystem;
         private FishingRewardProcessor m_rewardProcessor;
         private ShopSystem m_shopSystem;
 
@@ -40,6 +41,12 @@ namespace DesktopCompanion.Systems
         private float m_battleTimer;
         private float m_autoAttackTimer;
         private bool m_isResolvingPending;
+
+#if UNITY_EDITOR
+        private bool m_isDebugCatchOverrideEnabled;
+        private int m_debugNextBattleFishDataId;
+        private float m_debugNextFishSize;
+#endif
 
         #region Events
 
@@ -88,6 +95,7 @@ namespace DesktopCompanion.Systems
             m_stageSystem = SystemManager.GetSystem<StageSystem>();
             m_playerSystem = SystemManager.GetSystem<PlayerSystem>();
             m_collectionSystem = SystemManager.GetSystem<FishCollectionSystem>();
+            m_fishingSettingSystem = SystemManager.GetSystem<FishingSettingSystem>();
             m_inventorySystem = SystemManager.GetSystem<InventorySystem>();
             m_shopSystem = SystemManager.GetSystem<ShopSystem>();
 
@@ -214,7 +222,90 @@ namespace DesktopCompanion.Systems
             ChangeState(FishingState.Stopped);
         }
 
+#if UNITY_EDITOR
+        public bool TrySetDebugCatchOverride(int battleFishDataId, float size)
+        {
+            BattleFishData fishData = DataManager.GetData<BattleFishData>(battleFishDataId);
+
+            if (fishData == null)
+            {
+                Debug.LogWarning(
+                    $"[FishingSystem] 디버그 다음 포획 설정 실패: " +
+                    $"BattleFishData를 찾을 수 없습니다. id={battleFishDataId}");
+                return false;
+            }
+
+            float roundedSize = Mathf.Round(size * 10f) / 10f;
+
+            if (roundedSize < fishData.MinSize || roundedSize > fishData.MaxSize)
+            {
+                Debug.LogWarning(
+                    "[FishingSystem] 디버그 다음 포획 설정 실패: " +
+                    $"크기가 물고기 범위를 벗어났습니다. fish={fishData.Name}, " +
+                    $"size={roundedSize:0.0}, range={fishData.MinSize:0.0}~{fishData.MaxSize:0.0}");
+                return false;
+            }
+
+            m_isDebugCatchOverrideEnabled = true;
+            m_debugNextBattleFishDataId = fishData.ID;
+            m_debugNextFishSize = roundedSize;
+
+            Debug.Log(
+                $"[FishingSystem] 디버그 강제 포획 활성화: " +
+                $"fish={fishData.Name}, size={roundedSize:0.0}, " +
+                $"quality={fishData.GetQuality(roundedSize)}");
+            return true;
+        }
+
+        public void ClearDebugCatchOverride()
+        {
+            m_isDebugCatchOverrideEnabled = false;
+        }
+#endif
+
         #region Pending
+
+        private bool ShouldCreatePendingCatch(bool isCollectionUpdated, FishCollectionUpdateResult collectionResult)
+        {
+            switch (m_fishingSettingSystem.CurrentInventoryFullPolicy)
+            {
+                case InventoryFullPolicy.StopAndAsk:
+                    return true;
+
+                case InventoryFullPolicy.AlwaysSell:
+                    return false;
+
+                case InventoryFullPolicy.StopOnRecordUpdate:
+                    // 도감 결과를 믿을 수 없으면 자동 판매하지 않는다.
+                    if (!isCollectionUpdated)
+                    {
+                        return true;
+                    }
+
+                    // 새 종은 선택한 기준과 관계없이 항상 멈춘다.
+                    if (collectionResult.IsRegistered)
+                    {
+                        return true;
+                    }
+
+                    return m_fishingSettingSystem.CurrentRecordStopCriterion
+                        == RecordStopCriterion.Quality
+                        ? collectionResult.IsBestQualityImproved
+                        : collectionResult.IsBestSizeImproved;
+
+                default: return true;
+            }
+        }
+        private void EnterPendingCatch(EntityHandle caughtHandle)
+        {
+            m_pendingCatch = caughtHandle;
+
+            StopFishing();
+
+            OnPendingCatchChanged?.Invoke();
+            OnFishingResult?.Invoke(FishingResultType.InventoryFull);
+        }
+
         public bool TryClaimPendingCatch()
         {
             if (!HasPendingCatch ||
@@ -278,7 +369,18 @@ namespace DesktopCompanion.Systems
 
         private void StartBattle()
         {
+#if UNITY_EDITOR
+            bool hasDebugOverride = TryGetDebugCatchOverride(
+                out BattleFishData fishData,
+                out float debugSize);
+
+            if (!hasDebugOverride)
+            {
+                fishData = SelectBattleFish();
+            }
+#else
             BattleFishData fishData = SelectBattleFish();
+#endif
 
             if (fishData == null)
             {
@@ -298,7 +400,11 @@ namespace DesktopCompanion.Systems
                 return;
             }
 
-            float rolledSize = RollFishSize(fishData);
+            float rolledSize =
+#if UNITY_EDITOR
+                hasDebugOverride ? debugSize :
+#endif
+                RollFishSize(fishData);
             float size = Mathf.Round(rolledSize * 10f) / 10f;
 
             ItemQuality quality = fishData.GetQuality(size);
@@ -313,6 +419,34 @@ namespace DesktopCompanion.Systems
             OnBattleHpChanged?.Invoke(m_currentBattleFish, battleFish.CurrentHp, fishData.MaxHp);
             Debug.Log($"[FishingSystem] 전투 시작: {fishData.Name}, HP={battleFish.CurrentHp}/{fishData.MaxHp}, Size={size:0.00}, Quality={quality}, 제한시간={m_battleTimer:0.00}초");
         }
+
+#if UNITY_EDITOR
+        private bool TryGetDebugCatchOverride(
+            out BattleFishData fishData,
+            out float size)
+        {
+            fishData = null;
+            size = 0f;
+
+            if (!m_isDebugCatchOverrideEnabled)
+            {
+                return false;
+            }
+
+            fishData = DataManager.GetData<BattleFishData>(m_debugNextBattleFishDataId);
+            size = m_debugNextFishSize;
+
+            if (fishData != null)
+            {
+                return true;
+            }
+
+            Debug.LogWarning(
+                "[FishingSystem] 디버그 강제 포획을 적용하지 못했습니다. " +
+                $"BattleFishData를 찾을 수 없습니다. id={m_debugNextBattleFishDataId}");
+            return false;
+        }
+#endif
 
 
         private void ApplyDamage(int damage)
@@ -379,6 +513,7 @@ namespace DesktopCompanion.Systems
             }
 
             FishCollectionUpdateResult collectionResult = default;
+            bool isCollectionUpdated = false;
 
             if (m_collectionSystem == null)
             {
@@ -393,6 +528,10 @@ namespace DesktopCompanion.Systems
             {
                 Debug.LogWarning(
                     "[FishingSystem] 포획 물고기의 도감 반영에 실패했습니다.");
+            }
+            else
+            {
+                isCollectionUpdated = true;
             }
 
             OnFishCaughtPresentation?.Invoke(caughtHandle);
@@ -415,17 +554,35 @@ namespace DesktopCompanion.Systems
                     return;
                 }
 
-                m_pendingCatch = caughtHandle;
+                if (ShouldCreatePendingCatch(isCollectionUpdated, collectionResult))
+                {
+                    EnterPendingCatch(caughtHandle);
+                    return;
+                }
+
+                int earnedGold = 0;
+
+                bool isSold = m_shopSystem != null && m_shopSystem.SellAcquiredItem(caughtHandle, out earnedGold);
+
+                if (!isSold)
+                {
+                    // 자동 판매에 실패했을 때 물고기를 잃지 않도록
+                    // 기본 Pending 흐름으로 되돌린다.
+                    Debug.LogWarning(
+                        "[FishingSystem] 자동 판매에 실패하여 Pending 처리로 전환합니다.");
+
+                    EnterPendingCatch(caughtHandle);
+                    return;
+                }
 
                 Debug.Log(
-                    $"[FishingSystem] 인벤토리 부족으로 물고기를 Pending 처리합니다. " +
-                    $"handle={caughtHandle}");
+                    $"[FishingSystem] 인벤토리 부족 물고기 자동 판매 완료. " +
+                    $"earnedGold={earnedGold}");
 
-                StopFishing();
+                ClearCurrentBattleFish();
+                ScheduleNextFishing();
 
-                OnPendingCatchChanged?.Invoke();
-
-                OnFishingResult?.Invoke(FishingResultType.InventoryFull);
+                OnFishingResult?.Invoke(FishingResultType.Success);
                 return;
             }
 

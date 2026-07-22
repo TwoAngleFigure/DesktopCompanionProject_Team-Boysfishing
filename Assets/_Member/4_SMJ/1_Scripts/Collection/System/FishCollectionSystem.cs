@@ -75,6 +75,33 @@ namespace DesktopCompanion.Systems
         }
 
         /// <summary>
+        /// 모든 물고기 종의 도감 표시 정보를 ID 순서로 반환.
+        /// 아직 잡지 않은 종도 IsRegistered = false로 포함.
+        /// </summary>
+        public IReadOnlyList<FishCollectionDisplayEntry> GetAllDisplayEntries()
+        {
+            List<ItemData_Fish> fishDatas = new(DataManager.GetAll<ItemData_Fish>());
+
+            fishDatas.Sort((left, right) => left.ID.CompareTo(right.ID));
+
+            List<FishCollectionDisplayEntry> entries = new(fishDatas.Count);
+
+            foreach (ItemData_Fish fishData in fishDatas)
+            {
+                bool isRegistered = m_entries.TryGetValue(fishData.ID, out Entry record);
+
+                entries.Add(new FishCollectionDisplayEntry(
+                    fishData.ID,
+                    fishData.Name,
+                    isRegistered,
+                    isRegistered ? record.BestQuality : default,
+                    isRegistered ? record.BestSize : 0f));
+            }
+
+            return entries;
+        }
+
+        /// <summary>
         /// 포획한 물고기를 도감에 반영한다.
         ///
         /// 반환값:

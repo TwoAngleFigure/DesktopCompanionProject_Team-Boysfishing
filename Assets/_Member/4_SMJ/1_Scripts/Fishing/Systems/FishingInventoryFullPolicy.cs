@@ -1,16 +1,15 @@
-using UnityEngine;
-
-public class FishingInventoryFullPolicy : MonoBehaviour
+namespace DesktopCompanion.Systems
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public enum InventoryFullPolicy
     {
-        
+        StopAndAsk = 0,
+        AlwaysSell = 1,
+        StopOnRecordUpdate = 2,
     }
 
-    // Update is called once per frame
-    void Update()
+    public enum RecordStopCriterion
     {
-        
+        Quality = 0,
+        Size = 1,
     }
 }
