@@ -101,19 +101,19 @@ public class EquipmentViewModel : UIViewModelBase
 
         // C#의 문자열 보간($)과 줄바꿈(\n)을 활용해 하나의 거대한 텍스트로 묶습니다.
         string stats =
-            $"<color=#5BC0EB><b>[ 전투 스탯 ]</b></color>\n" +
+            $"<b>[ 전투 스탯 ]</b>\n" +
             $"클릭 데미지 :  {m_playerSystem.BaseDamagePerClick}\n" +
             $"수동 타격 배율 :  {m_playerSystem.BaseManualDamagePerHitMultiply}\n" +
             $"크리티컬 확률 :  {m_playerSystem.BaseCriticalChance}%\n" +
             $"크리티컬 배율 :  {m_playerSystem.BaseCriticalMultiply}배\n" +
             $"전투 시간 변수 :  {m_playerSystem.BaseBattleTimeVariable}\n\n" +
 
-            $"<color=#9BC53D><b>[ 자동 전투 ]</b></color>\n" +
+            $"<b>[ 자동 전투 ]</b>\n" +
             $"자동 공격 쿨타임 :  {m_playerSystem.BaseAutoBattleCooltime}초\n" +
             $"자동 공격 속도 :  {m_playerSystem.BaseAutoSpeedPerTime}\n" +
             $"자동 타격 배율 :  {m_playerSystem.BaseAutoDamagePerHitMultiply}\n\n" +
 
-            $"<color=#FDE74C><b>[ 보상 및 기타 ]</b></color>\n" +
+            $"<b>[ 보상 및 기타 ]</b>\n" +
             $"대어 낚시 확률 :  {m_playerSystem.BaseProbabilityAtFishSize}\n" +
             $"희귀어 낚시 확률 :  {m_playerSystem.BaseProbabilityAtFishRarity}\n" +
             $"골드 획득 배율 :  {m_playerSystem.BaseGoldGettingMultiply}배\n" +
