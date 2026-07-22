@@ -4,7 +4,7 @@ using DesktopCompanion.Core;
 
 namespace DesktopCompanion.Views
 {
-    public enum LayerDepth { Near, Mid, Far }
+    public enum LayerDepth { Near, Mid, Far, None }
 
     [System.Serializable]
     public class BlueprintData
@@ -154,8 +154,18 @@ namespace DesktopCompanion.Views
                     Debug.LogWarning($"[경고] {data.m_assetKey} 프리팹에 WorldProp 스크립트가 없습니다!");
                 }
             }
+            else
+            {
+                if (m_assetProvider == null)
+                {
+                    Debug.LogError($"[SpawnProp 에러] m_assetProvider가 NULL입니다! 의존성 주입을 확인하세요.");
+                }
+                else
+                {
+                    Debug.LogError($"[SpawnProp 에러] AssetProvider 메모리에 '{data.m_assetKey}' 프리팹이 존재하지 않습니다! (Preload 누락 또는 키 이름 불일치)");
+                }
+            }
 
-            Debug.Log($"{data.m_assetKey} (카메라위치: {m_cameraTransform.position.x})");
         }
 
         private Transform GetLayerTransform(LayerDepth depth)
