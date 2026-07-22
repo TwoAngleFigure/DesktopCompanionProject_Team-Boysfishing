@@ -25,7 +25,39 @@ namespace DesktopCompanion.Views
             m_playerSystem = SystemManager.GetSystem<PlayerSystem>();
             m_inventorySystem = SystemManager.GetSystem<InventorySystem>();
             
+            // [System 상태 변경 구독] 
+            // 플레이어의 골드가 변경되거나(스탯 변경 이벤트), 인벤토리의 재료가 변경될 때 UI를 실시간 갱신하기 위해 이벤트를 구독합니다.
+            if (m_playerSystem != null)
+            {
+                m_playerSystem.OnStatChanged += HandleStateChanged;
+            }
+            if (m_inventorySystem != null)
+            {
+                m_inventorySystem.OnInventoryChanged += HandleInventoryChanged;
+            }
+
             ReinforceCommand = new RelayCommand(TryReinforce);
+            
+            // 뷰모델 생성 시 초기 상태를 갱신하여 빈 문자열 대신 안내 문구가 표시되도록 합니다.
+            UpdateReinforcementInfo(SelectedEquipment.Value);
+        }
+
+        // 플레이어 스탯(골드 등)이 변경되었을 때 호출되며, 현재 올려둔 장비가 있다면 강화 정보를 즉시 갱신합니다.
+        private void HandleStateChanged(EntityHandle handle)
+        {
+            if (SelectedEquipment.Value.Value != Guid.Empty)
+            {
+                UpdateReinforcementInfo(SelectedEquipment.Value);
+            }
+        }
+
+        // 인벤토리(강화 재료 등)가 변경되었을 때 호출되며, 현재 올려둔 장비가 있다면 보유 재료 개수를 즉시 갱신합니다.
+        private void HandleInventoryChanged()
+        {
+            if (SelectedEquipment.Value.Value != Guid.Empty)
+            {
+                UpdateReinforcementInfo(SelectedEquipment.Value);
+            }
         }
 
         public void RegisterEquipment(EntityHandle handle)
@@ -36,22 +68,26 @@ namespace DesktopCompanion.Views
 
         private void UpdateReinforcementInfo(EntityHandle handle)
         {
+            // 장비 등록 여부와 상관없이 현재 플레이어의 골드는 항상 최신으로 갱신하여 표시되게 합니다.
+            if (m_playerSystem != null && m_playerSystem.PlayerHandle.Value != Guid.Empty)
+            {
+                Entity_Player player = EntityManager.Get<Entity_Player>(m_playerSystem.PlayerHandle);
+                if (player != null)
+                {
+                    CurrentGold.Value = player.Gold;
+                }
+            }
+
             if (handle.Value == Guid.Empty)
             {
                 RequiredGold.Value = 0;
                 StatIncreaseText.Value = "장비를 등록해주세요.";
-                RequiredMaterialText.Value = "";
+                RequiredMaterialText.Value = "장비를 등록해주세요.";
                 return;
             }
 
             Entity_Equipment equip = EntityManager.Get<Entity_Equipment>(handle);
             if (equip == null) return;
-
-            Entity_Player player = EntityManager.Get<Entity_Player>(m_playerSystem.PlayerHandle);
-            if (player != null)
-            {
-                CurrentGold.Value = player.Gold;
-            }
             
             UpgradeStep nextStep = equip.ItemData.GetNextUpgradeStep(equip.UpgradeLevel);
             
@@ -63,50 +99,32 @@ namespace DesktopCompanion.Views
                 return;
             }
 
-            // 1. 필요 골드 설정
-            RequiredGold.Value = nextStep.GoldCost;
+            // --- [테스트용 코드] ---
+            // 1. 필요 골드 설정 (테스트 1 고정)
+            RequiredGold.Value = 1;
             
-            // 2. 필요 재료 문자열 생성
-            if (nextStep.MaterialCosts != null && nextStep.MaterialCosts.Length > 0)
-            {
-                var mat = nextStep.MaterialCosts[0];
-                // TODO: InventorySystem에서 실제 아이템 개수를 가져오는 로직 연동
-                int currentMat = 0; 
-                RequiredMaterialText.Value = $"{mat.Material?.Name ?? "재료"} {currentMat} / {mat.Count}";
-            }
-            else
-            {
-                RequiredMaterialText.Value = "필요 재료 없음";
-            }
+            // 2. 필요 재료 문자열 완성 (테스트 소모 재료 없음)
+            RequiredMaterialText.Value = "<테스트> 소모 재료 없음";
 
-            // 3. 스탯 증가량 문자열 생성
+            // 3. 스탯 증가량 문자열 완성 (기본 스탯 + 1씩 증가)
             StringBuilder sb = new StringBuilder();
             sb.AppendLine($"<color=#5BC0EB><b>[{equip.ItemData.Name}]</b></color>");
             sb.AppendLine("-------------------");
             
-            // 현재 스탯 가져오기 (0강이면 기본 효과, 그 이상이면 해당 레벨의 누적 효과)
-            var currentModifiers = equip.ItemData.GetModifiers(equip.UpgradeLevel);
+            var baseModifiers = equip.ItemData.GetModifiers(0);
 
-            foreach (var nextMod in nextStep.Modifiers)
+            if (baseModifiers != null)
             {
-                // 현재 스탯에서 같은 종류의 스탯 값 찾기
-                float currValue = 0f;
-                if (currentModifiers != null)
+                foreach (var mod in baseModifiers)
                 {
-                    foreach (var currMod in currentModifiers)
-                    {
-                        if (currMod.Stat == nextMod.Stat)
-                        {
-                            currValue = currMod.Value;
-                            break;
-                        }
-                    }
+                    float currValue = mod.Value + equip.UpgradeLevel;
+                    float testNextValue = currValue + 1;
+                    sb.AppendLine($"{GetStatNameKR(mod.Stat)} : {currValue} <color=#00FF00>-> {testNextValue}</color>");
                 }
-
-                sb.AppendLine($"{GetStatNameKR(nextMod.Stat)} : {currValue} <color=#00FF00>▶ {nextMod.Value}</color>");
             }
             
             StatIncreaseText.Value = sb.ToString();
+            // -----------------------
         }
 
         private void TryReinforce()
@@ -136,8 +154,18 @@ namespace DesktopCompanion.Views
             };
         }
 
+        // ViewModel 파괴 시 호출되며, 구독했던 System 이벤트들을 안전하게 해제하여 메모리 누수를 방지합니다.
         public override void Unbind()
         {
+            if (m_playerSystem != null)
+            {
+                m_playerSystem.OnStatChanged -= HandleStateChanged;
+            }
+            if (m_inventorySystem != null)
+            {
+                m_inventorySystem.OnInventoryChanged -= HandleInventoryChanged;
+            }
+
             m_playerSystem = null;
             m_inventorySystem = null;
         }

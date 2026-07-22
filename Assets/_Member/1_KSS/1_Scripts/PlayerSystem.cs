@@ -205,51 +205,59 @@ namespace DesktopCompanion.Systems
                 // 🛡️ [방어 코드 2] 장비 데이터가 null인 경우 해당 칸 무시 (NullReferenceException 완벽 차단)
                 if (equipment == null) continue;
 
-                foreach (StatModifier stat in equipment.CurrentModifiers)
+                // --- [테스트용 코드] ---
+                // 실제 기획 데이터(CurrentModifiers) 대신, 테스트를 위해 (0강 기본 스탯 + 강화수치) 만큼 증가시킵니다.
+                var testModifiers = equipment.ItemData.GetModifiers(0);
+                if (testModifiers != null)
                 {
-                    switch (stat.Stat)
+                    foreach (StatModifier stat in testModifiers)
                     {
-                        case PlayerStat.DamagePerClick:
-                            m_baseDamagePerClick += (int)stat.Value;
-                            break;
-                        case PlayerStat.ManualDamagePerHitMultiply:
-                            m_baseManualDamagePerHitMultiply += stat.Value;
-                            break;
-                        case PlayerStat.BattleTimeVariable:
-                            m_baseBattleTimeVariable += (int)stat.Value;
-                            break;
-                        case PlayerStat.CriticalChance:
-                            m_baseCriticalChance += stat.Value;
-                            break;
-                        case PlayerStat.CriticalMultiply:
-                            m_baseCriticalMultiply += stat.Value;
-                            break;
-                        case PlayerStat.AutoBattleCooltime:
-                            m_baseAutoBattleCooltime -= stat.Value;
-                            break;
-                        case PlayerStat.AutoSpeedPerTime:
-                            m_baseAutoSpeedPerTime += stat.Value;
-                            break;
-                        case PlayerStat.AutoDamagePerHitMultiply:
-                            m_baseAutoDamagePerHitMultiply += stat.Value;
-                            break;
-                        case PlayerStat.ProbabilityAtFishSize:
-                            m_baseProbabilityAtFishSize += stat.Value;
-                            break;
-                        case PlayerStat.ProbabilityAtFishRarity:
-                            m_baseProbabilityAtFishRarity += stat.Value;
-                            break;
-                        case PlayerStat.GoldGettingMultiply:
-                            m_baseGoldGettingMultiply += stat.Value;
-                            break;
-                        case PlayerStat.MapMovementSpeedPerTime:
-                            m_baseMapMovementSpeedPerTime += stat.Value;
-                            break;
-                        case PlayerStat.InventorySize:
-                            m_baseInventorySize += (int)stat.Value;
-                            break;
+                        float testValue = stat.Value + equipment.UpgradeLevel;
+                        switch (stat.Stat)
+                        {
+                            case PlayerStat.DamagePerClick:
+                                m_baseDamagePerClick += (int)testValue;
+                                break;
+                            case PlayerStat.ManualDamagePerHitMultiply:
+                                m_baseManualDamagePerHitMultiply += testValue;
+                                break;
+                            case PlayerStat.BattleTimeVariable:
+                                m_baseBattleTimeVariable += (int)testValue;
+                                break;
+                            case PlayerStat.CriticalChance:
+                                m_baseCriticalChance += testValue;
+                                break;
+                            case PlayerStat.CriticalMultiply:
+                                m_baseCriticalMultiply += testValue;
+                                break;
+                            case PlayerStat.AutoBattleCooltime:
+                                m_baseAutoBattleCooltime -= testValue;
+                                break;
+                            case PlayerStat.AutoSpeedPerTime:
+                                m_baseAutoSpeedPerTime += testValue;
+                                break;
+                            case PlayerStat.AutoDamagePerHitMultiply:
+                                m_baseAutoDamagePerHitMultiply += testValue;
+                                break;
+                            case PlayerStat.ProbabilityAtFishSize:
+                                m_baseProbabilityAtFishSize += testValue;
+                                break;
+                            case PlayerStat.ProbabilityAtFishRarity:
+                                m_baseProbabilityAtFishRarity += testValue;
+                                break;
+                            case PlayerStat.GoldGettingMultiply:
+                                m_baseGoldGettingMultiply += testValue;
+                                break;
+                            case PlayerStat.MapMovementSpeedPerTime:
+                                m_baseMapMovementSpeedPerTime += testValue;
+                                break;
+                            case PlayerStat.InventorySize:
+                                m_baseInventorySize += (int)testValue;
+                                break;
+                        }
                     }
                 }
+                // -----------------------
             }
 
             m_baseInventorySize += m_bonusInventorySize;
@@ -404,24 +412,21 @@ namespace DesktopCompanion.Systems
                 return false;
             }
 
-            // 2. 비용 검증 (골드)
-            if (player.Gold < nextStep.GoldCost)
+            // --- [테스트용 코드] ---
+            // 2. 비용 검증 (골드 1 고정)
+            if (player.Gold < 1)
             {
                 Debug.LogWarning("골드가 부족합니다.");
                 return false;
             }
 
-            // 3. 비용 검증 (재화)
-            // (차후 InventorySystem 구조에 맞춰 실제 재화를 체크하는 로직으로 구성됩니다)
-            /*
-            foreach(var mat in nextStep.MaterialCosts) {
-                if(!m_inventorySystem.HasItem(mat.ItemDataId, mat.Count)) return false;
-            }
-            */
+            // 3. 비용 검증 (재료 없음)
+            // 테스트 모드이므로 재료 검사를 생략합니다.
 
-            // 4. 비용 차감
-            player.AddGold(-nextStep.GoldCost);
-            // 재화 차감 (m_inventorySystem.RemoveItem 등)
+            // 4. 비용 차감 (골드 1 소모)
+            player.AddGold(-1);
+            // 재료 차감 생략
+            // -----------------------
 
             // 5. 실제 강화 처리 (데이터는 변경하지 않고 개체의 상태만 업데이트)
             equipment.SetUpgradeLevel(equipment.UpgradeLevel + 1);
@@ -429,7 +434,7 @@ namespace DesktopCompanion.Systems
             // 6. 스탯 갱신
             CaculatedStat();
 
-            Debug.Log($"{equipment.ItemData.Name} 장비가 +{equipment.UpgradeLevel}강으로 강화되었습니다.");
+            Debug.Log($"{equipment.ItemData.Name} 장비가 +{equipment.UpgradeLevel}강으로 강화되었습니다. (테스트 모드)");
             return true;
         }
     }
