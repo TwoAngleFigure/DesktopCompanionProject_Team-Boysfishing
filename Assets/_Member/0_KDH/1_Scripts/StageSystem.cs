@@ -4,6 +4,7 @@ using UnityEngine;
 using DesktopCompanion.Systems;
 using DesktopCompanion.Data;
 using DesktopCompanion.Save;
+using DesktopCompanion.Controllers;
 
 namespace DesktopCompanion.Systems
 {
@@ -82,8 +83,9 @@ namespace DesktopCompanion.Systems
             if (m_currentState == VoyageState.Anchored && Vector2.Distance(m_currentLogicalPosition, targetStageData.MapPosition) <= 0.001f) return;
 
             var playerSystem = SystemManager.GetSystem<PlayerSystem>();
-            float playerSpeed = playerSystem != null ? playerSystem.BaseMapMovementSpeedPerTime : 50f;
-            m_maxSpeed = Mathf.Max(playerSpeed, 0.1f);
+            //float playerSpeed = playerSystem != null ? playerSystem.BaseMapMovementSpeedPerTime : 5f;
+            //m_maxSpeed = Mathf.Max(playerSpeed, 0.1f);
+            m_maxSpeed = 5.0f;
 
             int playerLicense = playerSystem != null ? playerSystem.StartingLicense : 1;
             if (playerLicense < targetStageData.RequiredLicense)
@@ -107,10 +109,13 @@ namespace DesktopCompanion.Systems
             if (pureTravelDistance < 0f) pureTravelDistance = 0f;
 
             float pureTravelTime = pureTravelDistance / m_maxSpeed;
+            float departureTime = (m_currentState == VoyageState.Anchored) ? DEPARTURE_DURATION : 0f;
+
+            float totalTravelTime = departureTime + pureTravelTime + ARRIVAL_DURATION;
 
             m_targetStageDataId = targetDataId;
-            m_remainingTravelTime = pureTravelTime;
-            m_totalTravelTime = pureTravelTime;
+            m_remainingTravelTime = totalTravelTime;
+            m_totalTravelTime = totalTravelTime;
 
             OnTravelStarted?.Invoke(targetDataId, pureTravelTime);
 
@@ -129,6 +134,12 @@ namespace DesktopCompanion.Systems
         {
             if (m_currentState == VoyageState.Anchored) return;
 
+            if (m_currentState == VoyageState.Departing || m_currentState == VoyageState.Traveling || m_currentState == VoyageState.Arriving)
+            {
+                m_remainingTravelTime -= dt;
+                if (m_remainingTravelTime <= 0f) m_remainingTravelTime = 0f;
+            }
+
             var targetStageData = DataManager.GetData<StageData>(m_targetStageDataId);
             if (targetStageData != null)
             {
@@ -136,28 +147,28 @@ namespace DesktopCompanion.Systems
 
                 if (m_currentState == VoyageState.Traveling)
                 {
-                    m_remainingTravelTime -= dt;
-                    if (m_remainingTravelTime <= 0f) m_remainingTravelTime = 0f;
-
-                    float distance = Vector2.Distance(m_currentLogicalPosition, targetStageData.MapPosition);
-                    float arrivalTriggerDistance = m_maxSpeed * ARRIVAL_DURATION * 0.5f;
-
-                    if (m_remainingTravelTime == 0f || distance <= arrivalTriggerDistance)
+                    if (m_remainingTravelTime <= ARRIVAL_DURATION)
                     {
-                        m_remainingTravelTime = 0f; // 타이머 0 고정
                         ChangeState(VoyageState.Arriving);
                     }
                 }
             }
         }
-        public void SequenceComplete_Departure() { if (m_currentState == VoyageState.Departing) ChangeState(VoyageState.Traveling); }
+        public void SequenceComplete_Departure()
+        {
+            if (m_currentState == VoyageState.Departing)
+            {
+                m_currentStageDataId = 0;
+                ChangeState(VoyageState.Traveling);
+            }
+        }
 
         public void SequenceComplete_Arrival()
         {
             if (m_currentState == VoyageState.Arriving)
             {
                 var targetStageData = DataManager.GetData<StageData>(m_targetStageDataId);
-                if (targetStageData != null) m_currentLogicalPosition = targetStageData.MapPosition; // 위치 완벽 보정
+                if (targetStageData != null) m_currentLogicalPosition = targetStageData.MapPosition;
 
                 m_currentStageDataId = m_targetStageDataId;
                 m_targetStageDataId = 0;
@@ -166,7 +177,14 @@ namespace DesktopCompanion.Systems
             }
         }
 
-        public void SequenceComplete_Stop() { if (m_currentState == VoyageState.Stopping) { m_targetStageDataId = 0; ChangeState(VoyageState.Anchored); } }
+        public void SequenceComplete_Stop()
+        {
+            if (m_currentState == VoyageState.Stopping)
+            {
+                m_targetStageDataId = 0;
+                ChangeState(VoyageState.Anchored);
+            }
+        }
         public float MaxSpeed => m_maxSpeed;
 
         public float RemainingDistance

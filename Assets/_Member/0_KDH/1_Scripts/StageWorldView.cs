@@ -40,13 +40,21 @@ namespace DesktopCompanion.Views
 
         public override void Unbind()
         {
-            var stageSystem = SystemManager.GetSystem<StageSystem>();
-            if (stageSystem != null)
+            if (SystemManager != null)
             {
-                stageSystem.OnVoyageStateChanged -= HandleVoyageStateChanged;
-                stageSystem.OnTravelStarted -= HandleTravelStarted;
+                var stageSystem = SystemManager.GetSystem<StageSystem>();
+                if (stageSystem != null)
+                {
+                    stageSystem.OnVoyageStateChanged -= HandleVoyageStateChanged;
+                    stageSystem.OnTravelStarted -= HandleTravelStarted;
+                }
             }
-            m_vm.Unbind();
+
+            if (m_vm != null)
+            {
+                m_vm.Unbind();
+            }
+
             DOTween.Kill(this);
             ClearCurrentStage();
         }
@@ -68,18 +76,30 @@ namespace DesktopCompanion.Views
             switch (newState)
             {
                 case VoyageState.Anchored:
-                    if (stageSystem.CurrentStageData != null) LoadStage(AssetKeys.Of(stageSystem.CurrentStageData, AssetUsage.Model), isTarget: false);
+                    if (stageSystem.CurrentStageData != null)
+                    {
+                        LoadStage(AssetKeys.Of(stageSystem.CurrentStageData, AssetUsage.Model), isTarget: false);
+                    }
+                    else
+                    {
+                        ClearCurrentStage();
+                    }
                     break;
+
                 case VoyageState.Departing:
                     PlayDepartureSequence(stageSystem);
                     break;
+
                 case VoyageState.Traveling:
                     if (stageSystem.TargetStageData != null) LoadStage(AssetKeys.Of(stageSystem.TargetStageData, AssetUsage.Model), isTarget: true);
                     break;
+
                 case VoyageState.Arriving:
                     PlayArrivalSequence(stageSystem);
                     break;
+
                 case VoyageState.Stopping:
+                    ClearCurrentStage();
                     PlayStoppingSequence(stageSystem);
                     break;
             }
@@ -100,6 +120,9 @@ namespace DesktopCompanion.Views
         {
             DOTween.Kill(this);
             float maxSpeed = stageSystem.MaxSpeed;
+
+            if (m_shipController != null) m_shipController.m_speed = 0f;
+            stageSystem.SyncSpeed(0f);
 
             DOVirtual.Float(0f, 1f, DEPARTURE_TIME, (v) =>
             {
@@ -163,8 +186,11 @@ namespace DesktopCompanion.Views
         private void LoadStage(string stageAssetKey, bool isTarget)
         {
             if (m_lastLoadedAssetKey == stageAssetKey) return;
-            bool isFirstLoad = string.IsNullOrEmpty(m_lastLoadedAssetKey);
+            bool isFirstLoad = string.IsNullOrEmpty(m_lastLoadedAssetKey) && !isTarget;
             ClearCurrentStage();
+
+            var stageSystem = SystemManager.GetSystem<StageSystem>();
+            bool isActuallyAnchored = stageSystem != null && stageSystem.CurrentState == VoyageState.Anchored;
 
             if (isFirstLoad && m_shipController != null) m_shipController.ResetToOrigin();
             m_lastLoadedAssetKey = stageAssetKey;
@@ -176,7 +202,6 @@ namespace DesktopCompanion.Views
 
                 if (blueprint != null)
                 {
-                    var stageSystem = SystemManager.GetSystem<StageSystem>();
                     float currentCamX = Camera.main != null ? Camera.main.transform.position.x : 0f;
 
                     if (!isTarget)
