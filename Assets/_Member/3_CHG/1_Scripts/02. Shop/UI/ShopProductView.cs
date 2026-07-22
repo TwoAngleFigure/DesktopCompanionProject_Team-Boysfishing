@@ -1,46 +1,73 @@
 using System;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class ShopProductView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+namespace DesktopCompanion.Views
 {
-    [Header("Button")]
-    [SerializeField] private Button m_button;
-
-    [Header("Visual")]
-    [SerializeField] private Sprite m_itemIcon;
-    [SerializeField] private TMP_Text m_itemName;
-    [SerializeField] private TMP_Text m_desciptionText;
-    [SerializeField] private TMP_Text m_priceText;
-
-    private int m_productIndex;
-
-    Action<int> m_onClick;
-    Action<int> m_onPointerEnter;
-    Action<int> m_onPointerExit;
-
-    public void Initialize(int productIndex, Action<int> onClick, Action<int> onPointerEnter, Action<int> onPointerExit)
+    public class ShopProductView : MonoBehaviour
     {
-        m_productIndex = productIndex;
+        [Header("Button")]
+        [SerializeField] private Button m_button;
 
-        m_onClick = onClick;
-        m_onPointerEnter = onPointerEnter;
-        m_onPointerExit = onPointerExit;
+        [Header("Visual")]
+        [SerializeField] private Image m_itemIcon;
+        [SerializeField] private TMP_Text m_itemName;
+        [SerializeField] private TMP_Text m_typeText;
+        [SerializeField] private TMP_Text m_descriptionText;
+        [SerializeField] private TMP_Text m_priceText;
 
-        if(m_button == null)
+        private ShopProductViewData m_productData;
+
+        Action<ShopProductViewData> m_onClick;
+
+        public void Initialize(Action<ShopProductViewData> onClick)
         {
-            Debug.LogWarning("[ShopProductView] 버튼이 할당되지 않았습니다.");
-            return;
+
+            m_onClick = onClick;
+
+            if (m_button == null)
+            {
+                Debug.LogWarning("[ShopProductView] 버튼이 할당되지 않았습니다.");
+                return;
+            }
+
+            m_button.onClick.RemoveListener(OnClickButton);
+            m_button.onClick.AddListener(OnClickButton);
         }
 
-        m_button.onClick.AddListener
+        public void Set(ShopProductViewData data, Sprite icon)
+        {
+            if (data == null)
+                return;
+
+            m_productData = data;
+
+            if (m_itemIcon != null)
+            {
+                m_itemIcon.sprite = icon;
+                m_itemIcon.enabled = icon != null;
+            }
+
+            if (m_itemName != null)
+                m_itemName.text = data.Name;
+
+            if (m_typeText != null)
+                m_typeText.text = data.TypeText;
+
+            if (m_descriptionText != null)
+                m_descriptionText.text = data.Description;
+
+            if (m_priceText != null)
+                m_priceText.text = data.Price.ToString();
+        }
+
+        public void OnClickButton()
+        {
+            if (m_productData == null)
+                return;
+            m_onClick?.Invoke(m_productData);
+        }
     }
-
-    public void Set(ShopProductViewData data, Sprite icon)
-    {
-
-    }
-
 }
+

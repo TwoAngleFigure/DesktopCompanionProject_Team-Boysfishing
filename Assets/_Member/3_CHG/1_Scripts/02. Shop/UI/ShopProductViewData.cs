@@ -14,7 +14,10 @@ public class ShopProductViewData
 
     public bool IsStackable;
 
-    public ShopProductViewData(int dataId, string name, ItemType itemType, string iconKey, int tier, int price, bool isStackable = true)
+    public string TypeText;
+    public string Description;
+
+    public ShopProductViewData(int dataId, string name, ItemType itemType, string iconKey, int tier, int price, string typeText, string description, bool isStackable = true)
     {
         DataId = dataId;
         Name = name;
@@ -22,6 +25,8 @@ public class ShopProductViewData
         IconKey = iconKey;
         Tier = tier;
         Price = price;
+        TypeText = typeText;
+        Description = description;
         IsStackable = isStackable;
     }
 }

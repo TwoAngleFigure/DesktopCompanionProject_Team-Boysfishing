@@ -15,16 +15,17 @@ namespace DesktopCompanion.Views
         [SerializeField] private Transform m_productRoot;
         [SerializeField] private ShopProductView m_productViewPrefab;
 
-        [Header("Tooltip")]
-        [SerializeField] private InventoryItemTooltipView m_tooltopView;
-
         [Header("Buy Popup")]
         [SerializeField] private GameObject m_buyPopup;
-        [SerializeField] private InputField m_buyAmountInput;
+        [SerializeField] private TMP_Text m_buyItemName;
+        [SerializeField] private TMP_Text m_requireGoldText;
+        [SerializeField] private TMP_InputField m_buyAmountInput;
         [SerializeField] private Slider m_buyAmountSlider;
+        [SerializeField] private Button m_maxAmountButton;
         [SerializeField] private Button m_buyButton;
         [SerializeField] private Button m_cancelButton;
-        [SerializeField] private TMP_Text m_buyText;
+
+        private int m_buyAmount = 1;
 
         private readonly ShopViewModel m_vm = new();
         private readonly List<ShopProductView> m_products = new();
@@ -38,23 +39,30 @@ namespace DesktopCompanion.Views
 
             m_vm.Gold.Bind(RefreshGoldText);
             m_vm.Products.Bind(RefreshProductView);
+            m_vm.SelectedProduct.Bind(OnSelectedProductChanged);
             m_vm.OnBuySucceeded += OnBuySucceeded;
 
-            if(m_buyButton != null)
+            m_buyAmountSlider?.onValueChanged.AddListener(OnBuyAmountSliderChanged);
+            m_buyAmountInput?.onEndEdit.AddListener(OnBuyAmountInputEdit);
+            m_maxAmountButton?.onClick.AddListener(OnClickMaxAmountButton);
+            m_buyButton?.onClick.AddListener(OnClickBuyButton);
+            m_cancelButton?.onClick.AddListener(OnClickCancelButton);
+            m_closeButton?.onClick.AddListener(OnClickCloseButton);
 
-            if(m_cancelButton != null)
-
-            if(m_closeButton != null)
-                m_closeButton.onClick.AddListener(OnClickCloseButton);
-            
+            m_buyAmountSlider.wholeNumbers = true;
         }
 
         public override void Unbind()
         {
-            if(m_closeButton != null)
-                m_closeButton.onClick.RemoveListener(OnClickCloseButton);
+            m_closeButton?.onClick.RemoveListener(OnClickCloseButton);
+            m_cancelButton?.onClick.RemoveListener(OnClickCancelButton);
+            m_buyButton?.onClick.RemoveListener(OnClickBuyButton);
+            m_maxAmountButton?.onClick.RemoveListener(OnClickMaxAmountButton);
+            m_buyAmountInput?.onEndEdit.RemoveListener(OnBuyAmountInputEdit);
+            m_buyAmountSlider?.onValueChanged.RemoveListener(OnBuyAmountSliderChanged);
 
             m_vm.OnBuySucceeded -= OnBuySucceeded;
+            m_vm.SelectedProduct.Unbind(OnSelectedProductChanged);
             m_vm.Products.Unbind(RefreshProductView);
             m_vm.Gold.Unbind(RefreshGoldText);
 
@@ -107,9 +115,8 @@ namespace DesktopCompanion.Views
             while(m_products.Count < count)
             {
                 ShopProductView productView = Instantiate(m_productViewPrefab, m_productRoot);
-                int productsCount = m_products.Count;
 
-                productView.Initialize(productsCount, OnProductClick, OnProductPointEnter, OnProductPointExit);
+                productView.Initialize(OnClickButton);
 
                 m_products.Add(productView);
             }
@@ -200,28 +207,105 @@ namespace DesktopCompanion.Views
 
         private void OnBuySucceeded()
         {
-            if(m_buyPopup != null)
-                m_buyPopup.SetActive(false);
+            m_vm.SelectedProduct.Value = null;
         }
 
         private void OnClickCloseButton()
         {
+            m_vm.SelectedProduct.Value = null;
             Close();
         }
 
-        private void OnProductClick(int index)
+        private void OnSelectedProductChanged(ShopProductViewData data)
         {
+            if(data == null)
+            {
+                m_buyPopup.gameObject.SetActive(false);
+                return;
+            }
 
+            if (m_buyItemName != null)
+                m_buyItemName.text = data.Name;
+
+            if(m_buyAmountSlider != null)
+            {
+                if (data.IsStackable)
+                    m_buyAmountSlider.maxValue = Mathf.Max(m_vm.Gold.Value / data.Price, 1);
+                else
+                    m_buyAmountSlider.maxValue = 1;
+                m_buyAmountSlider.minValue = 1;
+            }
+
+            ApplyBuyAmount(1);
+
+            if (m_vm.Gold.Value < data.Price)
+                m_buyButton.interactable = false;
+            else
+                m_buyButton.interactable = true;
+
+            m_buyPopup.gameObject.SetActive(true);
         }
 
-        private void OnProductPointEnter(int index)
+        private void OnClickButton(ShopProductViewData data)
         {
-
+            m_vm.SelectProductCommand.Execute(data.DataId);
         }
 
-        private void OnProductPointExit(int index)
+        private void OnBuyAmountSliderChanged(float value)
         {
+            ApplyBuyAmount((int) value);
+        }
 
+        private void OnBuyAmountInputEdit(string text)
+        {
+            if(string.IsNullOrEmpty(text) || !int.TryParse(text, out int value))
+            {
+                ApplyBuyAmount(m_buyAmount);
+                return;
+            }
+
+            if(m_vm.SelectedProduct.Value.Price * value > m_vm.Gold.Value)
+            {
+                ApplyBuyAmount(m_buyAmount);
+                return;
+            }
+            
+            ApplyBuyAmount(value);
+        }
+
+        private void ApplyBuyAmount(int amount)
+        {
+            if (amount <= 0 || amount > m_buyAmountSlider.maxValue)
+            {
+                m_buyAmountSlider.SetValueWithoutNotify(m_buyAmount);
+                m_buyAmountInput.SetTextWithoutNotify(m_buyAmount.ToString());
+
+                m_requireGoldText.text = "ÇÊ¿ä °ñµå : " + (m_vm.SelectedProduct.Value.Price * m_buyAmount).ToString() + "G";
+                return;
+            }
+
+            m_buyAmount = amount;
+
+            m_buyAmountSlider.SetValueWithoutNotify(amount);
+            m_buyAmountInput.SetTextWithoutNotify(amount.ToString());
+
+            m_requireGoldText.text = "ÇÊ¿ä °ñµå : " + (m_vm.SelectedProduct.Value.Price * m_buyAmount).ToString() + "G";
+        }
+
+        private void OnClickBuyButton()
+        {
+            m_vm.BuyCommand.Execute(m_buyAmount);
+        }
+
+        private void OnClickCancelButton()
+        {
+            m_vm.SelectedProduct.Value = null;
+        }
+        
+        private void OnClickMaxAmountButton()
+        {
+            int maxAmount = (int)m_buyAmountSlider.maxValue;
+            ApplyBuyAmount(maxAmount);
         }
     }
 }
