@@ -163,7 +163,7 @@ namespace DesktopCompanion.Views
         private InventorySlotViewData CreateSlotViewData(int slotIndex, EntityHandle handle, Entity entity, bool isSelected)
         {
             ItemType actualItemType = GetItemType(entity);
-            string iconKey = BuildIconKey(entity, actualItemType);
+            string iconKey = BuildIconKey(entity);
 
             InventorySlotViewData viewData = new()
             {
@@ -674,42 +674,42 @@ namespace DesktopCompanion.Views
             return m_currentTab;
         }
 
-        private string BuildIconKey(Entity entity, ItemType itemType)
+        private string BuildIconKey(Entity entity)
         {
-            if (entity == null)
+            ItemData itemData = GetItemData(entity);
+
+            if (itemData == null)
             {
                 return string.Empty;
             }
 
-            string dataClassName = GetDataClassName(itemType);
-
-            if (string.IsNullOrEmpty(dataClassName))
-            {
-                return string.Empty;
-            }
-
-            return $"{dataClassName}_{entity.DataId}_Icon";
+            return AssetKeys.Of(itemData, AssetUsage.Icon);
         }
 
-        private string GetDataClassName(ItemType itemType)
+
+        private ItemData GetItemData(Entity entity)
         {
-            switch (itemType)
+            if (entity is Entity_Fish fish)
             {
-                case ItemType.Fish:
-                    return nameof(ItemData_Fish);
-
-                case ItemType.Equipment:
-                    return nameof(ItemData_Equipment);
-
-                case ItemType.Materials:
-                    return nameof(ItemData_Materials);
-
-                case ItemType.Consumables:
-                    return nameof(ItemData_Consumables);
-
-                default:
-                    return string.Empty;
+                return fish.ItemData;
             }
+
+            if (entity is Entity_Equipment equipment)
+            {
+                return equipment.ItemData;
+            }
+
+            if (entity is Entity_Materials materials)
+            {
+                return materials.ItemData;
+            }
+
+            if (entity is Entity_Consumables consumables)
+            {
+                return consumables.ItemData;
+            }
+
+            return null;
         }
 
         private ItemType NormalizeTab(ItemType tab)
