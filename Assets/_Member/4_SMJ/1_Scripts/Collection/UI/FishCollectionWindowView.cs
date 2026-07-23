@@ -27,6 +27,11 @@ namespace DesktopCompanion.Views
 
         public override void Bind()
         {
+            if (m_detailNameText != null)
+            {
+                m_detailNameText.alignment = TextAlignmentOptions.Center;
+            }
+
             m_vm.Inject(SystemManager, EntityManager);
             m_vm.Bind();
 
@@ -155,6 +160,7 @@ namespace DesktopCompanion.Views
             {
                 m_bestSizeText.gameObject.SetActive(isVisible);
             }
+
         }
 
         private void ClearEntryViews()
