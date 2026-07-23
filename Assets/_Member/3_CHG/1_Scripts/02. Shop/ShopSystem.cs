@@ -16,7 +16,7 @@ namespace DesktopCompanion.Systems
 
         public IReadOnlyList<ItemData> Products => m_products;
 
-        //��ȹ �� �ӽ� ���� ���� å���� ����. ��ȹ �� ����
+        //현재 기획 미흡으로 인해 구매 가격 = baseprice * 3으로 지정. 기획 후 수정
         private float m_priceMultiplier = 3.0f;
 
         public override void PostInitialize()
@@ -40,7 +40,7 @@ namespace DesktopCompanion.Systems
                 Debug.LogError("[ShopSystem] CurrencySystem not found.");
             }
 
-            //�� ��ȹ �� ���� �Ǹ� ǰ���� �Ҹ�ǰ���� ����. ��ȹ ���� �� ����
+            //현재 기획 상 상점 판매 품목은 소모품으로 한정. 기획 후 수정
             m_products = DataManager.GetAll<ItemData_Consumables>();
         }
 
@@ -98,7 +98,7 @@ namespace DesktopCompanion.Systems
         {
             earnedGold = 0;
 
-            //���� �κ��丮�� ������ Fish�� ���� ó�� - �ٸ� �͵��� ó�� X
+            //자동 판매는 현재 기획 상 물고기 아이템에 한정
             if (EntityManager.Get(handle) is not Entity_Fish fish)
             {
                 return false;
@@ -233,7 +233,7 @@ namespace DesktopCompanion.Systems
 
         #endregion
 
-        /// <summary> ���� ������ ��� ����Ʈ ��ȯ </summary>
+        /// <summary> 현재 플레이어가 구매할 수 있는 아이템을 반환 </summary>
         public IReadOnlyList<ItemData> GetBuyableItems()
         {
             Entity_Player playerEntity = (Entity_Player)EntityManager.Get(m_playerSystem.PlayerHandle);
@@ -249,7 +249,7 @@ namespace DesktopCompanion.Systems
             return buyableItem;
         }
 
-        /// <summary> ������ ���ŷ���. DataId�� ItemType�� ���� Ȯ���� �Ͽ� �߰��� ��. </summary>
+        /// <summary> 아이템을 구매하는 함수. ItemType과 DataId 검증 확실히 할 것. </summary>
         public bool BuyItem(ItemType type, int dataId, int amount)
         {
             #region Validation
@@ -258,14 +258,14 @@ namespace DesktopCompanion.Systems
 
             if (amount <= 0 || (type == ItemType.Equipment && amount > 1))
             {
-                Debug.LogWarning($"[ShopSystem] �����Ϸ��� ������ �߸��Ǿ����ϴ�. amount : {amount}");
+                Debug.LogWarning($"[ShopSystem] 구매하려는 품목의 수량이 올바르지 않습니다. amount : {amount}");
                 return false;
             }
 
             if ((type == ItemType.Materials || type == ItemType.Consumables) && m_inventorySystem.GetTotalQuantityByDataId(type, dataId) <= 0 && !m_inventorySystem.HasEmptySlot(type) ||
                 (type == ItemType.Equipment && !m_inventorySystem.HasEmptySlot(type)))
             {
-                Debug.LogWarning($"[ShopSystem] �κ��丮�� �����Ϸ��� �������� �� ������ �����ϴ�.");
+                Debug.LogWarning($"[ShopSystem] 구매하려는 품목이 인벤토리에 들어갈 자리가 없습니다.");
                 return false;
             }
 
@@ -273,13 +273,13 @@ namespace DesktopCompanion.Systems
 
             if(totalPrice <= 0)
             {
-                Debug.LogWarning("[ShopSystem] ������ 0�� ��ǰ�� �������� �ʽ��ϴ�.");
+                Debug.LogWarning("[ShopSystem] 가격이 0 이하인 품목은 존재하지 않습니다.");
                 return false;
             }
 
             if(m_currencySystem.CurrentGold < totalPrice)
             {
-                Debug.LogWarning($"[ShopSystem] �����Ϸ��� �������� ������ ���� ������ ��庸�� �����ϴ�. ���� ������ ��� : {m_currencySystem.CurrentGold}, ���� : {totalPrice}");
+                Debug.LogWarning($"[ShopSystem] 구매하려는 품목의 가격이 현재 소지한 골드보다 높습니다. 현재 소지한 골드 : {m_currencySystem.CurrentGold}, 가격 : {totalPrice}");
                 return false;
             }
             #endregion
@@ -312,13 +312,13 @@ namespace DesktopCompanion.Systems
             { 
                 EntityManager.Destroy(itemHandle);
                 if (!m_currencySystem.AddGold(totalPrice))
-                    Debug.LogError($"[ShopSystem] ���� ���� ȯ�� ���� : {totalPrice}");
+                    Debug.LogError($"[ShopSystem] 환불에 실패했습니다. : {totalPrice}");
                 return false;
             }
             return true;
         }
 
-        //��ȹ �� �ӽ� ���� ���� å���� ����. ��ȹ �� ����
+        //현재 기획 미흡으로 인해 구매 가격 = 판매 가격 x n으로 구현. 기획 후 수정
         public int CalculateItemPrice(int basePrice)
         {
             float price = basePrice * m_priceMultiplier;
@@ -337,7 +337,7 @@ namespace DesktopCompanion.Systems
                 }
             }
 
-            Debug.LogWarning($"[ShopSystem] ���� ��ǰ�� �ùٸ��� �ʽ��ϴ�.\nID : {dataId} | ID_Type : {type}");
+            Debug.LogWarning($"[ShopSystem] 아이템이 검증에 실패했습니다.\nID : {dataId} | ID_Type : {type}");
             price = 0;
             return false;
         }

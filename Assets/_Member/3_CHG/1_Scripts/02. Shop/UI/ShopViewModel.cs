@@ -149,11 +149,11 @@ namespace DesktopCompanion.Views
             switch(item.Type)
             {
                 case ItemType.Equipment:
-                    return "���";
+                    return "장비";
                 case ItemType.Materials:
-                    return "���";
+                    return "재료";
                 case ItemType.Consumables:
-                    return "�Ҹ�ǰ";
+                    return "소모품";
                 default:
                     return "";
             }
@@ -178,7 +178,7 @@ namespace DesktopCompanion.Views
 
             StringBuilder effectBuilder = new();
 
-            builder.Append($"{itemData.Tier} Ƽ��");
+            builder.Append($"{itemData.Tier} 티어");
             builder.AppendLine();
 
             AppendModifiers(effectBuilder, itemData.Modifiers);
@@ -191,7 +191,7 @@ namespace DesktopCompanion.Views
                 }
 
                 effectBuilder.Append(itemData.SummonTarget.Name);
-                effectBuilder.Append(" ��ȯ");
+                effectBuilder.Append(" 소환");
             }
 
             if (effectBuilder.Length > 0)
@@ -200,7 +200,7 @@ namespace DesktopCompanion.Views
             }
             else
             {
-                builder.Append("ȿ�� ���� ����");
+                builder.Append("장착 효과 없음");
             }
 
             return builder.ToString();
@@ -233,43 +233,43 @@ namespace DesktopCompanion.Views
             switch (stat)
             {
                 case PlayerStat.DamagePerClick:
-                    return "Ŭ�� ���ݷ�";
+                    return "클릭 공격력";
 
                 case PlayerStat.ManualDamagePerHitMultiply:
-                    return "���� ���� ����";
+                    return "수동 공격 배율";
 
                 case PlayerStat.BattleTimeVariable:
-                    return "���� �ð�";
+                    return "전투 시간";
 
                 case PlayerStat.CriticalChance:
-                    return "ũ��Ƽ�� Ȯ��";
+                    return "크리티컬 확률";
 
                 case PlayerStat.CriticalMultiply:
-                    return "ũ��Ƽ�� ����";
+                    return "크리티컬 배율";
 
                 case PlayerStat.AutoBattleCooltime:
-                    return "�ڵ� ���� ����";
+                    return "자동 낚시 간격";
 
                 case PlayerStat.AutoSpeedPerTime:
-                    return "�ڵ� ���� �ӵ�";
+                    return "자동 공격 속도";
 
                 case PlayerStat.AutoDamagePerHitMultiply:
-                    return "�ڵ� ���� ����";
+                    return "자동 공격 배율";
 
                 case PlayerStat.MapMovementSpeedPerTime:
-                    return "�̵� �ӵ�";
+                    return "이동 속도";
 
                 case PlayerStat.InventorySize:
-                    return "�κ��丮 ũ��";
+                    return "인벤토리 크기";
 
                 case PlayerStat.ProbabilityAtFishSize:
-                    return "���� ���� ���� Ȯ��";
+                    return "높은 성급 등장 확률";
 
                 case PlayerStat.ProbabilityAtFishRarity:
-                    return "���� ��� ���� Ȯ��";
+                    return "높은 등급 등장 확률";
 
                 case PlayerStat.GoldGettingMultiply:
-                    return "��� ȹ�� ����";
+                    return "골드 획득 배율";
 
                 default:
                     return stat.ToString();

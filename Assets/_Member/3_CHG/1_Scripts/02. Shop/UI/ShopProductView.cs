@@ -28,7 +28,7 @@ namespace DesktopCompanion.Views
 
             if (m_button == null)
             {
-                Debug.LogWarning("[ShopProductView] ��ư�� �Ҵ���� �ʾҽ��ϴ�.");
+                Debug.LogWarning("[ShopProductView] 버튼이 할당되지 않았습니다.");
                 return;
             }
 
