@@ -40,7 +40,6 @@ namespace DesktopCompanion.Views
         [SerializeField] private Button m_filterCloseButton;
 
         private readonly InventorySellViewModel m_vm = new();
-        private bool m_isBound;
 
         public bool IsSellMode => m_vm.IsSellMode.Value;
 
@@ -49,8 +48,6 @@ namespace DesktopCompanion.Views
 
         public void Bind(SystemManager systemManager, EntityManager entityManager)
         {
-            if (m_isBound) return;
-
             m_vm.Inject(systemManager, entityManager);
             m_vm.Bind();
 
@@ -91,20 +88,10 @@ namespace DesktopCompanion.Views
             m_filterApplyButton?.onClick.AddListener(OnFilterApplyClicked);
             m_filterDisableButton?.onClick.AddListener(OnFilterDisableClicked);
             m_filterCloseButton?.onClick.AddListener(OnFilterCloseClicked);
-
-            m_isBound = true;
-
-            // 첫 화면 상태 보정
-            RefreshSellMode(m_vm.IsSellMode.Value);
-            RefreshQuantityPopup(m_vm.IsQuantityPopupOpen.Value);
-            RefreshConfirmPopup(m_vm.IsConfirmPopupOpen.Value);
-            RefreshFilterPopup(m_vm.IsFilterPopupOpen.Value);
         }
 
         public void Unbind()
         {
-            if (!m_isBound) return;
-
             m_sellButton?.onClick.RemoveListener(OnSellButtonClicked);
             m_autoSellButton?.onClick.RemoveListener(OnAutoSellFilterClicked);
 
@@ -145,13 +132,8 @@ namespace DesktopCompanion.Views
 
             m_vm.Unbind();
 
-            m_quantityPopup?.SetActive(false);
-            m_confirmPopup?.SetActive(false);
-            m_filterPopup?.SetActive(false);
-
             OnSellVisualStateChanged = null;
             OnSellModeChanged = null;
-            m_isBound = false;
         }
 
         public void HandleSlotClick(InventorySlotViewData slotData)
@@ -231,15 +213,11 @@ namespace DesktopCompanion.Views
 
         private void OnQualityChanged(int dropdownIndex)
         {
-            if (dropdownIndex < 0 || dropdownIndex > 4) return;
-
             m_vm.SetAutoSellQualityCommand.Execute((ItemQuality)(dropdownIndex + 1));
         }
 
         private void OnRarityChanged(int dropdownIndex)
         {
-            if (dropdownIndex < 0 || dropdownIndex > 4) return; // Boss 제외
-
             m_vm.SetAutoSellRarityCommand.Execute((ItemRarity)dropdownIndex);
         }
 
@@ -368,34 +346,12 @@ namespace DesktopCompanion.Views
 
         private void RefreshAutoSellQuality(ItemQuality quality)
         {
-            if (m_qualityDropdown == null || m_qualityDropdown.options.Count == 0) return;
-
-            int index = Mathf.Clamp((int)quality - 1, 0, m_qualityDropdown.options.Count - 1);
-            m_qualityDropdown.SetValueWithoutNotify(index);
+            m_qualityDropdown?.SetValueWithoutNotify((int)quality - 1);
         }
 
         private void RefreshAutoSellRarity(ItemRarity rarity)
         {
-            if (m_rarityDropdown == null || m_rarityDropdown.options.Count == 0) return;
-
-            int index = Mathf.Clamp((int)rarity, 0, m_rarityDropdown.options.Count - 1);
-            m_rarityDropdown.SetValueWithoutNotify(index);
-        }
-
-        private void OnDestroy()
-        {
-            Unbind();
-        }
-
-        //외부 참조용 판매 진입 코드
-        public void EnterSellMode()
-        {
-            if (IsSellMode)
-            {
-                return;
-            }
-
-            m_vm.SellButtonCommand.Execute();
+            m_rarityDropdown?.SetValueWithoutNotify((int)rarity);
         }
     }
 }
