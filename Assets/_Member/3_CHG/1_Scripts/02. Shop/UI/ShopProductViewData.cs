@@ -17,7 +17,10 @@ public class ShopProductViewData
     public string TypeText;
     public string Description;
 
-    public ShopProductViewData(int dataId, string name, ItemType itemType, string iconKey, int tier, int price, string typeText, string description, bool isStackable = true)
+    public bool IsBuyable;
+
+    public ShopProductViewData(int dataId, string name, ItemType itemType, string iconKey, int tier, 
+        int price, string typeText, string description, bool isBuyable ,bool isStackable = true)
     {
         DataId = dataId;
         Name = name;
@@ -27,6 +30,7 @@ public class ShopProductViewData
         Price = price;
         TypeText = typeText;
         Description = description;
+        IsBuyable = isBuyable;
         IsStackable = isStackable;
     }
 }

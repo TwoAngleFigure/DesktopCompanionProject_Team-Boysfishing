@@ -14,6 +14,8 @@ namespace DesktopCompanion.Systems
 
         private IReadOnlyList<ItemData> m_products;
 
+        public IReadOnlyList<ItemData> Products => m_products;
+
         //기획 전 임시 구매 가격 책정용 변수. 기획 후 수정
         private float m_priceMultiplier = 3.0f;
 

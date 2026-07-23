@@ -60,6 +60,9 @@ namespace DesktopCompanion.Views
 
             if (m_priceText != null)
                 m_priceText.text = data.Price.ToString();
+
+            if (m_button != null)
+                m_button.interactable = data.IsBuyable;
         }
 
         public void OnClickButton()

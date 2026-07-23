@@ -3,6 +3,7 @@ using DesktopCompanion.Entities;
 using DesktopCompanion.Systems;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 
@@ -96,16 +97,27 @@ namespace DesktopCompanion.Views
             for(int i = 0; i < data.Count; i++)
             {
                 ItemData item = data[i];
-                ShopProductViewData product = CreateProductViewData(item);
+                ShopProductViewData product = CreateProductViewData(item, true);
                 
                 if(product != null && product.Price > 0) 
                     products.Add(product);
             }
 
+            foreach(ItemData item in m_shopSystem.Products)
+            {
+                if (!data.Contains(item))
+                {
+                    ShopProductViewData product = CreateProductViewData(item, false);
+
+                    if(product != null && product.Price > 0)
+                        products.Add(product);
+                }
+            }
+
             Products.Value = products;
         }
 
-        private ShopProductViewData CreateProductViewData(ItemData item)
+        private ShopProductViewData CreateProductViewData(ItemData item, bool isBuyable)
         {
             if (m_shopSystem == null || item == null || item.Type == ItemType.Fish)
                 return null;
@@ -120,7 +132,8 @@ namespace DesktopCompanion.Views
                 item.Tier,
                 m_shopSystem.CalculateItemPrice(item.BasePrice),
                 GetTypeText(item),
-                GetDescription(item)
+                GetDescription(item),
+                isBuyable
                 );
 
             if (item.Type == ItemType.Equipment)

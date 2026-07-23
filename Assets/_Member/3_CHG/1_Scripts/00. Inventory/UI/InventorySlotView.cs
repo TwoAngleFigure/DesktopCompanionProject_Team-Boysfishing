@@ -17,6 +17,7 @@ namespace DesktopCompanion.Views
         [SerializeField] private TMP_Text m_quantityText;
         [SerializeField] private TMP_Text m_subInfoText;
         [SerializeField] private GameObject m_fishStarImage;
+        [SerializeField] private GameObject m_enhanceIcon;
 
         [Header("State")]
         [SerializeField] private GameObject m_emptyRoot;
@@ -85,9 +86,22 @@ namespace DesktopCompanion.Views
 
             if (m_quantityText != null)
             {
-                m_quantityText.text = data.Quantity > 1
-                    ? data.Quantity.ToString()
-                    : string.Empty;
+                switch (data.ItemType)
+                {
+                    case ItemType.Equipment:
+                        m_quantityText.text =  data.UpgradeLevel > 0 ? $"+{data.UpgradeLevel}" : string.Empty;
+                        break;
+
+                    case ItemType.Consumables:
+                    case ItemType.Materials:
+                        m_quantityText.text = data.Quantity > 1 ? data.Quantity.ToString() : string.Empty;
+                        break;
+
+                    case ItemType.Fish:
+                    default:
+                        m_quantityText.text = string.Empty;
+                        break;
+                }
             }
 
             if (m_subInfoText != null)
@@ -98,6 +112,11 @@ namespace DesktopCompanion.Views
             if (m_fishStarImage != null)
             {
                 m_fishStarImage.SetActive(data.ItemType == ItemType.Fish);
+            }
+
+            if(m_enhanceIcon != null)
+            {
+                m_enhanceIcon.SetActive(data.ItemType == ItemType.Equipment && data.UpgradeLevel > 0);
             }
         }
 
@@ -132,6 +151,11 @@ namespace DesktopCompanion.Views
                 m_fishStarImage.SetActive(false);
             }
 
+            if(m_enhanceIcon != null)
+            {
+                m_enhanceIcon.SetActive(false);
+            }
+
             SetSellSelection(false, 0, false);
         }
 
@@ -143,10 +167,6 @@ namespace DesktopCompanion.Views
                     return GetQualityNumberText(data.Quality);
 
                 case ItemType.Equipment:
-                    return data.UpgradeLevel > 0
-                        ? $"+{data.UpgradeLevel}"
-                        : string.Empty;
-
                 case ItemType.Materials:
                 case ItemType.Consumables:
                     return string.Empty;
