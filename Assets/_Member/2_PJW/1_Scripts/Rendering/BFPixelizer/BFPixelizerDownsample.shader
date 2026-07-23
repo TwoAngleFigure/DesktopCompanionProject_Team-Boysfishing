@@ -30,6 +30,7 @@ Shader "Hidden/BFPixelizer/Downsample"
 
             // _BlitTexture(Blit.hlsl) = 오프스크린 컬러(풀해상도).
             TEXTURE2D_X(_BFP_OffMeta);
+            TEXTURE2D_X(_BFP_OffAlpha);
             TEXTURE2D_X_FLOAT(_BFP_OffDepth);
             float _BFP_CellSize; // N_rt
 
@@ -37,6 +38,7 @@ Shader "Hidden/BFPixelizer/Downsample"
             {
                 half4 color : SV_Target0;
                 half4 meta : SV_Target1;
+                half2 alpha : SV_Target2; // r = 오브젝트 알파, g = 아웃라인 투명도(계획 15)
                 float depth : SV_Depth;
             };
 
@@ -50,6 +52,7 @@ Shader "Hidden/BFPixelizer/Downsample"
                 FragOutput output;
                 output.color = LOAD_TEXTURE2D_X(_BlitTexture, src);
                 output.meta = LOAD_TEXTURE2D_X(_BFP_OffMeta, src);
+                output.alpha = LOAD_TEXTURE2D_X(_BFP_OffAlpha, src).rg;
                 output.depth = LOAD_TEXTURE2D_X(_BFP_OffDepth, src).r;
                 return output;
             }

@@ -33,6 +33,10 @@ namespace DesktopCompanion.Rendering
         private readonly List<DrawEntry> _draws = new();
         private Renderer[] _renderers;
         private uint[] _originalRenderingLayers;
+        private int _rendererLayerMask;
+
+        /// <summary>계층 렌더러들의 레이어 비트 합집합 — 카메라 Culling Mask 대조용.</summary>
+        public int RendererLayerMask => _rendererLayerMask;
 
         /// <summary>격자 원점(월드) = transform.position.</summary>
         public Vector3 PivotWS => transform.position;
@@ -65,10 +69,12 @@ namespace DesktopCompanion.Rendering
 
             // v2(화면 격자) 경로에서 제외 — 스프라이트 합성과의 이중 표시 방지.
             _originalRenderingLayers = new uint[_renderers.Length];
+            _rendererLayerMask = 0;
             for (int i = 0; i < _renderers.Length; i++)
             {
                 _originalRenderingLayers[i] = _renderers[i].renderingLayerMask;
                 _renderers[i].renderingLayerMask = RenderingLayerBit;
+                _rendererLayerMask |= 1 << _renderers[i].gameObject.layer;
             }
 
             s_active.Add(this);
@@ -83,6 +89,16 @@ namespace DesktopCompanion.Rendering
                 if (_renderers[i] != null)
                     _renderers[i].renderingLayerMask = _originalRenderingLayers[i];
             }
+        }
+
+        /// <summary>
+        /// 컬링용 월드 AABB. 스프라이트 버퍼가 피벗 중심 · 반경 GetRadiusWS()의 영역을 담으므로,
+        /// 그 구를 감싸는 AABB가 합성이 픽셀을 남길 수 있는 최대 범위와 정확히 일치한다.
+        /// </summary>
+        public Bounds GetCullingBounds()
+        {
+            float diameter = GetRadiusWS() * 2f;
+            return new Bounds(PivotWS, new Vector3(diameter, diameter, diameter));
         }
 
         /// <summary>피벗 기준 바운딩 반경(월드) — 어떤 회전에도 오브젝트를 담는 스프라이트 버퍼 크기 산출용.</summary>
