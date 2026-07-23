@@ -5,7 +5,7 @@ using DesktopCompanion.Entities;
 
 namespace DesktopCompanion.Views
 {
-    public class ReinforceWindowView : UIViewBase
+    public class ReinforceWindowView : UIWindowBase
     {
         [SerializeField] private ReinforceSlotWidget m_slotWidget;
         [SerializeField] private TextMeshProUGUI m_statText;

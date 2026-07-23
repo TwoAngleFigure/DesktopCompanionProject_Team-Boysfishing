@@ -11,6 +11,7 @@ namespace DesktopCompanion.Views
     {
         private PlayerSystem m_playerSystem;
         private InventorySystem m_inventorySystem;
+        private CurrencySystem m_currencySystem; // [추가] 골드 변경을 실시간으로 감지하기 위한 시스템 참조
 
         public readonly BindableProperty<EntityHandle> SelectedEquipment = new(default);
         public readonly BindableProperty<int> RequiredGold = new(0);
@@ -35,6 +36,13 @@ namespace DesktopCompanion.Views
             {
                 m_inventorySystem.OnInventoryChanged += HandleInventoryChanged;
             }
+            
+            // [추가] 순수하게 '골드' 수치만 변경되는 상황(아이템 판매 등)을 즉각 캐치하기 위해 구독
+            m_currencySystem = SystemManager.GetSystem<CurrencySystem>();
+            if (m_currencySystem != null)
+            {
+                m_currencySystem.OnGoldChanged += HandleGoldChanged;
+            }
 
             ReinforceCommand = new RelayCommand(TryReinforce);
             
@@ -49,6 +57,12 @@ namespace DesktopCompanion.Views
             {
                 UpdateReinforcementInfo(SelectedEquipment.Value);
             }
+        }
+
+        // [추가] 아이템 판매 등으로 보유 골드가 변경되면, 즉시 UI 텍스트에 반영합니다.
+        private void HandleGoldChanged(int newGold)
+        {
+            CurrentGold.Value = newGold;
         }
 
         // 인벤토리(강화 재료 등)가 변경되었을 때 호출되며, 현재 올려둔 장비가 있다면 보유 재료 개수를 즉시 갱신합니다.
@@ -124,8 +138,6 @@ namespace DesktopCompanion.Views
 
             // 3. 스탯 증가량 문자열 완성
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"<color=#5BC0EB><b>[{equip.ItemData.Name}]</b></color>");
-            sb.AppendLine("-------------------");
             
             // 현재 스탯 가져오기 (0강이면 기본 효과, 그 이상이면 해당 레벨의 누적 효과)
             var currentModifiers = equip.ItemData.GetModifiers(equip.UpgradeLevel);
@@ -193,9 +205,16 @@ namespace DesktopCompanion.Views
             {
                 m_inventorySystem.OnInventoryChanged -= HandleInventoryChanged;
             }
+            
+            // [추가] 이벤트 구독 해제
+            if (m_currencySystem != null)
+            {
+                m_currencySystem.OnGoldChanged -= HandleGoldChanged;
+            }
 
             m_playerSystem = null;
             m_inventorySystem = null;
+            m_currencySystem = null;
         }
     }
 }
