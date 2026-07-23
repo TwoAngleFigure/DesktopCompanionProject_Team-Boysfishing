@@ -23,6 +23,13 @@ namespace DesktopCompanion.Systems
         private PlayerSystem m_playerSystem;
         private CurrencySystem m_currencySystem;
 
+        private IReadOnlyList<ItemData> m_products;
+
+        public IReadOnlyList<ItemData> Products => m_products;
+
+        //��ȹ �� �ӽ� ���� ���� å���� ����. ��ȹ �� ����
+        private float m_priceMultiplier = 3.0f;
+
         public override void PostInitialize()
         {
             m_inventorySystem = SystemManager.GetSystem<InventorySystem>();
