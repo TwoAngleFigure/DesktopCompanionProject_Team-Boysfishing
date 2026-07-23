@@ -95,8 +95,8 @@ namespace DesktopCompanion.Views
             if (handle.Value == Guid.Empty)
             {
                 RequiredGold.Value = 0;
-                StatIncreaseText.Value = "장비를 등록해주세요.";
-                RequiredMaterialText.Value = "장비를 등록해주세요.";
+                StatIncreaseText.Value = "";
+                RequiredMaterialText.Value = "장비를 등록해 주세요.";
                 return;
             }
 
@@ -129,7 +129,8 @@ namespace DesktopCompanion.Views
                     currentMat = m_inventorySystem.GetTotalQuantityByDataId(DesktopCompanion.Data.ItemType.Materials, mat.Material.ID);
                 }
 
-                RequiredMaterialText.Value = $"{mat.Material?.Name ?? "재료"} {currentMat} / {mat.Count}";
+                string colorHex = currentMat >= mat.Count ? "#00FF00" : "#FF0000";
+                RequiredMaterialText.Value = $"{mat.Material?.Name ?? "재료"} <color={colorHex}>{currentMat}</color> / {mat.Count}";
             }
             else
             {
