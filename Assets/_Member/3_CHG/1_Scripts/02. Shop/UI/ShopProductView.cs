@@ -28,7 +28,7 @@ namespace DesktopCompanion.Views
 
             if (m_button == null)
             {
-                Debug.LogWarning("[ShopProductView] ¹öÆ°ÀÌ ÇÒ´çµÇÁö ¾Ê¾Ò½À´Ï´Ù.");
+                Debug.LogWarning("[ShopProductView] ï¿½ï¿½Æ°ï¿½ï¿½ ï¿½Ò´ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¾Ò½ï¿½ï¿½Ï´ï¿½.");
                 return;
             }
 

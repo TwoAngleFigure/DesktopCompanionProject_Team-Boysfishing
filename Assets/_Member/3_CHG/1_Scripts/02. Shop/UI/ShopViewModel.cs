@@ -149,11 +149,11 @@ namespace DesktopCompanion.Views
             switch(item.Type)
             {
                 case ItemType.Equipment:
-                    return "Àåºñ";
+                    return "ï¿½ï¿½ï¿½";
                 case ItemType.Materials:
-                    return "Àç·á";
+                    return "ï¿½ï¿½ï¿½";
                 case ItemType.Consumables:
-                    return "¼Ò¸ðÇ°";
+                    return "ï¿½Ò¸ï¿½Ç°";
                 default:
                     return "";
             }
@@ -178,7 +178,7 @@ namespace DesktopCompanion.Views
 
             StringBuilder effectBuilder = new();
 
-            builder.Append($"{itemData.Tier} Æ¼¾î");
+            builder.Append($"{itemData.Tier} Æ¼ï¿½ï¿½");
             builder.AppendLine();
 
             AppendModifiers(effectBuilder, itemData.Modifiers);
@@ -191,7 +191,7 @@ namespace DesktopCompanion.Views
                 }
 
                 effectBuilder.Append(itemData.SummonTarget.Name);
-                effectBuilder.Append(" ¼ÒÈ¯");
+                effectBuilder.Append(" ï¿½ï¿½È¯");
             }
 
             if (effectBuilder.Length > 0)
@@ -200,7 +200,7 @@ namespace DesktopCompanion.Views
             }
             else
             {
-                builder.Append("È¿°ú Á¤º¸ ¾øÀ½");
+                builder.Append("È¿ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½");
             }
 
             return builder.ToString();
@@ -233,43 +233,43 @@ namespace DesktopCompanion.Views
             switch (stat)
             {
                 case PlayerStat.DamagePerClick:
-                    return "Å¬¸¯ °ø°Ý·Â";
+                    return "Å¬ï¿½ï¿½ ï¿½ï¿½ï¿½Ý·ï¿½";
 
                 case PlayerStat.ManualDamagePerHitMultiply:
-                    return "¼öµ¿ °ø°Ý ¹èÀ²";
+                    return "ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½";
 
                 case PlayerStat.BattleTimeVariable:
-                    return "ÀüÅõ ½Ã°£";
+                    return "ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½";
 
                 case PlayerStat.CriticalChance:
-                    return "Å©¸®Æ¼ÄÃ È®·ü";
+                    return "Å©ï¿½ï¿½Æ¼ï¿½ï¿½ È®ï¿½ï¿½";
 
                 case PlayerStat.CriticalMultiply:
-                    return "Å©¸®Æ¼ÄÃ ¹èÀ²";
+                    return "Å©ï¿½ï¿½Æ¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½";
 
                 case PlayerStat.AutoBattleCooltime:
-                    return "ÀÚµ¿ ³¬½Ã °£°Ý";
+                    return "ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½";
 
                 case PlayerStat.AutoSpeedPerTime:
-                    return "ÀÚµ¿ °ø°Ý ¼Óµµ";
+                    return "ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Óµï¿½";
 
                 case PlayerStat.AutoDamagePerHitMultiply:
-                    return "ÀÚµ¿ °ø°Ý ¹èÀ²";
+                    return "ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½";
 
                 case PlayerStat.MapMovementSpeedPerTime:
-                    return "ÀÌµ¿ ¼Óµµ";
+                    return "ï¿½Ìµï¿½ ï¿½Óµï¿½";
 
                 case PlayerStat.InventorySize:
-                    return "ÀÎº¥Åä¸® Å©±â";
+                    return "ï¿½Îºï¿½ï¿½ä¸® Å©ï¿½ï¿½";
 
                 case PlayerStat.ProbabilityAtFishSize:
-                    return "³ôÀº ¼º±Þ µîÀå È®·ü";
+                    return "ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½";
 
                 case PlayerStat.ProbabilityAtFishRarity:
-                    return "³ôÀº µî±Þ µîÀå È®·ü";
+                    return "ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½";
 
                 case PlayerStat.GoldGettingMultiply:
-                    return "°ñµå È¹µæ ¹èÀ²";
+                    return "ï¿½ï¿½ï¿½ È¹ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½";
 
                 default:
                     return stat.ToString();

@@ -1,3 +1,4 @@
+using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
 using System;
 using System.Collections.Generic;
@@ -5,18 +6,6 @@ using UnityEngine;
 
 namespace DesktopCompanion.Systems
 {
-    public readonly struct SellRequest
-    {
-        public EntityHandle Handle { get; }
-        public int Amount { get; }
-
-        public SellRequest(EntityHandle handle, int amount)
-        {
-            Handle = handle;
-            Amount = amount;
-        }
-    }
-
     public class ShopSystem : SystemBase
     {
         private InventorySystem m_inventorySystem;
@@ -50,7 +39,12 @@ namespace DesktopCompanion.Systems
             {
                 Debug.LogError("[ShopSystem] CurrencySystem not found.");
             }
+
+            //�� ��ȹ �� ���� �Ǹ� ǰ���� �Ҹ�ǰ���� ����. ��ȹ ���� �� ����
+            m_products = DataManager.GetAll<ItemData_Consumables>();
         }
+
+        #region sell
 
         public int CalculateSellGold(EntityHandle handle, int amount)
         {
@@ -60,67 +54,37 @@ namespace DesktopCompanion.Systems
             return ApplyGoldMultiplier(basePrice);
         }
 
-        public int CalculateSellGold(IReadOnlyCollection<SellRequest> requests)
+        public int CalculateSellGold(IReadOnlyCollection<ItemQuantity> items)
         {
-            if (requests == null || requests.Count == 0)
-            {
-                return 0;
-            }
-
-            long totalBasePrice = 0;
-
-            foreach (SellRequest request in requests)
-            {
-                Entity entity = EntityManager.Get(request.Handle);
-                long basePrice = CalculateBaseSellPrice(entity, request.Amount);
-
-                if (basePrice <= 0)
-                {
-                    return 0;
-                }
-
-                totalBasePrice += basePrice;
-            }
-
-            return ApplyGoldMultiplier(totalBasePrice);
+            return TryCalculateSellGold(items, out int sellGold) ? sellGold : 0;
         }
 
-        public bool SellItems(IReadOnlyCollection<SellRequest> requests, out int earnedGold)
+        public bool SellItems(IReadOnlyCollection<ItemQuantity> items, out int earnedGold)
         {
             earnedGold = 0;
 
-            if (m_inventorySystem == null || m_currencySystem == null || requests == null || requests.Count == 0)
+            if (m_inventorySystem == null || m_currencySystem == null)
             {
                 return false;
             }
 
-            HashSet<EntityHandle> uniqueHandles = new();
-
-            foreach (SellRequest request in requests)
-            {
-                if (!uniqueHandles.Add(request.Handle) || !m_inventorySystem.CanRemoveByHandle(request.Handle, request.Amount))
-                {
-                    return false;
-                }
-            }
-
-            int sellGold = CalculateSellGold(requests);
-
-            if (sellGold <= 0)
+            if (!TryCalculateSellGold(items, out int sellGold))
             {
                 return false;
-            }
-
-            foreach (SellRequest request in requests)
-            {
-                if (!m_inventorySystem.RemoveByHandle(request.Handle, request.Amount, false))
-                {
-                    return false;
-                }
             }
 
             if (!m_currencySystem.AddGold(sellGold))
             {
+                return false;
+            }
+
+            if (!m_inventorySystem.RemoveByHandles(items, false))
+            {
+                if (!m_currencySystem.AddGold(-sellGold))
+                {
+                    Debug.LogError("[ShopSystem] Failed to roll back gold after inventory removal failure.");
+                }
+
                 return false;
             }
 
@@ -132,7 +96,15 @@ namespace DesktopCompanion.Systems
 
         public bool SellAcquiredItem(EntityHandle handle, out int earnedGold)
         {
-            earnedGold = CalculateSellGold(handle, 1);
+            earnedGold = 0;
+
+            //���� �κ��丮�� ������ Fish�� ���� ó�� - �ٸ� �͵��� ó�� X
+            if (EntityManager.Get(handle) is not Entity_Fish fish)
+            {
+                return false;
+            }
+
+            earnedGold = ApplyGoldMultiplier(CalculateBaseSellPrice(fish, 1));
 
             if (earnedGold <= 0 || m_currencySystem == null || !m_currencySystem.AddGold(earnedGold))
             {
@@ -142,6 +114,40 @@ namespace DesktopCompanion.Systems
 
             EntityManager.Destroy(handle);
             return true;
+        }
+
+        private bool TryCalculateSellGold(IReadOnlyCollection<ItemQuantity> items, out int sellGold)
+        {
+            sellGold = 0;
+
+            if (m_inventorySystem == null || items == null || items.Count == 0)
+            {
+                return false;
+            }
+
+            HashSet<EntityHandle> uniqueHandles = new();
+            long totalBasePrice = 0;
+
+            foreach (ItemQuantity item in items)
+            {
+                if (!uniqueHandles.Add(item.Handle) || !m_inventorySystem.CanRemoveByHandle(item.Handle, item.Amount))
+                {
+                    return false;
+                }
+
+                Entity entity = EntityManager.Get(item.Handle);
+                long basePrice = CalculateBaseSellPrice(entity, item.Amount);
+
+                if (basePrice <= 0)
+                {
+                    return false;
+                }
+
+                totalBasePrice += basePrice;
+            }
+
+            sellGold = ApplyGoldMultiplier(totalBasePrice);
+            return sellGold > 0;
         }
 
         private long CalculateBaseSellPrice(Entity entity, int amount)
@@ -224,5 +230,117 @@ namespace DesktopCompanion.Systems
                 ? int.MaxValue
                 : (int)finalGold;
         }
+
+        #endregion
+
+        /// <summary> ���� ������ ��� ����Ʈ ��ȯ </summary>
+        public IReadOnlyList<ItemData> GetBuyableItems()
+        {
+            Entity_Player playerEntity = (Entity_Player)EntityManager.Get(m_playerSystem.PlayerHandle);
+            int license = playerEntity.CurrentLicense;
+            List<ItemData> buyableItem = new List<ItemData>();
+            
+            foreach(ItemData item in m_products)
+            {
+                if (item.Tier <= license)
+                    buyableItem.Add(item);
+            }
+
+            return buyableItem;
+        }
+
+        /// <summary> ������ ���ŷ���. DataId�� ItemType�� ���� Ȯ���� �Ͽ� �߰��� ��. </summary>
+        public bool BuyItem(ItemType type, int dataId, int amount)
+        {
+            #region Validation
+            if (!IsValidDataId(type, dataId, out int price))
+                return false;
+
+            if (amount <= 0 || (type == ItemType.Equipment && amount > 1))
+            {
+                Debug.LogWarning($"[ShopSystem] �����Ϸ��� ������ �߸��Ǿ����ϴ�. amount : {amount}");
+                return false;
+            }
+
+            if ((type == ItemType.Materials || type == ItemType.Consumables) && m_inventorySystem.GetTotalQuantityByDataId(type, dataId) <= 0 && !m_inventorySystem.HasEmptySlot(type) ||
+                (type == ItemType.Equipment && !m_inventorySystem.HasEmptySlot(type)))
+            {
+                Debug.LogWarning($"[ShopSystem] �κ��丮�� �����Ϸ��� �������� �� ������ �����ϴ�.");
+                return false;
+            }
+
+            int totalPrice = CalculateItemPrice(price) * amount;
+
+            if(totalPrice <= 0)
+            {
+                Debug.LogWarning("[ShopSystem] ������ 0�� ��ǰ�� �������� �ʽ��ϴ�.");
+                return false;
+            }
+
+            if(m_currencySystem.CurrentGold < totalPrice)
+            {
+                Debug.LogWarning($"[ShopSystem] �����Ϸ��� �������� ������ ���� ������ ��庸�� �����ϴ�. ���� ������ ��� : {m_currencySystem.CurrentGold}, ���� : {totalPrice}");
+                return false;
+            }
+            #endregion
+            EntityHandle itemHandle;
+            switch (type)
+            {
+                case ItemType.Materials:
+                    itemHandle = EntityManager.Create<ItemData_Materials>(dataId);
+                    Entity_Materials entity_Materials = EntityManager.Get<Entity_Materials>(itemHandle);
+                    entity_Materials.SetQuantity(amount);
+                    break;
+                case ItemType.Equipment:
+                    itemHandle = EntityManager.Create<ItemData_Equipment>(dataId); break;
+                case ItemType.Consumables:
+                    itemHandle = EntityManager.Create<ItemData_Consumables>(dataId);
+                    Entity_Consumables entity_Consumables = EntityManager.Get<Entity_Consumables>(itemHandle);
+                    entity_Consumables.SetQuantity(amount);
+                    break;
+                default:
+                    return false;
+            }
+
+            if (!m_currencySystem.AddGold(-totalPrice))
+            {
+                EntityManager.Destroy(itemHandle);
+                return false;
+            }
+
+            if (!m_inventorySystem.AddItem(itemHandle)) 
+            { 
+                EntityManager.Destroy(itemHandle);
+                if (!m_currencySystem.AddGold(totalPrice))
+                    Debug.LogError($"[ShopSystem] ���� ���� ȯ�� ���� : {totalPrice}");
+                return false;
+            }
+            return true;
+        }
+
+        //��ȹ �� �ӽ� ���� ���� å���� ����. ��ȹ �� ����
+        public int CalculateItemPrice(int basePrice)
+        {
+            float price = basePrice * m_priceMultiplier;
+
+            return (int)price;
+        }
+        
+        private bool IsValidDataId(ItemType type, int dataId, out int price)
+        {
+            foreach(ItemData item in m_products)
+            {
+                if (item.ID == dataId && item.Type == type)
+                {
+                    price = item.BasePrice;
+                    return true;
+                }
+            }
+
+            Debug.LogWarning($"[ShopSystem] ���� ��ǰ�� �ùٸ��� �ʽ��ϴ�.\nID : {dataId} | ID_Type : {type}");
+            price = 0;
+            return false;
+        }
+
     }
 }
