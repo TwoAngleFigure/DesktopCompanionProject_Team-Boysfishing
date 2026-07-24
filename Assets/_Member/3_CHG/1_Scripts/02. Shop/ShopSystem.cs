@@ -283,6 +283,7 @@ namespace DesktopCompanion.Systems
                 return false;
             }
             #endregion
+
             EntityHandle itemHandle;
             switch (type)
             {
