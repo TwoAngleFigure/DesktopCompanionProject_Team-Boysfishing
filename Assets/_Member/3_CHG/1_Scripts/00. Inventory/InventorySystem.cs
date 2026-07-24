@@ -4,6 +4,7 @@ using DesktopCompanion.Save;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using static UnityEngine.EventSystems.EventTrigger;
 
 namespace DesktopCompanion.Systems
 {
@@ -170,51 +171,25 @@ namespace DesktopCompanion.Systems
 
         public bool RemoveAt(ItemType itemType, int slotIndex, bool destroyEntity = false, bool requestSave = true)
         {
-            ItemType slotType = InventorySlotStorage.NormalizeSlotType(itemType);
-
-            if (!m_slotStorage.IsValidSlotIndex(itemType, slotIndex))
+            if(!m_itemController.RemoveAt(itemType,slotIndex, destroyEntity))
             {
-                LogWarning($"TryRemoveAt failed. Invalid slot. slotType: {slotType}, itemType: {itemType}, slotIndex: {slotIndex}");
+                LogWarning("[InventorySystem] 아이템 제거에 실패했습니다.");
                 return false;
             }
 
-            if (!m_slotStorage.GetHandle(itemType, slotIndex, out EntityHandle removedHandle))
-            {
-                LogWarning($"TryRemoveAt failed. Slot is empty. slotType: {slotType}, itemType: {itemType}, slotIndex: {slotIndex}");
-                return false;
-            }
-
-            m_slotStorage.ClearHandle(itemType, slotIndex, out _);
-
-            if (destroyEntity)
-            {
-                EntityManager.Destroy(removedHandle);
-            }
-
-            LogDebug($"TryRemoveAt success. itemType: {itemType}, slotIndex: {slotIndex}, destroyEntity: {destroyEntity}");
             NotifyInventoryChanged($"Remove item / itemType: {itemType}, slotIndex: {slotIndex}", requestSave);
             return true;
         }
 
         public bool SwapSlots(ItemType itemType, int fromIndex, int toIndex)
         {
+            if(!m_itemController.SwapSlots(itemType, fromIndex, toIndex))
+            {
+                LogWarning("[InventorySystem] 슬롯 교환에 실패했습니다.");
+                return false;
+            }
+
             ItemType slotType = InventorySlotStorage.NormalizeSlotType(itemType);
-
-            if (!m_slotStorage.IsValidSlotIndex(itemType, fromIndex) || !m_slotStorage.IsValidSlotIndex(itemType, toIndex))
-            {
-                LogWarning($"SwapSlots failed. Invalid index. slotType: {slotType}, itemType: {itemType}, from: {fromIndex}, to: {toIndex}");
-                return false;
-            }
-
-            if (fromIndex == toIndex)
-            {
-                LogDebug($"SwapSlots skipped. Same index. itemType: {itemType}, index: {fromIndex}");
-                return false;
-            }
-
-            m_slotStorage.Swap(itemType, fromIndex, toIndex);
-
-            LogDebug($"SwapSlots success. slotType: {slotType}, itemType: {itemType}, from: {fromIndex}, to: {toIndex}");
             NotifyInventoryChanged($"Swap slots / slotType: {slotType}, from: {fromIndex}, to: {toIndex}", true);
 
             return true;
@@ -222,52 +197,14 @@ namespace DesktopCompanion.Systems
 
         public bool RemoveQuantityAt(ItemType itemType, int slotIndex, int amount, bool destroyEntityWhenZero = true, bool requestSave = true)
         {
-            if (amount <= 0)
+            if(!m_itemController.RemoveQuantityAt(itemType, slotIndex, amount, out Entity entity, destroyEntityWhenZero))
             {
-                LogWarning($"TryRemoveQuantityAt failed. Invalid amount: {amount}");
+                LogWarning("[InventorySystem] 아이템 제거를 실패했습니다.");
                 return false;
             }
 
-            if (!GetHandleAt(itemType, slotIndex, out EntityHandle handle))
-            {
-                LogWarning($"TryRemoveQuantityAt failed. Handle not found. itemType: {itemType}, slotIndex: {slotIndex}");
-                return false;
-            }
-
-            Entity entity = EntityManager.Get(handle);
-
-            if (entity == null)
-            {
-                LogWarning($"TryRemoveQuantityAt failed. Entity not found. handle: {handle}");
-                return false;
-            }
-
-            if (!InventoryItemRules.GetStackQuantity(entity, out int currentQuantity))
-            {
-                LogWarning($"TryRemoveQuantityAt failed. Entity is not stackable. type: {entity.GetType().Name}, dataId: {entity.DataId}, name: {entity.Name}");
-                return false;
-            }
-
-            if (currentQuantity < amount)
-            {
-                LogWarning($"TryRemoveQuantityAt failed. Not enough quantity. dataId: {entity.DataId}, name: {entity.Name}, current: {currentQuantity}, requested: {amount}");
-                return false;
-            }
-
-            int nextQuantity = currentQuantity - amount;
-
-            if (nextQuantity > 0)
-            {
-                InventoryItemRules.SetStackQuantity(entity, nextQuantity);
-
-                LogDebug($"TryRemoveQuantityAt success. dataId: {entity.DataId}, name: {entity.Name}, before: {currentQuantity}, remove: {amount}, after: {nextQuantity}");
-                NotifyInventoryChanged($"Decrease quantity / dataId: {entity.DataId}, amount: {amount}", requestSave);
-
-                return true;
-            }
-
-            LogDebug($"TryRemoveQuantityAt zero. dataId: {entity.DataId}, name: {entity.Name}, before: {currentQuantity}, remove: {amount}. Slot will be removed.");
-            return RemoveAt(itemType, slotIndex, destroyEntityWhenZero, requestSave);
+            NotifyInventoryChanged($"Decrease quantity / dataId: {entity.DataId}, amount: {amount}", requestSave);
+            return true;
         }
 
         /// <summary>
@@ -275,169 +212,35 @@ namespace DesktopCompanion.Systems
         /// </summary>
         public bool RemoveByHandles(IReadOnlyCollection<ItemQuantity> items, bool requestSave = true)
         {
-            if (items == null || items.Count == 0)
+            if (!m_itemController.RemoveByHandles(items))
             {
+                LogWarning("[InventorySystem] 아이템 복수 개 삭제에 실패했습니다");
                 return false;
             }
-
-            HashSet<EntityHandle> uniqueHandles = new();
-            List<(ItemQuantity Item, ItemType SlotType, int SlotIndex, Entity Entity, bool IsStackable, int NextQuantity)> entries = new(items.Count);
-
-            foreach (ItemQuantity item in items)
-            {
-                if (item.Amount <= 0 || !uniqueHandles.Add(item.Handle)
-                    || !m_slotStorage.FindSlot(item.Handle, out ItemType slotType, out int slotIndex))
-                {
-                    return false;
-                }
-
-                Entity entity = EntityManager.Get(item.Handle);
-
-                if (!InventoryItemRules.CanRemove(entity, item.Amount))
-                {
-                    return false;
-                }
-
-                bool isStackable = InventoryItemRules.GetStackQuantity(entity, out int currentQuantity);
-                int nextQuantity = isStackable ? currentQuantity - item.Amount : 0;
-                entries.Add((item, slotType, slotIndex, entity, isStackable, nextQuantity));
-            }
-
-            for (int i = 0; i < entries.Count; i++)
-            {
-                var entry = entries[i];
-
-                if (entry.IsStackable && entry.NextQuantity > 0)
-                {
-                    InventoryItemRules.SetStackQuantity(entry.Entity, entry.NextQuantity);
-                    continue;
-                }
-
-                m_slotStorage.ClearHandle(entry.SlotType, entry.SlotIndex, out _);
-            }
-
-            for (int i = 0; i < entries.Count; i++)
-            {
-                var entry = entries[i];
-
-                if (!entry.IsStackable || entry.NextQuantity <= 0)
-                {
-                    EntityManager.Destroy(entry.Item.Handle);
-                }
-            }
-
-            NotifyInventoryChanged($"Remove item batch / requestCount: {entries.Count}", requestSave);
+            
+            NotifyInventoryChanged($"Remove item batch / requestCount: {items.Count}", requestSave);
             return true;
         }
 
         //item이 인벤토리에 몇 개 있는지 반환
         public int GetTotalQuantityByDataId(ItemType itemType, int dataId)
         {
-            if (dataId <= 0)
-            {
-                return 0;
-            }
-
-            int slotCount = m_slotStorage.GetMaxSlotCount(itemType);
-            int totalQuantity = 0;
-
-            for (int i = 0; i < slotCount; i++)
-            {
-                if (!m_slotStorage.GetHandle(itemType, i, out EntityHandle handle))
-                {
-                    continue;
-                }
-
-                Entity entity = EntityManager.Get(handle);
-
-                if (entity == null || entity.DataId != dataId)
-                {
-                    continue;
-                }
-
-                if (InventoryItemRules.GetStackQuantity(entity, out int quantity))
-                {
-                    totalQuantity += quantity;
-                }
-            }
-
-            return totalQuantity;
+            return m_itemController.GetTotalQuantityByDataId(itemType,dataId);
         }
 
         public bool ConsumeItemByDataId(ItemType itemType, int dataId, int amount)
         {
-            LogDebug($"TryConsumeItemByDataId called. itemType: {itemType}, dataId: {dataId}, amount: {amount}");
-
-            if (dataId <= 0 || amount <= 0)
-            {
-                LogWarning($"TryConsumeItemByDataId failed. Invalid args. itemType: {itemType}, dataId: {dataId}, amount: {amount}");
-                return false;
-            }
-
-            int totalQuantity = GetTotalQuantityByDataId(itemType, dataId);
-
-            if (totalQuantity < amount)
-            {
-                LogWarning($"TryConsumeItemByDataId failed. Not enough quantity. itemType: {itemType}, dataId: {dataId}, current: {totalQuantity}, requested: {amount}");
-                return false;
-            }
-
+            bool result = m_itemController.ConsumeItemByDataId(itemType, dataId, amount);
             ItemType slotType = InventorySlotStorage.NormalizeSlotType(itemType);
-            int slotCount = m_slotStorage.GetMaxSlotCount(itemType);
-            int remainingAmount = amount;
-
-            for (int i = 0; i < slotCount; i++)
-            {
-                if (remainingAmount <= 0)
-                {
-                    break;
-                }
-
-                if (!m_slotStorage.GetHandle(itemType, i, out EntityHandle handle))
-                {
-                    continue;
-                }
-
-                Entity entity = EntityManager.Get(handle);
-
-                if (entity == null || entity.DataId != dataId)
-                {
-                    continue;
-                }
-
-                if (!InventoryItemRules.GetStackQuantity(entity, out int quantity))
-                {
-                    continue;
-                }
-
-                int removeAmount = Math.Min(quantity, remainingAmount);
-                int nextQuantity = quantity - removeAmount;
-
-                if (nextQuantity > 0)
-                {
-                    InventoryItemRules.SetStackQuantity(entity, nextQuantity);
-                    LogDebug($"Consume partial stack. slotType: {slotType}, slotIndex: {i}, dataId: {dataId}, before: {quantity}, remove: {removeAmount}, after: {nextQuantity}");
-                }
-                else
-                {
-                    m_slotStorage.ClearHandle(itemType, i, out EntityHandle removedHandle);
-                    EntityManager.Destroy(removedHandle);
-                    LogDebug($"Consume whole stack. slotType: {slotType}, slotIndex: {i}, dataId: {dataId}, before: {quantity}, remove: {removeAmount}, entity destroyed.");
-                }
-
-                remainingAmount -= removeAmount;
-            }
-
-            bool result = remainingAmount <= 0;
 
             if (result)
             {
-                LogDebug($"TryConsumeItemByDataId success. slotType: {slotType}, itemType: {itemType}, dataId: {dataId}, amount: {amount}");
+                LogDebug($"ConsumeItemByDataId success. slotType: {slotType}, itemType: {itemType}, dataId: {dataId}, amount: {amount}");
                 NotifyInventoryChanged($"Consume item / slotType: {slotType}, itemType: {itemType}, dataId: {dataId}, amount: {amount}", true);
             }
             else
             {
-                LogWarning($"TryConsumeItemByDataId failed after loop. slotType: {slotType}, itemType: {itemType}, dataId: {dataId}, amount: {amount}, remaining: {remainingAmount}");
+                LogWarning($"ConsumeItemByDataId failed. slotType: {slotType}, itemType: {itemType}, dataId: {dataId}, amount: {amount}");
             }
 
             return result;
@@ -521,13 +324,7 @@ namespace DesktopCompanion.Systems
 
         public bool CanRemoveByHandle(EntityHandle handle, int amount)
         {
-            if (amount <= 0 || !m_slotStorage.FindSlot(handle, out _, out _))
-            {
-                return false;
-            }
-
-            Entity entity = EntityManager.Get(handle);
-            return InventoryItemRules.CanRemove(entity, amount);
+            return m_itemController.CanRemoveByHandle(handle, amount);
         }
 
         private int GetCurrentInventorySize()

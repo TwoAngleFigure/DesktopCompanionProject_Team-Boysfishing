@@ -2,6 +2,7 @@ using DesktopCompanion.Core;
 using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
 using System;
+using System.Collections.Generic;
 
 namespace DesktopCompanion.Systems
 {
@@ -37,6 +38,7 @@ namespace DesktopCompanion.Systems
             m_entityManager = entityManager;
         }
 
+        #region AddItem
         public AddItemResult IsValidToAddItem(EntityHandle itemHandle, out AddItemContext context)
         {
             context = default;
@@ -139,6 +141,235 @@ namespace DesktopCompanion.Systems
             }
 
             return entity;
+        }
+        #endregion
+
+        public bool SwapSlots(ItemType itemType, int fromIndex, int toIndex)
+        {
+            if (!m_slotStorage.IsValidSlotIndex(itemType, fromIndex) || !m_slotStorage.IsValidSlotIndex(itemType, toIndex))
+            {
+                return false;
+            }
+
+            if (fromIndex == toIndex)
+            {
+                return false;
+            }
+
+            m_slotStorage.Swap(itemType, fromIndex, toIndex);
+
+            return true;
+        }
+
+        #region RemoveItem
+        public bool RemoveAt(ItemType itemType, int slotIndex, bool destroyEntity = false)
+        {
+            if (!m_slotStorage.ClearHandle(itemType, slotIndex, out EntityHandle removedHandle))
+            {
+                return false;
+            }
+
+            if (destroyEntity)
+            {
+                m_entityManager.Destroy(removedHandle);
+            }
+            return true;
+        }
+
+        public bool RemoveQuantityAt(ItemType itemType, int slotIndex, int amount, out Entity entity, bool destroyEntityWhenZero = true)
+        {
+            entity = default;
+            
+            if (amount <= 0)
+            {
+                return false;
+            }
+
+            if (!m_slotStorage.GetHandle(itemType, slotIndex, out EntityHandle handle))
+            {
+                return false;
+            }
+
+            entity = m_entityManager.Get(handle);
+
+            if (entity == null || !InventoryItemRules.GetStackQuantity(entity, out int currentQuantity)
+                || currentQuantity < amount)
+            {
+                return false;
+            }
+
+            int nextQuantity = currentQuantity - amount;
+
+            if (nextQuantity > 0)
+            {
+                InventoryItemRules.SetStackQuantity(entity, nextQuantity);
+
+                return true;
+            }
+            return RemoveAt(itemType, slotIndex, destroyEntityWhenZero);
+        }
+
+        public bool CanRemoveByHandle(EntityHandle handle, int amount)
+        {
+            if (amount <= 0 || !m_slotStorage.FindSlot(handle, out _, out _))
+            {
+                return false;
+            }
+
+            Entity entity = m_entityManager.Get(handle);
+            return InventoryItemRules.CanRemove(entity, amount);
+        }
+
+        public bool RemoveByHandles(IReadOnlyCollection<ItemQuantity> items)
+        {
+            if (items == null || items.Count == 0)
+            {
+                return false;
+            }
+
+            HashSet<EntityHandle> uniqueHandles = new();
+            List<(ItemQuantity Item, ItemType SlotType, int SlotIndex, Entity Entity, bool IsStackable, int NextQuantity)> entries = new(items.Count);
+
+            foreach (ItemQuantity item in items)
+            {
+                if (item.Amount <= 0 || !uniqueHandles.Add(item.Handle)
+                    || !m_slotStorage.FindSlot(item.Handle, out ItemType slotType, out int slotIndex))
+                {
+                    return false;
+                }
+
+                Entity entity = m_entityManager.Get(item.Handle);
+
+                if (!InventoryItemRules.CanRemove(entity, item.Amount))
+                {
+                    return false;
+                }
+
+                bool isStackable = InventoryItemRules.GetStackQuantity(entity, out int currentQuantity);
+                int nextQuantity = isStackable ? currentQuantity - item.Amount : 0;
+                entries.Add((item, slotType, slotIndex, entity, isStackable, nextQuantity));
+            }
+
+            for (int i = 0; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+
+                if (entry.IsStackable && entry.NextQuantity > 0)
+                {
+                    InventoryItemRules.SetStackQuantity(entry.Entity, entry.NextQuantity);
+                    continue;
+                }
+
+                m_slotStorage.ClearHandle(entry.SlotType, entry.SlotIndex, out _);
+            }
+
+            for (int i = 0; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+
+                if (!entry.IsStackable || entry.NextQuantity <= 0)
+                {
+                    m_entityManager.Destroy(entry.Item.Handle);
+                }
+            }
+
+            return true;
+        }
+        #endregion
+
+        public int GetTotalQuantityByDataId(ItemType itemType, int dataId)
+        {
+            if (dataId <= 0)
+            {
+                return 0;
+            }
+
+            int slotCount = m_slotStorage.GetMaxSlotCount(itemType);
+            int totalQuantity = 0;
+
+            for (int i = 0; i < slotCount; i++)
+            {
+                if (!m_slotStorage.GetHandle(itemType, i, out EntityHandle handle))
+                {
+                    continue;
+                }
+
+                Entity entity = m_entityManager.Get(handle);
+
+                if (entity == null || entity.DataId != dataId)
+                {
+                    continue;
+                }
+
+                if (InventoryItemRules.GetStackQuantity(entity, out int quantity))
+                {
+                    totalQuantity += quantity;
+                }
+            }
+
+            return totalQuantity;
+        }
+
+        public bool ConsumeItemByDataId(ItemType itemType, int dataId, int amount)
+        {
+            if (dataId <= 0 || amount <= 0)
+            {
+                return false;
+            }
+
+            int totalQuantity = GetTotalQuantityByDataId(itemType, dataId);
+
+            if (totalQuantity < amount)
+            {
+                return false;
+            }
+
+            int slotCount = m_slotStorage.GetMaxSlotCount(itemType);
+            int remainingAmount = amount;
+
+            for (int i = 0; i < slotCount; i++)
+            {
+                if (remainingAmount <= 0)
+                {
+                    break;
+                }
+
+                if (!m_slotStorage.GetHandle(itemType, i, out EntityHandle handle))
+                {
+                    continue;
+                }
+
+                Entity entity = m_entityManager.Get(handle);
+
+                if (entity == null || entity.DataId != dataId)
+                {
+                    continue;
+                }
+
+                if (!InventoryItemRules.GetStackQuantity(entity, out int quantity))
+                {
+                    continue;
+                }
+
+                int removeAmount = Math.Min(quantity, remainingAmount);
+                int nextQuantity = quantity - removeAmount;
+
+                if (nextQuantity > 0)
+                {
+                    InventoryItemRules.SetStackQuantity(entity, nextQuantity);
+                }
+                else
+                {
+                    if(!RemoveAt(itemType, i, true))
+                        return false;
+                }
+
+                remainingAmount -= removeAmount;
+            }
+
+            bool result = remainingAmount <= 0;
+
+            return result;
         }
     }
 
