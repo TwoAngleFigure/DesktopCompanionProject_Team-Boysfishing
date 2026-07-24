@@ -16,6 +16,7 @@ namespace DesktopCompanion.Views
         [SerializeField] private TMP_Text m_itemNameText;
         [SerializeField] private TMP_Text m_gradeText;
         [SerializeField] private TMP_Text m_effectText;
+        [SerializeField] private TMP_Text m_sellPriceText;
 
         [Header("Position")]
         [SerializeField] private float m_horizontalGap = 0f;
@@ -94,6 +95,11 @@ namespace DesktopCompanion.Views
             if (m_effectText != null)
             {
                 m_effectText.text = data.EffectText;
+            }
+
+            if(m_sellPriceText != null)
+            {
+                m_sellPriceText.text = data.SellPriceText + "G";
             }
 
             if(m_itemIcon != null)

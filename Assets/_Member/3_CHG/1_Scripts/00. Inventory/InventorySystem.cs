@@ -14,27 +14,24 @@ namespace DesktopCompanion.Systems
 
         private InventorySlotStorage m_slotStorage;
         private InventorySaveLoad m_saveLoad;
+        private InventoryAutoSellFilter m_autoSellFilter;
 
         private PlayerSystem m_playerSystem;
         private ShopSystem m_shopSystem;
-
-        private bool m_autoSellEnabled;
-        private ItemQuality m_maxAutoSellQuality = ItemQuality.OneStar;
-        private ItemRarity m_maxAutoSellRarity = ItemRarity.Normal;
 
         public event Action OnInventoryChanged;
 
         public event Action OnInventorySaveRequested;
         public event Action OnAutoSellFilterChanged;
 
-        public bool AutoSellEnabled => m_autoSellEnabled;
-        public ItemQuality MaxAutoSellQuality => m_maxAutoSellQuality;
-        public ItemRarity MaxAutoSellRarity => m_maxAutoSellRarity;
-
         private InventorySave m_loadedSave;
 
         public string SaveId => "inventory";
         public Type StateType => typeof(InventorySave);
+
+        public bool AutoSellEnabled => m_autoSellFilter.AutoSellEnabled;
+        public ItemQuality MaxAutoSellQuality => m_autoSellFilter.MaxAutoSellQuality;
+        public ItemRarity MaxAutoSellRarity => m_autoSellFilter.MaxAutoSellRarity;
 
         public override void Initialize()
         {
@@ -51,6 +48,7 @@ namespace DesktopCompanion.Systems
 
             m_slotStorage = new InventorySlotStorage(fishInventorySize, equipmentInventorySize, materialInventorySize);
             m_saveLoad = new InventorySaveLoad(m_slotStorage, EntityManager, DataManager, LogDebug, LogWarning);
+            m_autoSellFilter = new InventoryAutoSellFilter();
 
             if (m_loadedSave != null)
             {
@@ -95,40 +93,24 @@ namespace DesktopCompanion.Systems
         /// <summary> 자동 필터 세팅 </summary>
         public bool SetAutoSellFilter(bool enabled, ItemQuality maxQuality, ItemRarity maxRarity)
         {
-            if ((int)maxQuality < (int)ItemQuality.OneStar || (int)maxQuality > (int)ItemQuality.FiveStar
-                || (int)maxRarity < (int)ItemRarity.Normal || (int)maxRarity > (int)ItemRarity.Legendary)
+            switch(m_autoSellFilter.Set(enabled, maxQuality, maxRarity))
             {
-                LogWarning($"SetAutoSellFilter failed. quality: {maxQuality}, rarity: {maxRarity}");
-                return false;
+                case SetFilterResult.Changed:
+                    OnAutoSellFilterChanged?.Invoke();
+                    RequestSave();
+                    return true;
+                case SetFilterResult.UnChanged:
+                    return true;
+                case SetFilterResult.Invalid:
+                default:
+                    return false;
             }
-
-            ApplyAutoSellFilter(enabled, maxQuality, maxRarity, true);
-            return true;
         }
 
         /// <summary> 인벤토리에 빈 슬롯이 있는 지 확인하는 함수 </summary>
         public bool HasEmptySlot(ItemType itemType)
         {
             return m_slotStorage.FindEmptySlotIndex(itemType) >= 0;
-        }
-
-        private void ApplyAutoSellFilter(bool enabled, ItemQuality maxQuality, ItemRarity maxRarity, bool requestSave)
-        {
-            if (m_autoSellEnabled == enabled && m_maxAutoSellQuality == maxQuality && m_maxAutoSellRarity == maxRarity)
-            {
-                return;
-            }
-
-            m_autoSellEnabled = enabled;
-            m_maxAutoSellQuality = maxQuality;
-            m_maxAutoSellRarity = maxRarity;
-
-            OnAutoSellFilterChanged?.Invoke();
-
-            if (requestSave)
-            {
-                RequestSave();
-            }
         }
 
         public bool AddItem(EntityHandle itemHandle)
@@ -168,7 +150,7 @@ namespace DesktopCompanion.Systems
                 return false;
             }
 
-            if (itemEntity is Entity_Fish fish && IsAutoSellTarget(fish))
+            if (itemEntity is Entity_Fish fish && m_autoSellFilter.IsAutoSellTarget(fish))
             {
                 if (m_shopSystem == null)
                 {
@@ -523,7 +505,7 @@ namespace DesktopCompanion.Systems
 
         public object CaptureState()
         {
-            return m_saveLoad.Capture(m_autoSellEnabled, m_maxAutoSellQuality, m_maxAutoSellRarity);
+            return m_saveLoad.Capture(m_autoSellFilter.AutoSellEnabled, m_autoSellFilter.MaxAutoSellQuality, m_autoSellFilter.MaxAutoSellRarity);
         }
 
         public void RestoreState(object state)
@@ -577,11 +559,13 @@ namespace DesktopCompanion.Systems
             }
         }
 
+        
+        
         private void RestoreLoadedSave()
         {
             InventoryAutoSellFilterState filterState = m_saveLoad.Restore(m_loadedSave, out int restoredCount, out int failedCount);
+            m_autoSellFilter.Set(filterState.Enabled, filterState.MaxQuality, filterState.MaxRarity);
 
-            ApplyAutoSellFilter(filterState.Enabled, filterState.MaxQuality, filterState.MaxRarity, false);
             NotifyInventoryChanged($"Restore inventory / restored: {restoredCount}, failed: {failedCount}", false);
         }
 
@@ -634,16 +618,6 @@ namespace DesktopCompanion.Systems
             return entity;
         }
 
-        private bool IsAutoSellTarget(Entity_Fish fish)
-        {
-            if (!m_autoSellEnabled)
-            {
-                return false;
-            }
-
-            return fish.Quality <= m_maxAutoSellQuality
-                && fish.Rarity <= m_maxAutoSellRarity;
-        }
 
         public bool CanRemoveByHandle(EntityHandle handle, int amount)
         {
