@@ -1,18 +1,60 @@
+using System;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
+using DesktopCompanion.Entities;
 
 namespace DesktopCompanion.Views
 {
-    /// <summary>아쿠아리움 창의 물고기 상태 행(이름·남은 시간·재료까지 남은 포인트·시간당).</summary>
+    /// <summary>
+    /// 물고기 1개체 행(인벤토리·수족관 공용). 계획 28에 따라 표시를 슬롯에 위임하고 정보량을 줄였다 —
+    /// 티어·레어리티·크기·재료·분당 포인트·남은 시간 같은 상세는 슬롯 hover 팝업이 담당한다.
+    /// 행에 남는 것은 [슬롯] + 이름 + <b>현재 정렬 기준의 값</b> + 액션 버튼(+불가 사유)뿐이다.
+    /// 액션 대상은 인덱스가 아닌 <see cref="EntityHandle"/>이라, 목록을 어떻게 정렬해도 지목이 어긋나지 않는다.
+    /// </summary>
     public class AquariumFishRow : MonoBehaviour
     {
-        [SerializeField] private TMP_Text m_label;
+        [SerializeField] private ItemSlotView m_slot;
+        [SerializeField] private TMP_Text m_nameText;
 
-        public void Set(AquariumFishVD vd)
+        [Tooltip("현재 정렬 기준의 값(티어로 정렬 중이면 T2, 크기로 정렬 중이면 45.8 …)")]
+        [SerializeField] private TMP_Text m_sortValueText;
+
+        [Header("액션")]
+        [SerializeField] private Button m_actionButton;
+        [SerializeField] private TMP_Text m_actionLabel;
+        [Tooltip("액션 불가 사유(자동판매 대상·창고 만석·수용량 부족 등)")]
+        [SerializeField] private TMP_Text m_blockReasonText;
+
+        private EntityHandle m_payload;
+        private Action<EntityHandle> m_onAction;
+
+        private void Awake()
         {
-            if (m_label == null || vd == null) return;
-            int t = Mathf.CeilToInt(Mathf.Max(0f, vd.RemainingSeconds));
-            m_label.text = $"{vd.Name}   남은 {t / 60:00}:{t % 60:00}   {vd.MaterialName}까지 {vd.RemainingPoints}pt   {vd.PointsPerHour:0}/h";
+            if (m_actionButton != null)
+            {
+                m_actionButton.onClick.AddListener(() => m_onAction?.Invoke(m_payload));
+            }
+        }
+
+        public void Set(AquariumFishVD vd, ItemSlotVD slotVD, Sprite icon, IItemTooltipSource tooltipSource,
+                        AquariumFishSortKey sortKey, string actionText, Action<EntityHandle> onAction)
+        {
+            if (vd == null)
+            {
+                return;
+            }
+
+            if (m_slot != null) m_slot.Set(slotVD, icon, tooltipSource);
+            if (m_nameText != null) m_nameText.text = vd.Name;
+            if (m_sortValueText != null) m_sortValueText.text = AquariumSort.FormatValue(vd, sortKey);
+
+            if (m_actionLabel != null) m_actionLabel.text = actionText;
+            if (m_actionButton != null) m_actionButton.interactable = vd.CanAct;
+            if (m_blockReasonText != null) m_blockReasonText.text = vd.CanAct ? string.Empty : vd.BlockReason;
+
+            m_payload = vd.Handle;
+            m_onAction = onAction;
         }
     }
 }
