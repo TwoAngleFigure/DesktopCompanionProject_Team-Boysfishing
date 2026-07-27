@@ -6,6 +6,7 @@ namespace DesktopCompanion.Views
 {
     /// <summary>
     /// 지정 범위(Canvas RectTransform) 안에서 우클릭 시 최상단(최근) 창을 닫는다(LIFO).
+    /// 단, UIWindowBase의 '닫기 입력 허용'을 끈 보호 창은 건너뛰고 그 아래 창을 닫는다(ESC 등 다른 닫기 수단과 동일 규칙).
     /// 오버레이 빌드는 Mouse.current가 갱신되지 않으므로 클릭관통과 동일한 Win32 전역 입력을 쓴다
     /// (GetCursorPos + GetAsyncKeyState(VK_RBUTTON) + ScreenToClient(Hwnd)). 에디터는 Mouse.current.
     /// </summary>
@@ -47,7 +48,7 @@ namespace DesktopCompanion.Views
             {
                 return;
             }
-            UIManager.RequestCloseTopWindow();
+            UIManager.RequestCloseTopWindow();   // 창별 '닫기 입력 허용' 플래그를 존중(보호 창은 건너뜀)
         }
 
         // 이번 프레임 우클릭 '눌림(엣지)' + 커서 스크린 좌표를 얻는다.

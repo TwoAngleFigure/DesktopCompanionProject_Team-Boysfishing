@@ -4,7 +4,8 @@ namespace DesktopCompanion.Views
 {
     /// <summary>
     /// 윈도우형 UI(인벤토리 등)만 상속하는 베이스. 일반 UI(HUD 등)는 UIViewBase를 그대로 쓴다.
-    /// 표시(=열림)에 연동해 UIManager의 활성 윈도우 스택에 참여한다. 우클릭 닫기는 이 스택의 top을 닫는다.
+    /// 표시(=열림)에 연동해 UIManager의 활성 윈도우 스택에 참여한다. 중앙 닫기 요청(우클릭·ESC 등)은
+    /// 이 스택의 top부터 <see cref="ClosableByShortcut"/>가 켜진 첫 창을 닫는다.
     ///
     /// 창 on/off는 <see cref="HideMode"/>로 선택한다(인스펙터 토글). 모드별 개폐 방식이 다르다:
     ///  - Deactivate(기본): GameObject SetActive로 개폐. 닫힘 = 씬에서 '비활성'으로 두거나 Hide()로 SetActive(false).
@@ -21,6 +22,11 @@ namespace DesktopCompanion.Views
         [Tooltip("자동 배치(우측→좌측) 참여 여부. false면 자체 위치 유지(닫기 스택에는 계속 참여)")]
         [SerializeField] private bool m_participateInLayout = true;
 
+        [Tooltip("중앙 닫기 요청(우클릭·ESC 등 UIManager.CloseTopWindow)의 대상이 될지 여부. " +
+                 "false면 그 수단으로는 닫히지 않는다(요청은 이 창을 건너뛰고 그 아래 창을 닫는다). " +
+                 "상시 표시 HUD성 창 보호용. Close()/Hide()/토글 버튼 등 직접 닫기는 그대로 동작")]
+        [SerializeField] private bool m_closableByShortcut = true;
+
         [Tooltip("개폐 방식. Deactivate=SetActive(기본) / CanvasGroup=항상 활성+alpha(즉시·페이드·상태보존)")]
         [SerializeField] private HideMode m_hideMode = HideMode.Deactivate;
 
@@ -36,6 +42,9 @@ namespace DesktopCompanion.Views
 
         /// <summary>자동 배치 참여 여부(UIManager가 읽음).</summary>
         public bool ParticipatesInLayout => m_participateInLayout;
+
+        /// <summary>중앙 닫기 요청(우클릭·ESC 등)의 대상이 될지 여부(UIManager가 읽음). false여도 스택·자동 배치에는 계속 참여한다.</summary>
+        public bool ClosableByShortcut => m_closableByShortcut;
 
         /// <summary>현재 표시(열려서 보이고 입력 받는) 상태인지. CanvasGroup 숨김은 false.</summary>
         public bool IsShown => gameObject.activeSelf && (m_canvasGroup == null || m_canvasGroup.blocksRaycasts);

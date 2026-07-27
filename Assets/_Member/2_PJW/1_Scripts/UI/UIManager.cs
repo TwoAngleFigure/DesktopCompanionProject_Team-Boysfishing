@@ -208,21 +208,31 @@ namespace DesktopCompanion.Views
         }
 
         /// <summary>
-        /// 활성 윈도우 중 가장 최근에 열린 것을 닫는다(우클릭 닫기용).
-        /// ※ 입력과 미연결: 추후 InputManager가 우클릭을 감지해 이 함수를 호출한다. 지금은 연결하지 않는다.
+        /// 중앙 닫기 요청(우클릭·ESC 등)의 단일 처리 지점. 활성 윈도우를 최근 열린 순(LIFO)으로 훑어
+        /// <see cref="UIWindowBase.ClosableByShortcut"/>가 켜진 첫 창을 닫는다.
+        /// 끈 창(보호 창)은 건너뛰므로 이 경로에서는 보이지 않는 셈이며, 그 아래 창이 닫힌다.
+        /// ※ 특정 창을 지목해 닫으려면 이 함수가 아니라 그 창의 Close()/Hide()를 직접 부른다.
         /// </summary>
         public void CloseTopWindow()
         {
-            if (m_activeWindows.Count == 0)
+            for (int i = m_activeWindows.Count - 1; i >= 0; i--)
             {
+                UIWindowBase window = m_activeWindows[i];
+                if (window == null)
+                {
+                    continue;
+                }
+                if (window.ClosableByShortcut == false)
+                {
+                    continue;   // 보호 창 — 건너뛰고 아래 창을 찾는다
+                }
+
+                window.Close();   // → Hide() (HideMode에 따라 CanvasGroup 숨김 또는 SetActive(false)) → RemoveActiveWindow
                 return;
             }
-
-            UIWindowBase top = m_activeWindows[m_activeWindows.Count - 1];
-            top.Close();   // → Hide() (HideMode에 따라 CanvasGroup 숨김 또는 SetActive(false)) → RemoveActiveWindow
         }
 
-        /// <summary>최상단(최근) 창 닫기 요청(정적 통로 — 우클릭 입력 등에서 호출).</summary>
+        /// <summary>중앙 닫기 요청(정적 통로 — 우클릭·ESC 등 닫기 입력에서 호출. 보호 창은 건너뛴다).</summary>
         public static void RequestCloseTopWindow() => s_instance?.CloseTopWindow();
     }
 }
