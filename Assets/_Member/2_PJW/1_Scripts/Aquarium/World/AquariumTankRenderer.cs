@@ -28,8 +28,33 @@ namespace DesktopCompanion.Views
         /// <summary>컨슈머(RawImage/월페이퍼)가 바인딩할 렌더 텍스처.</summary>
         public RenderTexture TankTexture => m_rt;
 
-        /// <summary>헤엄 범위(월드 좌표). 이 오브젝트 위치에 오프셋을 더한 박스.</summary>
-        public Bounds TankBounds => new Bounds(transform.position + m_boundsCenter, m_boundsSize);
+        /// <summary>회전 무관 로컬 헤엄 박스(에이전트가 이 공간에서 목표를 샘플·이동한다).</summary>
+        public Bounds LocalBounds => new Bounds(m_boundsCenter, m_boundsSize);
+
+        /// <summary>탱크 로컬 공간 기준 Transform(루트 회전이 반영됨).</summary>
+        public Transform TankSpace => transform;
+
+        /// <summary>
+        /// 루트 회전·스케일을 반영한 월드 AABB. 로컬 박스 8코너를 <see cref="Transform.localToWorldMatrix"/>로
+        /// 변환해 감싼다(회전 시 AABB가 커지는 것은 정상). 무회전·무스케일이면 기존 월드 박스와 동일.
+        /// </summary>
+        public Bounds TankBounds
+        {
+            get
+            {
+                Vector3 c = m_boundsCenter, e = m_boundsSize * 0.5f;
+                Matrix4x4 m = transform.localToWorldMatrix;
+                var b = new Bounds(m.MultiplyPoint3x4(c + new Vector3(-e.x, -e.y, -e.z)), Vector3.zero);
+                b.Encapsulate(m.MultiplyPoint3x4(c + new Vector3(e.x, -e.y, -e.z)));
+                b.Encapsulate(m.MultiplyPoint3x4(c + new Vector3(-e.x, e.y, -e.z)));
+                b.Encapsulate(m.MultiplyPoint3x4(c + new Vector3(e.x, e.y, -e.z)));
+                b.Encapsulate(m.MultiplyPoint3x4(c + new Vector3(-e.x, -e.y, e.z)));
+                b.Encapsulate(m.MultiplyPoint3x4(c + new Vector3(e.x, -e.y, e.z)));
+                b.Encapsulate(m.MultiplyPoint3x4(c + new Vector3(-e.x, e.y, e.z)));
+                b.Encapsulate(m.MultiplyPoint3x4(c + new Vector3(e.x, e.y, e.z)));
+                return b;
+            }
+        }
 
         private void Awake()
         {
@@ -61,8 +86,10 @@ namespace DesktopCompanion.Views
 #if UNITY_EDITOR
         private void OnDrawGizmosSelected()
         {
+            // 로컬 박스를 루트 회전·스케일에 맞춰 그린다(회전한 헤엄 범위 확인용).
+            Gizmos.matrix = transform.localToWorldMatrix;
             Gizmos.color = new Color(0.3f, 0.7f, 1f, 0.4f);
-            Gizmos.DrawWireCube(transform.position + m_boundsCenter, m_boundsSize);
+            Gizmos.DrawWireCube(m_boundsCenter, m_boundsSize);
         }
 #endif
     }
