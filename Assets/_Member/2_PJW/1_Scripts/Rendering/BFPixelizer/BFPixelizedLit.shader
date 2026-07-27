@@ -11,19 +11,24 @@ Shader "BFPixelizer/PixelizedLit"
 {
     Properties
     {
-        _BaseMap("Albedo", 2D) = "white" {}
-        _BaseColor("Color", Color) = (1, 1, 1, 1)
-        _PixelSize("Pixel Size (V1: 전역 격자 사용 — 유보)", Range(1, 5)) = 3
-        _OutlineColor("Outline Color", Color) = (0, 0, 0, 1)
+        _BaseMap                      ("Albedo", 2D)                   = "white" {}
+        _BaseColor                    ("Color", Color)                 = (1, 1, 1, 1)
+        _PixelSize                    ("Pixel Size", Range(1, 5))      = 3
+        _OutlineColor                 ("Outline Color", Color)         = (0, 0, 0, 1)
         // ⚠ 이름에 _BFP_ 접두사 필수: 단순 `_ObjectId`는 Unity 에디터의 씬 뷰 피킹이 쓰는
         // 전역 int 프로퍼티와 충돌해 머티리얼 값이 무시되고 항상 0으로 읽힌다.
-        _BFP_ObjectId("Object Id (겹침 아웃라인 구분, 1~255)", Range(1, 255)) = 1
-        _RenderingLayers("Rendering Layers (수광 레이어 비트, 일반=1)", Float) = 1
+        _BFP_ObjectId                 ("Object Id", Range(1, 255))     = 1
+        // 수광 레이어 비트(일반=1, 물=2). 자세한 배경은 프래그먼트 주석 참고.
+        _RenderingLayers              ("Rendering Layers", Float)      = 1
 
         // 알파(계획 15). 반투명으로 쓰려면 머티리얼 인스펙터의 Render Queue를
         // Transparent(3000)로 바꿔야 한다 — 그래야 투명 트랙(물 이후 합성)으로 분류된다.
-        _Alpha("Alpha (내부 픽셀 투명도)", Range(0, 1)) = 1
-        [Toggle] _OutlineFollowsAlpha("Outline Follows Alpha (아웃라인도 함께 투명)", Float) = 0
+        _Alpha                        ("Alpha", Range(0, 1))           = 1
+        [Toggle] _OutlineFollowsAlpha ("Outline Follows Alpha", Float) = 0
+
+        // 언릿(빛 영향 무시, 원색 그대로). [ToggleUI]는 인스펙터 토글만 제공하고
+        // 셰이더 키워드를 만들지 않는다 → 라이팅 multi_compile 많은 이 셰이더의 변형 폭증 방지.
+        [ToggleUI] _Unlit             ("Unlit", Float)                 = 0
     }
 
     SubShader
@@ -71,6 +76,7 @@ Shader "BFPixelizer/PixelizedLit"
             float _RenderingLayers;
             float _Alpha;
             float _OutlineFollowsAlpha;
+            float _Unlit;
             CBUFFER_END
 
             // 피처가 오프스크린 패스에서 설정하는 전역(메타 RT 크기·수퍼샘플 배율·전역 셀 크기).
@@ -194,12 +200,17 @@ Shader "BFPixelizer/PixelizedLit"
 
                 half3 ambient = SampleSH(normalWS);
 
+                // Unlit: 라이팅·앰비언트를 모두 건너뛰고 원색(_BaseMap × _BaseColor) 그대로 출력.
+                half3 shaded = albedo.rgb * (lighting + ambient);
+                half3 finalRGB = (_Unlit > 0.5) ? albedo.rgb : shaded;
+
                 FragOutput output;
-                output.color = half4(albedo.rgb * (lighting + ambient), saturate(_OutlineColor.a));
+                output.color = half4(finalRGB, saturate(_OutlineColor.a));
                 output.meta = half4(_BFP_ObjectId, _OutlineColor.rgb);
                 // 아웃라인 투명도는 여기서 확정한다(토글이 합성 셰이더까지 전파될 필요 없음).
                 // OFF면 1 → 내부가 투명해져도 테두리는 불투명하게 남는다(아쿠아리움 유리 룩).
-                half objectAlpha = saturate(_Alpha);
+                // _Alpha(전역 조절) × 텍스처 알파 × _BaseColor 알파 → URP Lit과 동일한 알파 공식.
+                half objectAlpha = saturate(_Alpha * albedo.a);
                 output.alpha = half2(objectAlpha, _OutlineFollowsAlpha > 0.5 ? objectAlpha : 1.0);
                 return output;
             }
@@ -235,6 +246,7 @@ Shader "BFPixelizer/PixelizedLit"
             float _RenderingLayers;
             float _Alpha;
             float _OutlineFollowsAlpha;
+            float _Unlit;
             CBUFFER_END
 
             float3 _LightDirection;
