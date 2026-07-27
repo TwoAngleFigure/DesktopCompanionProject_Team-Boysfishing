@@ -1,7 +1,8 @@
-using System;
 using DesktopCompanion.Core;
 using DesktopCompanion.Data;
 using DesktopCompanion.Systems;
+using System;
+using System.Collections.Generic;
 
 namespace DesktopCompanion.Views
 {
@@ -12,14 +13,13 @@ namespace DesktopCompanion.Views
 
         public event Action OnInventoryUpdated;
 
-        public RelayCommand<MixtureRecipeSO> CraftCommand { get; private set; }
-
+        public RelayCommand<RecipeData_Mixture> CraftCommand { get; private set; }
         public override void Bind()
         {
             m_mixtureSystem = SystemManager.GetSystem<MixtureSystem>();
             m_inventorySystem = SystemManager.GetSystem<InventorySystem>();
 
-            CraftCommand = new RelayCommand<MixtureRecipeSO>(recipe =>
+            CraftCommand = new RelayCommand<RecipeData_Mixture>(recipe =>
             {
                 if (CanCraft(recipe))
                 {
@@ -49,7 +49,7 @@ namespace DesktopCompanion.Views
             OnInventoryUpdated?.Invoke();
         }
 
-        public bool CanCraft(MixtureRecipeSO recipe)
+        public bool CanCraft(RecipeData_Mixture recipe)
         {
             if (m_mixtureSystem == null || recipe == null) return false;
             return m_mixtureSystem.CanCraft(recipe);
@@ -66,6 +66,24 @@ namespace DesktopCompanion.Views
             if (m_mixtureSystem == null) return "알 수 없음";
 
             return m_mixtureSystem.GetItemName(type, dataId);
+        }
+
+        public List<ParsedIngredient> GetParsedIngredients(string ingredientString)
+        {
+            if (m_mixtureSystem == null) return new List<ParsedIngredient>();
+            return m_mixtureSystem.ParseIngredients(ingredientString);
+        }
+
+        public string GetRecipeName(RecipeData_Mixture recipe)
+        {
+            if (m_mixtureSystem == null || recipe == null) return "알 수 없음";
+
+            string typeStr = recipe.m_resultType.Replace("ItemData_", "");
+            if (Enum.TryParse(typeStr, out ItemType type))
+            {
+                return m_mixtureSystem.GetItemName(type, recipe.m_resultId);
+            }
+            return "알 수 없음";
         }
     }
 }

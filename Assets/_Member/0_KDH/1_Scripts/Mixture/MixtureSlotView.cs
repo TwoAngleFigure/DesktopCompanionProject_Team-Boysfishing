@@ -12,12 +12,12 @@ namespace DesktopCompanion.Views
 
         // [SerializeField] private Image m_iconImage; 
 
-        private MixtureRecipeSO m_recipe;
-        private Action<MixtureRecipeSO> m_onClick;
-        private Action<MixtureRecipeSO> m_onHoverEnter;
+        private RecipeData_Mixture m_recipe;
+        private Action<RecipeData_Mixture> m_onClick;
+        private Action<RecipeData_Mixture> m_onHoverEnter;
         private Action m_onHoverExit;
 
-        public void Initialize(MixtureRecipeSO recipe, Action<MixtureRecipeSO> onClick, Action<MixtureRecipeSO> onHoverEnter, Action onHoverExit)
+        public void Initialize(RecipeData_Mixture recipe, Action<RecipeData_Mixture> onClick, Action<RecipeData_Mixture> onHoverEnter, Action onHoverExit)
         {
             m_recipe = recipe;
             m_onClick = onClick;

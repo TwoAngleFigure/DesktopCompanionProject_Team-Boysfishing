@@ -1,6 +1,8 @@
 using DesktopCompanion.Core;
 using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
+using DesktopCompanion.Systems;
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -14,10 +16,8 @@ namespace DesktopCompanion.Views
         [SerializeField] private UnityEngine.UI.Button m_closeButton;
 
         [Header("Grid & Slot Setup")]
-        [SerializeField] private List<MixtureRecipeSO> m_mixtureList = new();
-        [Tooltip("방금 만든 RecipeSlot 프리팹을 여기에 넣습니다.")]
+        [SerializeField] private List<RecipeData_Mixture> m_mixtureList = new();
         [SerializeField] private MixtureSlotView m_mixtureSlotPrefab;
-        [Tooltip("Grid Layout Group이 달려있는 Content 오브젝트를 여기에 넣습니다.")]
         [SerializeField] private Transform m_gridContainer;
 
         [Header("Bottom UI")]
@@ -34,7 +34,7 @@ namespace DesktopCompanion.Views
         [SerializeField] private TextMeshProUGUI m_hoverTooltipText;
 
         private MixtureViewModel m_viewModel;
-        private MixtureRecipeSO m_currentSelectedRecipe;
+        private RecipeData_Mixture m_currentSelectedRecipe;
         private readonly List<MixtureSlotView> m_instantiatedSlots = new();
 
         public override void Bind()
@@ -117,21 +117,21 @@ namespace DesktopCompanion.Views
             m_instantiatedSlots.Clear();
         }
 
-        private void OnSlotClicked(MixtureRecipeSO recipe)
+        private void OnSlotClicked(RecipeData_Mixture recipe)
         {
             m_currentSelectedRecipe = recipe;
 
             if (m_mainTooltipPanel != null) m_mainTooltipPanel.SetActive(true);
-            if (m_tooltipNameText != null) m_tooltipNameText.text = recipe.recipeName;
+            if (m_tooltipNameText != null) m_tooltipNameText.text = m_viewModel.GetRecipeName(recipe);
 
             RefreshUI();
         }
 
-        private void OnSlotHovered(MixtureRecipeSO recipe)
+        private void OnSlotHovered(RecipeData_Mixture recipe)
         {
             if (m_hoverTooltipRect != null && m_hoverTooltipText != null)
             {
-                m_hoverTooltipText.text = recipe.recipeName;
+                m_hoverTooltipText.text = m_viewModel.GetRecipeName(recipe);
 
                 m_hoverTooltipRect.gameObject.SetActive(true);
             }
@@ -157,7 +157,10 @@ namespace DesktopCompanion.Views
                 if (m_tooltipIngredientsText != null)
                 {
                     string info = "";
-                    foreach (var ing in m_currentSelectedRecipe.ingredients)
+
+                    var parsedIngredients = m_viewModel.GetParsedIngredients(m_currentSelectedRecipe.m_ingredients);
+
+                    foreach (var ing in parsedIngredients)
                     {
                         int owned = m_viewModel.GetOwnedQuantity(ing.itemType, ing.dataId);
                         string colorHex = owned >= ing.amount ? "#00FF00" : "#FF0000";
@@ -175,13 +178,9 @@ namespace DesktopCompanion.Views
             if (m_hoverTooltipRect != null && m_hoverTooltipRect.gameObject.activeSelf)
             {
                 Vector2 screenMousePos = UnityEngine.InputSystem.Mouse.current.position.ReadValue();
-
                 RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            m_hoverTooltipRect.parent as RectTransform,
-            screenMousePos,
-            null,
-            out Vector2 localPos);
-
+                    m_hoverTooltipRect.parent as RectTransform,
+                    screenMousePos, null, out Vector2 localPos);
 
                 m_hoverTooltipRect.localPosition = localPos + new Vector2(20f, -20f);
             }
@@ -194,7 +193,9 @@ namespace DesktopCompanion.Views
                 var inventorySystem = SystemManager.GetSystem<DesktopCompanion.Systems.InventorySystem>();
                 if (inventorySystem == null) return;
 
-                foreach (var ing in m_currentSelectedRecipe.ingredients)
+                var parsedIngredients = m_viewModel.GetParsedIngredients(m_currentSelectedRecipe.m_ingredients);
+
+                foreach (var ing in parsedIngredients)
                 {
                     for (int i = 0; i < ing.amount; i++)
                     {
@@ -203,8 +204,7 @@ namespace DesktopCompanion.Views
                     }
                 }
 
-                Debug.Log($"[테스트] {m_currentSelectedRecipe.recipeName} 전용 재료가 지급되었습니다!");
-
+                Debug.Log($"[테스트] {m_viewModel.GetRecipeName(m_currentSelectedRecipe)} 전용 재료가 지급되었습니다!");
                 RefreshUI();
             }
         }
