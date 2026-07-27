@@ -506,7 +506,9 @@ namespace DesktopCompanion.Rendering
             if (blockScreenPx < 1)
             {
                 // 도트가 물리 픽셀보다 작아지는 해상도 — 하한(1px)으로 잘리며 아트가 뭉개진다.
-                if (_warnedSubPixel == false)
+                // Scene 뷰 카메라는 사용자가 자유롭게 줌하는 대상(실제 타깃 해상도 아님)이라 경고가 노이즈다.
+                // 또한 Game 카메라와 번갈아 렌더될 때 _warnedSubPixel이 매번 리셋되어 반복 경고를 유발한다.
+                if (_warnedSubPixel == false && cameraData.cameraType != CameraType.SceneView)
                 {
                     _warnedSubPixel = true;
                     Debug.LogWarning(
