@@ -98,7 +98,7 @@ namespace DesktopCompanion.Systems
                 || save == null
                 || save.slots == null)
             {
-                return InventorySlotStorage.ExpandableInventoryInitialSize;
+                return InventorySizeController.ExpandableInventoryInitialSize;
             }
 
             int highestSlotIndex = -1;
@@ -117,7 +117,7 @@ namespace DesktopCompanion.Systems
                 highestSlotIndex = Math.Max(highestSlotIndex, slotSave.slotIndex);
             }
 
-            return InventorySlotStorage.CalculateInitialExpandableSize(highestSlotIndex, savedSlotCount);
+            return InventorySizeController.CalculateInitialExpandableSize(highestSlotIndex, savedSlotCount);
         }
 
         private void CaptureSlots(InventorySave save, ItemType slotType)

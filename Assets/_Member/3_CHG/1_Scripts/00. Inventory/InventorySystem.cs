@@ -17,6 +17,7 @@ namespace DesktopCompanion.Systems
         private InventorySaveLoad m_saveLoad;
         private InventoryAutoSellFilter m_autoSellFilter;
         private InventoryItemController m_itemController;
+        private InventorySizeController m_sizeController;
 
         private PlayerSystem m_playerSystem;
         private ShopSystem m_shopSystem;
@@ -52,6 +53,7 @@ namespace DesktopCompanion.Systems
             m_saveLoad = new InventorySaveLoad(m_slotStorage, EntityManager, DataManager, LogDebug, LogWarning);
             m_autoSellFilter = new InventoryAutoSellFilter();
             m_itemController = new InventoryItemController(m_slotStorage, EntityManager);
+            m_sizeController = new InventorySizeController(m_slotStorage);
 
             if (m_loadedSave != null)
             {
@@ -150,17 +152,17 @@ namespace DesktopCompanion.Systems
             AddItemResult addResult = m_itemController.AddItem(context);
             if (addResult == AddItemResult.Added || addResult == AddItemResult.Merged)
             {
-                ExpandInventoryIfNeeded(context.Type);
+                m_sizeController.ExpandInventoryIfNeeded(context.Type);
                 NotifyInventoryChanged("[InventorySystem] AddItem is Succeeded", true);
                 return true;
             }
             else if(addResult == AddItemResult.NoSpace)
             {
-                ExpandInventoryIfNeeded(context.Type);
+                m_sizeController.ExpandInventoryIfNeeded(context.Type);
                 addResult = m_itemController.AddItem(context);
                 if(addResult == AddItemResult.Added || addResult == AddItemResult.Merged)
                 {
-                    ExpandInventoryIfNeeded(context.Type);
+                    m_sizeController.ExpandInventoryIfNeeded(context.Type);
                     NotifyInventoryChanged("[InventorySystem] AddItem is Succeeded", true);
                     return true;
                 }
@@ -312,16 +314,6 @@ namespace DesktopCompanion.Systems
             NotifyInventoryChanged($"Restore inventory / restored: {restoredCount}, failed: {failedCount}", false);
         }
 
-        private void ExpandInventoryIfNeeded(ItemType itemType)
-        {
-            ItemType slotType = InventorySlotStorage.NormalizeSlotType(itemType);
-
-            if (!m_slotStorage.ExpandIfNeeded(slotType, out int previousSlotSize, out int nextSlotSize, out int remainingSlotCount))
-            {
-                return;
-            }
-        }
-
         public bool CanRemoveByHandle(EntityHandle handle, int amount)
         {
             return m_itemController.CanRemoveByHandle(handle, amount);
@@ -346,32 +338,14 @@ namespace DesktopCompanion.Systems
             return size;
         }
 
-        private bool ResizeFishSlots(int slotSize)
-        {
-            if (slotSize <= 0)
-            {
-                LogWarning($"ResizeFishSlots failed. Invalid slot size: {slotSize}");
-                return false;
-            }
-
-            if (!m_slotStorage.ResizeFishSlots(slotSize))
-            {
-                LogWarning($"ResizeFishSlots failed. Fish exist outside next slot size. nextSize: {slotSize}");
-                return false;
-            }
-
-            NotifyInventoryChanged($"Resize fish inventory / slotSize: {slotSize}", false);
-
-            return true;
-        }
-
         private void HandlePlayerStatChanged(EntityHandle playerHandle)
         {
             int nextInventorySize = GetCurrentInventorySize();
 
-            bool result = ResizeFishSlots(nextInventorySize);
+            bool result = m_sizeController.ResizeFishSlots(nextInventorySize);
 
             LogDebug($"Fish inventory size stat changed. nextSize: {nextInventorySize}, resizeResult: {result}");
+            NotifyInventoryChanged("[InventorySystem] 인벤토리 사이즈가 변경되었습니다.", false);
         }
     }
 }
