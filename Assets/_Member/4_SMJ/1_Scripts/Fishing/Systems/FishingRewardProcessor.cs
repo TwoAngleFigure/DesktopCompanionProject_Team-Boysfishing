@@ -39,11 +39,6 @@ namespace DesktopCompanion.Systems
                 return FishingRewardResult.Failed;
             }
 
-            if (IsFishInventoryFull())
-            {
-                return FishingRewardResult.InventoryFull;
-            }
-
             EntityHandle handle = m_entityManager.Create<ItemData_Fish>(itemData.ID);
             Entity_Fish fish = m_entityManager.Get<Entity_Fish>(handle);
 
@@ -61,6 +56,11 @@ namespace DesktopCompanion.Systems
 
         public FishingRewardResult TryFinalizeCaughtFish(EntityHandle caughtHandle)
         {
+            if (IsFishInventoryFull())
+            {
+                return FishingRewardResult.InventoryFull;
+            }
+
             if (TryAddItem(caughtHandle))
             {
                 return FishingRewardResult.Success;
