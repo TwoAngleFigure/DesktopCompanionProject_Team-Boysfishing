@@ -51,7 +51,7 @@ namespace DesktopCompanion.Systems
         #region Events
 
         public event Action<FishingState> OnStateChanged;
-        public event Action<EntityHandle> OnFishCaughtPresentation;
+        public event Action<EntityHandle, FishCollectionUpdateResult> OnFishCaughtPresentation;
         public event Action<FishingResultType> OnFishingResult;
         public event Action<EntityHandle, int, int> OnBattleHpChanged;
         public event Action OnPendingCatchChanged;
@@ -534,7 +534,7 @@ namespace DesktopCompanion.Systems
                 isCollectionUpdated = true;
             }
 
-            OnFishCaughtPresentation?.Invoke(caughtHandle);
+            OnFishCaughtPresentation?.Invoke(caughtHandle, collectionResult);
 
             FishingRewardResult finalizeResult = m_rewardProcessor.TryFinalizeCaughtFish(caughtHandle);
 

@@ -1,4 +1,5 @@
 using DesktopCompanion.Entities;
+using DesktopCompanion.Systems;
 using DesktopCompanion.Views;
 using DG.Tweening;
 using TMPro;
@@ -16,6 +17,7 @@ public class CaughtFishPopupWorldView : MonoBehaviour
     [SerializeField] private CanvasGroup m_popupCanvasGroup;
     [SerializeField] private GameObject m_popupRoot;
     [SerializeField] private TMP_Text m_fishInfoText;
+    [SerializeField] private GameObject m_collectionUpdateBadge;
     [SerializeField] private Image[] m_qualityStars;
     [SerializeField] private float m_popupHoldDuration = 1.5f;
     [SerializeField] private float m_popupMoveDistance = 0.4f;
@@ -40,7 +42,10 @@ public class CaughtFishPopupWorldView : MonoBehaviour
         }
     }
 
-    public void ShowCaughtFish(Entity_Fish fish, GameObject prefab)
+    public void ShowCaughtFish(
+        Entity_Fish fish,
+        GameObject prefab,
+        FishCollectionUpdateResult collectionResult)
     {
         if (fish == null)
         {
@@ -48,7 +53,7 @@ public class CaughtFishPopupWorldView : MonoBehaviour
         }
 
         ClearCurrentModel();
-        UpdateCatchPopup(fish);
+        UpdateCatchPopup(fish, collectionResult);
         CreateCaughtFishModel(prefab);
         PlayResultPopup();
     }
@@ -56,6 +61,7 @@ public class CaughtFishPopupWorldView : MonoBehaviour
     public void ShowFailure(string resultText)
     {
         ClearCurrentModel();
+        SetCollectionUpdateBadge(false);
         UpdateFailurePopup(resultText);
         PlayResultPopup();
     }
@@ -114,14 +120,18 @@ public class CaughtFishPopupWorldView : MonoBehaviour
         m_popupRoot.SetActive(false);
     }
 
-    private void UpdateCatchPopup(Entity_Fish fish)
+    private void UpdateCatchPopup(
+        Entity_Fish fish,
+        FishCollectionUpdateResult collectionResult)
     {
         if (m_fishInfoText != null)
         {
-            m_fishInfoText.text = $"{fish.Name} / {fish.Size:0.00} cm";
+            m_fishInfoText.text = $"{fish.Name} / {fish.Size:0.0} cm";
         }
 
         SetQualityStars((int)fish.Quality);
+        SetCollectionUpdateBadge(
+            collectionResult.UpdateType != FishCollectionUpdateType.None);
     }
 
     private void UpdateFailurePopup(string resultText)
@@ -132,6 +142,15 @@ public class CaughtFishPopupWorldView : MonoBehaviour
         }
 
         SetQualityStars(0);
+        SetCollectionUpdateBadge(false);
+    }
+
+    private void SetCollectionUpdateBadge(bool isVisible)
+    {
+        if (m_collectionUpdateBadge != null)
+        {
+            m_collectionUpdateBadge.SetActive(isVisible);
+        }
     }
 
     private void SetQualityStars(int count)

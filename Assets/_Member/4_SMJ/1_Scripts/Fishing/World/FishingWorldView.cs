@@ -85,7 +85,9 @@ public class FishingWorldView : WorldViewBase
         m_caughtFishPopup.ShowFailure(GetResultText(resultType));
     }
 
-    private void HandleFishCaught(EntityHandle fishHandle)
+    private void HandleFishCaught(
+        EntityHandle fishHandle,
+        FishCollectionUpdateResult collectionResult)
     {
         Entity_Fish fish = EntityManager.Get<Entity_Fish>(fishHandle);
 
@@ -108,7 +110,7 @@ public class FishingWorldView : WorldViewBase
             return;
         }
 
-        m_caughtFishPopup.ShowCaughtFish(fish, fishPrefab);
+        m_caughtFishPopup.ShowCaughtFish(fish, fishPrefab, collectionResult);
     }
 
     private void HandlePendingCatchChanged()
