@@ -18,6 +18,10 @@ public class FishingWorldView : WorldViewBase
     [Header("Catch Popup")]
     [SerializeField] private CaughtFishPopupWorldView m_caughtFishPopup;
 
+    [Header("Drop Popup")]
+    [SerializeField] private FishingDropPopupWorldView m_dropPopup;
+    [SerializeField] private Sprite m_tempDropIcon;
+
     private FishingSystem m_fishingSystem;
     private GameObject m_currentFlightRoot;
     private GameObject m_currentFlightModel;
@@ -35,18 +39,21 @@ public class FishingWorldView : WorldViewBase
         m_fishingSystem.OnFishCaughtPresentation += HandleFishCaught;
         m_fishingSystem.OnFishingResult += HandleFishingResult;
         m_fishingSystem.OnPendingCatchChanged += HandlePendingCatchChanged;
+        m_fishingSystem.OnItemDropped += HandleItemDropped;
     }
 
     public override void Unbind()
     {
         ClearCurrentFlightModel();
         m_caughtFishPopup?.Cleanup();
+        m_dropPopup?.Cleanup();
 
         if (m_fishingSystem != null)
         {
             m_fishingSystem.OnFishCaughtPresentation -= HandleFishCaught;
             m_fishingSystem.OnFishingResult -= HandleFishingResult;
             m_fishingSystem.OnPendingCatchChanged -= HandlePendingCatchChanged;
+            m_fishingSystem.OnItemDropped -= HandleItemDropped;
         }
 
         m_fishingSystem = null;
@@ -128,6 +135,44 @@ public class FishingWorldView : WorldViewBase
         }
 
         m_caughtFishPopup.CloseAfterPending();
+    }
+
+    private void HandleItemDropped(
+    FishingGrantedDropInfo dropInfo)
+    {
+        if (m_fishingSystem == null || m_dropPopup == null)
+        {
+            return;
+        }
+
+        ItemData itemData = m_fishingSystem.GetItemData(dropInfo.ItemType, dropInfo.DataId);
+
+        if (itemData == null)
+        {
+            Debug.LogWarning($"[FishingWorldView] 드롭 아이템 데이터를 찾을 수 없습니다: " +
+                $"type={dropInfo.ItemType}, id={dropInfo.DataId}");
+            return;
+        }
+
+        string iconKey = AssetKeys.Of(
+            itemData,
+            AssetUsage.Icon);
+
+        Sprite icon = AssetProvider.Get<Sprite>(iconKey);
+
+        if (icon == null)
+        {
+            // TODO: 실제 드롭 아이콘 등록이 끝나면 임시 아이콘 대체와 함께 로그를 다시 활성화합니다.
+            // Debug.LogWarning($"[FishingWorldView] 드롭 아이콘을 찾을 수 없습니다: key={iconKey}");
+            icon = m_tempDropIcon;
+        }
+
+        if (icon == null)
+        {
+            return;
+        }
+
+        m_dropPopup.Show(icon, dropInfo.Count);
     }
 
     private GameObject GetFishModelPrefab(ItemData_Fish fishData)
