@@ -38,7 +38,7 @@
     "m_id": 100003,
     "m_name": "강준치",
     "m_type": "Fish",
-    "m_tier": 3,
+    "m_tier": 1,
     "m_basePrice": 10,
     "m_rarity": "Normal",
     "m_aquariumMaterial": {
@@ -140,7 +140,7 @@
     "m_id": 100009,
     "m_name": "돌고기",
     "m_type": "Fish",
-    "m_tier": 3,
+    "m_tier": 1,
     "m_basePrice": 10,
     "m_rarity": "Normal",
     "m_aquariumMaterial": {
@@ -176,7 +176,7 @@
     "m_type": "Fish",
     "m_tier": 1,
     "m_basePrice": 50,
-    "m_rarity": "Boss",
+    "m_rarity": "Uncommon",
     "m_aquariumMaterial": {
       "type": "ItemData_Materials",
       "id": 300006
@@ -191,7 +191,7 @@
     "m_id": 100012,
     "m_name": "누치",
     "m_type": "Fish",
-    "m_tier": 3,
+    "m_tier": 1,
     "m_basePrice": 50,
     "m_rarity": "Uncommon",
     "m_aquariumMaterial": {
@@ -208,7 +208,7 @@
     "m_id": 100013,
     "m_name": "메기",
     "m_type": "Fish",
-    "m_tier": 7,
+    "m_tier": 1,
     "m_basePrice": 50,
     "m_rarity": "Uncommon",
     "m_aquariumMaterial": {
@@ -242,7 +242,7 @@
     "m_id": 100015,
     "m_name": "강어귀망둥어",
     "m_type": "Fish",
-    "m_tier": 3,
+    "m_tier": 1,
     "m_basePrice": 50,
     "m_rarity": "Uncommon",
     "m_aquariumMaterial": {
@@ -259,7 +259,7 @@
     "m_id": 100016,
     "m_name": "꺽지",
     "m_type": "Fish",
-    "m_tier": 3,
+    "m_tier": 1,
     "m_basePrice": 50,
     "m_rarity": "Uncommon",
     "m_aquariumMaterial": {
@@ -276,7 +276,7 @@
     "m_id": 100017,
     "m_name": "미유기",
     "m_type": "Fish",
-    "m_tier": 3,
+    "m_tier": 1,
     "m_basePrice": 50,
     "m_rarity": "Uncommon",
     "m_aquariumMaterial": {
@@ -293,7 +293,7 @@
     "m_id": 100018,
     "m_name": "동자개",
     "m_type": "Fish",
-    "m_tier": 3,
+    "m_tier": 1,
     "m_basePrice": 50,
     "m_rarity": "Uncommon",
     "m_aquariumMaterial": {
@@ -310,7 +310,7 @@
     "m_id": 100019,
     "m_name": "쏘가리",
     "m_type": "Fish",
-    "m_tier": 7,
+    "m_tier": 1,
     "m_basePrice": 125,
     "m_rarity": "Rare",
     "m_aquariumMaterial": {
@@ -327,7 +327,7 @@
     "m_id": 100020,
     "m_name": "배스",
     "m_type": "Fish",
-    "m_tier": 3,
+    "m_tier": 1,
     "m_basePrice": 125,
     "m_rarity": "Rare",
     "m_aquariumMaterial": {
@@ -344,7 +344,7 @@
     "m_id": 100021,
     "m_name": "블루길",
     "m_type": "Fish",
-    "m_tier": 3,
+    "m_tier": 1,
     "m_basePrice": 125,
     "m_rarity": "Rare",
     "m_aquariumMaterial": {
@@ -361,7 +361,7 @@
     "m_id": 100022,
     "m_name": "산천어",
     "m_type": "Fish",
-    "m_tier": 7,
+    "m_tier": 1,
     "m_basePrice": 125,
     "m_rarity": "Rare",
     "m_aquariumMaterial": {
@@ -378,7 +378,7 @@
     "m_id": 100023,
     "m_name": "가물치",
     "m_type": "Fish",
-    "m_tier": 7,
+    "m_tier": 1,
     "m_basePrice": 300,
     "m_rarity": "Epic",
     "m_aquariumMaterial": {
@@ -395,7 +395,7 @@
     "m_id": 100024,
     "m_name": "뱀장어",
     "m_type": "Fish",
-    "m_tier": 7,
+    "m_tier": 1,
     "m_basePrice": 300,
     "m_rarity": "Epic",
     "m_aquariumMaterial": {
@@ -412,7 +412,7 @@
     "m_id": 100025,
     "m_name": "끄리",
     "m_type": "Fish",
-    "m_tier": 7,
+    "m_tier": 1,
     "m_basePrice": 300,
     "m_rarity": "Epic",
     "m_aquariumMaterial": {
@@ -429,7 +429,7 @@
     "m_id": 100026,
     "m_name": "대형잉어",
     "m_type": "Fish",
-    "m_tier": 7,
+    "m_tier": 1,
     "m_basePrice": 500,
     "m_rarity": "Legendary",
     "m_aquariumMaterial": {
@@ -446,9 +446,9 @@
     "m_id": 100027,
     "m_name": "비단잉어",
     "m_type": "Fish",
-    "m_tier": 3,
+    "m_tier": 1,
     "m_basePrice": 500,
-    "m_rarity": "Boss",
+    "m_rarity": "Legendary",
     "m_aquariumMaterial": {
       "type": "ItemData_Materials",
       "id": 300001
@@ -463,7 +463,7 @@
     "m_id": 100028,
     "m_name": "철갑상어",
     "m_type": "Fish",
-    "m_tier": 7,
+    "m_tier": 1,
     "m_basePrice": 800,
     "m_rarity": "Boss",
     "m_aquariumMaterial": {
@@ -497,7 +497,7 @@
     "m_id": 100030,
     "m_name": "전어",
     "m_type": "Fish",
-    "m_tier": 4,
+    "m_tier": 2,
     "m_basePrice": 80,
     "m_rarity": "Normal",
     "m_aquariumMaterial": {
@@ -514,7 +514,7 @@
     "m_id": 100031,
     "m_name": "숭어",
     "m_type": "Fish",
-    "m_tier": 4,
+    "m_tier": 2,
     "m_basePrice": 80,
     "m_rarity": "Normal",
     "m_aquariumMaterial": {
@@ -531,7 +531,7 @@
     "m_id": 100032,
     "m_name": "멸치",
     "m_type": "Fish",
-    "m_tier": 4,
+    "m_tier": 2,
     "m_basePrice": 80,
     "m_rarity": "Normal",
     "m_aquariumMaterial": {
@@ -548,7 +548,7 @@
     "m_id": 100033,
     "m_name": "전갱이",
     "m_type": "Fish",
-    "m_tier": 4,
+    "m_tier": 2,
     "m_basePrice": 80,
     "m_rarity": "Normal",
     "m_aquariumMaterial": {
@@ -565,7 +565,7 @@
     "m_id": 100034,
     "m_name": "보리멸",
     "m_type": "Fish",
-    "m_tier": 4,
+    "m_tier": 2,
     "m_basePrice": 80,
     "m_rarity": "Normal",
     "m_aquariumMaterial": {
@@ -633,7 +633,7 @@
     "m_id": 100038,
     "m_name": "웅어",
     "m_type": "Fish",
-    "m_tier": 4,
+    "m_tier": 2,
     "m_basePrice": 80,
     "m_rarity": "Normal",
     "m_aquariumMaterial": {
@@ -650,7 +650,7 @@
     "m_id": 100039,
     "m_name": "농어",
     "m_type": "Fish",
-    "m_tier": 8,
+    "m_tier": 2,
     "m_basePrice": 230,
     "m_rarity": "Uncommon",
     "m_aquariumMaterial": {
@@ -667,7 +667,7 @@
     "m_id": 100040,
     "m_name": "붕장어",
     "m_type": "Fish",
-    "m_tier": 8,
+    "m_tier": 2,
     "m_basePrice": 230,
     "m_rarity": "Uncommon",
     "m_aquariumMaterial": {
@@ -701,7 +701,7 @@
     "m_id": 100042,
     "m_name": "갑오징어",
     "m_type": "Fish",
-    "m_tier": 4,
+    "m_tier": 2,
     "m_basePrice": 230,
     "m_rarity": "Uncommon",
     "m_aquariumMaterial": {
@@ -786,7 +786,7 @@
     "m_id": 100047,
     "m_name": "도다리",
     "m_type": "Fish",
-    "m_tier": 4,
+    "m_tier": 2,
     "m_basePrice": 400,
     "m_rarity": "Rare",
     "m_aquariumMaterial": {
@@ -803,7 +803,7 @@
     "m_id": 100048,
     "m_name": "광어",
     "m_type": "Fish",
-    "m_tier": 8,
+    "m_tier": 2,
     "m_basePrice": 400,
     "m_rarity": "Rare",
     "m_aquariumMaterial": {
@@ -820,7 +820,7 @@
     "m_id": 100049,
     "m_name": "무늬오징어",
     "m_type": "Fish",
-    "m_tier": 4,
+    "m_tier": 2,
     "m_basePrice": 400,
     "m_rarity": "Rare",
     "m_aquariumMaterial": {
@@ -837,7 +837,7 @@
     "m_id": 100050,
     "m_name": "보구치",
     "m_type": "Fish",
-    "m_tier": 4,
+    "m_tier": 2,
     "m_basePrice": 400,
     "m_rarity": "Rare",
     "m_aquariumMaterial": {
@@ -871,7 +871,7 @@
     "m_id": 100052,
     "m_name": "대왕문어",
     "m_type": "Fish",
-    "m_tier": 8,
+    "m_tier": 2,
     "m_basePrice": 900,
     "m_rarity": "Epic",
     "m_aquariumMaterial": {
@@ -888,7 +888,7 @@
     "m_id": 100053,
     "m_name": "먹물오징어",
     "m_type": "Fish",
-    "m_tier": 8,
+    "m_tier": 2,
     "m_basePrice": 900,
     "m_rarity": "Epic",
     "m_aquariumMaterial": {
@@ -905,7 +905,7 @@
     "m_id": 100054,
     "m_name": "황금꽃게",
     "m_type": "Fish",
-    "m_tier": 8,
+    "m_tier": 2,
     "m_basePrice": 900,
     "m_rarity": "Epic",
     "m_aquariumMaterial": {
@@ -922,7 +922,7 @@
     "m_id": 100055,
     "m_name": "점농어",
     "m_type": "Fish",
-    "m_tier": 8,
+    "m_tier": 2,
     "m_basePrice": 900,
     "m_rarity": "Epic",
     "m_aquariumMaterial": {
@@ -939,7 +939,7 @@
     "m_id": 100056,
     "m_name": "대물민어",
     "m_type": "Fish",
-    "m_tier": 8,
+    "m_tier": 2,
     "m_basePrice": 1200,
     "m_rarity": "Legendary",
     "m_aquariumMaterial": {
@@ -956,7 +956,7 @@
     "m_id": 100057,
     "m_name": "산갈치",
     "m_type": "Fish",
-    "m_tier": 8,
+    "m_tier": 2,
     "m_basePrice": 1200,
     "m_rarity": "Legendary",
     "m_aquariumMaterial": {
@@ -973,7 +973,7 @@
     "m_id": 100058,
     "m_name": "대형 노랑가오리",
     "m_type": "Fish",
-    "m_tier": 4,
+    "m_tier": 2,
     "m_basePrice": 2000,
     "m_rarity": "Boss",
     "m_aquariumMaterial": {
@@ -1050,7 +1050,7 @@
     "m_id": 100063,
     "m_name": "청어",
     "m_type": "Fish",
-    "m_tier": 5,
+    "m_tier": 3,
     "m_rarity": "Normal",
     "m_aquariumMaterial": {
       "type": "ItemData_Materials",
@@ -1065,7 +1065,7 @@
     "m_id": 100064,
     "m_name": "명태",
     "m_type": "Fish",
-    "m_tier": 5,
+    "m_tier": 3,
     "m_rarity": "Normal",
     "m_aquariumMaterial": {
       "type": "ItemData_Materials",
@@ -1111,7 +1111,7 @@
     "m_name": "대구",
     "m_type": "Fish",
     "m_tier": 3,
-    "m_rarity": "Boss",
+    "m_rarity": "Normal",
     "m_aquariumMaterial": {
       "type": "ItemData_Materials",
       "id": 300001
@@ -1125,7 +1125,7 @@
     "m_id": 100068,
     "m_name": "홍어",
     "m_type": "Fish",
-    "m_tier": 5,
+    "m_tier": 3,
     "m_rarity": "Normal",
     "m_aquariumMaterial": {
       "type": "ItemData_Materials",
@@ -1140,7 +1140,7 @@
     "m_id": 100069,
     "m_name": "도치",
     "m_type": "Fish",
-    "m_tier": 6,
+    "m_tier": 3,
     "m_rarity": "Uncommon",
     "m_aquariumMaterial": {
       "type": "ItemData_Materials",
@@ -1154,7 +1154,7 @@
     "m_id": 100070,
     "m_name": "양미리",
     "m_type": "Fish",
-    "m_tier": 5,
+    "m_tier": 3,
     "m_rarity": "Uncommon",
     "m_aquariumMaterial": {
       "type": "ItemData_Materials",
@@ -1168,7 +1168,7 @@
     "m_id": 100071,
     "m_name": "가오리",
     "m_type": "Fish",
-    "m_tier": 5,
+    "m_tier": 3,
     "m_rarity": "Uncommon",
     "m_aquariumMaterial": {
       "type": "ItemData_Materials",
@@ -1182,7 +1182,7 @@
     "m_id": 100072,
     "m_name": "임연수",
     "m_type": "Fish",
-    "m_tier": 5,
+    "m_tier": 3,
     "m_rarity": "Uncommon",
     "m_aquariumMaterial": {
       "type": "ItemData_Materials",
@@ -1196,7 +1196,7 @@
     "m_id": 100073,
     "m_name": "백조기",
     "m_type": "Fish",
-    "m_tier": 6,
+    "m_tier": 3,
     "m_rarity": "Uncommon",
     "m_aquariumMaterial": {
       "type": "ItemData_Materials",
@@ -1210,7 +1210,7 @@
     "m_id": 100074,
     "m_name": "까나리",
     "m_type": "Fish",
-    "m_tier": 5,
+    "m_tier": 3,
     "m_rarity": "Uncommon",
     "m_aquariumMaterial": {
       "type": "ItemData_Materials",
@@ -1294,7 +1294,7 @@
     "m_id": 100080,
     "m_name": "열목어",
     "m_type": "Fish",
-    "m_tier": 5,
+    "m_tier": 3,
     "m_rarity": "Rare",
     "m_aquariumMaterial": {
       "type": "ItemData_Materials",
@@ -1308,7 +1308,7 @@
     "m_id": 100081,
     "m_name": "황쏘가리",
     "m_type": "Fish",
-    "m_tier": 6,
+    "m_tier": 3,
     "m_rarity": "Rare",
     "m_aquariumMaterial": {
       "type": "ItemData_Materials",
@@ -1322,7 +1322,7 @@
     "m_id": 100082,
     "m_name": "빙어",
     "m_type": "Fish",
-    "m_tier": 5,
+    "m_tier": 3,
     "m_rarity": "Epic",
     "m_aquariumMaterial": {
       "type": "ItemData_Materials",
@@ -1336,7 +1336,7 @@
     "m_id": 100083,
     "m_name": "백명태",
     "m_type": "Fish",
-    "m_tier": 6,
+    "m_tier": 3,
     "m_rarity": "Epic",
     "m_aquariumMaterial": {
       "type": "ItemData_Materials",
@@ -1350,7 +1350,7 @@
     "m_id": 100084,
     "m_name": "은대구",
     "m_type": "Fish",
-    "m_tier": 6,
+    "m_tier": 3,
     "m_rarity": "Epic",
     "m_aquariumMaterial": {
       "type": "ItemData_Materials",
@@ -1364,7 +1364,7 @@
     "m_id": 100085,
     "m_name": "황금가자미",
     "m_type": "Fish",
-    "m_tier": 6,
+    "m_tier": 3,
     "m_rarity": "Epic",
     "m_aquariumMaterial": {
       "type": "ItemData_Materials",
@@ -1378,7 +1378,7 @@
     "m_id": 100086,
     "m_name": "심해대구",
     "m_type": "Fish",
-    "m_tier": 6,
+    "m_tier": 3,
     "m_rarity": "Legendary",
     "m_aquariumMaterial": {
       "type": "ItemData_Materials",
@@ -1391,7 +1391,7 @@
     "m_id": 100087,
     "m_name": "북태평양 연어",
     "m_type": "Fish",
-    "m_tier": 6,
+    "m_tier": 3,
     "m_rarity": "Legendary",
     "m_aquariumMaterial": {
       "type": "ItemData_Materials",
@@ -1404,7 +1404,7 @@
     "m_id": 100088,
     "m_name": "청새치",
     "m_type": "Fish",
-    "m_tier": 6,
+    "m_tier": 3,
     "m_rarity": "Boss",
     "m_aquariumMaterial": {
       "type": "ItemData_Materials",
@@ -1412,102 +1412,6 @@
     },
     "m_aquariumProduceTime": 3000,
     "m_aquariumCapacity": 6
-  },
-  {
-    "type": "ItemData_Fish",
-    "m_id": 100089,
-    "m_name": "쑤기미",
-    "m_type": "Fish",
-    "m_tier": 2,
-    "m_rarity": "Boss"
-  },
-  {
-    "type": "ItemData_Fish",
-    "m_id": 100090,
-    "m_name": "돌돔",
-    "m_type": "Fish",
-    "m_tier": 8,
-    "m_rarity": "Boss"
-  },
-  {
-    "type": "ItemData_Fish",
-    "m_id": 100091,
-    "m_name": "블루 랍스터",
-    "m_type": "Fish",
-    "m_tier": 5,
-    "m_rarity": "Boss"
-  },
-  {
-    "type": "ItemData_Fish",
-    "m_id": 100092,
-    "m_name": "클리오네",
-    "m_type": "Fish",
-    "m_tier": 9,
-    "m_rarity": "Normal"
-  },
-  {
-    "type": "ItemData_Fish",
-    "m_id": 100093,
-    "m_name": "보름달물해파리",
-    "m_type": "Fish",
-    "m_tier": 9,
-    "m_rarity": "Normal"
-  },
-  {
-    "type": "ItemData_Fish",
-    "m_id": 100094,
-    "m_name": "마다린 피쉬",
-    "m_type": "Fish",
-    "m_tier": 9,
-    "m_rarity": "Uncommon"
-  },
-  {
-    "type": "ItemData_Fish",
-    "m_id": 100095,
-    "m_name": "잎새해룡",
-    "m_type": "Fish",
-    "m_tier": 9,
-    "m_rarity": "Rare"
-  },
-  {
-    "type": "ItemData_Fish",
-    "m_id": 100096,
-    "m_name": "블루탱",
-    "m_type": "Fish",
-    "m_tier": 9,
-    "m_rarity": "Rare"
-  },
-  {
-    "type": "ItemData_Fish",
-    "m_id": 100097,
-    "m_name": "덤보문어",
-    "m_type": "Fish",
-    "m_tier": 9,
-    "m_rarity": "Epic"
-  },
-  {
-    "type": "ItemData_Fish",
-    "m_id": 100098,
-    "m_name": "만타가오리",
-    "m_type": "Fish",
-    "m_tier": 9,
-    "m_rarity": "Epic"
-  },
-  {
-    "type": "ItemData_Fish",
-    "m_id": 100099,
-    "m_name": "고래상어",
-    "m_type": "Fish",
-    "m_tier": 9,
-    "m_rarity": "Legendary"
-  },
-  {
-    "type": "ItemData_Fish",
-    "m_id": 100100,
-    "m_name": "혹등고래",
-    "m_type": "Fish",
-    "m_tier": 9,
-    "m_rarity": "Boss"
   },
   {
     "type": "ItemData_Materials",
@@ -1557,7 +1461,7 @@
   {
     "type": "ItemData_Materials",
     "m_id": 300006,
-    "m_name": "황금 떡밥 조각",
+    "m_name": "강의 정수 조각",
     "m_type": "Materials",
     "m_tier": 1,
     "m_basePrice": 10,
@@ -1566,25 +1470,25 @@
   {
     "type": "ItemData_Materials",
     "m_id": 300007,
-    "m_name": "무지개빛 옥구슬 조각",
+    "m_name": "갯벌의 진주 조각",
     "m_type": "Materials",
-    "m_tier": 3,
+    "m_tier": 2,
     "m_basePrice": 10,
     "m_aquariumRequiredPoints": 6000
   },
   {
     "type": "ItemData_Materials",
     "m_id": 300008,
-    "m_name": "고대의 흑요석 미끼 조각",
+    "m_name": "군도의 푸른 빛 조각",
     "m_type": "Materials",
-    "m_tier": 7,
+    "m_tier": 3,
     "m_basePrice": 10,
     "m_aquariumRequiredPoints": 9000
   },
   {
     "type": "ItemData_Materials",
     "m_id": 300009,
-    "m_name": "맹독의 자수정 조각",
+    "m_name": "심연의 결석 조각",
     "m_type": "Materials",
     "m_tier": 4,
     "m_basePrice": 10,
@@ -1593,46 +1497,11 @@
   {
     "type": "ItemData_Materials",
     "m_id": 300010,
-    "m_name": "황금빛 산호 조각",
+    "m_name": "화산의 심장 조각",
     "m_type": "Materials",
-    "m_tier": 4,
+    "m_tier": 5,
     "m_basePrice": 10,
     "m_aquariumRequiredPoints": 60000
-  },
-  {
-    "type": "ItemData_Materials",
-    "m_id": 300011,
-    "m_name": "단단한 갯바위 광석 조각",
-    "m_type": "Materials",
-    "m_tier": 8
-  },
-  {
-    "type": "ItemData_Materials",
-    "m_id": 300012,
-    "m_name": "얼어붙은 빙하 결정 조각",
-    "m_type": "Materials",
-    "m_tier": 3
-  },
-  {
-    "type": "ItemData_Materials",
-    "m_id": 300013,
-    "m_name": "심해의 푸른 진주 조각",
-    "m_type": "Materials",
-    "m_tier": 5
-  },
-  {
-    "type": "ItemData_Materials",
-    "m_id": 300014,
-    "m_name": "은빛 창날 루어 조각",
-    "m_type": "Materials",
-    "m_tier": 6
-  },
-  {
-    "type": "ItemData_Materials",
-    "m_id": 300015,
-    "m_name": "바다 거인의 소라고동 조각",
-    "m_type": "Materials",
-    "m_tier": 9
   },
   {
     "type": "AquariumUpgradeData",
@@ -7309,13 +7178,6 @@
               "id": 300004
             },
             "m_count": 10
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 2
           }
         ]
       },
@@ -7347,13 +7209,6 @@
               "id": 300004
             },
             "m_count": 12
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 4
           }
         ]
       },
@@ -7385,13 +7240,6 @@
               "id": 300004
             },
             "m_count": 14
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 6
           }
         ]
       },
@@ -7423,13 +7271,6 @@
               "id": 300004
             },
             "m_count": 16
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 8
           }
         ]
       },
@@ -7461,13 +7302,6 @@
               "id": 300004
             },
             "m_count": 20
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 10
           }
         ]
       },
@@ -7499,13 +7333,6 @@
               "id": 300004
             },
             "m_count": 25
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 12
           }
         ]
       },
@@ -7537,13 +7364,6 @@
               "id": 300004
             },
             "m_count": 30
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 14
           }
         ]
       },
@@ -7575,13 +7395,6 @@
               "id": 300004
             },
             "m_count": 35
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 16
           }
         ]
       },
@@ -7613,13 +7426,6 @@
               "id": 300004
             },
             "m_count": 40
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 18
           }
         ]
       },
@@ -7651,13 +7457,6 @@
               "id": 300004
             },
             "m_count": 60
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 20
           }
         ]
       }
@@ -7702,13 +7501,6 @@
               "id": 300004
             },
             "m_count": 10
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 2
           }
         ]
       },
@@ -7735,13 +7527,6 @@
               "id": 300004
             },
             "m_count": 12
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 4
           }
         ]
       },
@@ -7768,13 +7553,6 @@
               "id": 300004
             },
             "m_count": 14
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 6
           }
         ]
       },
@@ -7801,13 +7579,6 @@
               "id": 300004
             },
             "m_count": 16
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 8
           }
         ]
       },
@@ -7834,13 +7605,6 @@
               "id": 300004
             },
             "m_count": 20
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 10
           }
         ]
       },
@@ -7867,13 +7631,6 @@
               "id": 300004
             },
             "m_count": 25
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 12
           }
         ]
       },
@@ -7900,13 +7657,6 @@
               "id": 300004
             },
             "m_count": 30
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 14
           }
         ]
       },
@@ -7933,13 +7683,6 @@
               "id": 300004
             },
             "m_count": 35
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 16
           }
         ]
       },
@@ -7966,13 +7709,6 @@
               "id": 300004
             },
             "m_count": 40
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 18
           }
         ]
       },
@@ -7999,13 +7735,6 @@
               "id": 300004
             },
             "m_count": 60
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 20
           }
         ]
       }
@@ -8050,13 +7779,6 @@
               "id": 300004
             },
             "m_count": 10
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 2
           }
         ]
       },
@@ -8083,13 +7805,6 @@
               "id": 300004
             },
             "m_count": 12
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 4
           }
         ]
       },
@@ -8116,13 +7831,6 @@
               "id": 300004
             },
             "m_count": 14
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 6
           }
         ]
       },
@@ -8149,13 +7857,6 @@
               "id": 300004
             },
             "m_count": 16
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 8
           }
         ]
       },
@@ -8182,13 +7883,6 @@
               "id": 300004
             },
             "m_count": 20
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 10
           }
         ]
       },
@@ -8215,13 +7909,6 @@
               "id": 300004
             },
             "m_count": 25
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 12
           }
         ]
       },
@@ -8248,13 +7935,6 @@
               "id": 300004
             },
             "m_count": 30
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 14
           }
         ]
       },
@@ -8281,13 +7961,6 @@
               "id": 300004
             },
             "m_count": 35
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 16
           }
         ]
       },
@@ -8314,13 +7987,6 @@
               "id": 300004
             },
             "m_count": 40
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 18
           }
         ]
       },
@@ -8347,13 +8013,6 @@
               "id": 300004
             },
             "m_count": 60
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 20
           }
         ]
       }
@@ -8398,13 +8057,6 @@
               "id": 300004
             },
             "m_count": 10
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 2
           }
         ]
       },
@@ -8431,13 +8083,6 @@
               "id": 300004
             },
             "m_count": 12
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 4
           }
         ]
       },
@@ -8464,13 +8109,6 @@
               "id": 300004
             },
             "m_count": 14
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 6
           }
         ]
       },
@@ -8497,13 +8135,6 @@
               "id": 300004
             },
             "m_count": 16
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 8
           }
         ]
       },
@@ -8530,13 +8161,6 @@
               "id": 300004
             },
             "m_count": 20
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 10
           }
         ]
       },
@@ -8563,13 +8187,6 @@
               "id": 300004
             },
             "m_count": 25
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 12
           }
         ]
       },
@@ -8596,13 +8213,6 @@
               "id": 300004
             },
             "m_count": 30
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 14
           }
         ]
       },
@@ -8629,13 +8239,6 @@
               "id": 300004
             },
             "m_count": 35
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 16
           }
         ]
       },
@@ -8662,13 +8265,6 @@
               "id": 300004
             },
             "m_count": 40
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 18
           }
         ]
       },
@@ -8695,13 +8291,6 @@
               "id": 300004
             },
             "m_count": 60
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 20
           }
         ]
       }
@@ -8746,13 +8335,6 @@
               "id": 300004
             },
             "m_count": 10
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 2
           }
         ]
       },
@@ -8779,13 +8361,6 @@
               "id": 300004
             },
             "m_count": 12
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 4
           }
         ]
       },
@@ -8812,13 +8387,6 @@
               "id": 300004
             },
             "m_count": 14
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 6
           }
         ]
       },
@@ -8845,13 +8413,6 @@
               "id": 300004
             },
             "m_count": 16
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 8
           }
         ]
       },
@@ -8878,13 +8439,6 @@
               "id": 300004
             },
             "m_count": 20
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 10
           }
         ]
       },
@@ -8911,13 +8465,6 @@
               "id": 300004
             },
             "m_count": 25
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 12
           }
         ]
       },
@@ -8944,13 +8491,6 @@
               "id": 300004
             },
             "m_count": 30
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 14
           }
         ]
       },
@@ -8977,13 +8517,6 @@
               "id": 300004
             },
             "m_count": 35
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 16
           }
         ]
       },
@@ -9010,13 +8543,6 @@
               "id": 300004
             },
             "m_count": 40
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 18
           }
         ]
       },
@@ -9043,13 +8569,6 @@
               "id": 300004
             },
             "m_count": 60
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 20
           }
         ]
       }
@@ -9094,13 +8613,6 @@
               "id": 300004
             },
             "m_count": 10
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 2
           }
         ]
       },
@@ -9127,13 +8639,6 @@
               "id": 300004
             },
             "m_count": 12
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 4
           }
         ]
       },
@@ -9160,13 +8665,6 @@
               "id": 300004
             },
             "m_count": 14
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 6
           }
         ]
       },
@@ -9193,13 +8691,6 @@
               "id": 300004
             },
             "m_count": 16
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 8
           }
         ]
       },
@@ -9226,13 +8717,6 @@
               "id": 300004
             },
             "m_count": 20
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 10
           }
         ]
       },
@@ -9259,13 +8743,6 @@
               "id": 300004
             },
             "m_count": 25
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 12
           }
         ]
       },
@@ -9292,13 +8769,6 @@
               "id": 300004
             },
             "m_count": 30
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 14
           }
         ]
       },
@@ -9325,13 +8795,6 @@
               "id": 300004
             },
             "m_count": 35
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 16
           }
         ]
       },
@@ -9358,13 +8821,6 @@
               "id": 300004
             },
             "m_count": 40
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 18
           }
         ]
       },
@@ -9391,13 +8847,6 @@
               "id": 300004
             },
             "m_count": 60
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 20
           }
         ]
       }
@@ -9442,13 +8891,6 @@
               "id": 300004
             },
             "m_count": 10
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 2
           }
         ]
       },
@@ -9475,13 +8917,6 @@
               "id": 300004
             },
             "m_count": 12
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 4
           }
         ]
       },
@@ -9508,13 +8943,6 @@
               "id": 300004
             },
             "m_count": 14
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 6
           }
         ]
       },
@@ -9541,13 +8969,6 @@
               "id": 300004
             },
             "m_count": 16
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 8
           }
         ]
       },
@@ -9574,13 +8995,6 @@
               "id": 300004
             },
             "m_count": 20
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 10
           }
         ]
       },
@@ -9607,13 +9021,6 @@
               "id": 300004
             },
             "m_count": 25
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 12
           }
         ]
       },
@@ -9640,13 +9047,6 @@
               "id": 300004
             },
             "m_count": 30
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 14
           }
         ]
       },
@@ -9673,13 +9073,6 @@
               "id": 300004
             },
             "m_count": 35
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 16
           }
         ]
       },
@@ -9706,13 +9099,6 @@
               "id": 300004
             },
             "m_count": 40
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 18
           }
         ]
       },
@@ -9739,13 +9125,6 @@
               "id": 300004
             },
             "m_count": 60
-          },
-          {
-            "m_material": {
-              "type": "ItemData_Materials",
-              "id": 300005
-            },
-            "m_count": 20
           }
         ]
       }
@@ -9780,14 +9159,14 @@
   {
     "type": "ItemData_Consumables",
     "m_id": 400002,
-    "m_name": "황금 떡밥",
+    "m_name": "강의 정수",
     "m_type": "Consumables",
     "m_tier": 1,
     "m_basePrice": 10,
     "m_mountingArea": "Bait",
     "m_summonTarget": {
       "type": "BattleFishData",
-      "id": 500011
+      "id": 500028
     },
     "m_craftMaterials": [
       {
@@ -9803,14 +9182,14 @@
   {
     "type": "ItemData_Consumables",
     "m_id": 400003,
-    "m_name": "무지개빛 옥구슬",
+    "m_name": "갯벌의 진주",
     "m_type": "Consumables",
-    "m_tier": 3,
+    "m_tier": 2,
     "m_basePrice": 10,
     "m_mountingArea": "Bait",
     "m_summonTarget": {
       "type": "BattleFishData",
-      "id": 500027
+      "id": 500058
     },
     "m_craftMaterials": [
       {
@@ -9826,14 +9205,14 @@
   {
     "type": "ItemData_Consumables",
     "m_id": 400004,
-    "m_name": "고대의 흑요석 미끼",
+    "m_name": "군도의 푸른 빛",
     "m_type": "Consumables",
-    "m_tier": 7,
+    "m_tier": 3,
     "m_basePrice": 10,
     "m_mountingArea": "Bait",
     "m_summonTarget": {
       "type": "BattleFishData",
-      "id": 500028
+      "id": 500088
     },
     "m_craftMaterials": [
       {
@@ -9845,97 +9224,6 @@
       }
     ],
     "m_craftGoldCost": 5000
-  },
-  {
-    "type": "ItemData_Consumables",
-    "m_id": 400005,
-    "m_name": "맹독의 자수정",
-    "m_type": "Consumables",
-    "m_tier": 2,
-    "m_basePrice": 10,
-    "m_mountingArea": "Bait",
-    "m_summonTarget": {
-      "type": "BattleFishData",
-      "id": 500089
-    }
-  },
-  {
-    "type": "ItemData_Consumables",
-    "m_id": 400006,
-    "m_name": "황금빛 산호",
-    "m_type": "Consumables",
-    "m_tier": 4,
-    "m_basePrice": 10,
-    "m_mountingArea": "Bait",
-    "m_summonTarget": {
-      "type": "BattleFishData",
-      "id": 500058
-    }
-  },
-  {
-    "type": "ItemData_Consumables",
-    "m_id": 400007,
-    "m_name": "단단한 갯바위 광석",
-    "m_type": "Consumables",
-    "m_tier": 8,
-    "m_basePrice": 10,
-    "m_mountingArea": "Bait",
-    "m_summonTarget": {
-      "type": "BattleFishData",
-      "id": 500090
-    }
-  },
-  {
-    "type": "ItemData_Consumables",
-    "m_id": 400008,
-    "m_name": "얼어붙은 빙하 결정",
-    "m_type": "Consumables",
-    "m_tier": 3,
-    "m_basePrice": 10,
-    "m_mountingArea": "Bait",
-    "m_summonTarget": {
-      "type": "BattleFishData",
-      "id": 500067
-    }
-  },
-  {
-    "type": "ItemData_Consumables",
-    "m_id": 400009,
-    "m_name": "심해의 푸른 진주",
-    "m_type": "Consumables",
-    "m_tier": 5,
-    "m_basePrice": 10,
-    "m_mountingArea": "Bait",
-    "m_summonTarget": {
-      "type": "BattleFishData",
-      "id": 500091
-    }
-  },
-  {
-    "type": "ItemData_Consumables",
-    "m_id": 400010,
-    "m_name": "은빛 창날 루어",
-    "m_type": "Consumables",
-    "m_tier": 6,
-    "m_basePrice": 10,
-    "m_mountingArea": "Bait",
-    "m_summonTarget": {
-      "type": "BattleFishData",
-      "id": 500088
-    }
-  },
-  {
-    "type": "ItemData_Consumables",
-    "m_id": 400011,
-    "m_name": "바다 거인의 소라고동",
-    "m_type": "Consumables",
-    "m_tier": 9,
-    "m_basePrice": 10,
-    "m_mountingArea": "Bait",
-    "m_summonTarget": {
-      "type": "BattleFishData",
-      "id": 500100
-    }
   },
   {
     "type": "PlayerData",
@@ -10175,25 +9463,7 @@
       76.0,
       91.0
     ],
-    "m_isBoss": true,
-    "m_bossDrops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300001
-        },
-        "m_count": 1,
-        "m_probability": 0.5
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200008
-        },
-        "m_count": 1,
-        "m_probability": 0.01
-      }
-    ]
+    "m_isBoss": false
   },
   {
     "type": "BattleFishData",
@@ -10493,7 +9763,25 @@
       122.0,
       136.0
     ],
-    "m_isBoss": false
+    "m_isBoss": false,
+    "m_bossDrops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300001
+        },
+        "m_count": 1,
+        "m_probability": 0.5
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200008
+        },
+        "m_count": 1,
+        "m_probability": 0.01
+      }
+    ]
   },
   {
     "type": "BattleFishData",
@@ -10513,7 +9801,7 @@
       122.0,
       136.0
     ],
-    "m_isBoss": true,
+    "m_isBoss": false,
     "m_bossDrops": [
       {
         "m_item": {
@@ -11368,25 +10656,7 @@
       80.0,
       96.0
     ],
-    "m_isBoss": true,
-    "m_bossDrops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300001
-        },
-        "m_count": 1,
-        "m_probability": 0.5
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200008
-        },
-        "m_count": 1,
-        "m_probability": 0.01
-      }
-    ]
+    "m_isBoss": false
   },
   {
     "type": "BattleFishData",
@@ -11827,205 +11097,13 @@
     ]
   },
   {
-    "type": "BattleFishData",
-    "m_id": 500089,
-    "m_name": "쑤기미",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100089
-    },
-    "m_isBoss": true,
-    "m_bossDrops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300001
-        },
-        "m_count": 1,
-        "m_probability": 0.5
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200008
-        },
-        "m_count": 1,
-        "m_probability": 0.01
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500090,
-    "m_name": "돌돔",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100090
-    },
-    "m_isBoss": true,
-    "m_bossDrops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300001
-        },
-        "m_count": 1,
-        "m_probability": 0.5
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200008
-        },
-        "m_count": 1,
-        "m_probability": 0.01
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500091,
-    "m_name": "블루 랍스터",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100091
-    },
-    "m_isBoss": true,
-    "m_bossDrops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300001
-        },
-        "m_count": 1,
-        "m_probability": 0.5
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200008
-        },
-        "m_count": 1,
-        "m_probability": 0.01
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500092,
-    "m_name": "클리오네",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100092
-    },
-    "m_isBoss": false
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500093,
-    "m_name": "보름달물해파리",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100093
-    },
-    "m_isBoss": false
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500094,
-    "m_name": "마다린 피쉬",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100094
-    },
-    "m_isBoss": false
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500095,
-    "m_name": "잎새해룡",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100095
-    },
-    "m_isBoss": false
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500096,
-    "m_name": "블루탱",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100096
-    },
-    "m_isBoss": false
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500097,
-    "m_name": "덤보문어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100097
-    },
-    "m_isBoss": false
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500098,
-    "m_name": "만타가오리",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100098
-    },
-    "m_isBoss": false
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500099,
-    "m_name": "고래상어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100099
-    },
-    "m_isBoss": false
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500100,
-    "m_name": "혹등고래",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100100
-    },
-    "m_isBoss": true,
-    "m_bossDrops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300001
-        },
-        "m_count": 1,
-        "m_probability": 0.5
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200008
-        },
-        "m_count": 1,
-        "m_probability": 0.01
-      }
-    ]
-  },
-  {
     "type": "StageData",
     "m_id": 600001,
     "m_name": "푸른 하천1",
     "m_requiredLicense": 1,
     "m_boss": {
       "type": "BattleFishData",
-      "id": 500011
+      "id": 500028
     },
     "m_mapPosition": {
       "x": 0,
@@ -12061,7 +11139,7 @@
     "m_requiredLicense": 2,
     "m_boss": {
       "type": "BattleFishData",
-      "id": 500027
+      "id": 500058
     },
     "m_mapPosition": {
       "x": -250,
@@ -12090,7 +11168,7 @@
     "m_requiredLicense": 3,
     "m_boss": {
       "type": "BattleFishData",
-      "id": 500028
+      "id": 500088
     },
     "m_mapPosition": {
       "x": -350,
@@ -12108,10 +11186,6 @@
     "m_id": 600004,
     "m_name": "푸른 하천2",
     "m_requiredLicense": 3,
-    "m_boss": {
-      "type": "BattleFishData",
-      "id": 500089
-    },
     "m_tierPools": [
       {
         "m_tier": 3,
@@ -12133,10 +11207,6 @@
     "m_id": 600005,
     "m_name": "갯벌 연안2",
     "m_requiredLicense": 4,
-    "m_boss": {
-      "type": "BattleFishData",
-      "id": 500058
-    },
     "m_tierPools": [
       {
         "m_tier": 4,
@@ -12149,10 +11219,6 @@
     "m_id": 600006,
     "m_name": "냉수대 앞바다2",
     "m_requiredLicense": 5,
-    "m_boss": {
-      "type": "BattleFishData",
-      "id": 500090
-    },
     "m_tierPools": [
       {
         "m_tier": 5,
@@ -12165,10 +11231,6 @@
     "m_id": 600007,
     "m_name": "푸른 하천3",
     "m_requiredLicense": 7,
-    "m_boss": {
-      "type": "BattleFishData",
-      "id": 500067
-    },
     "m_tierPools": [
       {
         "m_tier": 7,
@@ -12181,10 +11243,6 @@
     "m_id": 600008,
     "m_name": "갯벌 연안3",
     "m_requiredLicense": 8,
-    "m_boss": {
-      "type": "BattleFishData",
-      "id": 500091
-    },
     "m_tierPools": [
       {
         "m_tier": 8,
@@ -12197,10 +11255,6 @@
     "m_id": 600009,
     "m_name": "냉수대 앞바다3",
     "m_requiredLicense": 6,
-    "m_boss": {
-      "type": "BattleFishData",
-      "id": 500088
-    },
     "m_tierPools": [
       {
         "m_tier": 6,
@@ -12213,10 +11267,6 @@
     "m_id": 600010,
     "m_name": "냉수대 앞바다4",
     "m_requiredLicense": 9,
-    "m_boss": {
-      "type": "BattleFishData",
-      "id": 500100
-    },
     "m_tierPools": [
       {
         "m_tier": 9,
