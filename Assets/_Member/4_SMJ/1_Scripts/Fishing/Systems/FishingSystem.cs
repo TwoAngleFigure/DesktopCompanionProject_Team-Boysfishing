@@ -55,6 +55,7 @@ namespace DesktopCompanion.Systems
         public event Action<FishingResultType> OnFishingResult;
         public event Action<EntityHandle, int, int> OnBattleHpChanged;
         public event Action OnPendingCatchChanged;
+        public event Action<FishingGrantedDropInfo> OnItemDropped;
 
         #endregion
 
@@ -220,6 +221,27 @@ namespace DesktopCompanion.Systems
             m_autoAttackTimer = 0f;
 
             ChangeState(FishingState.Stopped);
+        }
+
+        public ItemData GetItemData(ItemType itemType, int dataId)
+        {
+            if (dataId <= 0)
+            {
+                return null;
+            }
+
+            return itemType switch
+            {
+                ItemType.Fish => DataManager.GetData<ItemData_Fish>(dataId),
+
+                ItemType.Materials => DataManager.GetData<ItemData_Materials>(dataId),
+
+                ItemType.Consumables => DataManager.GetData<ItemData_Consumables>(dataId),
+
+                ItemType.Equipment => DataManager.GetData<ItemData_Equipment>(dataId),
+
+                _ => null
+            };
         }
 
 #if UNITY_EDITOR
@@ -536,6 +558,18 @@ namespace DesktopCompanion.Systems
 
             OnFishCaughtPresentation?.Invoke(caughtHandle, collectionResult);
 
+            IReadOnlyList<FishingGrantedDropInfo> grantedDrops = m_rewardProcessor.Process(battleFish.BattleData.Drops, battleFish.Quality);
+
+            foreach (FishingGrantedDropInfo grantedDrop in grantedDrops)
+            {
+                if (!grantedDrop.IsValid)
+                {
+                    continue;
+                }
+
+                OnItemDropped?.Invoke(grantedDrop);
+            }
+
             FishingRewardResult finalizeResult = m_rewardProcessor.TryFinalizeCaughtFish(caughtHandle);
 
             if (finalizeResult == FishingRewardResult.InventoryFull)
@@ -597,15 +631,6 @@ namespace DesktopCompanion.Systems
                 OnFishingResult?.Invoke(FishingResultType.Failed);
                 return;
             }
-
-            if (battleFish.BattleData.IsBoss)
-            {
-                m_rewardProcessor?.Process(battleFish.BattleData.BossDrops);
-            }
-
-            Debug.Log($"[FishingSystem] 낚시 성공 및 인벤토리 지급: {battleFish.BattleData.ItemFish.Name}, " +
-                $"Size={battleFish.Size:0.00}, " +
-                $"Quality={battleFish.Quality}, ");
 
             ClearCurrentBattleFish();
             ScheduleNextFishing();

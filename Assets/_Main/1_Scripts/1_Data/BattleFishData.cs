@@ -41,7 +41,9 @@ namespace DesktopCompanion.Data
 
         [Header("Boss")]
         [SerializeField] private bool m_isBoss;
-        [SerializeField] private ItemDrop[] m_bossDrops;        // 보스 획득 시 확률 드롭(G8)
+
+        [Header("Drops")]
+        [SerializeField] private ItemDrop[] m_drops;        // 획득 시 확률 드롭(G8)
 
         public ItemData_Fish ItemFish => m_itemFish;
         public int MaxHp => m_maxHp;
@@ -49,7 +51,7 @@ namespace DesktopCompanion.Data
         public float MinSize => m_minSize;
         public float MaxSize => m_maxSize;
         public bool IsBoss => m_isBoss;
-        public ItemDrop[] BossDrops => m_bossDrops;
+        public ItemDrop[] Drops => m_drops;
 
         /// <summary>크기 → 성급 산출(G6). 경계값 미설정 시 1성.</summary>
         public ItemQuality GetQuality(float size)
