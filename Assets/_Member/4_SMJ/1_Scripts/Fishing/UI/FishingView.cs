@@ -20,9 +20,6 @@ public class FishingView : UIViewBase
     [Header("Manual Attack")]
     [SerializeField] private Button m_manualAttackButton;
 
-    [Header("Debug HUD")]
-    [SerializeField] private TMP_Text m_debugWaitTimeText;
-
     private readonly FishingVM m_vm = new();
 
     public override void Bind()
@@ -34,7 +31,6 @@ public class FishingView : UIViewBase
         m_vm.HpText.Bind(OnHpTextChanged);
         m_vm.HpRatio.Bind(OnHpRatioChanged);
         m_vm.ToggleButtonText.Bind(OnToggleButtonTextChanged);
-        m_vm.DebugWaitTimeText.Bind(OnDebugWaitTimeTextChanged);
         m_vm.BattleTimeRemainingRatio.Bind(OnBattleTimeRemainingRatioChanged);
         m_vm.IsBattleGaugeVisible.Bind(OnBattleGaugeVisibleChanged);
 
@@ -55,7 +51,6 @@ public class FishingView : UIViewBase
         m_vm.HpText.Unbind(OnHpTextChanged);
         m_vm.HpRatio.Unbind(OnHpRatioChanged);
         m_vm.ToggleButtonText.Unbind(OnToggleButtonTextChanged);
-        m_vm.DebugWaitTimeText.Unbind(OnDebugWaitTimeTextChanged);
         m_vm.BattleTimeRemainingRatio.Unbind(OnBattleTimeRemainingRatioChanged);
         m_vm.IsBattleGaugeVisible.Unbind(OnBattleGaugeVisibleChanged);
 
@@ -101,14 +96,6 @@ public class FishingView : UIViewBase
         }
     }
 
-
-    private void OnDebugWaitTimeTextChanged(string value)
-    {
-        if (m_debugWaitTimeText != null)
-        {
-            m_debugWaitTimeText.text = value;
-        }
-    }
 
     private void OnToggleButtonTextChanged(string value)
     {

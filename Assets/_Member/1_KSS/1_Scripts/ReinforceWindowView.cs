@@ -5,7 +5,7 @@ using DesktopCompanion.Entities;
 
 namespace DesktopCompanion.Views
 {
-    public class ReinforceWindowView : UIViewBase
+    public class ReinforceWindowView : UIWindowBase
     {
         [SerializeField] private ReinforceSlotWidget m_slotWidget;
         [SerializeField] private TextMeshProUGUI m_statText;
@@ -101,6 +101,12 @@ namespace DesktopCompanion.Views
 
         private void UpdateGoldUI(int requiredGold)
         {
+            if (m_viewModel.SelectedEquipment.Value.Value == System.Guid.Empty)
+            {
+                m_goldText.text = "";
+                return;
+            }
+            
             int current = m_viewModel.CurrentGold.Value;
             string colorHex = current >= requiredGold ? "#00FF00" : "#FF0000";
             m_goldText.text = $"필요 골드 <color={colorHex}>{current}</color> / {requiredGold}";

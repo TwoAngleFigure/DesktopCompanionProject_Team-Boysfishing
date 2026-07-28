@@ -10,13 +10,15 @@ namespace DesktopCompanion.Views
     /// [테스트 UI] 아쿠아리움 검증용 IMGUI 패널(씬 배선 불필요 — GameObject에 이 컴포넌트만 추가).
     /// UIViewBase 자가 등록으로 부팅 시 SystemManager/EntityManager를 주입받는다.
     ///
-    /// 기능:
-    ///  - 인벤토리를 참조해 '배치 가능한 물고기' 목록(종별) + 생산 재료/생산량 표시, [배치] 버튼.
-    ///  - 아쿠아리움에 배치된 물고기 목록 + 다음 생산까지 남은 시간, [회수] 버튼.
-    ///  - 아쿠아리움이 생산 중인 모든 재료 목록(누적/요구 포인트, 보류) 표시.
-    ///  - 수용량(used/max)·레벨·업그레이드 버튼.
+    /// ※ 계획 27의 정식 창(AquariumFishWindow / AquariumStatusWindow) 프리팹이 완성되면 제거한다.
+    ///    그 전까지 시스템 계층(개체 단위 배치/회수·선검사·강화)을 프리팹 없이 검증하는 용도다.
     ///
-    /// ※ 배치는 인벤토리를 '소비하지 않는다'(종 dataId 참조). 소비/반환이 필요하면 별도 연결.
+    /// 기능:
+    ///  - 인벤토리 물고기를 '개체 단위'로 나열(성급·크기·분당 포인트) + [배치] 버튼(불가 사유 표시).
+    ///  - 배치된 물고기 목록 + 다음 생산까지 남은 시간 + [회수] 버튼(회수 선검사 사유 표시).
+    ///  - 생산 중인 모든 재료(누적/요구 포인트, 시간당 개수, 보류).
+    ///  - 수용량(used/max)·등급·강화 버튼(골드/재료 비용·부족 사유).
+    ///
     /// ※ IMGUI라 에디터 Play 검증용. 오버레이 빌드에서 클릭하려면 uGUI 변환 필요(클릭관통은 GraphicRaycaster 감지).
     /// </summary>
     public class AquariumTestUI : UIViewBase
@@ -42,7 +44,7 @@ namespace DesktopCompanion.Views
 
         private void OnGUI()
         {
-            GUILayout.BeginArea(new Rect(12, 12, 400, Screen.height - 24), GUI.skin.box);
+            GUILayout.BeginArea(new Rect(12, 12, 460, Screen.height - 24), GUI.skin.box);
 
             GUILayout.Label("<b>아쿠아리움 테스트</b>", RichLabel());
             if (m_aquarium == null)
@@ -63,104 +65,134 @@ namespace DesktopCompanion.Views
             GUILayout.EndArea();
         }
 
-        // ── 수용량·업그레이드 ──
+        // ── 수용량·강화 ──
         private void DrawCapacity()
         {
             GUILayout.Label($"<b>수용량</b> {m_aquarium.UsedCapacity} / {m_aquarium.MaxCapacity}  (Lv.{m_aquarium.UpgradeLevel})", RichLabel());
-            var next = m_aquarium.NextUpgrade;
-            if (next != null)
+
+            AquariumSystem.AquariumUpgradeInfo info = m_aquarium.GetUpgradeInfo();
+            if (info.HasNext == false)
             {
-                string costs = FormatCosts(next);
-                if (GUILayout.Button($"업그레이드 → Lv.{m_aquarium.UpgradeLevel + 1} (최대 {next.MaxCapacity}) 비용: {costs}"))
-                {
-                    bool ok = m_aquarium.TryUpgrade();
-                    Debug.Log($"[AquariumTestUI] TryUpgrade → {ok}");
-                }
+                GUILayout.Label("최대 등급");
+                return;
             }
-            else
+
+            GUI.enabled = info.CanUpgrade;
+            string nextName = string.IsNullOrWhiteSpace(info.NextName) ? $"Lv.{info.NextLevel}" : info.NextName;
+            if (GUILayout.Button($"강화 → {nextName} (최대 {info.NextMaxCapacity})  비용: {FormatCosts(info)}"))
             {
-                GUILayout.Label("최대 레벨");
+                bool ok = m_aquarium.TryUpgrade();
+                Debug.Log($"[AquariumTestUI] TryUpgrade → {ok}");
+            }
+            GUI.enabled = true;
+
+            if (info.CanUpgrade == false)
+            {
+                GUILayout.Label($"<color=#e06060>{info.BlockReason}</color>", RichLabel());
             }
         }
 
-        // ── 배치 가능한 물고기(인벤토리 참조) ──
+        // ── 인벤토리 물고기(개체 단위) ──
         private void DrawDeployable()
         {
-            GUILayout.Label("<b>배치 가능한 물고기 (인벤토리)</b>", RichLabel());
+            GUILayout.Label("<b>인벤토리 물고기 (개체)</b>", RichLabel());
             if (m_inventory == null)
             {
                 GUILayout.Label("InventorySystem 없음");
                 return;
             }
 
-            // 종(dataId)별로 집계 — 집계 시점에 종 정의(ItemData_Fish)를 함께 보관
-            var counts = new Dictionary<int, int>();
-            var datas = new Dictionary<int, ItemData_Fish>();
-            var order = new List<int>();
             EntityHandle[] slots = m_inventory.GetSlots(ItemType.Fish);
+            EntityHandle addTarget = default;
+            bool hasAddTarget = false;
+            int shown = 0;
+
+            m_scrollDeploy = GUILayout.BeginScrollView(m_scrollDeploy, GUILayout.Height(170));
             for (int i = 0; i < slots.Length; i++)
             {
-                var fish = EntityManager.Get<Entity_Fish>(slots[i]);   // 빈/유실 핸들은 null
-                if (fish == null) continue;
-                int id = fish.DataId;
-                if (!counts.ContainsKey(id)) { counts[id] = 0; datas[id] = fish.ItemData; order.Add(id); }
-                counts[id]++;
-            }
+                if (EntityManager.Get<Entity_Fish>(slots[i]) == null) continue;
 
-            if (order.Count == 0)
-            {
-                GUILayout.Label("보유 물고기 없음 — InventoryDebugBridge로 추가하세요.");
-                return;
-            }
+                AquariumSystem.AquariumFishInfo info = m_aquarium.BuildFishInfo(slots[i]);
+                if (info.IsValid == false) continue;
+                shown++;
 
-            m_scrollDeploy = GUILayout.BeginScrollView(m_scrollDeploy, GUILayout.Height(150));
-            foreach (int id in order)
-            {
-                ItemData_Fish data = datas[id];
-                if (data == null) continue;
-                string matName = data.AquariumMaterial != null ? data.AquariumMaterial.Name : "-";
+                bool canPlace = m_aquarium.CanPlaceFish(slots[i], out string reason);
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Label($"{data.Name} x{counts[id]}  → {matName} +{data.AquariumProduceAmount} (cap {data.AquariumCapacity})",
-                    GUILayout.Width(300));
+                GUILayout.Label($"{info.Name} T{info.Tier} {info.Rarity} {Stars((int)info.Star)} " +
+                                $"크기 {info.Size:0.##} → {info.MaterialName} {info.PointsPerMinute:0.#}pt/분",
+                    GUILayout.Width(360));
+
+                GUI.enabled = canPlace;
                 if (GUILayout.Button("배치", GUILayout.Width(60)))
                 {
-                    bool ok = m_aquarium.AddFish(id);
-                    Debug.Log($"[AquariumTestUI] AddFish({id}) → {ok}{(ok ? "" : " (수용량 초과?)")}");
+                    addTarget = slots[i];
+                    hasAddTarget = true;
                 }
+                GUI.enabled = true;
                 GUILayout.EndHorizontal();
+
+                if (canPlace == false)
+                {
+                    GUILayout.Label($"   <color=#e06060>{reason}</color>", RichLabel());
+                }
             }
             GUILayout.EndScrollView();
+
+            if (shown == 0)
+            {
+                GUILayout.Label("보유 물고기 없음 — InventoryDebugBridge로 추가하세요.");
+            }
+            if (hasAddTarget)   // 클릭은 지연 적용(레이아웃 그룹 균형 유지 후 처리)
+            {
+                Debug.Log($"[AquariumTestUI] AddFish → {m_aquarium.AddFish(addTarget)}");
+            }
         }
 
         // ── 배치된 물고기 + 남은 시간 ──
         private void DrawPlaced()
         {
-            GUILayout.Label("<b>아쿠아리움 물고기</b>", RichLabel());
-            List<AquariumSystem.FishSlotStatus> list = m_aquarium.GetFishStatuses();
+            GUILayout.Label("<b>수족관 물고기</b>", RichLabel());
+            List<AquariumSystem.AquariumFishInfo> list = m_aquarium.GetPlacedFishInfos();
             if (list.Count == 0)
             {
                 GUILayout.Label("배치된 물고기 없음");
                 return;
             }
 
-            int removeIndex = -1;   // 클릭은 지연 적용(레이아웃 그룹 균형 유지 후 처리)
-            m_scrollPlaced = GUILayout.BeginScrollView(m_scrollPlaced, GUILayout.Height(150));
+            EntityHandle removeTarget = default;
+            bool hasRemoveTarget = false;
+
+            m_scrollPlaced = GUILayout.BeginScrollView(m_scrollPlaced, GUILayout.Height(170));
             for (int i = 0; i < list.Count; i++)
             {
-                var s = list[i];
+                AquariumSystem.AquariumFishInfo info = list[i];
+                bool canRetrieve = m_aquarium.CanRetrieveFish(info.Handle, out string reason);
+
                 GUILayout.BeginHorizontal();
-                GUILayout.Label($"{s.FishName} → {s.MaterialName} +{s.ProduceAmount}  남은 {FormatTime(s.RemainingSeconds)}",
-                    GUILayout.Width(300));
-                if (GUILayout.Button("회수", GUILayout.Width(60))) removeIndex = s.Index;
+                GUILayout.Label($"{info.Name} {Stars((int)info.Star)} 크기 {info.Size:0.##} → " +
+                                $"{info.MaterialName} {info.PointsPerMinute:0.#}pt/분  남은 {FormatTime(info.RemainingSeconds)}",
+                    GUILayout.Width(360));
+
+                GUI.enabled = canRetrieve;
+                if (GUILayout.Button("회수", GUILayout.Width(60)))
+                {
+                    removeTarget = info.Handle;
+                    hasRemoveTarget = true;
+                }
+                GUI.enabled = true;
                 GUILayout.EndHorizontal();
+
+                if (canRetrieve == false)
+                {
+                    GUILayout.Label($"   <color=#e06060>{reason}</color>", RichLabel());
+                }
             }
             GUILayout.EndScrollView();
 
-            if (removeIndex >= 0)
+            if (hasRemoveTarget)
             {
-                m_aquarium.RemoveFishAt(removeIndex);
-                Debug.Log($"[AquariumTestUI] RemoveFishAt({removeIndex})");
+                Debug.Log($"[AquariumTestUI] RemoveFish → {m_aquarium.RemoveFish(removeTarget)}");
             }
         }
 
@@ -179,31 +211,34 @@ namespace DesktopCompanion.Views
             foreach (var m in mats)
             {
                 string pending = m.Pending > 0 ? $"  <color=#e0a000>보류 {m.Pending}</color>" : "";
-                GUILayout.Label($"{m.MaterialName}: {m.Points}/{m.Required} pt{pending}", RichLabel());
+                GUILayout.Label($"{m.MaterialName}: {m.Points}/{m.Required} pt  ({m.PerHour:0.#}개/h){pending}", RichLabel());
             }
             GUILayout.EndScrollView();
         }
 
         // ── 헬퍼 ──
+        private static string Stars(int count) => count <= 0 ? "-" : new string('★', Mathf.Clamp(count, 1, 5));
+
         private static string FormatTime(float seconds)
         {
-            if (seconds < 0f) seconds = 0f;
-            int t = Mathf.CeilToInt(seconds);
-            return $"{t / 60:00}:{t % 60:00}";
+            int total = Mathf.CeilToInt(Mathf.Max(0f, seconds));
+            return $"{total / 60:00}:{total % 60:00}";
         }
 
-        private string FormatCosts(AquariumUpgradeData data)
+        private static string FormatCosts(AquariumSystem.AquariumUpgradeInfo info)
         {
-            var costs = data.MaterialCosts;
-            if (costs == null || costs.Length == 0) return data.UpgradeCost > 0 ? $"{data.UpgradeCost}G" : "무료";
             var parts = new List<string>();
-            foreach (var c in costs)
+            if (info.GoldCost > 0) parts.Add($"{info.GoldOwned}/{info.GoldCost}G");
+
+            if (info.Materials != null)
             {
-                if (c?.Material == null) continue;
-                parts.Add($"{c.Material.Name}x{c.Count}");
+                for (int i = 0; i < info.Materials.Count; i++)
+                {
+                    AquariumSystem.MaterialRequirement req = info.Materials[i];
+                    parts.Add($"{req.MaterialName} {req.Owned}/{req.Required}");
+                }
             }
-            if (data.UpgradeCost > 0) parts.Add($"{data.UpgradeCost}G");
-            return string.Join(", ", parts);
+            return parts.Count > 0 ? string.Join(", ", parts) : "무료";
         }
 
         private static GUIStyle s_rich;

@@ -2,6 +2,7 @@ using DesktopCompanion.Core;
 using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace DesktopCompanion.Systems
 {
@@ -39,11 +40,6 @@ namespace DesktopCompanion.Systems
                 return FishingRewardResult.Failed;
             }
 
-            if (IsFishInventoryFull())
-            {
-                return FishingRewardResult.InventoryFull;
-            }
-
             EntityHandle handle = m_entityManager.Create<ItemData_Fish>(itemData.ID);
             Entity_Fish fish = m_entityManager.Get<Entity_Fish>(handle);
 
@@ -61,6 +57,11 @@ namespace DesktopCompanion.Systems
 
         public FishingRewardResult TryFinalizeCaughtFish(EntityHandle caughtHandle)
         {
+            if (IsFishInventoryFull())
+            {
+                return FishingRewardResult.InventoryFull;
+            }
+
             if (TryAddItem(caughtHandle))
             {
                 return FishingRewardResult.Success;
@@ -76,18 +77,26 @@ namespace DesktopCompanion.Systems
                    m_inventorySystem.GetMaxSlotCount(ItemType.Fish);
         }
 
-        public void Process(ItemDrop[] drops)
+        public IReadOnlyList<FishingGrantedDropInfo> Process(ItemDrop[] drops, ItemQuality quality)
         {
+            var grantedDrops = new List<FishingGrantedDropInfo>();
+
             if (drops == null || drops.Length == 0)
             {
-                return;
+                return grantedDrops;
             }
+
+            int qualityCount = Mathf.Clamp(
+                (int)quality, 
+                (int)ItemQuality.OneStar, 
+                (int)ItemQuality.FiveStar);
 
             foreach (ItemDrop drop in drops)
             {
                 if (drop == null || drop.Item == null || drop.Count <= 0)
                 {
-                    Debug.LogWarning("[FishingRewardProcessor] 유효하지 않은 드랍 데이터입니다.");
+                    Debug.LogWarning(
+                        "[FishingRewardProcessor] 유효하지 않은 드롭 데이터입니다.");
                     continue;
                 }
 
@@ -96,19 +105,42 @@ namespace DesktopCompanion.Systems
                     continue;
                 }
 
-                int grantedCount = GrantItem(drop.Item, drop.Count);
+                // 기본 수량 × 성급
+                int requestedCount = drop.Count * qualityCount;
 
-                if (grantedCount == drop.Count)
+                int grantedCount = GrantItem(
+                    drop.Item,
+                    requestedCount);
+
+                if (grantedCount > 0)
                 {
-                    Debug.Log($"[FishingRewardProcessor] 보상 지급: {drop.Item.Name} x{grantedCount}");
+                    grantedDrops.Add(
+                        new FishingGrantedDropInfo(
+                            drop.Item.Type,
+                            drop.Item.ID,
+                            grantedCount));
+                }
+
+                if (grantedCount == requestedCount)
+                {
+                    Debug.Log(
+                        $"[FishingRewardProcessor] 보상 지급 성공: " +
+                        $"item={drop.Item.Name}, " +
+                        $"quality={quality}, " +
+                        $"count={grantedCount}");
                 }
                 else
                 {
                     Debug.LogWarning(
                         $"[FishingRewardProcessor] 보상 일부/전체 지급 실패: " +
-                        $"{drop.Item.Name}, 요청={drop.Count}, 지급={grantedCount}");
+                        $"item={drop.Item.Name}, " +
+                        $"quality={quality}, " +
+                        $"requested={requestedCount}, " +
+                        $"granted={grantedCount}");
                 }
-            }
+        }
+
+                return grantedDrops;
         }
 
         private bool Roll(float probability)

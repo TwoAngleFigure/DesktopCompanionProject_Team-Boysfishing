@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using DesktopCompanion.Data;
+using DesktopCompanion.Entities;
 using DesktopCompanion.Systems;
 
 namespace DesktopCompanion.Views
@@ -20,9 +21,17 @@ namespace DesktopCompanion.Views
         [SerializeField] private string m_layerName = "Aquarium";
         [SerializeField] private float m_swimSpeed = 0.6f;
 
+        [Header("Fish Size")]
+        [Tooltip("개체 Size에 곱하는 전역 배율. 최종 스케일 = 프리팹 기준 스케일 × clamp(Size) × 이 값.")]
+        [SerializeField] private float m_sizeScale = 1f;
+        [Tooltip("개체 Size 클램프 최소(너무 작아지지 않게).")]
+        [SerializeField] private float m_sizeMin = 0.5f;
+        [Tooltip("개체 Size 클램프 최대(너무 커지지 않게).")]
+        [SerializeField] private float m_sizeMax = 2f;
+
         private AquariumSystem m_aquarium;
         private int m_layer = -1;
-        private readonly Dictionary<int, List<GameObject>> m_spawned = new();   // dataId → 인스턴스들
+        private readonly Dictionary<EntityHandle, GameObject> m_spawned = new();   // 개체 핸들 → 인스턴스(1:1)
 
         public override void Bind()
         {
@@ -45,12 +54,9 @@ namespace DesktopCompanion.Views
         public override void Unbind()
         {
             if (m_aquarium != null) m_aquarium.OnAquariumChanged -= Reconcile;
-            foreach (var list in m_spawned.Values)
+            foreach (var go in m_spawned.Values)
             {
-                for (int i = 0; i < list.Count; i++)
-                {
-                    if (list[i] != null) Destroy(list[i]);
-                }
+                if (go != null) Destroy(go);
             }
             m_spawned.Clear();
             m_aquarium = null;
@@ -60,43 +66,36 @@ namespace DesktopCompanion.Views
         {
             if (m_aquarium == null) return;
 
-            // 원하는 다중집합(dataId → 개수)
-            var want = new Dictionary<int, int>();
-            var ids = m_aquarium.FishDataIds;
-            for (int i = 0; i < ids.Count; i++)
+            // 슬롯별 (핸들·dataId·개체 Size). 핸들 기준 1:1 매핑이라 인덱스가 밀려도 인스턴스가 보존된다.
+            var placed = m_aquarium.GetPlacedFish();
+
+            var alive = new HashSet<EntityHandle>();
+            foreach (var pf in placed)
             {
-                want[ids[i]] = (want.TryGetValue(ids[i], out int c) ? c : 0) + 1;
+                alive.Add(pf.Handle);
+                if (m_spawned.TryGetValue(pf.Handle, out var existing) && existing != null)
+                {
+                    existing.GetComponent<AquariumFishAgent>()?.SetSize(EffectiveSize(pf.Size));   // 크기만 갱신(종 불변)
+                    continue;
+                }
+                GameObject go = Spawn(pf.DataId, pf.Size);
+                if (go != null) m_spawned[pf.Handle] = go;
             }
 
-            // 초과분 디스폰
+            // 사라진(회수된) 핸들 디스폰
+            var remove = new List<EntityHandle>();
             foreach (var kv in m_spawned)
             {
-                int keep = want.TryGetValue(kv.Key, out int w) ? w : 0;
-                var list = kv.Value;
-                for (int i = list.Count - 1; i >= keep; i--)
+                if (!alive.Contains(kv.Key))
                 {
-                    if (list[i] != null) Destroy(list[i]);
-                    list.RemoveAt(i);
+                    if (kv.Value != null) Destroy(kv.Value);
+                    remove.Add(kv.Key);
                 }
             }
-
-            // 부족분 스폰
-            foreach (var kv in want)
-            {
-                if (!m_spawned.TryGetValue(kv.Key, out var list))
-                {
-                    m_spawned[kv.Key] = list = new List<GameObject>();
-                }
-                while (list.Count < kv.Value)
-                {
-                    GameObject go = Spawn(kv.Key);
-                    if (go == null) break;   // 스폰 실패 시 무한 루프 방지
-                    list.Add(go);
-                }
-            }
+            for (int i = 0; i < remove.Count; i++) m_spawned.Remove(remove[i]);
         }
 
-        private GameObject Spawn(int dataId)
+        private GameObject Spawn(int dataId, float size)
         {
             ItemData_Fish data = m_aquarium.GetFishData(dataId);
             GameObject prefab = null;
@@ -111,22 +110,29 @@ namespace DesktopCompanion.Views
                 return null;
             }
 
-            Bounds b = m_tank != null ? m_tank.TankBounds : new Bounds(transform.position, Vector3.one * 3f);
-            Transform parent = m_fishRoot != null ? m_fishRoot : transform;
+            Transform space = m_tank != null ? m_tank.TankSpace : transform;
+            Bounds local = m_tank != null ? m_tank.LocalBounds : new Bounds(Vector3.zero, Vector3.one * 3f);
+            Vector3 spawnLocal = new Vector3(
+                Random.Range(local.min.x, local.max.x),
+                Random.Range(local.min.y, local.max.y),
+                Random.Range(local.min.z, local.max.z));
 
-            GameObject go = Instantiate(prefab, RandomInBounds(b), Quaternion.identity, parent);
+            Transform parent = m_fishRoot != null ? m_fishRoot : transform;   // ※ m_fishRoot는 회전 루트 하위여야 함
+            GameObject go = Instantiate(prefab, space.TransformPoint(spawnLocal), Quaternion.identity, parent);
             if (m_layer >= 0) SetLayerRecursive(go, m_layer);
 
             var agent = go.AddComponent<AquariumFishAgent>();
-            agent.Init(b, m_swimSpeed);
+            agent.Init(space, local, go.transform.localScale, EffectiveSize(size), m_swimSpeed);   // 프리팹 원본 스케일=baseScale
             return go;
         }
 
-        private static Vector3 RandomInBounds(Bounds b)
-            => new Vector3(
-                Random.Range(b.min.x, b.max.x),
-                Random.Range(b.min.y, b.max.y),
-                Random.Range(b.min.z, b.max.z));
+        /// <summary>개체 Size를 인스펙터 클램프(min/max)·전역 배율로 보정한 최종 스케일 계수.</summary>
+        private float EffectiveSize(float rawSize)
+        {
+            float s = rawSize > 0f ? rawSize : 1f;                 // 0/음수 방어
+            s = Mathf.Clamp(s, m_sizeMin, m_sizeMax);              // 인스펙터 클램프
+            return s * Mathf.Max(0.0001f, m_sizeScale);            // 전역 배율
+        }
 
         private static void SetLayerRecursive(GameObject go, int layer)
         {

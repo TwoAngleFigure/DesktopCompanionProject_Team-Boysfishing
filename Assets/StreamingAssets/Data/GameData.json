@@ -10274,7 +10274,7 @@
     "m_baseBattleTimeVariable": 10,
     "m_baseCriticalChance": 0.05,
     "m_baseCriticalMultiply": 1.1,
-    "m_baseAutoBattleCooltime": 60,
+    "m_baseAutoBattleCooltime": 10,
     "m_baseAutoSpeedPerTime": 1,
     "m_baseAutoDamagePerHitMultiply": 0.3,
     "m_baseProbabilityAtFishSize": 0,
@@ -10304,14 +10304,14 @@
       13.0
     ],
     "m_isBoss": true,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300016
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -10334,14 +10334,14 @@
       29.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300016
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -10364,14 +10364,14 @@
       7.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300016
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -10394,14 +10394,14 @@
       23.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300016
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -10424,14 +10424,14 @@
       11.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300016
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -10454,14 +10454,14 @@
       14.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300016
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -10484,14 +10484,14 @@
       19.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300016
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -10514,14 +10514,14 @@
       19.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300016
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -10544,7 +10544,7 @@
       91.0
     ],
     "m_isBoss": true,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
@@ -10582,14 +10582,14 @@
       32.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300017
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -10612,14 +10612,14 @@
       18.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300017
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -10642,14 +10642,14 @@
       19.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300017
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -10672,14 +10672,14 @@
       20.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300017
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -10702,14 +10702,14 @@
       18.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300017
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -10732,14 +10732,14 @@
       44.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300017
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -10762,14 +10762,14 @@
       18.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300017
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -10792,14 +10792,14 @@
       23.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300017
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -10822,14 +10822,14 @@
       12.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300017
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -10852,14 +10852,14 @@
       6.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300017
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -10882,14 +10882,14 @@
       13.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300017
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -10904,7 +10904,7 @@
     "m_maxHp": 500,
     "m_battleTimeVariable": 10,
     "m_isBoss": true,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
@@ -10942,14 +10942,14 @@
       55.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300018
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -10972,14 +10972,14 @@
       11.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300018
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11002,14 +11002,14 @@
       55.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300018
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11032,14 +11032,14 @@
       19.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300018
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11062,14 +11062,14 @@
       24.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300018
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11092,14 +11092,14 @@
       26.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300018
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11122,14 +11122,14 @@
       28.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300018
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11152,14 +11152,14 @@
       55.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300018
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11182,14 +11182,14 @@
       24.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300018
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11212,7 +11212,7 @@
       136.0
     ],
     "m_isBoss": true,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
@@ -11250,14 +11250,14 @@
       26.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300018
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11280,14 +11280,14 @@
       40.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300018
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11310,14 +11310,14 @@
       27.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300018
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11340,14 +11340,14 @@
       22.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300018
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11370,14 +11370,14 @@
       43.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300018
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11400,14 +11400,14 @@
       32.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300018
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11430,7 +11430,7 @@
       96.0
     ],
     "m_isBoss": true,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
@@ -11468,14 +11468,14 @@
       29.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300018
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11498,14 +11498,14 @@
       27.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300018
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11528,14 +11528,14 @@
       26.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300018
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11558,14 +11558,14 @@
       50.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300018
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11588,14 +11588,14 @@
       31.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300018
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11619,14 +11619,14 @@
       24.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300019
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11649,14 +11649,14 @@
       58.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300019
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11679,14 +11679,14 @@
       12.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300019
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11709,14 +11709,14 @@
       28.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300019
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11739,14 +11739,14 @@
       21.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300019
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11769,14 +11769,14 @@
       28.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300019
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11799,14 +11799,14 @@
       26.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300019
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11829,14 +11829,14 @@
       35.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300019
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11859,14 +11859,14 @@
       38.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300019
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11889,14 +11889,14 @@
       30.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300019
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11919,7 +11919,7 @@
       181.0
     ],
     "m_isBoss": true,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
@@ -11957,14 +11957,14 @@
       35.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300020
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -11987,14 +11987,14 @@
       50.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300020
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12017,14 +12017,14 @@
       74.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300020
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12047,14 +12047,14 @@
       19.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300020
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12077,14 +12077,14 @@
       76.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300020
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12107,14 +12107,14 @@
       40.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300020
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12137,14 +12137,14 @@
       19.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300020
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12167,14 +12167,14 @@
       40.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300020
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12197,14 +12197,14 @@
       12.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300020
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12218,7 +12218,7 @@
     },
     "m_battleTimeVariable": 10,
     "m_isBoss": true,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
@@ -12256,14 +12256,14 @@
       26.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300021
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12286,14 +12286,14 @@
       30.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300021
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12316,14 +12316,14 @@
       50.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300021
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12346,14 +12346,14 @@
       56.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300021
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12376,14 +12376,14 @@
       86.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300021
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12406,14 +12406,14 @@
       39.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300021
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12436,14 +12436,14 @@
       131.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300021
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12466,14 +12466,14 @@
       101.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300021
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12496,7 +12496,7 @@
       266.0
     ],
     "m_isBoss": true,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
@@ -12534,14 +12534,14 @@
       73.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300022
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12564,14 +12564,14 @@
       55.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300022
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12585,8 +12585,8 @@
     },
     "m_maxHp": 350,
     "m_battleTimeVariable": 10,
-    "m_minSize": 15,
-    "m_maxSize": 50,
+    "m_minSize": 30,
+    "m_maxSize": 90,
     "m_qualityThresholds": [
       22.0,
       29.0,
@@ -12594,14 +12594,14 @@
       44.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300022
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12624,14 +12624,14 @@
       83.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300022
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12654,14 +12654,14 @@
       90.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300022
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12684,14 +12684,14 @@
       46.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300022
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12714,14 +12714,14 @@
       136.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300022
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12744,7 +12744,7 @@
       266.0
     ],
     "m_isBoss": true,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
@@ -12782,14 +12782,14 @@
       77.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300023
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12812,14 +12812,14 @@
       83.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300023
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12842,14 +12842,14 @@
       74.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300023
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12872,14 +12872,14 @@
       166.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300023
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12902,14 +12902,14 @@
       28.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300023
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12932,14 +12932,14 @@
       22.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300023
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12962,14 +12962,14 @@
       86.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300023
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -12992,14 +12992,14 @@
       121.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300023
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -13022,14 +13022,14 @@
       441.0
     ],
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300023
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -13043,7 +13043,7 @@
     },
     "m_battleTimeVariable": 10,
     "m_isBoss": true,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
@@ -13072,14 +13072,14 @@
     },
     "m_battleTimeVariable": 10,
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300024
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -13093,14 +13093,14 @@
     },
     "m_battleTimeVariable": 10,
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300024
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -13114,14 +13114,14 @@
     },
     "m_battleTimeVariable": 10,
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300024
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -13135,14 +13135,14 @@
     },
     "m_battleTimeVariable": 10,
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300024
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -13156,14 +13156,14 @@
     },
     "m_battleTimeVariable": 10,
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300024
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -13177,14 +13177,14 @@
     },
     "m_battleTimeVariable": 10,
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300024
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -13198,14 +13198,14 @@
     },
     "m_battleTimeVariable": 10,
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300024
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -13219,14 +13219,14 @@
     },
     "m_battleTimeVariable": 10,
     "m_isBoss": false,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300024
         },
         "m_count": 1,
-        "m_probability": 1.0
+        "m_probability": 1
       }
     ]
   },
@@ -13240,7 +13240,7 @@
     },
     "m_battleTimeVariable": 10,
     "m_isBoss": true,
-    "m_bossDrops": [
+    "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",

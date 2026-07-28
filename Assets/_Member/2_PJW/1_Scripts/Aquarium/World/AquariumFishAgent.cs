@@ -3,48 +3,68 @@ using UnityEngine;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 탱크 Bounds 안을 랜덤 웨이포인트로 부드럽게 헤엄치는 경량 에이전트(물리/보이드 없음).
+    /// 탱크 로컬 공간(<see cref="AquariumTankRenderer.TankSpace"/>) 안을 랜덤 웨이포인트로 헤엄치는 경량 에이전트.
+    /// 로컬 좌표로 목표를 잡아 이동하므로 루트(카메라+탱크+물고기)가 회전해도 탱크 안에 머문다.
+    /// 모델 규약: rotation(0,0,0)에서 -Y가 정면 / +Z가 상방 → <see cref="ForwardOffset"/>로 표준 정렬에 보정.
     /// <see cref="AquariumWorldView"/>가 스폰한 물고기 모델에 부착·초기화한다.
     /// </summary>
     public class AquariumFishAgent : MonoBehaviour
     {
-        private Bounds m_bounds;
-        private Vector3 m_target;
+        // 모델 -Y(정면)/+Z(상방)를 표준(LookRotation: +Z 전방/+Y 상방)으로 보내는 고정 오프셋.
+        // 검산: Euler(-90,0,0)는 (0,-1,0)→(0,0,1), (0,0,1)→(0,1,0).
+        private static readonly Quaternion ForwardOffset = Quaternion.Euler(-90f, 0f, 0f);
+
+        private Transform m_space;       // 탱크 로컬 공간 기준(TankSpace)
+        private Bounds m_localBounds;    // 로컬 헤엄 박스(LocalBounds)
+        private Vector3 m_localTarget;
+        private Vector3 m_baseScale = Vector3.one;   // 프리팹 원본 스케일
         private float m_speed;
         private float m_turnSpeed;
         private bool m_init;
 
-        public void Init(Bounds bounds, float speed = 0.6f, float turnSpeed = 3f)
+        public void Init(Transform space, Bounds localBounds, Vector3 baseScale, float size,
+                         float speed = 0.6f, float turnSpeed = 3f)
         {
-            m_bounds = bounds;
+            m_space = space;
+            m_localBounds = localBounds;
+            m_baseScale = baseScale;
             m_speed = Mathf.Max(0.01f, speed);
             m_turnSpeed = Mathf.Max(0.1f, turnSpeed);
-            m_target = RandomPoint();
+            m_localTarget = RandomPoint();
+            SetSize(size);
             m_init = true;
         }
 
+        /// <summary>기준 스케일 × Size(≤0이면 1로 폴백). 같은 개체 유지 시 크기만 갱신에도 사용.</summary>
+        public void SetSize(float size)
+            => transform.localScale = m_baseScale * (size > 0f ? size : 1f);
+
         private void Update()
         {
-            if (!m_init) return;
+            if (!m_init || m_space == null) return;
 
-            Vector3 pos = transform.position;
-            Vector3 to = m_target - pos;
-            if (to.sqrMagnitude < 0.04f)   // 도달 → 다음 목표
+            float dt = Time.deltaTime;
+            Vector3 localPos = m_space.InverseTransformPoint(transform.position);
+            Vector3 to = m_localTarget - localPos;
+            if (to.sqrMagnitude < 0.04f)   // 도달 → 다음 목표(로컬)
             {
-                m_target = RandomPoint();
-                to = m_target - pos;
+                m_localTarget = RandomPoint();
+                to = m_localTarget - localPos;
             }
 
-            Vector3 dir = to.sqrMagnitude > 0.0001f ? to.normalized : transform.forward;
-            Quaternion look = Quaternion.LookRotation(dir, Vector3.up);
-            transform.rotation = Quaternion.Slerp(transform.rotation, look, m_turnSpeed * Time.deltaTime);
-            transform.position = pos + transform.forward * (m_speed * Time.deltaTime);
+            // 목표를 향한 자세: 상방=탱크 로컬 up, 모델 정면 오프셋 적용.
+            Vector3 worldDir = m_space.TransformDirection(to.sqrMagnitude > 0.0001f ? to.normalized : Vector3.up);
+            Quaternion look = Quaternion.LookRotation(worldDir, m_space.up) * ForwardOffset;
+            transform.rotation = Quaternion.Slerp(transform.rotation, look, m_turnSpeed * dt);
+
+            // 현재 향한 모델 전방(-Y)의 월드 방향으로 전진.
+            transform.position += (transform.rotation * Vector3.down) * (m_speed * dt);
         }
 
         private Vector3 RandomPoint()
             => new Vector3(
-                Random.Range(m_bounds.min.x, m_bounds.max.x),
-                Random.Range(m_bounds.min.y, m_bounds.max.y),
-                Random.Range(m_bounds.min.z, m_bounds.max.z));
+                Random.Range(m_localBounds.min.x, m_localBounds.max.x),
+                Random.Range(m_localBounds.min.y, m_localBounds.max.y),
+                Random.Range(m_localBounds.min.z, m_localBounds.max.z));
     }
 }
