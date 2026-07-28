@@ -235,10 +235,11 @@ MonoBehaviour:
   m_canvas: {fileID: 0}
   m_tooltipRoot: {fileID: 7479610682873590630}
   m_canvasGroup: {fileID: 3971609836977792596}
+  m_itemIcon: {fileID: 0}
   m_itemNameText: {fileID: 4545145335808045019}
   m_gradeText: {fileID: 2121796378420819422}
   m_effectText: {fileID: 8243725629720939042}
-  m_pointerOffset: {x: 18, y: -18}
+  m_horizontalGap: 0
 --- !u!225 &3971609836977792596
 CanvasGroup:
   m_ObjectHideFlags: 0

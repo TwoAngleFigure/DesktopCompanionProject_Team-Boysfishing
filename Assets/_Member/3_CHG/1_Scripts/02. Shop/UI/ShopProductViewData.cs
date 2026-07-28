@@ -1,9 +1,9 @@
 using DesktopCompanion.Data;
-using UnityEngine;
 
 public class ShopProductViewData
 {
-    public int DataId;
+    public int ProductId;
+    public int BaseId;
     public string Name;
 
     public ItemType ItemType;
@@ -19,10 +19,11 @@ public class ShopProductViewData
 
     public bool IsBuyable;
 
-    public ShopProductViewData(int dataId, string name, ItemType itemType, string iconKey, int tier, 
-        int price, string typeText, string description, bool isBuyable ,bool isStackable = true)
+    public ShopProductViewData(int productId, int baseId, string name, ItemType itemType, string iconKey, int tier, 
+        int price, string typeText, string description, bool isBuyable, bool isStackable = true)
     {
-        DataId = dataId;
+        ProductId = productId;
+        BaseId = baseId;
         Name = name;
         ItemType = itemType;
         IconKey = iconKey;

@@ -12585,8 +12585,8 @@
     },
     "m_maxHp": 350,
     "m_battleTimeVariable": 10,
-    "m_minSize": 15,
-    "m_maxSize": 50,
+    "m_minSize": 30,
+    "m_maxSize": 90,
     "m_qualityThresholds": [
       22.0,
       29.0,
@@ -13503,5 +13503,85 @@
     "m_name": "프로 라이센스",
     "m_grade": 5,
     "m_upgradeGoldCost": 500000
+  },
+  {
+    "type": "ShopProducts",
+    "m_id": 900001,
+    "m_name": "새우 미끼",
+    "m_baseId": 400001,
+    "m_tier": 1,
+    "m_price": 90,
+    "m_itemType": "Consumables",
+    "m_isSummon": false
+  },
+  {
+    "type": "ShopProducts",
+    "m_id": 900002,
+    "m_name": "황금 떡밥",
+    "m_baseId": 400002,
+    "m_tier": 1,
+    "m_price": 30,
+    "m_itemType": "Consumables",
+    "m_isSummon": true
+  },
+  {
+    "type": "ShopProducts",
+    "m_id": 900003,
+    "m_name": "무지개빛 옥구슬",
+    "m_baseId": 400003,
+    "m_tier": 3,
+    "m_price": 30,
+    "m_itemType": "Consumables",
+    "m_isSummon": true
+  },
+  {
+    "type": "ShopProducts",
+    "m_id": 900004,
+    "m_name": "고대의 흑요석 미끼",
+    "m_baseId": 400004,
+    "m_tier": 7,
+    "m_price": 30,
+    "m_itemType": "Consumables",
+    "m_isSummon": true
+  },
+  {
+    "type": "ShopProducts",
+    "m_id": 900005,
+    "m_name": "맹독의 자수정",
+    "m_baseId": 400005,
+    "m_tier": 2,
+    "m_price": 30,
+    "m_itemType": "Consumables",
+    "m_isSummon": true
+  },
+  {
+    "type": "ShopProducts",
+    "m_id": 900006,
+    "m_name": "황금빛 산호",
+    "m_baseId": 400006,
+    "m_tier": 4,
+    "m_price": 30,
+    "m_itemType": "Consumables",
+    "m_isSummon": true
+  },
+  {
+    "type": "ShopProducts",
+    "m_id": 900007,
+    "m_name": "단단한 갯바위 광석",
+    "m_baseId": 400007,
+    "m_tier": 8,
+    "m_price": 30,
+    "m_itemType": "Consumables",
+    "m_isSummon": true
+  },
+  {
+    "type": "ShopProducts",
+    "m_id": 900008,
+    "m_name": "얼어붙은 빙하 결정",
+    "m_baseId": 400008,
+    "m_tier": 3,
+    "m_price": 30,
+    "m_itemType": "Consumables",
+    "m_isSummon": true
   }
 ]
