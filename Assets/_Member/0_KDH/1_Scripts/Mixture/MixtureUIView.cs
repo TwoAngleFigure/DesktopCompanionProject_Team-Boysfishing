@@ -16,7 +16,6 @@ namespace DesktopCompanion.Views
         [SerializeField] private UnityEngine.UI.Button m_closeButton;
 
         [Header("Grid & Slot Setup")]
-        [SerializeField] private List<RecipeData_Mixture> m_mixtureList = new();
         [SerializeField] private MixtureSlotView m_mixtureSlotPrefab;
         [SerializeField] private Transform m_gridContainer;
 
@@ -92,7 +91,12 @@ namespace DesktopCompanion.Views
 
             if (m_mixtureSlotPrefab == null || m_gridContainer == null) return;
 
-            foreach (var recipe in m_mixtureList)
+            var mixtureSystem = SystemManager.GetSystem<MixtureSystem>();
+            if (mixtureSystem == null) return;
+
+            var allRecipes = mixtureSystem.GetAllRecipes();
+
+            foreach (var recipe in allRecipes)
             {
                 if (recipe == null) continue;
 

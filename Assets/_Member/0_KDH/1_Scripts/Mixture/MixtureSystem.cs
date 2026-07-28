@@ -14,6 +14,16 @@ namespace DesktopCompanion.Systems
 
         public override void PostInitialize()
         {
+            if (this.DataManager != null)
+            {
+                var recipeList = this.DataManager.GetAll<RecipeData_Mixture>();
+
+                SetRecipeData(new List<RecipeData_Mixture>(recipeList));
+            }
+            else
+            {
+                Debug.LogError("[MixtureSystem] DataManager 참조를 찾을 수 없습니다!");
+            }
         }
 
         public override void Initialize()
@@ -31,7 +41,7 @@ namespace DesktopCompanion.Systems
             m_recipeDatabase.Clear();
             foreach (var data in rawDataList)
             {
-                m_recipeDatabase[data.m_id] = data;
+                m_recipeDatabase[data.ID] = data;
             }
             Debug.Log($"[MixtureSystem] {m_recipeDatabase.Count}개의 조합 레시피 데이터를 성공적으로 로드했습니다.");
         }
@@ -189,6 +199,11 @@ namespace DesktopCompanion.Systems
             }
 
             return itemData != null ? itemData.Name : "알 수 없음";
+        }
+
+        public List<RecipeData_Mixture> GetAllRecipes()
+        {
+            return new List<RecipeData_Mixture>(m_recipeDatabase.Values);
         }
     }
 
