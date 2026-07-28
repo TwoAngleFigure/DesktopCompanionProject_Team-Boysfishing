@@ -87,7 +87,7 @@ namespace DesktopCompanion.Views
                 return;
             }
 
-            m_inventoryWindow.Show();
+            m_inventoryWindow.OrganizeFishTab();
         }
     }
 }
