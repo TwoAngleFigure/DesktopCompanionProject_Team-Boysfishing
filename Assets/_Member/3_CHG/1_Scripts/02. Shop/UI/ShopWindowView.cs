@@ -248,7 +248,7 @@ namespace DesktopCompanion.Views
 
         private void OnClickButton(ShopProductViewData data)
         {
-            m_vm.SelectProductCommand.Execute(data.DataId);
+            m_vm.SelectProductCommand.Execute(data.ProductId);
         }
 
         private void OnBuyAmountSliderChanged(float value)

@@ -1,7 +1,9 @@
 using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
+using DG.Tweening.Core.Easing;
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace DesktopCompanion.Systems
@@ -12,12 +14,9 @@ namespace DesktopCompanion.Systems
         private PlayerSystem m_playerSystem;
         private CurrencySystem m_currencySystem;
 
-        private IReadOnlyList<ItemData> m_products;
+        private IReadOnlyList<ShopProducts> m_products;
 
-        public IReadOnlyList<ItemData> Products => m_products;
-
-        //현재 기획 미흡으로 인해 구매 가격 = baseprice * 3으로 지정. 기획 후 수정
-        private float m_priceMultiplier = 3.0f;
+        public IReadOnlyList<ShopProducts> Products => m_products;
 
         public override void PostInitialize()
         {
@@ -41,7 +40,7 @@ namespace DesktopCompanion.Systems
             }
 
             //현재 기획 상 상점 판매 품목은 소모품으로 한정. 기획 후 수정
-            m_products = DataManager.GetAll<ItemData_Consumables>();
+            m_products = DataManager.GetAll<ShopProducts>();
         }
 
         #region sell
@@ -234,68 +233,83 @@ namespace DesktopCompanion.Systems
         #endregion
 
         /// <summary> 현재 플레이어가 구매할 수 있는 아이템을 반환 </summary>
-        public IReadOnlyList<ItemData> GetBuyableItems()
+        public bool IsBuyableProduct(ShopProducts product)
         {
             Entity_Player playerEntity = (Entity_Player)EntityManager.Get(m_playerSystem.PlayerHandle);
             int license = playerEntity.CurrentLicense;
-            List<ItemData> buyableItem = new List<ItemData>();
-            
-            foreach(ItemData item in m_products)
+            if (product.IsSummon)
             {
-                if (item.Tier <= license)
-                    buyableItem.Add(item);
+                if (product.Tier <= license - 1)
+                    return true;
+                else
+                    return false;
             }
+            if (product.Tier <= license)
+                return true;
 
-            return buyableItem;
+            return false;
         }
 
-        /// <summary> 아이템을 구매하는 함수. ItemType과 DataId 검증 확실히 할 것. </summary>
-        public bool BuyItem(ItemType type, int dataId, int amount)
+        /// <summary> 아이템을 구매하는 함수.</summary>
+        public bool BuyItem(int productId, int amount)
         {
             #region Validation
-            if (!IsValidDataId(type, dataId, out int price))
+            if (!FindProduct(productId, out ShopProducts product))
                 return false;
 
-            if (amount <= 0 || (type == ItemType.Equipment && amount > 1))
+            if (amount <= 0 || (product.ItemType == ItemType.Equipment && amount > 1))
             {
                 Debug.LogWarning($"[ShopSystem] 구매하려는 품목의 수량이 올바르지 않습니다. amount : {amount}");
                 return false;
             }
 
-            if ((type == ItemType.Materials || type == ItemType.Consumables) && m_inventorySystem.GetTotalQuantityByDataId(type, dataId) <= 0 && !m_inventorySystem.HasEmptySlot(type) ||
-                (type == ItemType.Equipment && !m_inventorySystem.HasEmptySlot(type)))
+            if (!IsBuyableProduct(product))
+            {
+                Debug.LogWarning($"[ShopSystem] 품목을 구매할 자격이 갖춰지지 않았습니다. 아이템 티어 : {product.Tier}");
+                return false;
+            }
+
+            if(!FindProductItemData(product, out ItemData item))
+            {
+                Debug.LogWarning($"[ShopSystem] 구매 검증에 실패했습니다. id : {product.ID} | baseId : {product.BaseId}");
+                return false;
+            }
+
+            if ((product.ItemType == ItemType.Materials || product.ItemType == ItemType.Consumables) && 
+                m_inventorySystem.GetTotalQuantityByDataId(product.ItemType, product.BaseId) <= 0 && !m_inventorySystem.HasEmptySlot(product.ItemType) ||
+                (product.ItemType == ItemType.Equipment && !m_inventorySystem.HasEmptySlot(product.ItemType)))
             {
                 Debug.LogWarning($"[ShopSystem] 구매하려는 품목이 인벤토리에 들어갈 자리가 없습니다.");
                 return false;
             }
 
-            int totalPrice = CalculateItemPrice(price) * amount;
-
-            if(totalPrice <= 0)
+            if(product.Price <= 0)
             {
                 Debug.LogWarning("[ShopSystem] 가격이 0 이하인 품목은 존재하지 않습니다.");
                 return false;
             }
 
-            if(m_currencySystem.CurrentGold < totalPrice)
+            int totalPrice = product.Price * amount;
+
+            if (m_currencySystem.CurrentGold < totalPrice)
             {
-                Debug.LogWarning($"[ShopSystem] 구매하려는 품목의 가격이 현재 소지한 골드보다 높습니다. 현재 소지한 골드 : {m_currencySystem.CurrentGold}, 가격 : {totalPrice}");
+                Debug.LogWarning($"[ShopSystem] 구매하려는 품목의 가격이 현재 소지한 골드보다 높습니다. 현재 소지한 골드 : {m_currencySystem.CurrentGold}, 가격 : {product.Price}");
                 return false;
             }
             #endregion
 
             EntityHandle itemHandle;
-            switch (type)
+            switch (product.ItemType)
             {
                 case ItemType.Materials:
-                    itemHandle = EntityManager.Create<ItemData_Materials>(dataId);
+                    itemHandle = EntityManager.Create<ItemData_Materials>(product.BaseId);
                     Entity_Materials entity_Materials = EntityManager.Get<Entity_Materials>(itemHandle);
                     entity_Materials.SetQuantity(amount);
                     break;
                 case ItemType.Equipment:
-                    itemHandle = EntityManager.Create<ItemData_Equipment>(dataId); break;
+                    itemHandle = EntityManager.Create<ItemData_Equipment>(product.BaseId); break;
                 case ItemType.Consumables:
-                    itemHandle = EntityManager.Create<ItemData_Consumables>(dataId);
+                    itemHandle = EntityManager.Create<ItemData_Consumables>(product.BaseId);
                     Entity_Consumables entity_Consumables = EntityManager.Get<Entity_Consumables>(itemHandle);
                     entity_Consumables.SetQuantity(amount);
                     break;
@@ -318,29 +332,48 @@ namespace DesktopCompanion.Systems
             }
             return true;
         }
-
-        //현재 기획 미흡으로 인해 구매 가격 = 판매 가격 x n으로 구현. 기획 후 수정
-        public int CalculateItemPrice(int basePrice)
-        {
-            float price = basePrice * m_priceMultiplier;
-
-            return (int)price;
-        }
         
-        private bool IsValidDataId(ItemType type, int dataId, out int price)
+        private bool FindProduct(int productId, out ShopProducts product)
         {
-            foreach(ItemData item in m_products)
+            product = default;
+            foreach(ShopProducts shopProduct in m_products)
             {
-                if (item.ID == dataId && item.Type == type)
+                if (shopProduct.ID == productId)
                 {
-                    price = item.BasePrice;
+                    product = shopProduct;
                     return true;
                 }
             }
 
-            Debug.LogWarning($"[ShopSystem] 아이템이 검증에 실패했습니다.\nID : {dataId} | ID_Type : {type}");
-            price = 0;
+            Debug.LogWarning($"[ShopSystem] ID로 상품 품목을 찾을 수 없습니다. ID : {productId}");
             return false;
+        }
+
+        public bool FindProductItemData(ShopProducts product, out ItemData item)
+        {
+            ItemType type = product.ItemType;
+
+            switch (type)
+            {
+                case ItemType.Materials:
+                    item = DataManager.GetData<ItemData_Materials>(product.BaseId);
+                    break;
+                case ItemType.Equipment:
+                    item = DataManager.GetData<ItemData_Equipment>(product.BaseId);
+                    break;
+                case ItemType.Consumables:
+                    item = DataManager.GetData<ItemData_Consumables>(product.BaseId);
+                    break;
+                case ItemType.Fish:
+                default:
+                    item = default;
+                    break;
+            }
+            if( item == null)
+            {
+                return false;
+            }
+            return true;
         }
 
     }

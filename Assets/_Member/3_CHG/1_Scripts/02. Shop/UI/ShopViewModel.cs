@@ -1,9 +1,7 @@
 using DesktopCompanion.Data;
-using DesktopCompanion.Entities;
 using DesktopCompanion.Systems;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 
@@ -51,11 +49,11 @@ namespace DesktopCompanion.Views
             m_currencySystem = null;
         }
 
-        private void SelectProduct(int dataId)
+        private void SelectProduct(int productId)
         {
             foreach(ShopProductViewData data in Products.Value)
             {
-                if (data.DataId == dataId)
+                if (data.ProductId == productId)
                 {
                     SelectedProduct.Value = data;
                     return;
@@ -75,7 +73,7 @@ namespace DesktopCompanion.Views
 
             if(m_shopSystem != null)
             {
-                if (m_shopSystem.BuyItem(SelectedProduct.Value.ItemType, SelectedProduct.Value.DataId, amount))
+                if (m_shopSystem.BuyItem(SelectedProduct.Value.ProductId, amount))
                     OnBuySucceeded?.Invoke();
             }
         }
@@ -88,55 +86,45 @@ namespace DesktopCompanion.Views
         private void RefreshProducts()
         {
             List<ShopProductViewData> products = new();
-            IReadOnlyList<ItemData> data = new List<ItemData>();
-            if(m_shopSystem != null)
-            {
-                data = m_shopSystem.GetBuyableItems();
-            }
+            IReadOnlyList<ShopProducts> data = m_shopSystem.Products;
 
-            for(int i = 0; i < data.Count; i++)
+            foreach(ShopProducts product in data)
             {
-                ItemData item = data[i];
-                ShopProductViewData product = CreateProductViewData(item, true);
-                
-                if(product != null && product.Price > 0) 
-                    products.Add(product);
-            }
+                if(!m_shopSystem.FindProductItemData(product, out ItemData item) || item == null)
+                    continue;
 
-            foreach(ItemData item in m_shopSystem.Products)
-            {
-                if (!data.Contains(item))
-                {
-                    ShopProductViewData product = CreateProductViewData(item, false);
+                ShopProductViewData productData;
+                productData = CreateProductViewData(product, item , m_shopSystem.IsBuyableProduct(product));
+                if(productData == null)
+                    continue;
 
-                    if(product != null && product.Price > 0)
-                        products.Add(product);
-                }
+                products.Add(productData);
             }
 
             Products.Value = products;
         }
 
-        private ShopProductViewData CreateProductViewData(ItemData item, bool isBuyable)
+        private ShopProductViewData CreateProductViewData(ShopProducts product, ItemData item, bool isBuyable)
         {
-            if (m_shopSystem == null || item == null || item.Type == ItemType.Fish)
+            if (m_shopSystem == null || product == null || product.ItemType == ItemType.Fish)
                 return null;
 
             string iconkey = BuildIconKey(item);
 
             ShopProductViewData result = new ShopProductViewData(
-                item.ID,
+                product.ID,
+                product.BaseId,
                 item.Name,
-                item.Type,
+                product.ItemType,
                 iconkey,
-                item.Tier,
-                m_shopSystem.CalculateItemPrice(item.BasePrice),
-                GetTypeText(item),
+                product.Tier,
+                product.Price,
+                GetTypeText(product),
                 GetDescription(item),
                 isBuyable
                 );
 
-            if (item.Type == ItemType.Equipment)
+            if (product.ItemType == ItemType.Equipment)
                 result.IsStackable = false;
             else 
                 result.IsStackable = true;
@@ -144,9 +132,10 @@ namespace DesktopCompanion.Views
             return result;
         }
 
-        private string GetTypeText(ItemData item)
+        #region TextBuild
+        private string GetTypeText(ShopProducts product)
         {
-            switch(item.Type)
+            switch(product.ItemType)
             {
                 case ItemType.Equipment:
                     return "장비";
@@ -171,7 +160,6 @@ namespace DesktopCompanion.Views
             }
         }
 
-        #region TextBuild
         private string BuildConsumableDetailText(ItemData_Consumables itemData)
         {
             StringBuilder builder = new();
