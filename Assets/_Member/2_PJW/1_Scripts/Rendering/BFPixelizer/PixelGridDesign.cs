@@ -1,20 +1,13 @@
 namespace DesktopCompanion.Rendering
 {
     /// <summary>
-    /// 픽셀 격자·시야의 설계 상수(계획 23·25).
-    /// 표시 계층(DisplayModeController)과 픽셀라이저(BFPixelizerFeature)가
-    /// 같은 기준을 쓰도록 여기서만 정의한다.
-    ///
-    /// 640×360을 기준 도트 해상도로 잡은 이유: 360이 720·1080·1440·2160의 공약수라
-    /// 주요 세로 해상도 전부에서 블록이 정수 배율(×2·×3·×4·×6)로 떨어진다.
-    /// 960×540은 1440p에서, 480×270은 720p·1440p에서 정수가 깨진다(계획 22 분석).
-    ///
-    /// ※ 인스펙터 노출 대신 상수로 둔 이유: WorldWidth와 BlocksPerUnit은 서로 유도 관계라
-    ///   두 곳에 나눠 적으면 어긋난다. 한 파일만 고치면 양쪽이 자동으로 일관된다.
+    /// 픽셀 격자와 시야의 설계 상수. 표시 계층(DisplayModeController)과
+    /// 픽셀라이저(BFPixelizerFeature)가 같은 기준을 쓰도록 여기서만 정의한다.
+    /// 기준 도트 해상도 640×360은 720·1080·1440·2160에서 블록이 정수 배율로 떨어지는 값이다.
     /// </summary>
     public static class PixelGridDesign
     {
-        /// <summary>기준 화면 해상도. 아래 값들이 이 비율·크기에서 정의된다.</summary>
+        /// <summary>기준 화면 해상도. 아래 값들이 이 비율·크기를 기준으로 정의된다.</summary>
         public const int ReferenceWidth = 1920;
         public const int ReferenceHeight = 1080;
 
@@ -25,7 +18,7 @@ namespace DesktopCompanion.Rendering
         public const int BaseDotsWide = 640;
         public const int BaseDotsHigh = 360;
 
-        /// <summary>기준 화면 종횡비. 렌더 밴드의 하한이 된다(계획 25). = 1.7778</summary>
+        /// <summary>기준 화면 종횡비. 렌더 밴드 종횡비의 하한이다. = 1.7778</summary>
         public static float ReferenceAspect => (float)ReferenceWidth / ReferenceHeight;
 
         /// <summary>모든 환경에서 보장되는 최소 가로 시야(월드 유닛). = 35.556</summary>

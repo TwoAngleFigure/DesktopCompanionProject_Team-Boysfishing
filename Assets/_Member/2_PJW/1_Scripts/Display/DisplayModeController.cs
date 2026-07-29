@@ -5,14 +5,12 @@ using DesktopCompanion.Rendering;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 화면 모드(Full/Window)·스케일·모니터를 적용하는 컨트롤러(계획 06: RT 크롭 방식).
-    ///
-    /// 표시 방식 = 단일 카메라 → RenderTexture → RawImage 크롭:
-    ///  - World Camera(A): 씬을 항상 투명 RT에 렌더(SW3가 단일 카메라 컨텍스트로 일관 렌더 → 물 일관·AlignToWater 정상).
-    ///  - Screen Clear Camera: 화면 백버퍼를 매 프레임 투명 클리어(잔상 방지). 지오메트리 미렌더(SW3 무관).
-    ///  - RawImage: RT를 표시. Full=전체·uv 전체, Window=우하단 크롭(uvRect)·크기(크롭×scale)·위치(드래그).
-    ///
-    /// ※ 캔버스는 Screen Space - Overlay, Canvas Scaler = Constant Pixel Size(scaleFactor 1) 전제(픽셀=UI 단위).
+    /// 화면 모드(Full/Window)·출력 배율·크롭 범위·모니터·창 위치를 적용하는 컨트롤러.
+    /// 표시 경로는 단일 카메라 → RenderTexture → RawImage 크롭이다.
+    ///  - World Camera: 씬을 투명 RT에 상시 렌더한다. RT 종횡비를 밴드 형상으로 잡아 카메라 시야를 화면 해상도에서 분리한다.
+    ///  - Screen Clear Camera: 지오메트리 없이 화면 백버퍼만 매 프레임 투명 클리어해 잔상을 막는다.
+    ///  - RawImage: RT를 표시한다. Full은 uv 전체, Window는 크롭 범위(uvRect)와 배율·드래그 위치를 적용한다.
+    /// 캔버스는 Screen Space - Overlay + Constant Pixel Size(scaleFactor 1)를 전제한다.
     /// </summary>
     [DefaultExecutionOrder(-50)]
     public class DisplayModeController : MonoBehaviour
@@ -27,7 +25,7 @@ namespace DesktopCompanion.Views
         [Tooltip("Window 모드의 세로 크롭 비율(화면 대비). 월드가 화면 하단에 있으므로 하단 고정이다.")]
         [SerializeField, Range(0.05f, 1f)] private float m_cropHeight01 = 1f / 3f;
 
-        /// <summary>크롭 가로 범위의 최소 폭. 0폭으로 접히는 것을 막는다.</summary>
+        /// <summary>크롭 가로 범위의 최소 폭.</summary>
         private const float MinCropWidth = 0.05f;
 
         [Header("Refs")]
@@ -83,12 +81,11 @@ namespace DesktopCompanion.Views
             }
         }
 
-        // ── 렌더 밴드(계획 25) ──
+        // ── 렌더 밴드 ──
         //
-        // 16:9보다 좁은 화면에서도 가로 시야를 확보하기 위해 렌더 영역을 눕힌다.
-        // 카메라 크기를 키우지 않으므로 물·조명 스케일이 환경과 무관하게 일정하다.
+        // 기준 종횡비보다 좁은 화면에서도 가로 시야를 확보하기 위해 RT를 눕힌 밴드 형상으로 만든다.
         // targetTexture가 설정된 카메라의 종횡비는 화면이 아니라 그 텍스처를 따르므로,
-        // RT를 밴드 형상으로 만드는 것만으로 카메라가 모니터 해상도에서 분리된다.
+        // 카메라 크기를 키우지 않고도 시야가 모니터 해상도에서 분리된다.
 
         private float BandAspect
         {
@@ -115,7 +112,7 @@ namespace DesktopCompanion.Views
             if (m_worldCamera == null) return;
             m_worldCamera.clearFlags = CameraClearFlags.SolidColor;
             m_worldCamera.backgroundColor = new Color(0f, 0f, 0f, 0f);
-            // 시야 확보는 RT 종횡비가 담당하므로 카메라 크기는 상수다(계획 25).
+            // 시야 확보는 RT 종횡비가 담당하므로 카메라 크기는 상수다.
             m_worldCamera.orthographic = true;
             m_worldCamera.orthographicSize = PixelGridDesign.ReferenceOrthographicSize;
             m_worldCamera.enabled = true;   // 상시 렌더(RT)
@@ -178,7 +175,7 @@ namespace DesktopCompanion.Views
             if (m_data.Mode == ScreenMode.Full)
             {
                 m_worldImage.uvRect = new Rect(0f, 0f, 1f, 1f);
-                // 밴드는 화면 하단에 붙는다. 위쪽은 렌더되지 않아 바탕화면이 비친다(계획 25).
+                // 밴드는 화면 하단에 붙는다. 위쪽은 렌더되지 않아 바탕화면이 비친다.
                 m_worldRect.sizeDelta = new Vector2(Screen.width, bandH);
                 m_worldRect.anchoredPosition = Vector2.zero;
             }
@@ -194,7 +191,7 @@ namespace DesktopCompanion.Views
 
                 // 잘라낸 영역의 픽셀 종횡비를 그대로 유지하므로 왜곡이 없다.
                 // 세로 기준은 Screen.height가 아니라 밴드 높이다 — RT가 밴드 형상이므로.
-                // cw는 픽셀 블록 크기 식에서 소거되므로 크롭을 바꿔도 픽셀 크기는 변하지 않는다(계획 21).
+                // cw는 픽셀 블록 크기 식에서 소거되므로 크롭을 바꿔도 픽셀 크기는 변하지 않는다.
                 Vector2 size = ClampSize(new Vector2(Screen.width * cw * f, bandH * ch * f));
                 m_worldRect.sizeDelta = size;
 
@@ -209,7 +206,7 @@ namespace DesktopCompanion.Views
         public float CropLeft => m_data.CropLeft;
         public float CropRight => m_data.CropRight;
 
-        /// <summary>크롭 가로 경계를 지정한다(슬라이더용).</summary>
+        /// <summary>크롭 가로 경계를 지정하고 표시에 반영·저장한다.</summary>
         public void SetCropRange(float left, float right)
         {
             m_data.CropLeft = left;
@@ -218,7 +215,7 @@ namespace DesktopCompanion.Views
             Save();
         }
 
-        /// <summary>폭을 유지한 채 크롭 범위를 좌우로 민다(드래그용). delta는 0~1 정규화 값.</summary>
+        /// <summary>폭을 유지한 채 크롭 범위를 좌우로 민다. delta는 0~1 정규화 값이다.</summary>
         public void ShiftCropRange(float delta01)
         {
             float cw = m_data.CropRight - m_data.CropLeft;
@@ -226,7 +223,7 @@ namespace DesktopCompanion.Views
             SetCropRange(left, left + cw);
         }
 
-        /// <summary>크롭 가로 범위를 [0,1]·순서·최소폭 규칙에 맞게 보정한다.</summary>
+        /// <summary>크롭 가로 범위를 [0,1] 구간·좌우 순서·최소 폭 규칙에 맞게 보정한다.</summary>
         private static void NormalizeCropRange(ref float left, ref float right)
         {
             left = Mathf.Clamp01(left);
@@ -257,7 +254,7 @@ namespace DesktopCompanion.Views
 
         public void ToggleWindowMoveMode() => SetWindowMoveMode(!WindowMoveMode);
 
-        /// <summary>드래그: RawImage 위치를 픽셀 델타만큼 이동(내용 uv는 고정).</summary>
+        /// <summary>RawImage 위치를 픽셀 델타만큼 이동한다. 크롭 uv는 고정된다.</summary>
         public void MoveWindowRect(Vector2 deltaPixels)
         {
             if (Mode != ScreenMode.Window || m_worldRect == null) return;
@@ -268,14 +265,14 @@ namespace DesktopCompanion.Views
 
         public void EndDragSave() => Save();
 
-        /// <summary>현재 창(RawImage) 화면 rect(픽셀). 드래그 히트테스트용.</summary>
+        /// <summary>현재 RawImage의 화면 rect(픽셀)를 반환한다. 드래그 히트 테스트에 쓴다.</summary>
         public Rect WindowRectPixels()
         {
             if (m_worldRect == null) return default;
             return new Rect(m_worldRect.anchoredPosition, m_worldRect.sizeDelta);
         }
 
-        /// <summary>커서(스크린) → World 카메라(=RT) 픽셀 좌표. RawImage 밖이면 null(월드 위 아님).</summary>
+        /// <summary>커서 스크린 좌표를 World 카메라(RT) 픽셀 좌표로 변환한다. RawImage 밖이면 null을 반환한다.</summary>
         public Vector2? MapCursorToWorldCamera(Vector2 cursor)
         {
             if (m_worldRect == null || m_worldImage == null || m_rt == null) return null;
@@ -314,7 +311,7 @@ namespace DesktopCompanion.Views
             if (save) Save();
         }
 
-        /// <summary>현재 선택된 모니터의 Windows 디스플레이 번호(UI 표기용). 조회 실패 시 index+1.</summary>
+        /// <summary>현재 선택된 모니터의 Windows 디스플레이 번호를 반환한다. 조회에 실패하면 index+1을 반환한다.</summary>
         public int CurrentDisplayNumber()
         {
             var monitors = Win32Native.GetMonitors();

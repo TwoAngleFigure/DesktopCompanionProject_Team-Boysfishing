@@ -6,9 +6,9 @@ using DesktopCompanion.Core;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 'UI'의 중앙 관리자(WorldManager와 동형). 도메인 구독은 갖지 않는다 —
-    /// 개별 UI는 팀원이 UIViewBase/UIWindowBase를 상속해 만들고, System 구독은 각 ViewModel 안에서.
-    /// UIManager는 유닛의 호스트/레지스트리 + 공통 의존성 공급자 + 활성 윈도우 관리자 + 자동 배치자다.
+    /// UI View 유닛의 레지스트리이자 공통 의존성(SystemManager·EntityManager·AssetProvider) 공급자.
+    /// 유닛의 등록·주입·Bind 수명과 함께, 활성 윈도우 스택·자동 배치·중앙 닫기 요청을 관리한다.
+    /// 도메인별 구독 로직은 갖지 않는다.
     /// </summary>
     public class UIManager : MonoBehaviour
     {
@@ -57,8 +57,8 @@ namespace DesktopCompanion.Views
         }
 
         /// <summary>
-        /// GameManager.OnBootCompleted에서 호출. 이 시점에 싱글턴을 지정하고(조립 루트가 수명을 통제),
-        /// Initialize 이전(씬 로드)에 등록을 시도해 대기 중이던 View를 흡수·바인딩한다.
+        /// GameManager.OnBootCompleted에서 호출한다. 싱글턴을 지정하고 의존성을 보관한 뒤,
+        /// 대기 큐에 쌓인 View를 모두 등록·바인딩하고 표시 중인 윈도우를 활성 스택에 반영한다.
         /// </summary>
         public void Initialize(SystemManager systemManager, EntityManager entityManager, AssetProvider assetProvider)
         {
@@ -136,7 +136,7 @@ namespace DesktopCompanion.Views
 
         // ── 활성 윈도우 관리 (윈도우형 전용) ──
 
-        /// <summary>윈도우가 켜질 때(OnEnable) 호출 — 최근 열림을 스택 top으로.</summary>
+        /// <summary>윈도우를 활성 스택의 top(최근 열림)으로 올리고 재배치한다.</summary>
         public static void PushActiveWindow(UIWindowBase window)
         {
             if (s_instance == null || window == null)
@@ -153,7 +153,7 @@ namespace DesktopCompanion.Views
             RelayoutWindows();
         }
 
-        /// <summary>윈도우가 꺼질 때(OnDisable/Hide) 호출 — 스택에서 제거.</summary>
+        /// <summary>윈도우를 활성 스택에서 제거하고 재배치한다.</summary>
         public static void RemoveActiveWindow(UIWindowBase window)
         {
             if (s_instance == null || window == null)
@@ -173,8 +173,8 @@ namespace DesktopCompanion.Views
         }
 
         /// <summary>
-        /// 활성 창을 우측→좌측으로 재배치(오래된 것=우측 가장자리·세로 중앙, 최근=좌측). 빈틈 제거.
-        /// 대상 창은 고정 크기 + Canvas(또는 전체화면 루트) 직속 자식이어야 앵커(1,0.5)가 화면 우측·세로중앙과 일치.
+        /// 활성 창을 우측→좌측 순으로 재배치한다(오래된 것이 우측 가장자리·세로 중앙, 최근이 좌측).
+        /// 대상 창은 앵커·피벗을 (1, 0.5)로 맞추며, 배치 예외 창은 건너뛴다.
         /// </summary>
         private void RelayoutWindows()
         {
@@ -208,10 +208,9 @@ namespace DesktopCompanion.Views
         }
 
         /// <summary>
-        /// 중앙 닫기 요청(우클릭·ESC 등)의 단일 처리 지점. 활성 윈도우를 최근 열린 순(LIFO)으로 훑어
-        /// <see cref="UIWindowBase.ClosableByShortcut"/>가 켜진 첫 창을 닫는다.
-        /// 끈 창(보호 창)은 건너뛰므로 이 경로에서는 보이지 않는 셈이며, 그 아래 창이 닫힌다.
-        /// ※ 특정 창을 지목해 닫으려면 이 함수가 아니라 그 창의 Close()/Hide()를 직접 부른다.
+        /// 중앙 닫기 요청을 처리한다. 활성 윈도우를 최근 열린 순(LIFO)으로 훑어
+        /// <see cref="UIWindowBase.ClosableByShortcut"/>가 켜진 첫 창을 닫고, 꺼진 창은 건너뛴다.
+        /// 특정 창을 지목해 닫을 때는 그 창의 Close()/Hide()를 직접 호출한다.
         /// </summary>
         public void CloseTopWindow()
         {
@@ -232,7 +231,7 @@ namespace DesktopCompanion.Views
             }
         }
 
-        /// <summary>중앙 닫기 요청(정적 통로 — 우클릭·ESC 등 닫기 입력에서 호출. 보호 창은 건너뛴다).</summary>
+        /// <summary>중앙 닫기 요청의 정적 진입점(우클릭·ESC 등 닫기 입력이 호출한다).</summary>
         public static void RequestCloseTopWindow() => s_instance?.CloseTopWindow();
     }
 }

@@ -4,9 +4,10 @@ using DesktopCompanion.Core;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// uGUI View 유닛의 공통 베이스(MVVM의 View). WorldViewBase와 동형.
-    /// OnEnable에서 UIManager에 자가 등록 → 부팅 시 의존성 주입·Bind.
-    /// Bind()에서 자기 ViewModel을 생성·주입하고 uGUI 위젯 ↔ VM 바인딩을 연결한다.
+    /// uGUI View 유닛의 공통 베이스(MVVM의 View). 수명·의존성 주입은 UIManager가 담당한다.
+    ///
+    /// 흐름: OnEnable → UIManager.Register(this) → Inject → Bind
+    ///       OnDisable → Unbind → UIManager.Unregister(this)
     /// </summary>
     public abstract class UIViewBase : MonoBehaviour
     {
@@ -30,10 +31,10 @@ namespace DesktopCompanion.Views
             AssetProvider = assetProvider;
         }
 
-        /// <summary>ViewModel 생성·주입·Bind 후, uGUI 위젯 ↔ VM 바인딩을 연결한다.</summary>
+        /// <summary>ViewModel을 생성·주입·Bind하고 uGUI 위젯과 VM의 바인딩을 연결한다.</summary>
         public abstract void Bind();
 
-        /// <summary>위젯 연결 해제 + VM.Unbind(). OnDisable에서 호출된다.</summary>
+        /// <summary>위젯 연결을 해제하고 VM.Unbind()를 호출한다. OnDisable에서 호출된다.</summary>
         public abstract void Unbind();
     }
 }

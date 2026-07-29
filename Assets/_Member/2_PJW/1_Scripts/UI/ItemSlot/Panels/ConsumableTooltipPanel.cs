@@ -6,8 +6,7 @@ using DesktopCompanion.Data;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 소모품 상세 팝업. 분류·장착 효과·보유 수량·제작 재료.
-    /// ※ 계획 28 R-5 — 아쿠아리움에서는 쓰이지 않는다. 제작/상점 UI가 생길 때 표현을 다듬는다.
+    /// 소모품 상세 팝업 패널. 분류·장착 효과·보유 수량을 표시하고, 제작 레시피가 있으면 제작 구역을 켠다.
     /// </summary>
     public class ConsumableTooltipPanel : ItemTooltipPanelBase
     {

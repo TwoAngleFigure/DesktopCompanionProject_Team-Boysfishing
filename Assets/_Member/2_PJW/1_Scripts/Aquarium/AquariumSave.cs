@@ -4,9 +4,8 @@ using System.Collections.Generic;
 namespace DesktopCompanion.Systems
 {
     /// <summary>
-    /// 아쿠아리움 영구 상태 DTO(§15.3). Plan A: 배치 물고기는 인벤토리에서 이동해 온 '개체'이므로
-    /// 인벤토리처럼 handle+dataId+롤값(Size/Quality)을 저장해 복원 시 Entity를 재등록한다.
-    /// 사전(재료 포인트/보류)은 JSON 친화적으로 병렬 리스트로 저장한다.
+    /// 아쿠아리움 영구 상태 DTO. 배치 물고기는 handle·dataId·롤값(Size/Quality)으로 저장해
+    /// 복원 시 Entity를 재등록하고, 재료 포인트·보류 생산물은 병렬 리스트로 저장한다.
     /// </summary>
     [Serializable]
     public class AquariumSave
@@ -22,7 +21,7 @@ namespace DesktopCompanion.Systems
         public List<int> pendingMatIds = new();   // 보류된 생산물 재료 dataId
         public List<int> pendingCounts = new();   // 보류 개수 — pendingMatIds와 병렬
 
-        /// <summary>배치된 물고기 1개체(인벤토리 슬롯 저장과 동형 + 생산 주기 진행값).</summary>
+        /// <summary>배치된 물고기 1개체의 저장 항목. 개체 식별·롤값과 생산 주기 진행값을 담는다.</summary>
         [Serializable]
         public class FishEntry
         {

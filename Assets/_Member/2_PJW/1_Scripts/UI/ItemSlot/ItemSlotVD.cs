@@ -4,7 +4,7 @@ using DesktopCompanion.Entities;
 
 namespace DesktopCompanion.Views
 {
-    /// <summary>아이템 종류. 슬롯의 표시 규칙과 툴팁 패널 선택에 함께 쓰인다.</summary>
+    /// <summary>아이템 종류. 슬롯의 표시 규칙과 툴팁 패널 선택에 쓰인다.</summary>
     public enum TooltipItemKind
     {
         Fish,
@@ -15,9 +15,9 @@ namespace DesktopCompanion.Views
     }
 
     /// <summary>
-    /// 슬롯 1칸의 표시 데이터(계획 28). ItemData 계열 전 종류 공용.
-    /// 등급 표현은 두 축으로 나뉜다 — <see cref="Tier"/>는 테두리 색(전 종류),
-    /// <see cref="Rarity"/>는 글로우(물고기만, <see cref="HasRarity"/>로 판별).
+    /// 슬롯 1칸의 표시 데이터. ItemData 계열 전 종류에 공용으로 쓴다.
+    /// <see cref="Tier"/>는 전 종류의 테두리 색, <see cref="Rarity"/>는 물고기 전용 글로우에 쓰이며
+    /// 레어도 보유 여부는 <see cref="HasRarity"/>로 판별한다.
     /// </summary>
     public class ItemSlotVD
     {
@@ -32,10 +32,10 @@ namespace DesktopCompanion.Views
         public int Star;                 // 물고기 개체 성급(1~5). 0 = 성급 표시 없음
         public int Quantity;             // 스택. 1 이하면 미표시
 
-        /// <summary>개체(Entity)에서 만들어졌는지. false면 정의(ItemData)만 있는 표시다.</summary>
+        /// <summary>개체(Entity)에서 만들어졌는지. false면 정의(ItemData)만으로 만든 표시다.</summary>
         public bool HasEntity => Handle.Value != System.Guid.Empty;
 
-        /// <summary>개체(Entity)에서 만든다. 물고기의 성급·레어도는 개체 롤값을 쓴다.</summary>
+        /// <summary>개체(Entity)로부터 만든다. 물고기의 성급·레어도는 개체 롤값을 쓴다.</summary>
         public static ItemSlotVD FromEntity(EntityHandle handle, EntityManager entities)
         {
             Entity entity = entities != null ? entities.Get(handle) : null;
@@ -80,8 +80,8 @@ namespace DesktopCompanion.Views
         }
 
         /// <summary>
-        /// 정의(ItemData)만으로 만든다. 개체가 없는 표시(아쿠아리움 재료 생산 풀, 상점 진열 등)용.
-        /// 물고기라도 이 경로로 만들면 개체 롤값이 없으므로 성급·레어도는 표시되지 않는다.
+        /// 정의(ItemData)만으로 만든다. 개체가 없는 표시에 쓴다.
+        /// 개체 롤값이 없으므로 물고기라도 성급·레어도는 채워지지 않는다.
         /// </summary>
         public static ItemSlotVD FromData(ItemData data, int quantity = 0)
         {

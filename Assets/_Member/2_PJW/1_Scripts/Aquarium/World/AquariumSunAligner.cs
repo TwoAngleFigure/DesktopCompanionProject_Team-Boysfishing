@@ -3,13 +3,10 @@ using UnityEngine;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 아쿠아리움 루트(카메라+탱크+물고기)를 SunSource(=URP 메인 라이트=물 라이트) 방향에 실시간 동기화 회전시킨다.
-    /// SW3 물은 메인 라이트를 공유하고 바다가 SunSource 기준이므로, 태양은 그대로 두고 아쿠아리움 쪽만 회전한다.
-    /// 카메라가 루트에 포함되어 함께 회전하므로 RT 구도(카메라-탱크 상대 자세)는 유지된다.
-    /// LateUpdate에서 적용해 라이트/애니메이션 갱신 이후 회전을 반영한다.
-    ///
-    /// Offset은 손으로 맞추기 비직관적이므로, 인스펙터에 배치해둔 현재 각도에서 역산하는 기능을 제공한다
-    /// (컴포넌트 우클릭 메뉴 "현재 배치로 Offset 계산"). 계산식: offset = Inverse(sun.rot) * root.rot.
+    /// 아쿠아리움 루트(카메라·탱크·물고기)를 태양(SunSource = URP 메인 라이트) 방향에 상대 오프셋만큼 회전시킨다.
+    /// LateUpdate에서 적용하므로 라이트·애니메이션 갱신 이후의 각도가 반영된다.
+    /// 카메라가 루트에 포함되어 함께 회전하므로 카메라-탱크의 상대 자세는 유지된다.
+    /// 컨텍스트 메뉴로 현재 배치에서 오프셋을 역산하거나 0으로 초기화할 수 있다.
     /// </summary>
     [DisallowMultipleComponent]
     public class AquariumSunAligner : MonoBehaviour
@@ -34,9 +31,8 @@ namespace DesktopCompanion.Views
         }
 
         /// <summary>
-        /// 현재 씬에 배치된 루트 각도와 태양 각도로부터 Offset을 역산해 채운다.
-        /// 지금의 배치 상태를 그대로 보존하면서(런타임에 root.rotation이 현재값과 동일해짐), 태양만 따라 상대 회전하게 된다.
-        /// 에디트 모드에서 루트를 원하는 각도로 배치한 뒤 실행하면 된다.
+        /// 현재 루트 각도와 태양 각도로부터 Offset을 역산해 채운다(offset = Inverse(sun.rotation) * root.rotation).
+        /// 적용 후 런타임 루트 각도가 현재 배치와 일치한다.
         /// </summary>
         [ContextMenu("현재 배치로 Offset 계산")]
         private void CaptureOffsetFromCurrent()
@@ -59,7 +55,7 @@ namespace DesktopCompanion.Views
             Debug.Log($"[AquariumSunAligner] 현재 배치 기준 Offset 계산: {m_offsetEuler} (sun={sun.name})");
         }
 
-        /// <summary>Offset을 0으로 초기화(태양 각도를 그대로 사용).</summary>
+        /// <summary>Offset을 0으로 초기화한다. 루트가 태양 각도를 그대로 따른다.</summary>
         [ContextMenu("Offset 초기화(0)")]
         private void ResetOffset()
         {

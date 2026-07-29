@@ -7,10 +7,9 @@ using DesktopCompanion.Entities;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 물고기 1개체 행(인벤토리·수족관 공용). 계획 28에 따라 표시를 슬롯에 위임하고 정보량을 줄였다 —
-    /// 티어·레어리티·크기·재료·분당 포인트·남은 시간 같은 상세는 슬롯 hover 팝업이 담당한다.
-    /// 행에 남는 것은 [슬롯] + 이름 + <b>현재 정렬 기준의 값</b> + 액션 버튼(+불가 사유)뿐이다.
-    /// 액션 대상은 인덱스가 아닌 <see cref="EntityHandle"/>이라, 목록을 어떻게 정렬해도 지목이 어긋나지 않는다.
+    /// 물고기 1개체를 표시하는 목록 행. 인벤토리·수족관 목록에 공용으로 쓴다.
+    /// 슬롯·이름·현재 정렬 기준의 값·액션 버튼(과 불가 사유)을 표시하며, 나머지 상세는 슬롯 hover 팝업이 담당한다.
+    /// 액션 대상은 인덱스가 아닌 <see cref="EntityHandle"/>이므로 정렬을 바꿔도 지목이 어긋나지 않는다.
     /// </summary>
     public class AquariumFishRow : MonoBehaviour
     {

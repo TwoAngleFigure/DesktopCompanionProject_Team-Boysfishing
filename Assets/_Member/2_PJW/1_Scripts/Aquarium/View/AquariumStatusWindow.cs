@@ -8,11 +8,11 @@ using DesktopCompanion.Systems;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 재료 생산 경과 + 수족관 정보 창(계획 27 W3).
-    /// 위=재료별 원형 게이지 목록(정렬 바), 아래=현재 등급/다음 등급 대비 + 강화 비용·버튼.
-    /// ※ '사용/최대' 수용량은 물고기 목록 창(AquariumFishWindow)에만 표시한다 — 여기서는 등급별 수용 한도만 보여준다.
+    /// 재료 생산 경과와 수족관 정보 창.
+    /// 위쪽에 재료별 원형 게이지 목록과 정렬 바를, 아래쪽에 현재 등급·다음 등급 대비와 강화 비용·버튼을 표시한다.
+    /// 등급이 주는 수용 한도만 표시하며, '사용/최대' 수용량은 물고기 목록 창이 담당한다.
     /// 1초 정산은 <see cref="AquariumStatusViewModel.ProgressTick"/>으로 들어와 게이지 값만 갱신한다.
-    /// 재료 슬롯의 상세는 hover 팝업이 담당한다(계획 28) — 이 창이 그 상세의 공급자다.
+    /// <see cref="IItemTooltipSource"/>를 구현해 재료 슬롯의 hover 팝업 상세를 공급한다.
     /// </summary>
     public class AquariumStatusWindow : UIWindowBase, IItemTooltipSource
     {
@@ -84,8 +84,8 @@ namespace DesktopCompanion.Views
         }
 
         /// <summary>
-        /// 아쿠아리움 재료 생산 풀은 Entity가 없고 dataId만 있으므로 정의 기반 경로로 만든다.
-        /// 재료 툴팁은 헤더만 표시하므로 시스템 지표는 넘기지 않는다.
+        /// hover된 재료 슬롯의 툴팁 상세를 조립한다.
+        /// 재료 생산 풀에는 Entity가 없으므로 dataId로 정의를 찾아 정의 기반 경로로 만든다.
         /// </summary>
         public ItemTooltipData BuildTooltip(ItemSlotVD vd)
         {
@@ -144,7 +144,7 @@ namespace DesktopCompanion.Views
                 return;
             }
 
-            // 현재 등급 — '사용/최대'가 아니라 등급이 주는 수용 '한도'다(사용량은 물고기 목록 창 담당).
+            // 현재 등급 — 등급이 주는 수용 한도를 표시한다.
             if (m_currentLevelText != null) m_currentLevelText.text = vd.LevelName;
             if (m_currentCapacityText != null) m_currentCapacityText.text = $"수용량 {vd.MaxCapacity}";
 

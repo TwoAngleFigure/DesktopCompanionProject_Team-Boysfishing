@@ -4,17 +4,19 @@ using UnityEngine;
 namespace DesktopCompanion.Rendering
 {
     /// <summary>
-    /// BF Pixelizer 오브젝트 공간 모드(계획 14) 지정 컴포넌트.
-    /// 부착한 계층 전체가 "하나의 회전 추종 픽셀 오브젝트"로 처리된다:
-    /// 정렬 공간 전용 버퍼에 3D 렌더 → 다운샘플 → 회전·배치 합성(픽셀이 오브젝트와 함께 회전).
-    /// 하위 렌더러는 BFPixelizer/PixelizedLit 머티리얼을 사용해야 한다(외형·아웃라인 설정은 머티리얼).
+    /// BF Pixelizer의 오브젝트 공간(스프라이트) 모드를 지정하는 컴포넌트.
+    /// 부착한 계층 전체가 하나의 회전 추종 픽셀 오브젝트로 처리되어,
+    /// 정렬 공간 전용 버퍼에 렌더 → 다운샘플 → 회전·배치 합성 경로를 탄다.
+    /// 활성 상태를 정적 목록에 등록해 렌더 피처가 순회하게 하고, 화면 격자 경로에서 제외되도록
+    /// 하위 렌더러의 renderingLayerMask를 <see cref="RenderingLayerBit"/>으로 교체했다가 비활성화 시 복원한다.
+    /// 하위 렌더러는 BFPixelizer/PixelizedLit 머티리얼을 사용해야 한다.
     /// </summary>
     [DisallowMultipleComponent]
     public class PixelizedSpriteObject : MonoBehaviour
     {
         private const string ForwardPassName = "BFPixelizedForward";
 
-        /// <summary>스프라이트 모드 렌더러 표시용 렌더링 레이어 비트 — v2(화면 격자) 경로에서 제외.</summary>
+        /// <summary>스프라이트 모드 렌더러를 표시하는 렌더링 레이어 비트. 화면 격자 경로에서 제외하는 데 쓴다.</summary>
         public const uint RenderingLayerBit = 1u << 31;
 
         public struct DrawEntry
@@ -27,7 +29,7 @@ namespace DesktopCompanion.Rendering
 
         private static readonly List<PixelizedSpriteObject> s_active = new();
 
-        /// <summary>활성 스프라이트 모드 오브젝트 목록(렌더 피처가 순회).</summary>
+        /// <summary>활성 스프라이트 모드 오브젝트 목록. 렌더 피처가 순회한다.</summary>
         public static IReadOnlyList<PixelizedSpriteObject> Active => s_active;
 
         private readonly List<DrawEntry> _draws = new();
@@ -35,13 +37,13 @@ namespace DesktopCompanion.Rendering
         private uint[] _originalRenderingLayers;
         private int _rendererLayerMask;
 
-        /// <summary>계층 렌더러들의 레이어 비트 합집합 — 카메라 Culling Mask 대조용.</summary>
+        /// <summary>계층 렌더러들의 레이어 비트 합집합. 카메라 Culling Mask와 대조하는 데 쓴다.</summary>
         public int RendererLayerMask => _rendererLayerMask;
 
-        /// <summary>격자 원점(월드) = transform.position.</summary>
+        /// <summary>격자 원점의 월드 좌표.</summary>
         public Vector3 PivotWS => transform.position;
 
-        /// <summary>화면면 회전각 추출 기준 축.</summary>
+        /// <summary>화면면 회전각을 추출할 때 기준으로 삼는 축.</summary>
         public Vector3 UpWS => transform.up;
 
         public IReadOnlyList<DrawEntry> Draws => _draws;
@@ -67,7 +69,7 @@ namespace DesktopCompanion.Rendering
             if (_draws.Count == 0)
                 Debug.LogWarning("[BFPixelizer] 계층에 PixelizedLit 머티리얼 렌더러가 없습니다.", this);
 
-            // v2(화면 격자) 경로에서 제외 — 스프라이트 합성과의 이중 표시 방지.
+            // 화면 격자 경로에서 제외 — 스프라이트 합성과의 이중 표시 방지.
             _originalRenderingLayers = new uint[_renderers.Length];
             _rendererLayerMask = 0;
             for (int i = 0; i < _renderers.Length; i++)
@@ -92,8 +94,8 @@ namespace DesktopCompanion.Rendering
         }
 
         /// <summary>
-        /// 컬링용 월드 AABB. 스프라이트 버퍼가 피벗 중심 · 반경 GetRadiusWS()의 영역을 담으므로,
-        /// 그 구를 감싸는 AABB가 합성이 픽셀을 남길 수 있는 최대 범위와 정확히 일치한다.
+        /// 컬링용 월드 AABB. 피벗 중심 · 반경 <see cref="GetRadiusWS"/>의 구를 감싸는 상자이며,
+        /// 합성이 픽셀을 남길 수 있는 최대 범위와 일치한다.
         /// </summary>
         public Bounds GetCullingBounds()
         {
@@ -101,7 +103,7 @@ namespace DesktopCompanion.Rendering
             return new Bounds(PivotWS, new Vector3(diameter, diameter, diameter));
         }
 
-        /// <summary>피벗 기준 바운딩 반경(월드) — 어떤 회전에도 오브젝트를 담는 스프라이트 버퍼 크기 산출용.</summary>
+        /// <summary>피벗 기준 월드 바운딩 반경. 어떤 회전에도 오브젝트를 담는 스프라이트 버퍼 크기 산출에 쓴다.</summary>
         public float GetRadiusWS()
         {
             float radius = 0f;
