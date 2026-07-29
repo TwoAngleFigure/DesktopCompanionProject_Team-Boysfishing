@@ -1,11 +1,14 @@
 using System;
+using UnityEngine;
 
 namespace DesktopCompanion.Data
 {
-    [Serializable]
-    public class RecipeData_Mixture
+    [CreateAssetMenu(
+        fileName = "RecipeData_Mixture", 
+        menuName = "Data/RecipeData_Mixture"
+        )]
+    public class RecipeData_Mixture : GameData
     {
-        public int m_id;
         public string m_resultType;
         public int m_resultId;
         public int m_resultCount;
