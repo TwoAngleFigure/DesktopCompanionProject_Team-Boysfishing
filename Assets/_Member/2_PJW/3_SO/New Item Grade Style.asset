@@ -12,21 +12,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b47be7f3dadd69646b9ef9acb4c2639d, type: 3}
   m_Name: New Item Grade Style
   m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Views.ItemGradeStyle
-  m_startHue: 120
-  m_stepDegrees: 60
+  m_startHue: 112
+  m_stepDegrees: 40
   m_saturation: 1
-  m_baseValue: 1
-  m_cycleValueFalloff: 0.65
+  m_baseValue: 0.88235295
+  m_cycleValueFalloff: 1
   m_rarityGlows:
-  - Color: {r: 0.89433956, g: 0.89433956, b: 0.89433956, a: 0}
+  - Color: {r: 1, g: 1, b: 1, a: 1}
     Strength: 0
-  - Color: {r: 0.4035908, g: 0.8490566, b: 0.1714133, a: 0}
+  - Color: {r: 0, g: 0.78113204, b: 0.10742669, a: 1}
     Strength: 0
-  - Color: {r: 0.17383398, g: 0.6793823, b: 0.96981126, a: 0}
+  - Color: {r: 0.17383398, g: 0.6793823, b: 0.96981126, a: 1}
     Strength: 0
-  - Color: {r: 0.9245283, g: 0.57266754, b: 0.18665004, a: 0}
+  - Color: {r: 0.21960786, g: 0.21960786, b: 0.21960786, a: 1}
     Strength: 0
-  - Color: {r: 0.8415094, g: 0.08097541, b: 0.08528235, a: 0}
+  - Color: {r: 0.8415094, g: 0.08097541, b: 0.08528235, a: 1}
     Strength: 0
-  - Color: {r: 0.38864213, g: 0.073784195, b: 0.90943396, a: 0}
+  - Color: {r: 0.38864213, g: 0.073784195, b: 0.90943396, a: 1}
     Strength: 0

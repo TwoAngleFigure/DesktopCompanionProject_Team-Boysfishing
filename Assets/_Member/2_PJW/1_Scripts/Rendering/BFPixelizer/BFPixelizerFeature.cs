@@ -17,7 +17,7 @@ namespace DesktopCompanion.Rendering
     /// </summary>
     public class BFPixelizerFeature : ScriptableRendererFeature
     {
-        [Tooltip("전역 픽셀 크기(화면 픽셀). V1: 모든 대상이 이 단일 격자를 공유한다(머티리얼 _PixelSize는 유보).")]
+        [Tooltip("전역 픽셀 크기(화면 픽셀). 모든 대상이 이 단일 격자를 공유한다.")]
         [Range(1, 5)]
         [SerializeField] private int _pixelSize = 3;
 
@@ -31,7 +31,7 @@ namespace DesktopCompanion.Rendering
         [Range(1f, 4f)]
         [SerializeField] private float _pixelScale = 1f;
 
-        [Header("월드 격자 (계획 23)")]
+        [Header("월드 격자")]
         [Tooltip("블록 크기를 월드 유닛 기준으로 고정한다. 해상도가 달라도 오브젝트가 같은 도트 수로 그려진다. " +
                  "격자 기준값은 PixelGridDesign이 소유한다(640×360 · 18도트/유닛). " +
                  "해제 시 화면 격자(_pixelSize 기준)로 동작한다 — 비교·폴백용.")]
