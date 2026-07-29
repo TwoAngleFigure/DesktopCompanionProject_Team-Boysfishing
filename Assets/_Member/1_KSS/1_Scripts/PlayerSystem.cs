@@ -88,15 +88,27 @@ namespace DesktopCompanion.Systems
                 {
                     if (kvp.Value.Value != Guid.Empty)
                     {
-                        Entity_Equipment equip = EntityManager.Get<Entity_Equipment>(kvp.Value);
-                        if (equip != null)
+                        Entity entity = EntityManager.Get(kvp.Value);
+                        if (entity is Entity_Equipment equip)
                         {
                             save.equippedItems.Add(new PlayerSave.EquippedItemSave
                             {
                                 area = kvp.Key,
                                 handle = kvp.Value.ToString(),
                                 dataId = equip.DataId,
-                                upgradeLevel = equip.UpgradeLevel
+                                upgradeLevel = equip.UpgradeLevel,
+                                quantity = 1
+                            });
+                        }
+                        else if (entity is Entity_Consumables consumable)
+                        {
+                            save.equippedItems.Add(new PlayerSave.EquippedItemSave
+                            {
+                                area = kvp.Key,
+                                handle = kvp.Value.ToString(),
+                                dataId = consumable.DataId,
+                                upgradeLevel = 0,
+                                quantity = consumable.Quantity
                             });
                         }
                     }
@@ -129,11 +141,23 @@ namespace DesktopCompanion.Systems
                 {
                     if (EntityHandle.TryParse(equipSave.handle, out EntityHandle parsedHandle))
                     {
-                        EntityHandle restoredHandle = EntityManager.Restore<ItemData_Equipment>(parsedHandle, equipSave.dataId);
-                        if (EntityManager.Get(restoredHandle) is Entity_Equipment equip)
+                        if (equipSave.area == EquipmentMountingArea.Bait || equipSave.area == EquipmentMountingArea.Groundbait)
                         {
-                            equip.SetUpgradeLevel(Math.Max(0, equipSave.upgradeLevel));
-                            entity_Player.Equip(equipSave.area, restoredHandle);
+                            EntityHandle restoredHandle = EntityManager.Restore<ItemData_Consumables>(parsedHandle, equipSave.dataId);
+                            if (EntityManager.Get(restoredHandle) is Entity_Consumables consumable)
+                            {
+                                consumable.SetQuantity(Math.Max(1, equipSave.quantity));
+                                entity_Player.Equip(equipSave.area, restoredHandle);
+                            }
+                        }
+                        else
+                        {
+                            EntityHandle restoredHandle = EntityManager.Restore<ItemData_Equipment>(parsedHandle, equipSave.dataId);
+                            if (EntityManager.Get(restoredHandle) is Entity_Equipment equip)
+                            {
+                                equip.SetUpgradeLevel(Math.Max(0, equipSave.upgradeLevel));
+                                entity_Player.Equip(equipSave.area, restoredHandle);
+                            }
                         }
                     }
                 }
@@ -200,12 +224,23 @@ namespace DesktopCompanion.Systems
                 // 🛡️ [방어 코드 1] 슬롯이 비어있으면 해당 칸의 추가 스탯 계산만 건너뜁니다.
                 if (equitmentHandle.Value == Guid.Empty) continue;
 
-                Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(equitmentHandle);
+                Entity entity = EntityManager.Get(equitmentHandle);
+                if (entity == null) continue;
 
-                // 🛡️ [방어 코드 2] 장비 데이터가 null인 경우 해당 칸 무시 (NullReferenceException 완벽 차단)
-                if (equipment == null) continue;
+                StatModifier[] modifiers = null;
 
-                foreach (StatModifier stat in equipment.CurrentModifiers)
+                if (entity is Entity_Equipment equipment && equipment.ItemData != null)
+                {
+                    modifiers = equipment.CurrentModifiers;
+                }
+                else if (entity is Entity_Consumables consumable && consumable.ItemData != null)
+                {
+                    modifiers = consumable.ItemData.Modifiers;
+                }
+
+                if (modifiers == null) continue;
+
+                foreach (StatModifier stat in modifiers)
                 {
                     switch (stat.Stat)
                     {
@@ -258,7 +293,7 @@ namespace DesktopCompanion.Systems
 
         private bool TryFindAndRemoveFromInventory(InventorySystem inventory, EntityHandle handle)
         {
-            ItemType[] types = { ItemType.Fish, ItemType.Equipment, ItemType.Materials };
+            ItemType[] types = { ItemType.Fish, ItemType.Equipment, ItemType.Materials, ItemType.Consumables };
 
             foreach (var type in types)
             {
@@ -324,9 +359,10 @@ namespace DesktopCompanion.Systems
             Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
             if (player != null && player.Equipped.TryGetValue(area, out EntityHandle handle))
             {
-                Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(handle);
-                // 장비 엔티티가 유효하면 해당 장비의 이름을 반환하고, 없으면 null 반환
-                return equipment != null ? equipment.Name : null;
+                Entity entity = EntityManager.Get(handle);
+                if (entity is Entity_Equipment equipment) return equipment.Name;
+                if (entity is Entity_Consumables consumable) return consumable.Name;
+                return null;
             }
             return null;
         }

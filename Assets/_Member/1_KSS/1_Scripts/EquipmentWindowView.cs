@@ -14,7 +14,9 @@ namespace DesktopCompanion.Views
         private readonly EquipmentViewModel m_vm = new();
 
         [Header("UI 연결")]
-        [SerializeField] private TextMeshProUGUI m_allStatsText;
+        [SerializeField] private TextMeshProUGUI m_battleStatsText; // [변경] 전투 스탯
+        [SerializeField] private TextMeshProUGUI m_autoBattleStatsText; // [변경] 자동 전투 스탯
+        [SerializeField] private TextMeshProUGUI m_rewardStatsText; // [변경] 보상 및 기타 스탯
         [SerializeField] private EquipmentSlotWidget[] m_slots;
 
         // [추가됨] 배 장비창 텍스트 2개를 연결할 빈칸!
@@ -54,16 +56,17 @@ namespace DesktopCompanion.Views
 
                         if (!m_itemPickupController.HasItem)
                         {
-                            // 1. 선택 없음 + 장착된 장비 슬롯 클릭 -> 장비 선택 (실제 장비는 해제되지 않음)
                             if (!equippedItem.Equals(default(EntityHandle)))
                             {
-                                Sprite icon = null;
-                                Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(equippedItem);
-                                if (equipment != null && equipment.ItemData != null && !string.IsNullOrEmpty(equipment.ItemData.AssetKey))
+                                if (TryGetEquipmentOrConsumableData(equippedItem, out _, out string assetKey, out _))
                                 {
-                                    AssetProvider.TryGet<Sprite>(equipment.ItemData.AssetKey, out icon);
+                                    Sprite icon = null;
+                                    if (!string.IsNullOrEmpty(assetKey))
+                                    {
+                                        AssetProvider.TryGet<Sprite>(assetKey, out icon);
+                                    }
+                                    m_itemPickupController.BeginEquipmentPickup(clickedArea, equippedItem, icon);
                                 }
-                                m_itemPickupController.BeginEquipmentPickup(clickedArea, equippedItem, icon);
                             }
                         }
                         else
@@ -82,12 +85,8 @@ namespace DesktopCompanion.Views
                             {
                                 // 인벤토리 장비 선택 중
                                 EntityHandle pickedItem = m_itemPickupController.PickedHandle;
-                                Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(pickedItem);
-
-                                if (equipment != null)
+                                if (TryGetEquipmentOrConsumableData(pickedItem, out EquipmentMountingArea itemArea, out _, out _))
                                 {
-                                    EquipmentMountingArea itemArea = equipment.ItemData.MountingArea;
-
                                     if (itemArea == clickedArea)
                                     {
                                         // 4. 같은 장착 부위 슬롯 클릭 -> EquipCommand 실행, 선택 해제
@@ -106,13 +105,8 @@ namespace DesktopCompanion.Views
                         if (m_itemPickupController != null && m_itemPickupController.HasItem)
                         {
                             EntityHandle droppedItem = m_itemPickupController.PickedHandle;
-                            Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(droppedItem);
-
-                            if (equipment != null)
+                            if (TryGetEquipmentOrConsumableData(droppedItem, out EquipmentMountingArea itemArea, out _, out _))
                             {
-                                // ⚠️ 주의: 변수명(MountingArea)이 에러나면 ItemData_Equipment의 실제 변수명으로 수정하세요!
-                                EquipmentMountingArea itemArea = equipment.ItemData.MountingArea;
-
                                 if (itemArea == dropArea)
                                 {
                                     m_vm.EquipCommand.Execute((dropArea, droppedItem));
@@ -140,15 +134,21 @@ namespace DesktopCompanion.Views
 
                         if (!equippedItem.Equals(default(EntityHandle)) && m_itemPickupController != null && !m_itemPickupController.HasItem)
                         {
-                            Sprite icon = null;
-                            Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(equippedItem);
-                            if (equipment != null && equipment.ItemData != null && !string.IsNullOrEmpty(equipment.ItemData.AssetKey))
+                            if (TryGetEquipmentOrConsumableData(equippedItem, out _, out string assetKey, out _))
                             {
-                                AssetProvider.TryGet<Sprite>(equipment.ItemData.AssetKey, out icon);
+                                Sprite icon = null;
+                                if (!string.IsNullOrEmpty(assetKey))
+                                {
+                                    AssetProvider.TryGet<Sprite>(assetKey, out icon);
+                                }
+                                // 장비 전용 픽업 메서드 호출 (아이콘 포함)
+                                m_itemPickupController.BeginEquipmentPickup(dragArea, equippedItem, icon);
                             }
-
-                            // 장비 전용 픽업 메서드 호출 (아이콘 포함)
-                            m_itemPickupController.BeginEquipmentPickup(dragArea, equippedItem, icon);
+                            else
+                            {
+                                // 헬퍼 실패시에도 픽업은 시도 (아이콘 없이)
+                                m_itemPickupController.BeginEquipmentPickup(dragArea, equippedItem, null);
+                            }
                             
                             // 빈 칸으로 만들기(장비 해제)
                             m_vm.EquipCommand.Execute((dragArea, default(EntityHandle)));
@@ -188,21 +188,32 @@ namespace DesktopCompanion.Views
                 EntityHandle equippedItem = m_vm.GetEquippedHandleForArea(slot.Area);
                 
                 Sprite icon = null;
+                int quantity = 0;
                 if (!equippedItem.Equals(default(EntityHandle)))
                 {
-                    Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(equippedItem);
-                    if (equipment != null && equipment.ItemData != null && !string.IsNullOrEmpty(equipment.ItemData.AssetKey))
+                    if (TryGetEquipmentOrConsumableData(equippedItem, out _, out string assetKey, out quantity))
                     {
-                        AssetProvider.TryGet<Sprite>(equipment.ItemData.AssetKey, out icon);
+                        if (!string.IsNullOrEmpty(assetKey))
+                        {
+                            AssetProvider.TryGet<Sprite>(assetKey, out icon);
+                        }
                     }
                 }
 
-                slot.RefreshSlotUI(itemName, icon);
+                slot.RefreshSlotUI(itemName, icon, quantity);
             }
 
-            if (m_allStatsText != null)
+            if (m_battleStatsText != null)
             {
-                m_allStatsText.text = m_vm.GetAllStatsFormattedText();
+                m_battleStatsText.text = m_vm.GetBattleStatsFormattedText();
+            }
+            if (m_autoBattleStatsText != null)
+            {
+                m_autoBattleStatsText.text = m_vm.GetAutoBattleStatsFormattedText();
+            }
+            if (m_rewardStatsText != null)
+            {
+                m_rewardStatsText.text = m_vm.GetRewardStatsFormattedText();
             }
 
             // [추가됨] 스탯창이 갱신될 때, 배 장비창의 텍스트도 자동으로 최신 스탯을 받아옵니다!
@@ -221,6 +232,40 @@ namespace DesktopCompanion.Views
             if (m_playerEquipPanel != null) m_playerEquipPanel.SetActive(tabIndex == 0);
             if (m_shipEquipPanel != null) m_shipEquipPanel.SetActive(tabIndex == 1);
             if (m_statsPanel != null) m_statsPanel.SetActive(tabIndex == 2);
+        }
+
+        // [추가됨] Entity_Equipment 또는 Entity_Consumables 양쪽 모두에서 필요한 정보(장착부위, 아이콘, 수량)를 안전하게 빼오는 헬퍼 함수
+        private bool TryGetEquipmentOrConsumableData(EntityHandle handle, out EquipmentMountingArea area, out string assetKey, out int quantity)
+        {
+            area = default;
+            assetKey = string.Empty;
+            quantity = 0;
+
+            if (handle.Equals(default(EntityHandle))) return false;
+
+            Entity entity = EntityManager.Get(handle);
+            if (entity is Entity_Equipment equip)
+            {
+                if (equip.ItemData != null)
+                {
+                    area = equip.ItemData.MountingArea;
+                    assetKey = equip.ItemData.AssetKey;
+                    quantity = 1;
+                    return true;
+                }
+            }
+            else if (entity is Entity_Consumables cons)
+            {
+                if (cons.ItemData != null)
+                {
+                    area = cons.ItemData.MountingArea;
+                    assetKey = cons.ItemData.AssetKey;
+                    quantity = cons.Quantity;
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }
