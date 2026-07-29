@@ -143,6 +143,8 @@ namespace DesktopCompanion.Core
             m_systemManager.Register(new DesktopCompanion.Systems.AquariumSystem());   // Inventory 이후(생산물 지급 의존)
 
             m_systemManager.Register(new DesktopCompanion.Systems.MixtureSystem());
+
+            m_systemManager.Register(new DesktopCompanion.Systems.TutorialSystem());   // 타 System 구독만 하므로 최후미
         }
 
         // Data 타입 ↔ Entity 매핑 등록. 새 계열은 여기 한 줄 추가(EntityManager 본체는 불변).
