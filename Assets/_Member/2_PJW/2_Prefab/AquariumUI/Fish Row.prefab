@@ -288,7 +288,7 @@ GameObject:
   - component: {fileID: 2491078156679050063}
   - component: {fileID: 8063063689825715889}
   m_Layer: 5
-  m_Name: FIsh Row
+  m_Name: Fish Row
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -639,6 +639,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4677997721682301207, guid: 5e34e2e431312e7488e4bd254bd2d856, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 7f5310b52f07561428872c466b3ad035, type: 3}
     - target: {fileID: 6362569440421375543, guid: 5e34e2e431312e7488e4bd254bd2d856, type: 3}
       propertyPath: m_Name
       value: Item Slot View
