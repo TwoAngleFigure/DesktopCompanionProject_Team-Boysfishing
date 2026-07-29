@@ -824,12 +824,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Views.ShopWindowView
   m_participateInLayout: 1
+  m_closableByShortcut: 1
   m_hideMode: 1
   m_canvasGroup: {fileID: 6312819656601718692}
   m_ownCanvas: {fileID: 527388618437029446}
   m_openOnStart: 0
   m_closeButton: {fileID: 1444321563073518227}
   m_goldText: {fileID: 1220255730506721544}
+  m_EquipmentSlotBackground: {fileID: 21300000, guid: 5b97967aece04d54c8e035145c8fec75, type: 3}
+  m_MaterialsSlotBackground: {fileID: 21300000, guid: e133cf6cb072f7e40844c3ad203a2b39, type: 3}
   m_productRoot: {fileID: 508478751356181196}
   m_productViewPrefab: {fileID: 7734774554857000515, guid: 963be6588790a6a4fb1a52b823c1ed86, type: 3}
   m_buyPopup: {fileID: 3864065759911009251}
@@ -2844,7 +2847,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 10
+  m_SortingOrder: 0
   m_TargetDisplay: 0
 --- !u!114 &3417399635208878236
 MonoBehaviour:
@@ -2863,7 +2866,7 @@ MonoBehaviour:
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 3440, y: 1440}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 1
+  m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
