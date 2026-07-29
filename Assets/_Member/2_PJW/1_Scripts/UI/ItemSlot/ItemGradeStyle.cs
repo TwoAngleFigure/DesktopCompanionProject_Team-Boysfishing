@@ -21,10 +21,14 @@ namespace DesktopCompanion.Views
                  "(작으면 인접 티어가 비슷해지고, 크면 한 바퀴를 일찍 돌아 색이 겹친다)")]
         [SerializeField, Range(1f, 360f)] private float m_stepDegrees = 60f;
 
+        [Header("티어 테두리 — 톤(전 티어 공통)")]
+        [Tooltip("선명도. 1 = 원색, 낮출수록 흰빛이 섞여 탁해진다. 예: 밝기 255 + 선명도 0.5 → (255,255,128)")]
         [SerializeField, Range(0f, 1f)] private float m_saturation = 1f;
+        [Tooltip("밝기 상한 — 색에서 가장 밝은 채널이 가질 값. 1 = 255(완전한 원색), 0.737 = 188. " +
+                 "인스펙터에서는 0~255 채널값으로 표기된다")]
         [SerializeField, Range(0f, 1f)] private float m_baseValue = 1f;
 
-        [Tooltip("색상환을 한 바퀴 돌 때마다 곱할 명도 배수. 스텝이 커서 색이 되돌아올 때 구분용(안전망)")]
+        [Tooltip("색상환을 한 바퀴 돌 때마다 밝기 상한에 곱할 배수. 스텝이 커서 색이 되돌아올 때 구분용(안전망)")]
         [SerializeField, Range(0.1f, 1f)] private float m_cycleValueFalloff = 0.65f;
 
         [Header("레어도 글로우 — 물고기 전용")]

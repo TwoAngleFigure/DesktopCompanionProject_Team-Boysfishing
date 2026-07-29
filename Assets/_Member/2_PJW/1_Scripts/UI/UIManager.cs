@@ -68,11 +68,15 @@ namespace DesktopCompanion.Views
             m_assetProvider = assetProvider;
             m_initialized = true;
 
-            for (int i = 0; i < s_pending.Count; i++)
-            {
-                AdoptPending(s_pending[i]);
-            }
+            // 스냅샷 후 비우고 순회한다. Bind가 다른 뷰를 켜고 끌 수 있고(예: UITabWindow의 초기 탭 적용 →
+            // 비선택 창 SetActive(false) → OnDisable → Unregister → s_pending.Remove), 그 제거가
+            // 순회 중인 목록을 밀어 항목을 건너뛰게 하기 때문이다.
+            UIViewBase[] pending = s_pending.ToArray();
             s_pending.Clear();
+            for (int i = 0; i < pending.Length; i++)
+            {
+                AdoptPending(pending[i]);
+            }
         }
 
         // ── 자가 등록·수명 (WorldManager와 동일 패턴) ──
