@@ -1,3 +1,4 @@
+using DesktopCompanion.Data;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -5,11 +6,13 @@ using UnityEngine.UI;
 
 namespace DesktopCompanion.Views
 {
-    public class ShopWindowView : UIWindowBase
+    public class ShopWindowView : UIWindowBase, IItemTooltipSource
     {
         [Header("UI")]
         [SerializeField] private Button m_closeButton;
         [SerializeField] private TMP_Text m_goldText;
+        [SerializeField] private Sprite m_EquipmentSlotBackground;
+        [SerializeField] private Sprite m_MaterialsSlotBackground;
 
         [Header("Product")]
         [SerializeField] private Transform m_productRoot;
@@ -31,6 +34,30 @@ namespace DesktopCompanion.Views
         private readonly List<ShopProductView> m_products = new();
 
         private readonly Dictionary<string, Sprite> m_runtimeIconCache = new();
+
+        public ItemTooltipData BuildTooltip(ItemSlotVD vd)
+        {
+            ItemTooltipData data = null;
+            if (vd != null)
+            {
+                ItemData itemData = null;
+                switch (vd.Kind)
+                {
+                    case TooltipItemKind.Equipment:
+                        itemData = m_vm.FindDataById(ItemType.Equipment, vd.DataId);
+                        break;
+                    case TooltipItemKind.Materials:
+                        itemData = m_vm.FindDataById(ItemType.Materials, vd.DataId);
+                        break;
+                    case TooltipItemKind.Consumables:
+                        itemData = m_vm.FindDataById(ItemType.Consumables, vd.DataId);
+                        break;
+                }
+
+                data = ItemTooltipBuilder.FromData(itemData);
+            }
+            return data;
+        }
 
         public override void Bind()
         {
@@ -94,8 +121,18 @@ namespace DesktopCompanion.Views
             {
                 ShopProductViewData productData = products[i];
                 Sprite icon = GetIcon(productData);
+                ItemSlotVD vd = ItemSlotVD.FromData(m_vm.FindData(productData));
 
-                m_products[i].Set(productData, icon);
+                switch (productData.ItemType)
+                {
+                    case ItemType.Equipment:
+                    case ItemType.Consumables:
+                        m_products[i].Set(m_EquipmentSlotBackground, productData, icon, vd, this);
+                        break;
+                    case ItemType.Materials:
+                        m_products[i].Set(m_MaterialsSlotBackground, productData, icon, vd, this);
+                        break;
+                }
             }
 
             for(int i = products.Count; i < m_products.Count; i++)

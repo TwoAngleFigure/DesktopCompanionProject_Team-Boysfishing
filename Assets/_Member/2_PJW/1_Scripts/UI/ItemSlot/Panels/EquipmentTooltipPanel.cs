@@ -19,6 +19,7 @@ namespace DesktopCompanion.Views
         [Header("다음 강화")]
         [Tooltip("최대 강화면 통째로 꺼지는 구역")]
         [SerializeField] private GameObject m_nextStepSection;
+        [SerializeField] private TMP_Text m_nextUpgradeText;
         [SerializeField] private TMP_Text m_nextCostText;
 
         public override TooltipItemKind Kind => TooltipItemKind.Equipment;
@@ -42,6 +43,7 @@ namespace DesktopCompanion.Views
             SetSection(m_nextStepSection, hasNext);
             if (hasNext)
             {
+                SetText(m_nextUpgradeText, $"+{equipment.UpgradeLevel + 1} / {equipment.MaxUpgradeLevel}");
                 SetText(m_nextCostText, FormatCost(equipment.NextStep));
             }
         }

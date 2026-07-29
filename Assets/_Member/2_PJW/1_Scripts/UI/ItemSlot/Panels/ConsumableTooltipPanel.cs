@@ -33,7 +33,7 @@ namespace DesktopCompanion.Views
             }
 
             SetText(m_categoryText, CategoryLabel(consumable.Category));
-            SetText(m_quantityText, consumable.Quantity > 0 ? $"보유 {consumable.Quantity}개" : string.Empty);
+            SetText(m_quantityText, consumable.Quantity > 0 ? $"{consumable.Quantity}개 보유" : string.Empty);
             SetText(m_modifierText, FormatModifiers(consumable.Modifiers));
 
             string craft = FormatCraft(consumable);

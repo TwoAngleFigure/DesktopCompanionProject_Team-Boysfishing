@@ -7,17 +7,19 @@ using UnityEngine.UI;
 
 namespace DesktopCompanion.Views
 {
-    public class InventorySlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class InventorySlotView : MonoBehaviour
     {
         [Header("Button")]
         [SerializeField] private Button m_button;
 
         [Header("Visual")]
+        [SerializeField] private Image m_slotBackground;
         [SerializeField] private Image m_iconImage;
         [SerializeField] private TMP_Text m_quantityText;
         [SerializeField] private TMP_Text m_subInfoText;
         [SerializeField] private GameObject m_fishStarImage;
         [SerializeField] private GameObject m_enhanceIcon;
+        [SerializeField] private Image m_tierBorder;
 
         [Header("State")]
         [SerializeField] private GameObject m_emptyRoot;
@@ -30,11 +32,11 @@ namespace DesktopCompanion.Views
         private float m_lastClickTime = -1f;
         private bool m_canDoubleClick;
         private bool m_isSellMode;
+        private ItemSlotView m_slotView;
 
         private Action<int> m_onClick;
         private Action<int> m_onDoubleClick;
-        private Action<int> m_onPointerEnter;
-        private Action<int> m_onPointerExit;
+
 
         private void Awake()
         {
@@ -42,16 +44,18 @@ namespace DesktopCompanion.Views
             {
                 m_button = GetComponent<Button>();
             }
+            if(m_slotView == null)
+            {
+                m_slotView = GetComponent<ItemSlotView>();
+            }
         }
 
-        public void Initialize(int slotIndex, Action<int> onClick, Action<int> onDoubleClick, Action<int> onPointerEnter, Action<int> onPointerExit)
+        public void Initialize(int slotIndex, Action<int> onClick, Action<int> onDoubleClick)
         {
             m_slotIndex = slotIndex;
 
             m_onClick = onClick;
             m_onDoubleClick = onDoubleClick;
-            m_onPointerEnter = onPointerEnter;
-            m_onPointerExit = onPointerExit;
 
             if (m_button == null)
             {
@@ -63,15 +67,27 @@ namespace DesktopCompanion.Views
             m_button.onClick.AddListener(HandleClick);
         }
 
-        public void Set(InventorySlotViewData data, Sprite icon)
+        public void Set(InventorySlotViewData data, Sprite icon, Sprite slotBackground, ItemSlotVD vd, IItemTooltipSource tooltipSource)
         {
-            if (data == null || data.IsEmpty)
+            if (data == null)
+                return;
+            if (m_slotBackground != null)
+            {
+                m_slotBackground.sprite = slotBackground;
+                m_slotBackground.enabled = slotBackground != null;
+            }
+
+            if(data.IsEmpty)
             {
                 SetEmpty(data);
                 return;
             }
 
-            m_canDoubleClick = data.ItemType == ItemType.Equipment;
+            m_canDoubleClick = data.ItemType == ItemType.Equipment || data.ItemType == ItemType.Consumables;
+            if(m_tierBorder != null)
+            {
+                m_tierBorder.gameObject.SetActive(true);
+            }
 
             if (m_emptyRoot != null)
             {
@@ -83,6 +99,7 @@ namespace DesktopCompanion.Views
                 m_iconImage.sprite = icon;
                 m_iconImage.enabled = icon != null;
             }
+
 
             if (m_quantityText != null)
             {
@@ -117,6 +134,11 @@ namespace DesktopCompanion.Views
             if(m_enhanceIcon != null)
             {
                 m_enhanceIcon.SetActive(data.ItemType == ItemType.Equipment && data.UpgradeLevel > 0);
+            }
+
+            if(vd != null && tooltipSource != null)
+            {
+                m_slotView.Set(vd, icon, tooltipSource);
             }
         }
 
@@ -154,6 +176,16 @@ namespace DesktopCompanion.Views
             if(m_enhanceIcon != null)
             {
                 m_enhanceIcon.SetActive(false);
+            }
+
+            if(m_tierBorder != null)
+            {
+                m_tierBorder.gameObject.SetActive(false);
+            }
+
+            if(m_slotView != null)
+            {
+                m_slotView.Set(null, null, null);
             }
 
             SetSellSelection(false, 0, false);
@@ -255,16 +287,6 @@ namespace DesktopCompanion.Views
             m_onClick?.Invoke(m_slotIndex);
         }
 
-        public void OnPointerEnter(PointerEventData eventData)
-        {
-            m_onPointerEnter?.Invoke(m_slotIndex);
-        }
-
-        public void OnPointerExit(PointerEventData eventData)
-        {
-            m_onPointerExit?.Invoke(m_slotIndex);
-        }
-
         private void OnDestroy()
         {
             if (m_button != null)
@@ -274,8 +296,6 @@ namespace DesktopCompanion.Views
 
             m_onClick = null;
             m_onDoubleClick = null;
-            m_onPointerEnter = null;
-            m_onPointerExit = null;
         }
     }
 }

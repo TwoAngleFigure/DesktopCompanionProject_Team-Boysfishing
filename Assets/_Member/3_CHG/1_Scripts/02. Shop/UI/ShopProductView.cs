@@ -11,19 +11,20 @@ namespace DesktopCompanion.Views
         [SerializeField] private Button m_button;
 
         [Header("Visual")]
-        [SerializeField] private Image m_itemIcon;
+        [SerializeField] private Image m_backgroundImage;
         [SerializeField] private TMP_Text m_itemName;
         [SerializeField] private TMP_Text m_typeText;
         [SerializeField] private TMP_Text m_descriptionText;
         [SerializeField] private TMP_Text m_priceText;
+        [SerializeField] private ItemSlotView m_slotView;
 
         private ShopProductViewData m_productData;
+
 
         Action<ShopProductViewData> m_onClick;
 
         public void Initialize(Action<ShopProductViewData> onClick)
         {
-
             m_onClick = onClick;
 
             if (m_button == null)
@@ -32,21 +33,25 @@ namespace DesktopCompanion.Views
                 return;
             }
 
+            if(m_slotView == null)
+            {
+                m_slotView = GetComponentInChildren<ItemSlotView>();
+            }
+
             m_button.onClick.RemoveListener(OnClickButton);
             m_button.onClick.AddListener(OnClickButton);
         }
 
-        public void Set(ShopProductViewData data, Sprite icon)
+        public void Set(Sprite background, ShopProductViewData data, Sprite icon, ItemSlotVD vd, IItemTooltipSource source)
         {
             if (data == null)
                 return;
 
             m_productData = data;
 
-            if (m_itemIcon != null)
+            if(background != null)
             {
-                m_itemIcon.sprite = icon;
-                m_itemIcon.enabled = icon != null;
+                m_backgroundImage.sprite = background;
             }
 
             if (m_itemName != null)
@@ -63,6 +68,11 @@ namespace DesktopCompanion.Views
 
             if (m_button != null)
                 m_button.interactable = data.IsBuyable;
+
+            if(vd != null && source != null)
+            {
+                m_slotView.Set(vd, icon, source);
+            }
         }
 
         public void OnClickButton()

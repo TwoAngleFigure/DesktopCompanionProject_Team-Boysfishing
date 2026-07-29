@@ -203,7 +203,7 @@ namespace DesktopCompanion.Systems
         public static ItemType NormalizeSlotType(ItemType itemType)
         {
             return itemType == ItemType.Consumables
-                ? ItemType.Materials
+                ? ItemType.Equipment
                 : itemType;
         }
 

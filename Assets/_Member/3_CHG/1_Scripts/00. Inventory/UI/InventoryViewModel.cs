@@ -5,6 +5,7 @@ using DesktopCompanion.Core;
 using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
 using DesktopCompanion.Systems;
+using DG.Tweening.Core.Easing;
 
 namespace DesktopCompanion.Views
 {
@@ -716,7 +717,7 @@ namespace DesktopCompanion.Views
         {
             if (tab == ItemType.Consumables)
             {
-                return ItemType.Materials;
+                return ItemType.Equipment;
             }
 
             return tab;
@@ -732,27 +733,37 @@ namespace DesktopCompanion.Views
             return m_inventorySystem.SwapSlots(CurrentTab.Value, fromIndex, toIndex);
         }
 
-        public bool EquipEquipmentAtSlot(int slotIndex)
+        public bool EquipAtSlot(int slotIndex, ItemType type)
         {
             if (m_playerSystem == null || m_inventorySystem == null || EntityManager == null)
             {
                 return false;
             }
 
-            if (!m_inventorySystem.GetHandleAt(ItemType.Equipment, slotIndex, out EntityHandle equipmentHandle))
+            if (!m_inventorySystem.GetHandleAt(type, slotIndex, out EntityHandle equipmentHandle))
             {
                 return false;
             }
 
-            Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(equipmentHandle);
-
-            if (equipment == null || equipment.ItemData == null)
+            switch (type)
             {
-                return false;
-            }
+                case ItemType.Equipment:
+                    Entity_Equipment equipment = EntityManager.Get<Entity_Equipment>(equipmentHandle);
 
-            m_playerSystem.Equip(equipment.ItemData.MountingArea, equipmentHandle);
-            return true;
+                    if (equipment == null || equipment.ItemData == null)
+                        return false;
+                    m_playerSystem.Equip(equipment.ItemData.MountingArea, equipmentHandle);
+                    return true;
+                case ItemType.Consumables:
+                    Entity_Consumables consumables = EntityManager.Get<Entity_Consumables>(equipmentHandle);
+
+                    if (consumables == null || consumables.ItemData == null)
+                        return false;
+                    m_playerSystem.Equip(consumables.ItemData.MountingArea, equipmentHandle);
+                    return true;
+                default:
+                    return false;
+            }
         }
 
         public bool PlaceEquippedItemAtSlot(EquipmentMountingArea sourceArea, int targetSlotIndex)

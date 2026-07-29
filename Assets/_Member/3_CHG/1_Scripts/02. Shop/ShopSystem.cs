@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using static UnityEditor.Progress;
 
 namespace DesktopCompanion.Systems
 {
@@ -374,6 +375,22 @@ namespace DesktopCompanion.Systems
                 return false;
             }
             return true;
+        }
+
+        public ItemData FindItemDataById(ItemType type, int id)
+        {
+            switch (type)
+            {
+                case ItemType.Materials:
+                    return DataManager.GetData<ItemData_Materials>(id);
+                case ItemType.Equipment:
+                    return DataManager.GetData<ItemData_Equipment>(id);
+                case ItemType.Consumables:
+                    return DataManager.GetData<ItemData_Consumables>(id);
+                case ItemType.Fish:
+                default:
+                    return default;
+            }
         }
 
     }
