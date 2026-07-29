@@ -2,6 +2,7 @@ using DesktopCompanion.Data;
 using DesktopCompanion.Systems;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 
@@ -101,6 +102,26 @@ namespace DesktopCompanion.Views
                 products.Add(productData);
             }
 
+            products.Sort((a, b) =>
+            {
+                int buyableCompare = b.IsBuyable.CompareTo(a.IsBuyable);
+
+                if (buyableCompare != 0)
+                {
+                    return buyableCompare;
+                }
+
+                int tierCompare = a.Tier.CompareTo(b.Tier);
+
+                if (tierCompare != 0)
+                {
+                    return tierCompare;
+                }
+
+                return a.ProductId.CompareTo(b.ProductId);
+            });
+
+
             Products.Value = products;
         }
 
@@ -121,7 +142,8 @@ namespace DesktopCompanion.Views
                 product.Price,
                 GetTypeText(product),
                 GetDescription(item),
-                isBuyable
+                isBuyable,
+                product.IsSummon
                 );
 
             if (product.ItemType == ItemType.Equipment)
@@ -165,9 +187,6 @@ namespace DesktopCompanion.Views
             StringBuilder builder = new();
 
             StringBuilder effectBuilder = new();
-
-            builder.Append($"{itemData.Tier} 티어");
-            builder.AppendLine();
 
             AppendModifiers(effectBuilder, itemData.Modifiers);
 
@@ -294,6 +313,23 @@ namespace DesktopCompanion.Views
             if (item == null)
                 return null;
             return AssetKeys.Of(item, AssetUsage.Icon);
+        }
+
+        public ItemData FindData(ShopProductViewData productViewData)
+        {
+            ShopProducts products = new ShopProducts(productViewData.BaseId, productViewData.ItemType, productViewData.IsSummon,
+                productViewData.Tier, productViewData.Price);
+
+            if (!m_shopSystem.FindProductItemData(products, out ItemData item))
+                return null;
+            
+
+            return item;
+        }
+
+        public ItemData FindDataById(ItemType type, int id)
+        {
+            return m_shopSystem.FindItemDataById(type, id);
         }
     }
 }

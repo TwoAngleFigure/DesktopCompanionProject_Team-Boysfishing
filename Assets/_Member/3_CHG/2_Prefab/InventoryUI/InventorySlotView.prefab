@@ -334,6 +334,7 @@ GameObject:
   - component: {fileID: 5436337411910454294}
   - component: {fileID: 8725414589469034017}
   - component: {fileID: 5072222001210860975}
+  - component: {fileID: 1706409670945618623}
   m_Layer: 0
   m_Name: IconImage
   m_TagString: Untagged
@@ -398,6 +399,25 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &1706409670945618623
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4629877145670581015}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f85b37bc8786c1648acaa9df5c29151a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Views.ItemSlotView
+  m_icon: {fileID: 5072222001210860975}
+  m_tierBorder: {fileID: 9144302051311954499}
+  m_rarityGlow: {fileID: 0}
+  m_starRoot: {fileID: 176298054508362052}
+  m_starText: {fileID: 5544590497199492253}
+  m_style: {fileID: 11400000, guid: 40efab02979a78543937d792c2f70afa, type: 2}
+  m_quantityText: {fileID: 2444894870059109342}
 --- !u!1 &5188367228837597408
 GameObject:
   m_ObjectHideFlags: 0
@@ -760,6 +780,7 @@ GameObject:
   - component: {fileID: 184827734351346035}
   - component: {fileID: 8089773193266452280}
   - component: {fileID: 2131937382253344352}
+  - component: {fileID: 1021141496392999292}
   m_Layer: 0
   m_Name: InventorySlotView
   m_TagString: Untagged
@@ -780,6 +801,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7899159310875983215}
+  - {fileID: 3122476662301019773}
   - {fileID: 5436337411910454294}
   - {fileID: 7398035470704406071}
   - {fileID: 4261948147266659626}
@@ -888,11 +910,107 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Views.InventorySlotView
   m_button: {fileID: 8089773193266452280}
+  m_slotBackground: {fileID: 184827734351346035}
   m_iconImage: {fileID: 5072222001210860975}
   m_quantityText: {fileID: 2444894870059109342}
   m_subInfoText: {fileID: 5544590497199492253}
   m_fishStarImage: {fileID: 176298054508362052}
   m_enhanceIcon: {fileID: 6436482970007692388}
+  m_tierBorder: {fileID: 9144302051311954499}
   m_emptyRoot: {fileID: 2713770433478105678}
   m_sellSelectedIcon: {fileID: 1154193547356629342}
   m_sellSelectedAmountText: {fileID: 8950390145496402026}
+--- !u!114 &1021141496392999292
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6993439036217386183}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f85b37bc8786c1648acaa9df5c29151a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Views.ItemSlotView
+  m_icon: {fileID: 5072222001210860975}
+  m_tierBorder: {fileID: 9144302051311954499}
+  m_rarityGlow: {fileID: 0}
+  m_starRoot: {fileID: 176298054508362052}
+  m_starText: {fileID: 5544590497199492253}
+  m_style: {fileID: 11400000, guid: 40efab02979a78543937d792c2f70afa, type: 2}
+  m_quantityText: {fileID: 0}
+--- !u!1 &8563923936402762894
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3122476662301019773}
+  - component: {fileID: 3196277864545437905}
+  - component: {fileID: 9144302051311954499}
+  m_Layer: 0
+  m_Name: Tier Border
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &3122476662301019773
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8563923936402762894}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 919988221340568669}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 84, y: 84}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &3196277864545437905
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8563923936402762894}
+  m_CullTransparentMesh: 1
+--- !u!114 &9144302051311954499
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8563923936402762894}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: 9c772e0811817e84394ba7ccda93ace9, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1

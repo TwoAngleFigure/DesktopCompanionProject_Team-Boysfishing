@@ -716,7 +716,7 @@ namespace DesktopCompanion.Views
         {
             if (tab == ItemType.Consumables)
             {
-                return ItemType.Materials;
+                return ItemType.Equipment;
             }
 
             return tab;
