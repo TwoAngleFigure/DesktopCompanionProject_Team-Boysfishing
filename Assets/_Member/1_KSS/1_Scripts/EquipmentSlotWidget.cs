@@ -18,6 +18,7 @@ namespace DesktopCompanion.Views
         [SerializeField] private Button m_slotButton;
         [SerializeField] private TextMeshProUGUI m_itemNameText;
         [SerializeField] private Image m_iconImage; // [추가] 장착된 아이템의 아이콘을 표시할 이미지
+        [SerializeField] private TextMeshProUGUI m_quantityText; // [추가] 장착된 소모품의 개수를 표시할 텍스트
 
         public EquipmentMountingArea Area => m_area;
 
@@ -48,7 +49,7 @@ namespace DesktopCompanion.Views
             m_onBeginDragAction = null;
         }
 
-        public void RefreshSlotUI(string itemName, Sprite icon)
+        public void RefreshSlotUI(string itemName, Sprite icon, int quantity = 0)
         {
             if (m_itemNameText != null)
             {
@@ -61,6 +62,12 @@ namespace DesktopCompanion.Views
                 m_iconImage.sprite = icon;
                 // 아이콘이 있으면 활성화(또는 투명도 100%), 없으면 비활성화(투명도 0%) 등 적절히 처리
                 m_iconImage.enabled = icon != null;
+            }
+
+            // [추가] 수량 텍스트 업데이트
+            if (m_quantityText != null)
+            {
+                m_quantityText.text = quantity > 1 ? quantity.ToString() : "";
             }
         }
 

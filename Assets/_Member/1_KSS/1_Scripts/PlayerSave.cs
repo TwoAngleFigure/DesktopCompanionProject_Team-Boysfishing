@@ -22,6 +22,7 @@ namespace DesktopCompanion.Systems
             public string handle;
             public int dataId;
             public int upgradeLevel;
+            public int quantity; // [추가] 소모품용 수량 저장
         }
     }
 }
