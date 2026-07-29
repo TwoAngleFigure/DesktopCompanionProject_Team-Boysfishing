@@ -220,8 +220,6 @@ namespace DesktopCompanion.Systems
 
         public void RestoreState(object state)
         {
-            bool ignoreSaveForTesting = true;
-            if (ignoreSaveForTesting) { ForceSetInitialStage(600001); return; }
             var save = (StageSaveData)state;
             m_currentStageDataId = save.currentStageDataId;
             if (save.savedPosX != 0 || save.savedPosY != 0) m_currentLogicalPosition = new Vector2(save.savedPosX, save.savedPosY);
