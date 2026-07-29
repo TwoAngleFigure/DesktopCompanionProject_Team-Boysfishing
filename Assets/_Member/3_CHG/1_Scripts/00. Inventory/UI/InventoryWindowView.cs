@@ -337,12 +337,20 @@ namespace DesktopCompanion.Views
                 return;
             }
 
-            if (slotData.ItemType != ItemType.Equipment)
+            if (slotData.ItemType != ItemType.Equipment && slotData.ItemType != ItemType.Consumables)
             {
                 return;
             }
 
-            bool equipped = m_vm.EquipEquipmentAtSlot(slotIndex);
+            bool equipped = false;
+            if(slotData.ItemType == ItemType.Equipment)
+            {
+                equipped = m_vm.EquipAtSlot(slotIndex, ItemType.Equipment);
+            }
+            else if(slotData.ItemType == ItemType.Consumables)
+            {
+                equipped = m_vm.EquipAtSlot(slotIndex, ItemType.Consumables);
+            }
 
             if (equipped)
             {

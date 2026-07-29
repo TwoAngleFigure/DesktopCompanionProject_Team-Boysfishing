@@ -83,7 +83,7 @@ namespace DesktopCompanion.Views
                 return;
             }
 
-            m_canDoubleClick = data.ItemType == ItemType.Equipment;
+            m_canDoubleClick = data.ItemType == ItemType.Equipment || data.ItemType == ItemType.Consumables;
             if(m_tierBorder != null)
             {
                 m_tierBorder.gameObject.SetActive(true);
