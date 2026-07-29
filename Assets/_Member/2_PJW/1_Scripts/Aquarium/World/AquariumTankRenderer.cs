@@ -3,9 +3,10 @@ using UnityEngine;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 아쿠아리움 3D 탱크의 RT 프로듀서. 전용 카메라(cullingMask=Aquarium)를 투명 RenderTexture에 상시 렌더한다.
-    /// 표현(컨슈머)은 이 <see cref="TankTexture"/>를 바인딩만 한다: 지금=UI 창 RawImage, 이후=월페이퍼(전체화면 배경).
-    /// 창 개폐·표시 모드와 무관하게 항상 렌더되어야 헤엄/미리보기가 유지된다(오브젝트를 비활성화하지 말 것).
+    /// 아쿠아리움 3D 탱크의 RT 프로듀서. 전용 카메라를 투명 RenderTexture에 상시 렌더하고,
+    /// 헤엄 범위(로컬 박스)와 탱크 로컬 공간 Transform을 에이전트·월드 뷰에 제공한다.
+    /// 컨슈머는 <see cref="TankTexture"/>를 바인딩해 표시한다.
+    /// 창 개폐·표시 모드와 무관하게 항상 렌더되어야 하므로 오브젝트를 비활성화하지 않는다.
     /// </summary>
     [DisallowMultipleComponent]
     public class AquariumTankRenderer : MonoBehaviour
@@ -25,18 +26,17 @@ namespace DesktopCompanion.Views
 
         private RenderTexture m_rt;
 
-        /// <summary>컨슈머(RawImage/월페이퍼)가 바인딩할 렌더 텍스처.</summary>
+        /// <summary>컨슈머가 바인딩할 탱크 렌더 텍스처.</summary>
         public RenderTexture TankTexture => m_rt;
 
-        /// <summary>회전 무관 로컬 헤엄 박스(에이전트가 이 공간에서 목표를 샘플·이동한다).</summary>
+        /// <summary>로컬 헤엄 박스. 에이전트가 이 범위에서 목표 지점을 샘플링한다.</summary>
         public Bounds LocalBounds => new Bounds(m_boundsCenter, m_boundsSize);
 
-        /// <summary>탱크 로컬 공간 기준 Transform(루트 회전이 반영됨).</summary>
+        /// <summary>탱크 로컬 공간의 기준 Transform. 루트 회전이 반영된다.</summary>
         public Transform TankSpace => transform;
 
         /// <summary>
-        /// 루트 회전·스케일을 반영한 월드 AABB. 로컬 박스 8코너를 <see cref="Transform.localToWorldMatrix"/>로
-        /// 변환해 감싼다(회전 시 AABB가 커지는 것은 정상). 무회전·무스케일이면 기존 월드 박스와 동일.
+        /// 루트 회전·스케일을 반영한 월드 AABB. 로컬 박스의 8코너를 월드로 변환해 감싼 값이다.
         /// </summary>
         public Bounds TankBounds
         {

@@ -3,8 +3,7 @@ using DesktopCompanion.Data;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 툴팁 팝업 1회분 상세 스냅샷(계획 28). 문자열을 미리 조립하지 않고 <b>값 그대로</b> 담는다 —
-    /// 문장 만들기는 종류별 패널이 각자 한다(패널마다 표현이 다르므로).
+    /// 툴팁 팝업 1회분의 상세 스냅샷. 문자열을 조립하지 않고 값 그대로 담으며, 문장 구성은 패널이 담당한다.
     /// <see cref="Kind"/>에 해당하는 섹션 하나만 채워진다.
     /// </summary>
     public class ItemTooltipData
@@ -15,13 +14,12 @@ namespace DesktopCompanion.Views
         public string IconKey;
         public int Tier;
 
-        // ※ 재료는 별도 섹션이 없다 — 아쿠아리움 진행 상황은 재료 게이지 행이 이미 보여주므로
-        //    툴팁에서 반복하지 않는다(헤더의 아이콘·이름·티어만 표시).
+        // 재료는 전용 섹션이 없다(헤더만 표시).
         public FishSection Fish;
         public EquipmentSection Equipment;
         public ConsumableSection Consumable;
 
-        /// <summary>물고기 상세. 성급·크기는 개체 롤값(계획 27 P5).</summary>
+        /// <summary>물고기 상세. 성급·크기는 개체 롤값이고 나머지는 종 정의값이다.</summary>
         public class FishSection
         {
             public ItemRarity Rarity;
@@ -33,7 +31,7 @@ namespace DesktopCompanion.Views
             public float CycleSeconds;        // 개체 성급이 반영된 생산 주기
             public float PointsPerMinute;
 
-            /// <summary>AquariumSystem 없이 만들면 false → 패널이 생산 구역을 감춘다.</summary>
+            /// <summary>생산 지표가 채워졌는지. false면 패널이 생산 구역을 감춘다.</summary>
             public bool HasAquariumInfo;
         }
 
@@ -57,9 +55,7 @@ namespace DesktopCompanion.Views
     }
 
     /// <summary>
-    /// 슬롯이 hover된 순간에 상세를 만들어 주는 공급자. 창이 구현한다.
-    /// 목록을 갱신할 때마다 모든 행의 상세를 미리 만들면 낭비이므로, 슬롯은 이 참조만 들고 있다가
-    /// 마우스가 올라온 순간에 1건만 조립한다.
+    /// 슬롯이 hover된 순간에 상세 데이터를 조립해 주는 공급자. 슬롯을 보유한 창이 구현한다.
     /// </summary>
     public interface IItemTooltipSource
     {

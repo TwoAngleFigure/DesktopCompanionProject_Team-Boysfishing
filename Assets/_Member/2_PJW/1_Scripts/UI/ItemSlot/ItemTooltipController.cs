@@ -3,7 +3,7 @@ using UnityEngine.UI;
 
 namespace DesktopCompanion.Views
 {
-    /// <summary>팝업을 슬롯의 어느 높이에 맞출지.</summary>
+    /// <summary>팝업을 슬롯의 어느 높이에 맞출지 지정한다.</summary>
     public enum TooltipVerticalAlign
     {
         SlotTop,      // 슬롯 위쪽 변
@@ -12,12 +12,10 @@ namespace DesktopCompanion.Views
     }
 
     /// <summary>
-    /// 아이템 상세 팝업의 단일 표시자(계획 28 C절). 씬에 1개만 둔다.
+    /// 아이템 상세 팝업의 단일 표시자. 씬에 1개만 둔다.
     /// 종류별 패널을 자식으로 갖고 <see cref="ItemTooltipData.Kind"/>에 맞는 하나만 켠다.
-    /// 위치는 hover된 슬롯 옆에 붙이되, 캔버스 우측을 넘치면 좌우를 뒤집고 마지막에 화면 안으로 민다.
-    ///
-    /// UIViewBase를 상속해 부팅 시 AssetProvider를 주입받는다(패널이 생산 재료 아이콘 등을 조회해야 하므로).
-    /// 창이 아니라 표시 도구라 UIWindowBase가 아니며, 활성 윈도우 스택에도 참여하지 않는다.
+    /// 팝업을 hover된 슬롯 옆에 붙이되, 캔버스 우측을 넘치면 좌우를 뒤집고 마지막에 화면 안으로 민다.
+    /// UIViewBase를 상속해 AssetProvider를 주입받으며, 활성 윈도우 스택에는 참여하지 않는다.
     /// </summary>
     public class ItemTooltipController : UIViewBase
     {
@@ -78,7 +76,7 @@ namespace DesktopCompanion.Views
             s_instance.ShowInternal(owner, data, icon, anchor);
         }
 
-        /// <summary>그 슬롯이 띄운 팝업일 때만 닫는다(이미 다른 슬롯으로 옮겨갔으면 무시).</summary>
+        /// <summary>그 슬롯이 띄운 팝업일 때만 닫는다. 이미 다른 슬롯으로 넘어갔으면 무시한다.</summary>
         public static void Dismiss(ItemSlotView owner)
         {
             if (s_instance != null && s_instance.m_owner == owner)
@@ -180,11 +178,9 @@ namespace DesktopCompanion.Views
         }
 
         /// <summary>
-        /// 패널 배열을 '화면에 나올 수 있는 상태'로 정리한다.
-        /// 인스펙터에 <b>프리팹 에셋</b>을 그대로 끌어다 놓은 경우(씬에 속하지 않은 오브젝트)
-        /// 그대로 두면 SetActive를 걸어도 화면에 나오지 않고 에셋 파일만 더러워진다.
-        /// → 자식으로 인스턴스를 만들어 배열을 교체한다. 씬 인스턴스가 할당돼 있으면 그대로 쓴다.
-        /// 마지막으로 전부 비활성화해 첫 표시 때 패널이 겹치지 않게 한다.
+        /// 패널 배열을 표시 가능한 상태로 정리한다.
+        /// 프리팹 에셋이 할당된 항목은 자식으로 인스턴스화해 배열을 교체하고, 씬 인스턴스는 그대로 쓴다.
+        /// 정리 후 모든 패널을 비활성화한다.
         /// </summary>
         private void ResolvePanels()
         {
@@ -230,7 +226,7 @@ namespace DesktopCompanion.Views
                 if (m_canvasGroup == null) m_canvasGroup = gameObject.AddComponent<CanvasGroup>();
             }
 
-            // 팝업이 마우스를 가로채면 슬롯의 hover가 즉시 풀려 깜빡인다(계획 28 R-1).
+            // 팝업이 마우스를 가로채면 슬롯의 hover가 즉시 풀려 깜빡인다.
             m_canvasGroup.interactable = false;
             m_canvasGroup.blocksRaycasts = false;
         }
@@ -272,8 +268,7 @@ namespace DesktopCompanion.Views
         }
 
         /// <summary>
-        /// 루트 사각형을 활성 패널에 맞춘다. 루트가 실제 팝업보다 작거나 크면
-        /// 피벗 기준 배치와 화면 밖 보정이 전부 어긋나므로, 패널을 루트 좌상단에 정렬하고 크기를 복사한다.
+        /// 루트 사각형을 활성 패널에 맞춘다. 패널을 루트 좌상단에 정렬하고 패널 크기를 루트에 복사한다.
         /// </summary>
         private void FitRootToActivePanel()
         {
@@ -303,7 +298,7 @@ namespace DesktopCompanion.Views
             return topRight.x > m_canvasRect.rect.xMax;
         }
 
-        /// <summary>팝업이 화면 밖으로 나가지 않게 마지막에 밀어 넣는다(슬롯이 가장자리에 있을 때).</summary>
+        /// <summary>팝업이 캔버스 밖으로 벗어난 만큼 안쪽으로 밀어 넣는다.</summary>
         private void ClampInsideCanvas()
         {
             m_root.GetWorldCorners(m_tooltipCorners);

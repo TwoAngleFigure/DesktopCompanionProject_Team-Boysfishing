@@ -7,8 +7,8 @@ using DesktopCompanion.Systems;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 물고기 1개체의 표시 행(인벤토리·수족관 공용, 계획 27 P2).
-    /// 성급·크기는 개체 롤값(Entity_Fish)이며, 티어·레어리티는 종 고정값이다.
+    /// 물고기 1개체의 행 표시 데이터. 인벤토리·수족관 목록에 공용으로 쓴다.
+    /// 성급·크기는 개체 롤값이고 티어·레어리티는 종 고정값이며, 액션 가능 여부와 차단 사유를 함께 담는다.
     /// </summary>
     public class AquariumFishVD
     {
@@ -58,7 +58,7 @@ namespace DesktopCompanion.Views
         }
     }
 
-    /// <summary>재료 생산 경과 행(원형 게이지 + 현재/필요 + 시간당 생산 개수).</summary>
+    /// <summary>재료 1종의 생산 경과 행 표시 데이터(누적/요구 포인트, 보류 개수, 시간당 생산 개수).</summary>
     public class AquariumMaterialVD
     {
         public int MaterialId;
@@ -69,7 +69,7 @@ namespace DesktopCompanion.Views
         public int Pending;
         public float PerHour;   // 시간당 생산 개수
 
-        /// <summary>원형 게이지 채움 비율(0~1).</summary>
+        /// <summary>게이지 채움 비율(0~1).</summary>
         public float Progress => Required > 0 ? Mathf.Clamp01((float)Points / Required) : 0f;
 
         public static AquariumMaterialVD From(AquariumSystem.MaterialStatus status, AquariumSystem aquarium)
@@ -89,9 +89,8 @@ namespace DesktopCompanion.Views
     }
 
     /// <summary>
-    /// 수족관 정보 패널(현재 등급 ↔ 다음 등급 대비 + 강화 비용).
-    /// ※ '사용/최대' 수용량은 물고기 목록 창(<see cref="AquariumFishListViewModel.CapacityText"/>)이 담당한다 —
-    ///    여기서는 등급별 수용 '한도'만 다룬다.
+    /// 수족관 정보 패널의 표시 데이터. 현재 등급과 다음 등급의 수용 한도, 강화 비용·보유량·차단 사유를 담는다.
+    /// 등급별 수용 한도만 다루며, '사용/최대' 수용량은 <see cref="AquariumFishListViewModel.CapacityText"/>가 담당한다.
     /// </summary>
     public class AquariumInfoVD
     {
@@ -134,7 +133,7 @@ namespace DesktopCompanion.Views
             };
         }
 
-        /// <summary>등급 이름. 시트에 Name이 비어 있으면 `Lv.N`으로 폴백해 빈칸이 보이지 않게 한다.</summary>
+        /// <summary>등급 이름을 반환한다. 이름이 비어 있으면 `Lv.N`으로 폴백한다.</summary>
         private static string GradeName(string name, int level)
             => string.IsNullOrWhiteSpace(name) ? $"Lv.{level}" : name;
 

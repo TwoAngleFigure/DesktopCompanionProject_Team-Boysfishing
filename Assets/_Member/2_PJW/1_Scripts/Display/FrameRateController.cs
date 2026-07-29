@@ -3,7 +3,7 @@ using UnityEngine;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 프레임레이트 상한(인스펙터 조정). 상시 구동 오버레이의 GPU 과다 점유를 막는다.
+    /// 애플리케이션 프레임레이트 상한을 적용한다. 창이 포커스를 잃으면 유휴 상한으로 낮춘다.
     /// targetFrameRate는 VSync가 꺼져 있어야 적용되므로 vSyncCount=0을 함께 설정한다.
     /// </summary>
     public class FrameRateController : MonoBehaviour

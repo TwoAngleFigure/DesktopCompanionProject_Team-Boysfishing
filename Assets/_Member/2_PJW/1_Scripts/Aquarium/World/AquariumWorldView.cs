@@ -7,9 +7,9 @@ using DesktopCompanion.Systems;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 아쿠아리움 배치 물고기를 3D 모델로 스폰해 탱크에서 헤엄치게 하는 월드 뷰.
-    /// 오션/배 월드와 다른 'Aquarium' 레이어에 스폰 → 전용 카메라만 렌더(RT) → UI 레벨 합성.
-    /// OnAquariumChanged마다 reconcile(부족분 스폰/초과분 디스폰)로 전체 재생성 없이 반영한다.
+    /// 아쿠아리움에 배치된 물고기를 3D 모델로 스폰해 탱크에서 헤엄치게 하는 월드 뷰.
+    /// 전용 카메라만 렌더하도록 지정 레이어에 스폰하고, 개체 Size를 클램프·배율 보정해 스케일에 적용한다.
+    /// 구조 변경마다 핸들 기준으로 reconcile해 부족분만 스폰하고 사라진 개체만 디스폰한다.
     /// </summary>
     public class AquariumWorldView : WorldViewBase
     {
@@ -126,7 +126,7 @@ namespace DesktopCompanion.Views
             return go;
         }
 
-        /// <summary>개체 Size를 인스펙터 클램프(min/max)·전역 배율로 보정한 최종 스케일 계수.</summary>
+        /// <summary>개체 Size를 클램프(min/max)하고 전역 배율을 곱한 최종 스케일 계수를 반환한다.</summary>
         private float EffectiveSize(float rawSize)
         {
             float s = rawSize > 0f ? rawSize : 1f;                 // 0/음수 방어

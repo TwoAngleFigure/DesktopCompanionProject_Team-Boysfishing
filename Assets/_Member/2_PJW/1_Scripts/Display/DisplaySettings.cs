@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace DesktopCompanion.Views
 {
-    /// <summary>표시 설정 값(모드·스케일·모니터·창 위치·크롭 범위). 창 위치는 정규화(0~1) rect 좌하단 기준.</summary>
+    /// <summary>표시 설정 값(모드·스케일·모니터·창 위치·크롭 범위). 창 위치는 좌하단 기준 정규화(0~1) 좌표다.</summary>
     public struct DisplaySettingsData
     {
         public ScreenMode Mode;
@@ -16,7 +16,7 @@ namespace DesktopCompanion.Views
     }
 
     /// <summary>
-    /// 표시 설정을 PlayerPrefs에 저장/로드한다(머신별 사용자 설정 — 게임 세이브와 무관).
+    /// 표시 설정을 PlayerPrefs에 저장·로드한다. 게임 세이브와는 무관한 머신별 설정이다.
     /// </summary>
     public static class DisplaySettings
     {
@@ -59,10 +59,7 @@ namespace DesktopCompanion.Views
             PlayerPrefs.Save();
         }
 
-        /// <summary>
-        /// 저장된 정수를 열거형으로 읽되 범위를 벗어나면 기본값으로 폴백한다.
-        /// ViewScale에서 X1_5가 제거되면서(계획 20) 기존 저장값이 다른 항목으로 오해석되는 것을 막는다.
-        /// </summary>
+        /// <summary>저장된 정수를 열거형으로 읽는다. 정의에 없는 값이면 기본값으로 폴백한다.</summary>
         private static T ReadEnum<T>(string key, T fallback) where T : struct, System.Enum
         {
             int raw = PlayerPrefs.GetInt(key, (int)(object)fallback);

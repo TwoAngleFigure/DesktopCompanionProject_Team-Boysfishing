@@ -9,10 +9,9 @@ using DesktopCompanion.Systems;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 물고기 목록 창(계획 27 W2). 위=인벤토리 물고기([넣기]), 아래=수족관 물고기([빼기]).
-    /// 두 목록 모두 개체 단위이며, 같은 항목을 비교하므로 정렬 바(기준 + 오름/내림) 하나를 공유한다.
-    /// 액션은 <see cref="EntityHandle"/>로 개체를 지목하므로 정렬을 바꿔도 대상이 어긋나지 않는다.
-    /// 각 행의 상세는 슬롯 hover 팝업이 담당한다(계획 28) — 이 창이 그 상세의 공급자다.
+    /// 물고기 목록 창. 위쪽에 인벤토리 물고기([넣기]), 아래쪽에 수족관 물고기([빼기])를 개체 단위로 표시하고
+    /// 두 목록이 정렬 바 하나를 공유한다. 액션은 <see cref="EntityHandle"/>로 개체를 지목한다.
+    /// <see cref="IItemTooltipSource"/>를 구현해 각 행 슬롯의 hover 팝업 상세를 공급한다.
     /// </summary>
     public class AquariumFishWindow : UIWindowBase, IItemTooltipSource
     {
@@ -69,7 +68,7 @@ namespace DesktopCompanion.Views
             m_aquarium = null;
         }
 
-        /// <summary>슬롯이 hover된 순간에만 호출된다(목록 갱신 때 전 행의 상세를 미리 만들지 않는다).</summary>
+        /// <summary>hover된 슬롯의 개체로부터 툴팁 상세를 조립한다. 개체가 없는 슬롯이면 null을 반환한다.</summary>
         public ItemTooltipData BuildTooltip(ItemSlotVD vd)
             => vd != null && vd.HasEntity
                 ? ItemTooltipBuilder.FromEntity(vd.Handle, EntityManager, m_aquarium)
