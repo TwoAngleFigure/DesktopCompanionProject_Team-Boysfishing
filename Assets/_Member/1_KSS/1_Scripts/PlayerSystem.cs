@@ -313,32 +313,31 @@ namespace DesktopCompanion.Systems
         {
             Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
 
-            // 🛡️ [추가된 방어 코드] 기존에 낀 장비도 없고, 새로 장착할 장비도 빈 값(클릭만 한 상태)이면 불필요한 로직 없이 조용히 종료!
+            // [추가된 방어 코드] 기존에 장비가 없고, 새로 장착할 장비도 없는 경우 불필요한 로직 없이 조용히 종료
             bool hasEquippedItem = player.Equipped.TryGetValue(area, out EntityHandle beforeEquipHandle) && beforeEquipHandle.Value != Guid.Empty;
             if (!hasEquippedItem && afterEquipHandle.Value == Guid.Empty)
             {
                 return;
             }
 
-            // 1. 기존 장비 해제 후 인벤토리 반환
+            // 1. 새로 장착할 아이템이 빈값이 아닐 때 인벤토리에서 먼저 제거 (병합 꼬임 방지)
+            if (afterEquipHandle.Value != Guid.Empty && m_inventorySystem != null)
+            {
+                bool isRemoved = TryFindAndRemoveFromInventory(m_inventorySystem, afterEquipHandle);
+                if (!isRemoved)
+                {
+                    Debug.LogWarning("[PlayerSystem] 인벤토리에서 장착할 아이템을 찾지 못하거나 제거에 실패했습니다.");
+                }
+            }
+
+            // 2. 기존 장비 해제 및 인벤토리 반환 (새 장비가 이미 빠져나간 상태이므로 병합 안전)
             if (hasEquippedItem)
             {
                 player.Unequip(area);
                 m_inventorySystem?.AddItem(beforeEquipHandle);
             }
 
-            // 2. 새로 장착할 아이템이 빈 값이 아닐 때만 인벤토리에서 제거 시도
-            if (afterEquipHandle.Value != Guid.Empty && m_inventorySystem != null)
-            {
-                bool isRemoved = TryFindAndRemoveFromInventory(m_inventorySystem, afterEquipHandle);
-                if (!isRemoved)
-                {
-                    // [경고] 장착하려는 아이템이 인벤토리에 없을 경우 경고 로그 출력
-                    Debug.LogWarning("[PlayerSystem] 인벤토리에서 장착할 아이템을 찾을 수 없거나 제거에 실패했습니다.");
-                }
-            }
-
-            // 3. 새 아이템 장착 (빈 값이면 빈 값대로 덮어씌워서 완벽한 해제 상태로 만듦)
+            // 3. 새 아이템 장착 (빈값이면 빈값대로 덮어씌워 완벽한 해제 상태로 만듦)
             player.Equip(area, afterEquipHandle);
 
             // 4. 스탯 재계산 (기본 스탯 + 장착 장비 스탯 안전하게 갱신)
@@ -367,9 +366,6 @@ namespace DesktopCompanion.Systems
             return null;
         }
 
-        /// <summary>
-        /// 특정 구역에 장착된 장비의 실제 데이터(EntityHandle)를 반환합니다. (드래그 탈착용)
-        /// </summary>
         public EntityHandle GetEquippedItemHandle(EquipmentMountingArea area)
         {
             if (playerHandle.Value == Guid.Empty) return default;
@@ -381,6 +377,48 @@ namespace DesktopCompanion.Systems
             }
 
             return default;
+        }
+
+        /// <summary>
+        /// 낚시 시스템 등에서 장착 중인 아이템(주로 소모품)을 소모할 때 호출합니다.
+        /// </summary>
+        /// <param name="area">소모할 아이템이 장착된 부위 (예: Bait, Groundbait)</param>
+        /// <param name="amount">소모할 수량</param>
+        /// <returns>소모에 성공하면 true, 수량이 부족하거나 아이템이 없으면 false</returns>
+        public bool TryConsumeEquippedItem(EquipmentMountingArea area, int amount = 1)
+        {
+            if (playerHandle.Value == Guid.Empty) return false;
+
+            Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
+            if (player == null || !player.Equipped.TryGetValue(area, out EntityHandle handle))
+            {
+                return false; // 장착된 아이템이 없음
+            }
+
+            if (handle.Value == Guid.Empty) return false;
+
+            Entity entity = EntityManager.Get(handle);
+            if (entity is Entity_Consumables consumable)
+            {
+                // 소모품 수량 확인
+                if (consumable.Quantity >= amount)
+                {
+                    consumable.Add(-amount);
+
+                    // 수량이 0 이하가 되면 장착 해제 및 엔티티 파기
+                    if (consumable.Quantity <= 0)
+                    {
+                        player.Unequip(area);
+                        EntityManager.Destroy(handle);
+                    }
+
+                    // 수량 변경 또는 해제 후 스탯 및 장비 상태 갱신
+                    CaculatedStat();
+                    return true;
+                }
+            }
+
+            return false;
         }
         // =========================================================
         // 물고기 창고 강화 로직 (골드 소모 및 1.25배 비용 증가)
