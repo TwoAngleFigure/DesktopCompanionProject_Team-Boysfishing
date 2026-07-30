@@ -16,6 +16,26 @@ namespace DesktopCompanion.Views
     /// </summary>
     public static class AssetKeys
     {
+        /// <summary>기본(대체) 에셋 키 접두. 파생 키가 없을 때 AssetProvider가 대신 조회한다.</summary>
+        public const string DefaultPrefix = "Default";
+
+        /// <summary>용도별 기본 에셋 키. 예: DefaultOf(AssetUsage.Icon) → "Default_Icon".</summary>
+        public static string DefaultOf(string usage)
+            => $"{DefaultPrefix}_{usage}";
+
+        /// <summary>키에서 용도 접미를 추출한다. 예: "ItemData_Fish_100001_Icon" → "Icon".</summary>
+        public static string UsageOf(string key)
+        {
+            if (string.IsNullOrEmpty(key))
+            {
+                return null;
+            }
+            int separator = key.LastIndexOf('_');
+            return separator >= 0 && separator < key.Length - 1
+                ? key.Substring(separator + 1)
+                : null;
+        }
+
         /// <summary>키 베이스(용도 접미 제외). 예: "ItemData_Fish_100001" 또는 오버라이드 값.</summary>
         public static string BaseOf(GameData data)
             => string.IsNullOrEmpty(data.AssetKey)

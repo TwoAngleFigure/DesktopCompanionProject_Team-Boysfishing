@@ -334,7 +334,6 @@ GameObject:
   - component: {fileID: 5436337411910454294}
   - component: {fileID: 8725414589469034017}
   - component: {fileID: 5072222001210860975}
-  - component: {fileID: 1706409670945618623}
   m_Layer: 0
   m_Name: IconImage
   m_TagString: Untagged
@@ -399,25 +398,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &1706409670945618623
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4629877145670581015}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f85b37bc8786c1648acaa9df5c29151a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Views.ItemSlotView
-  m_icon: {fileID: 5072222001210860975}
-  m_tierBorder: {fileID: 9144302051311954499}
-  m_rarityGlow: {fileID: 0}
-  m_starRoot: {fileID: 176298054508362052}
-  m_starText: {fileID: 5544590497199492253}
-  m_style: {fileID: 11400000, guid: 40efab02979a78543937d792c2f70afa, type: 2}
-  m_quantityText: {fileID: 2444894870059109342}
 --- !u!1 &5188367228837597408
 GameObject:
   m_ObjectHideFlags: 0
