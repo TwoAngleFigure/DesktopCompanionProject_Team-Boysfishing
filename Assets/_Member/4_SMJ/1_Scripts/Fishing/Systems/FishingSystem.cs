@@ -41,6 +41,8 @@ namespace DesktopCompanion.Systems
         private float m_battleTimer;
         private float m_autoAttackTimer;
         private bool m_isResolvingPending;
+        private readonly float[] m_qualityWeights = new float[5];
+        private float m_appliedBaitStat;
 
 #if UNITY_EDITOR
         private bool m_isDebugCatchOverrideEnabled;
@@ -422,14 +424,24 @@ namespace DesktopCompanion.Systems
                 return;
             }
 
-            float rolledSize =
+            ItemQuality quality;
+            float rolledSize;
+
 #if UNITY_EDITOR
-                hasDebugOverride ? debugSize :
+            if (hasDebugOverride)
+            {
+                rolledSize = debugSize;
+                quality = fishData.GetQuality(rolledSize);
+            }
+            else
 #endif
-                RollFishSize(fishData);
+            {
+                quality = RollFishQuality(m_appliedBaitStat);
+                rolledSize = RollFishSize(fishData, quality);
+            }
+
             float size = Mathf.Round(rolledSize * 10f) / 10f;
 
-            ItemQuality quality = fishData.GetQuality(size);
             battleFish.SetRollResult(size, quality);
 
             m_battleDuration = CalculateBattleDuration(fishData, size);
@@ -648,6 +660,9 @@ namespace DesktopCompanion.Systems
 
         private void ScheduleNextFishing()
         {
+            m_appliedBaitStat = m_playerSystem != null ? m_playerSystem.BaseProbabilityAtFishSize : 0f;
+
+            m_playerSystem?.TryConsumeEquippedItem(EquipmentMountingArea.Bait);
 
             m_waitDuration = CalculateNextFishingDelay();
             m_waitTimer = m_waitDuration;
@@ -771,12 +786,63 @@ namespace DesktopCompanion.Systems
             return m_playerSystem.StartingLicense;
         }
 
-        private float RollFishSize(BattleFishData fishData)
+        private ItemQuality RollFishQuality(float baitStat)
         {
-            float minSize = fishData.MinSize;
-            float maxSize = fishData.MaxSize;
+            float totalWeight = 0f;
 
-            return UnityEngine.Random.Range(minSize, maxSize);
+            // 1~5성의 가중치를 계산하고 전체 합계를 구한다.
+            for (int i = 0; i < m_qualityWeights.Length; i++)
+            {
+                ItemQuality quality = (ItemQuality)(i + 1);
+
+                float weight =
+                    FishingWeightCalculator.CalculateQualityWeight(
+                        quality,
+                        baitStat);
+
+                m_qualityWeights[i] = weight;
+                totalWeight += weight;
+            }
+
+            // 전체 가중치 범위에서 랜덤 값을 뽑는다.
+            float randomValue =
+                UnityEngine.Random.Range(0f, totalWeight);
+
+            float accumulatedWeight = 0f;
+
+            // 누적 가중치로 성급을 결정한다.
+            for (int i = 0; i < m_qualityWeights.Length; i++)
+            {
+                accumulatedWeight += m_qualityWeights[i];
+
+                if (randomValue <= accumulatedWeight)
+                {
+                    return (ItemQuality)(i + 1);
+                }
+            }
+
+            // 부동소수점 오차에 대한 마지막 반환값
+            return ItemQuality.FiveStar;
+        }
+
+        private float RollFishSize(BattleFishData fishData, ItemQuality quality)
+        {
+            fishData.GetSizeRange(
+                quality,
+                out float minSize,
+                out float maxSize);
+
+            int minSizeStep = Mathf.RoundToInt(minSize * 10f);
+
+            int maxSizeStepExclusive = quality == ItemQuality.FiveStar
+                ? Mathf.RoundToInt(maxSize * 10f) + 1
+                : Mathf.RoundToInt(maxSize * 10f);
+
+            int selectedSizeStep = UnityEngine.Random.Range(
+                minSizeStep,
+                maxSizeStepExclusive);
+
+            return selectedSizeStep / 10f;
         }
 
         private float CalculateBattleDuration(BattleFishData fishData, float fishSize)

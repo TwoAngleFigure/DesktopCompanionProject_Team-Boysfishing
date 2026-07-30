@@ -70,5 +70,19 @@ namespace DesktopCompanion.Data
             }
             return (ItemQuality)Mathf.Clamp(star, 1, 5);
         }
+
+        /// <summary>성급에 따른 크기 범위 산출.</summary>
+        public void GetSizeRange(ItemQuality quality, out float minSize, out float maxSize)
+        {
+            int qualityIndex = (int)quality - 1;
+
+            minSize = qualityIndex == 0
+                ? m_minSize
+                : m_qualityThresholds[qualityIndex - 1];
+
+            maxSize = qualityIndex == 4
+                ? m_maxSize
+                : m_qualityThresholds[qualityIndex];
+        }
     }
 }
