@@ -23,6 +23,8 @@ namespace DesktopCompanion.Systems
         public EntityHandle PlayerHandle => playerHandle;
 
         public event Action<EntityHandle> OnStatChanged;
+        // [추가] 장비 변경이나 수량 변경 시 스탯 계산 없이 UI만 갱신하기 위한 이벤트
+        public event Action<EntityHandle> OnEquipmentChanged;
 
         #region Stats
 
@@ -361,6 +363,7 @@ namespace DesktopCompanion.Systems
                 Entity entity = EntityManager.Get(handle);
                 if (entity is Entity_Equipment equipment) return equipment.Name;
                 if (entity is Entity_Consumables consumable) return consumable.Name;
+                if (entity is Entity_Materials material) return material.Name;
                 return null;
             }
             return null;
@@ -400,7 +403,7 @@ namespace DesktopCompanion.Systems
             Entity entity = EntityManager.Get(handle);
             if (entity is Entity_Consumables consumable)
             {
-                // 소모품 수량 확인
+                // 소모할 수량 확인
                 if (consumable.Quantity >= amount)
                 {
                     consumable.Add(-amount);
@@ -410,16 +413,41 @@ namespace DesktopCompanion.Systems
                     {
                         player.Unequip(area);
                         EntityManager.Destroy(handle);
+                        
+                        // 완전히 다 소모되어 장착 해제될 때만 스탯 계산 (비용이 큼)
+                        CaculatedStat();
+                    }
+                    else
+                    {
+                        // 수량만 변했을 때는 스탯 재계산 없이 UI 갱신 이벤트만 발생
+                        OnEquipmentChanged?.Invoke(playerHandle);
                     }
 
-                    // 수량 변경 또는 해제 후 스탯 및 장비 상태 갱신
-                    CaculatedStat();
+                    return true;
+                }
+            }
+            else if (entity is Entity_Materials material)
+            {
+                if (material.Quantity >= amount)
+                {
+                    material.Add(-amount);
+                    if (material.Quantity <= 0)
+                    {
+                        player.Unequip(area);
+                        EntityManager.Destroy(handle);
+                        CaculatedStat();
+                    }
+                    else
+                    {
+                        OnEquipmentChanged?.Invoke(playerHandle);
+                    }
                     return true;
                 }
             }
 
             return false;
         }
+
         // =========================================================
         // 물고기 창고 강화 로직 (골드 소모 및 1.25배 비용 증가)
         // =========================================================
