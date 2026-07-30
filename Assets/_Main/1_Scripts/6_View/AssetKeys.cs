@@ -5,9 +5,8 @@ namespace DesktopCompanion.Views
     /// <summary>에셋 용도 접미 상수(D18). 필요 시 확장.</summary>
     public static class AssetUsage
     {
-        public const string Icon = "Icon";             // UI 아이콘(Sprite)
-        public const string Model = "Model";           // 월드 프리팹(GameObject)
-        public const string Background = "Background"; // 스테이지 배경
+        public const string Icon = "Icon";   // UI 아이콘(Sprite)
+        public const string Model = "Model"; // 월드 프리팹(GameObject) — 스테이지 배경도 이 용도로 싣는다
     }
 
     /// <summary>
@@ -36,11 +35,23 @@ namespace DesktopCompanion.Views
                 : null;
         }
 
-        /// <summary>키 베이스(용도 접미 제외). 예: "ItemData_Fish_100001" 또는 오버라이드 값.</summary>
+        /// <summary>
+        /// 키 베이스(용도 접미 제외). 예: "ItemData_Fish_100001" 또는 오버라이드 값.
+        /// BattleFishData는 대응 ItemData_Fish와 비주얼을 공유하므로 그 베이스를 그대로 빌려 쓴다
+        /// — 같은 프리팹을 BattleFishData 주소로 중복 등록하지 않기 위함이다.
+        /// </summary>
         public static string BaseOf(GameData data)
-            => string.IsNullOrEmpty(data.AssetKey)
-                ? $"{data.GetType().Name}_{data.ID}"
-                : data.AssetKey;
+        {
+            if (string.IsNullOrEmpty(data.AssetKey) == false)
+            {
+                return data.AssetKey;   // 명시 오버라이드가 최우선(공유/스킨)
+            }
+            if (data is BattleFishData battleFish && battleFish.ItemFish != null)
+            {
+                return BaseOf(battleFish.ItemFish);
+            }
+            return $"{data.GetType().Name}_{data.ID}";
+        }
 
         /// <summary>최종 키. 예: Of(fishData, AssetUsage.Icon) → "ItemData_Fish_100001_Icon".</summary>
         public static string Of(GameData data, string usage)
