@@ -27,7 +27,7 @@ namespace DesktopCompanion.Views
 
         [Header("Inventory Link")]
         [SerializeField] private ItemPickupController m_itemPickupController;
-        [SerializeField] private DesktopCompanion.Views.InventoryItemTooltipView m_itemTooltip; // [추가] 인벤토리용 툴팁 컴포넌트 참조
+        //[SerializeField] private DesktopCompanion.Views.InventoryItemTooltipView m_itemTooltip; // [추가] 인벤토리용 툴팁 컴포넌트 참조
 
         [Header("Tab Buttons")]
         [SerializeField] private Button m_tabPlayerEquipBtn;
@@ -41,6 +41,7 @@ namespace DesktopCompanion.Views
 
         private void Awake()
         {
+            /*
             if (m_itemTooltip != null)
             {
                 // 인벤토리 창이 꺼져있어도 작동하도록 장비창 전용으로 툴팁 복제
@@ -49,6 +50,7 @@ namespace DesktopCompanion.Views
                 m_itemTooltip.gameObject.SetActive(true);
                 m_itemTooltip.Hide();
             }
+            */
         }
 
         public override void Bind()
@@ -309,7 +311,7 @@ namespace DesktopCompanion.Views
 
         private void ShowTooltip(EquipmentMountingArea area, RectTransform slotRect)
         {
-            if (m_itemTooltip == null) return;
+            ///if (m_itemTooltip == null) return;
 
             EntityHandle equippedItem = m_vm.GetEquippedHandleForArea(area);
             
@@ -324,7 +326,7 @@ namespace DesktopCompanion.Views
                     EffectText = "클릭하여 장착하거나 아이템을 드래그하세요.",
                     SellPriceText = ""
                 };
-                m_itemTooltip.Show(emptyData, null, slotRect);
+               // m_itemTooltip.Show(emptyData, null, slotRect);
                 return;
             }
 
@@ -390,15 +392,17 @@ namespace DesktopCompanion.Views
                 AssetProvider.TryGet<Sprite>(assetKey, out icon);
             }
 
-            m_itemTooltip.Show(dummyData, icon, slotRect);
+           // m_itemTooltip.Show(dummyData, icon, slotRect);
         }
 
         private void HideTooltip()
         {
+            /*
             if (m_itemTooltip != null)
             {
                 m_itemTooltip.Hide();
             }
+            */
         }
 
         // =======================================================
