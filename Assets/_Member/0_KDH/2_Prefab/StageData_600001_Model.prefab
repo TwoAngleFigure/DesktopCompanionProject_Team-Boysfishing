@@ -81,6 +81,42 @@ MonoBehaviour:
     m_spawnTriggerX: 0
     m_targetWorldX: -15
     m_targetCameraX: -15
+  - m_assetKey: river_back_1
+    m_layerDepth: 2
+    m_spawnDistanceTrigger: 55
+    m_targetWorldOffsetFromCamera: 0
+    m_targetLocalY: 1.3
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_2
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 40
+    m_targetWorldOffsetFromCamera: 10
+    m_targetLocalY: 2
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_4
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 40
+    m_targetWorldOffsetFromCamera: -7
+    m_targetLocalY: 2
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: log
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 25
+    m_targetWorldOffsetFromCamera: 20
+    m_targetLocalY: 0
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
 --- !u!1 &606873470048552616
 GameObject:
   m_ObjectHideFlags: 0
