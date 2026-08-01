@@ -9,8 +9,18 @@ namespace DesktopCompanion.Systems
     internal static class FishingWeightCalculator
     {
         private const float BaitStatScale = 0.01f;
+        private const float GroundbaitStatScale = 0.01f;
 
         private static readonly float[] s_baseQualityWeights =
+        {
+            40f,
+            30f,
+            15f,
+            10f,
+            5f
+        };
+
+        private static readonly float[] s_baseRarityWeights =
         {
             40f,
             30f,
@@ -31,6 +41,20 @@ namespace DesktopCompanion.Systems
                 qualityIndex,
                 baitStat,
                 BaitStatScale);
+        }
+
+        public static float CalculateRarityWeight(
+            ItemRarity rarity,
+            float groundbaitStat)
+        {
+            int rarityIndex = (int)rarity;
+            float baseWeight = s_baseRarityWeights[rarityIndex];
+
+            return CalculateProgressiveWeight(
+                baseWeight,
+                rarityIndex,
+                groundbaitStat,
+                GroundbaitStatScale);
         }
 
         public static float CalculateProgressiveWeight(

@@ -42,7 +42,17 @@ namespace DesktopCompanion.Systems
         private float m_autoAttackTimer;
         private bool m_isResolvingPending;
         private readonly float[] m_qualityWeights = new float[5];
+        private readonly float[] m_rarityWeights = new float[5];
+        private readonly List<BattleFishData>[] m_fishByRarity =
+        {
+            new(),
+            new(),
+            new(),
+            new(),
+            new()
+        };
         private float m_appliedBaitStat;
+        private float m_appliedGroundbaitStat;
 
 #if UNITY_EDITOR
         private bool m_isDebugCatchOverrideEnabled;
@@ -661,8 +671,10 @@ namespace DesktopCompanion.Systems
         private void ScheduleNextFishing()
         {
             m_appliedBaitStat = m_playerSystem != null ? m_playerSystem.BaseProbabilityAtFishSize : 0f;
+            m_appliedGroundbaitStat = m_playerSystem != null ? m_playerSystem.BaseProbabilityAtFishRarity : 0f;
 
             m_playerSystem?.TryConsumeEquippedItem(EquipmentMountingArea.Bait);
+            m_playerSystem?.TryConsumeEquippedItem(EquipmentMountingArea.Groundbait);
 
             m_waitDuration = CalculateNextFishingDelay();
             m_waitTimer = m_waitDuration;
@@ -736,14 +748,42 @@ namespace DesktopCompanion.Systems
                 return null;
             }
 
-            float totalWeight = 0f;
+            for (int i = 0; i < m_fishByRarity.Length; i++)
+            {
+                m_fishByRarity[i].Clear();
+            }
 
             foreach (FishPoolEntry entry in pool.Entries)
             {
-                if (entry != null && entry.Fish != null && entry.Weight > 0f)
+                if (entry == null || entry.Fish == null)
                 {
-                    totalWeight += entry.Weight;
+                    continue;
                 }
+
+                ItemRarity rarity = entry.Fish.ItemFish.Rarity;
+                int rarityIndex = (int)rarity;
+
+                m_fishByRarity[rarityIndex].Add(entry.Fish);
+            }
+
+            float totalWeight = 0f;
+
+            for (int i = 0; i < m_fishByRarity.Length; i++)
+            {
+                m_rarityWeights[i] = 0f;
+
+                if (m_fishByRarity[i].Count == 0)
+                {
+                    continue;
+                }
+
+                ItemRarity rarity = (ItemRarity)i;
+                float weight = FishingWeightCalculator.CalculateRarityWeight(
+                    rarity,
+                    m_appliedGroundbaitStat);
+
+                m_rarityWeights[i] = weight;
+                totalWeight += weight;
             }
 
             if (totalWeight <= 0f)
@@ -752,20 +792,23 @@ namespace DesktopCompanion.Systems
             }
 
             float randomValue = UnityEngine.Random.Range(0f, totalWeight);
-            float currentWeight = 0f;
+            float accumulatedWeight = 0f;
 
-            foreach (FishPoolEntry entry in pool.Entries)
+            for (int i = 0; i < m_fishByRarity.Length; i++)
             {
-                if (entry == null || entry.Fish == null || entry.Weight <= 0f)
+                if (m_fishByRarity[i].Count == 0)
                 {
                     continue;
                 }
 
-                currentWeight += entry.Weight;
+                accumulatedWeight += m_rarityWeights[i];
 
-                if (randomValue <= currentWeight)
+                if (randomValue <= accumulatedWeight)
                 {
-                    return entry.Fish;
+                    List<BattleFishData> selectedRarityFish = m_fishByRarity[i];
+                    int fishIndex = UnityEngine.Random.Range(0, selectedRarityFish.Count);
+
+                    return selectedRarityFish[fishIndex];
                 }
             }
 
