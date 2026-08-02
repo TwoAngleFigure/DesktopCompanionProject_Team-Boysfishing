@@ -103,7 +103,13 @@ Shader "Hidden/BFPixelizer/Composite"
             // SW3 물 등 깊이 텍스처 소비자가 픽셀화 오브젝트의 수중 실루엣을 보게 한다.
             Name "BFPixelizerDepthTexUpdate"
             ZWrite On
-            ZTest Always
+            // ★LEqual 필수. Always면 기존 깊이와 비교 없이 덮어써서 _CameraDepthTexture의 값이
+            // 실제 원근이 아니라 '패스 기록 순서'로 정해진다. 이 패스는 스프라이트 경로보다 항상
+            // 뒤에 기록되므로(피처가 스프라이트 경로를 먼저 기록한다), Always에서는 v2 오브젝트가 더 앞에 있는
+            // 스프라이트 오브젝트의 깊이를 덮어써 물의 수중 투영이 앞뒤를 뒤집어 본다.
+            // LEqual이면 실제로 더 가까울 때만 기록되어 순서 의존이 사라지고, 일반 불투명에
+            // 가려진 구간이 주입되던 문제(컬러 합성에만 있던 가림 검사 누락)도 함께 해소된다.
+            ZTest LEqual
             Cull Off
             ColorMask 0
 
@@ -237,7 +243,7 @@ Shader "Hidden/BFPixelizer/Composite"
             // SW3 물의 수중 투영이 스프라이트 모드 오브젝트를 보게 한다(v2의 pass 1과 동일 역할).
             Name "BFPixelizerSpriteDepthTexUpdate"
             ZWrite On
-            ZTest Always
+            ZTest LEqual // ★pass 1과 같은 이유 — 스프라이트 오브젝트끼리도 등록 순서로 앞뒤가 뒤집힌다
             Cull Off
             ColorMask 0
 
