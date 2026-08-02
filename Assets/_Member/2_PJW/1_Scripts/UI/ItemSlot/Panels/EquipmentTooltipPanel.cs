@@ -6,8 +6,8 @@ using DesktopCompanion.Data;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 장비 상세 팝업. 부위·강화 단계·현재 효과·다음 강화 비용.
-    /// ※ 계획 28 R-5 — 아쿠아리움에서는 쓰이지 않는다. 장비 창/상점이 생길 때 표현을 다듬는다.
+    /// 장비 상세 팝업 패널. 장착 부위·강화 단계·현재 효과를 표시하고,
+    /// 다음 강화 단계가 있으면 그 비용 구역을 켠다.
     /// </summary>
     public class EquipmentTooltipPanel : ItemTooltipPanelBase
     {

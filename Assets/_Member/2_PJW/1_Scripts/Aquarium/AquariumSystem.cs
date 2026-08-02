@@ -9,17 +9,14 @@ using DesktopCompanion.Save;
 namespace DesktopCompanion.Systems
 {
     /// <summary>
-    /// 아쿠아리움 시스템. 배치된 물고기가 재료를 자동 생산한다.
-    /// - Plan A: 물고기를 '개체(EntityHandle)'로 보유한다. 배치=인벤토리에서 개체를 빼 옴, 회수=인벤토리로 되돌림.
-    ///   → 보유 수만큼만 배치 가능(수용량과 별개로 소유 제한), 개체의 Size/Quality 보존.
-    /// - 물고기별 주기(성급으로 단축)마다 재료 포인트 적립 → 재료 요구 포인트 도달 시 재료 1개 생산.
-    ///   서로 다른 물고기가 같은 재료를 생산하면 포인트 풀을 공유한다.
-    /// - 타임스탬프 정산으로 오프라인(앱 종료) 시간도 반영한다.
-    /// - 생산물은 InventorySystem으로 즉시 지급, 가득 차면 보류 후 재지급.
-    /// - 수용량 상한은 AquariumUpgradeData(레벨=id), 업그레이드 비용은 골드(PlayerSystem) + 재료(InventorySystem).
-    /// ※ 생산 주기 감소는 '개체 성급(Entity_Fish.Quality)'을 사용한다(계획 27 P5 —
-    ///   계획 08의 '종 정의 ItemData_Fish.Star 사용' 결정을 대체).
-    /// R1: 자기 원시 상태는 Initialize, 타 System(Inventory/Player) 참조·개체 복원·오프라인 정산은 PostInitialize.
+    /// 배치된 물고기가 재료를 자동 생산하는 아쿠아리움 시스템.
+    /// - 물고기를 개체(EntityHandle)로 보유한다. 배치는 인벤토리에서 개체를 빼 오고, 회수는 되돌린다.
+    /// - 물고기별 생산 주기(개체 성급만큼 단축)마다 재료 포인트를 적립하고,
+    ///   요구 포인트에 도달하면 재료 1개를 생산한다. 같은 재료를 생산하는 물고기끼리 포인트 풀을 공유한다.
+    /// - 정산은 타임스탬프 기준이라 앱 종료 중 경과 시간도 반영된다.
+    /// - 생산물은 InventorySystem으로 지급하고, 지급에 실패하면 보류했다가 다음 정산에 재시도한다.
+    /// - 수용량 상한은 AquariumUpgradeData(레벨=id)가 정하며, 강화 비용은 골드와 재료다.
+    /// 초기화는 자기 원시 상태를 Initialize에서, 타 System 참조·개체 복원·오프라인 정산을 PostInitialize에서 한다.
     /// </summary>
     public class AquariumSystem : SystemBase, ISaveable, ITickable
     {
@@ -40,17 +37,16 @@ namespace DesktopCompanion.Systems
         private AquariumSave m_loadedSave;
 
         /// <summary>
-        /// '구조' 변화 시 발행(배치·회수·업그레이드). 목록 재빌드가 필요한 쪽만 구독한다.
-        /// 초 단위 정산은 <see cref="OnAquariumProgress"/>로 분리되어 있다(계획 27 A-5).
+        /// 구조가 바뀔 때(배치·회수·강화) 발행한다. 목록 재구성이 필요한 쪽이 구독한다.
         /// </summary>
         public event Action OnAquariumChanged;
 
-        /// <summary>'수치'만 변화 시 발행(1초 정산 — 포인트/보류/남은 시간). 목록 구조는 그대로다.</summary>
+        /// <summary>1초 정산으로 수치(포인트·보류·남은 시간)만 바뀔 때 발행한다. 목록 구조는 유지된다.</summary>
         public event Action OnAquariumProgress;
 
         // ── 읽기 API(View·World용) ──
 
-        /// <summary>배치 슬롯별 표현 정보(핸들·종·개체 크기). 월드 스폰이 핸들 기준 reconcile·크기 적용에 사용.</summary>
+        /// <summary>배치 물고기 1마리의 월드 표현 정보(핸들·종·개체 크기).</summary>
         public readonly struct PlacedFishView
         {
             public readonly EntityHandle Handle;
@@ -63,7 +59,7 @@ namespace DesktopCompanion.Systems
             }
         }
 
-        /// <summary>배치된 물고기의 슬롯별 (핸들·dataId·개체 Size). 월드 뷰가 핸들 기준으로 스폰/크기 적용.</summary>
+        /// <summary>배치된 모든 물고기의 (핸들·dataId·개체 Size)를 반환한다. 월드 뷰의 스폰·크기 적용에 쓴다.</summary>
         public List<PlacedFishView> GetPlacedFish()
         {
             var list = new List<PlacedFishView>(m_fishHandles.Count);
@@ -103,13 +99,12 @@ namespace DesktopCompanion.Systems
             }
         }
 
-        /// <summary>현재 등급 정의(등급 이름·수용 한도 조회용).</summary>
+        /// <summary>현재 등급 정의. 등급 이름·수용 한도 조회에 쓴다.</summary>
         public AquariumUpgradeData CurrentUpgrade => DataManager.GetData<AquariumUpgradeData>(m_upgradeLevel);
 
         /// <summary>
-        /// 다음 업그레이드 레벨 정의(비용 조회용). 최대 레벨이면 null.
-        /// 다음 id의 행이 아예 없을 때뿐 아니라 <b>행은 있는데 내용이 비어 있을 때</b>도 null로 본다 —
-        /// 시트 하단의 빈 행이 '다음 등급'으로 잡혀 수용량 0짜리 강화가 노출되는 것을 막는다.
+        /// 다음 등급 정의. 최대 등급이면 null이다.
+        /// 다음 id의 행이 없을 때뿐 아니라 행이 있어도 내용이 비어 있으면 null로 취급한다.
         /// </summary>
         public AquariumUpgradeData NextUpgrade
         {
@@ -120,7 +115,7 @@ namespace DesktopCompanion.Systems
             }
         }
 
-        /// <summary>등급 정의가 실제 내용을 가졌는지. 수용 한도가 없는 등급은 강화 대상이 될 수 없다.</summary>
+        /// <summary>등급 정의가 유효한 내용을 가졌는지. 수용 한도가 없는 등급은 강화 대상이 아니다.</summary>
         private static bool IsDefinedUpgrade(AquariumUpgradeData data) => data != null && data.MaxCapacity > 0;
 
         // ── 생명주기 ──
@@ -158,10 +153,7 @@ namespace DesktopCompanion.Systems
 
         // ── 배치/회수 (인벤토리 소비/반환) ──
 
-        /// <summary>
-        /// 인벤토리의 '그 개체'를 빼 아쿠아리움에 배치한다.
-        /// 정렬된 목록에서 행이 가리키는 개체가 정확히 배치되도록 핸들로 지목한다.
-        /// </summary>
+        /// <summary>핸들로 지목한 개체를 인벤토리에서 빼 아쿠아리움에 배치한다.</summary>
         public bool AddFish(EntityHandle handle)
         {
             if (CanPlaceFish(handle, out string reason) == false)
@@ -181,7 +173,7 @@ namespace DesktopCompanion.Systems
             return true;
         }
 
-        /// <summary>이 개체를 지금 배치할 수 있는지(수용량·중복·보유). UI가 [넣기] 버튼 활성/사유 표기에 쓴다.</summary>
+        /// <summary>이 개체를 배치할 수 있는지 검사한다(보유·중복·수용량). 불가 시 사유를 함께 반환한다.</summary>
         public bool CanPlaceFish(EntityHandle handle, out string reason)
         {
             reason = string.Empty;
@@ -213,8 +205,8 @@ namespace DesktopCompanion.Systems
         }
 
         /// <summary>
-        /// 종(dataId) 지정 배치 — 보유 개체 중 첫 번째를 골라 핸들 경로에 위임한다.
-        /// ※ 어느 개체가 배치될지 통제할 수 없으므로 정식 UI는 <see cref="AddFish(EntityHandle)"/>를 쓴다(디버그/자동화용).
+        /// 종(dataId)으로 배치한다. 보유 개체 중 첫 번째를 골라 <see cref="AddFish(EntityHandle)"/>에 위임한다.
+        /// 어느 개체가 배치될지 통제할 수 없으므로 디버그·자동화 경로에서 쓴다.
         /// </summary>
         public bool AddFish(int fishDataId)
         {
@@ -235,12 +227,12 @@ namespace DesktopCompanion.Systems
             return false;   // 보유 개체 없음
         }
 
-        /// <summary>배치된 개체를 핸들로 지목해 회수한다. 회수가 곧 판매가 되는 상황은 선검사로 차단한다.</summary>
+        /// <summary>핸들로 지목한 배치 개체를 회수한다.</summary>
         public bool RemoveFish(EntityHandle handle) => RemoveFishAt(m_fishHandles.IndexOf(handle));
 
         /// <summary>
-        /// 배치 물고기를 회수해 인벤토리로 되돌린다.
-        /// ※ 인덱스는 정렬된 목록의 행 순서와 무관한 '물리적 위치'다 — UI는 <see cref="RemoveFish"/>를 쓴다.
+        /// 지정 인덱스의 배치 물고기를 회수해 인벤토리로 되돌린다. 선검사에 걸리면 회수하지 않는다.
+        /// 인덱스는 내부 저장 순서이며 표시 목록의 행 순서와 무관하다.
         /// </summary>
         public bool RemoveFishAt(int index)
         {
@@ -271,11 +263,9 @@ namespace DesktopCompanion.Systems
         }
 
         /// <summary>
-        /// 이 개체를 회수해도 '판매되지 않고' 인벤토리로 돌아오는지 선검사한다(계획 27 P6).
-        /// ※ 판정 원본: InventorySystem.ShouldSellFish = IsAutoSellTarget || IsFishInventoryFull.
-        ///    AddItem은 이 조건이 참이면 인벤에 넣는 대신 판매하고 true를 반환하므로,
-        ///    호출 전에 막지 않으면 '빼기'가 곧 '판매'가 된다.
-        ///    → InventorySystem의 자동판매 정책이 바뀌면 이 함수도 함께 갱신할 것.
+        /// 이 개체가 회수 시 판매되지 않고 인벤토리로 돌아오는지 선검사한다. 불가 시 사유를 함께 반환한다.
+        /// 판정 기준은 InventorySystem의 자동판매 조건(물고기 창고 만석 · 자동판매 필터 대상)이며,
+        /// 그 정책이 바뀌면 이 함수도 함께 갱신해야 한다.
         /// </summary>
         public bool CanRetrieveFish(EntityHandle handle, out string reason)
         {
@@ -327,7 +317,7 @@ namespace DesktopCompanion.Systems
 
         // ── 업그레이드 ──
 
-        /// <summary>업그레이드 1건의 재료 요구(필요/보유).</summary>
+        /// <summary>강화 재료 1종의 요구량과 보유량.</summary>
         public readonly struct MaterialRequirement
         {
             public readonly int MaterialId;
@@ -343,7 +333,7 @@ namespace DesktopCompanion.Systems
             public bool IsSatisfied => Owned >= Required;
         }
 
-        /// <summary>다음 등급 강화의 가능 여부·비용·보유량(버튼 활성/사유 표기용).</summary>
+        /// <summary>다음 등급 강화의 가능 여부·비용·보유량·차단 사유.</summary>
         public readonly struct AquariumUpgradeInfo
         {
             public readonly bool HasNext;
@@ -372,7 +362,7 @@ namespace DesktopCompanion.Systems
 
         private static readonly MaterialRequirement[] s_noMaterials = Array.Empty<MaterialRequirement>();
 
-        /// <summary>다음 등급 강화 정보(비용·보유·가능 여부). 최대 등급이면 HasNext=false.</summary>
+        /// <summary>다음 등급 강화 정보를 만든다. 최대 등급이면 HasNext=false로 반환한다.</summary>
         public AquariumUpgradeInfo GetUpgradeInfo()
         {
             var next = NextUpgrade;
@@ -415,7 +405,7 @@ namespace DesktopCompanion.Systems
                 next.UpgradeCost, gold, materials, canUpgrade ? string.Empty : reason);
         }
 
-        /// <summary>다음 등급으로 강화한다. 골드·재료를 전부 검증한 뒤에만 소비한다(부분 차감 없음).</summary>
+        /// <summary>다음 등급으로 강화한다. 골드·재료를 모두 검증한 뒤에만 소비하므로 부분 차감이 없다.</summary>
         public bool TryUpgrade()
         {
             AquariumUpgradeInfo info = GetUpgradeInfo();
@@ -492,7 +482,7 @@ namespace DesktopCompanion.Systems
                 if (e == null) continue;
                 var f = e.ItemData;
 
-                float cycle = EffectiveCycle(f, e.Quality);   // P5: 개체 성급 반영
+                float cycle = EffectiveCycle(f, e.Quality);   // 개체 성급 반영
                 double total = m_fishProgress[i] + elapsed;
                 int batches = (int)(total / cycle);
                 m_fishProgress[i] = (float)(total - batches * cycle);
@@ -566,8 +556,7 @@ namespace DesktopCompanion.Systems
         private Entity_Fish FishEntity(EntityHandle h) => EntityManager.Get<Entity_Fish>(h);
 
         /// <summary>
-        /// 유효 생산 주기(초). 하한 <see cref="MinCycleSeconds"/>.
-        /// 계획 27 P5 — 주기 감소는 '개체 성급'(Entity_Fish.Quality)으로 계산한다.
+        /// 개체 성급만큼 단축된 유효 생산 주기(초)를 반환한다. 하한은 <see cref="MinCycleSeconds"/>다.
         /// </summary>
         private float EffectiveCycle(ItemData_Fish fish, ItemQuality quality)
             => Mathf.Max(MinCycleSeconds, fish.AquariumProduceTime - ((int)quality - 1) * fish.AquariumDecreaseCount);
@@ -576,21 +565,21 @@ namespace DesktopCompanion.Systems
 
         // ── View용 Data/지표 접근자 ──
 
-        /// <summary>종 정의(ItemData_Fish) 조회(뷰가 dataId로 종 정보를 얻을 때).</summary>
+        /// <summary>dataId로 물고기 종 정의(ItemData_Fish)를 조회한다.</summary>
         public ItemData_Fish GetFishData(int id) => FishData(id);
 
-        /// <summary>재료 정의(ItemData_Materials) 조회(아이콘 키 등).</summary>
+        /// <summary>dataId로 재료 정의(ItemData_Materials)를 조회한다.</summary>
         public ItemData_Materials GetMaterialData(int id) => DataManager.GetData<ItemData_Materials>(id);
 
-        /// <summary>시간당 생산 포인트(표시용). 개체 성급 단축 반영.</summary>
+        /// <summary>개체 성급 단축을 반영한 시간당 생산 포인트를 반환한다.</summary>
         public float PointsPerHour(ItemData_Fish fish, ItemQuality quality)
             => fish == null ? 0f : fish.AquariumProduceAmount * 3600f / EffectiveCycle(fish, quality);
 
-        /// <summary>분당 생산 포인트(표시용). 개체 성급 단축 반영.</summary>
+        /// <summary>개체 성급 단축을 반영한 분당 생산 포인트를 반환한다.</summary>
         public float PointsPerMinute(ItemData_Fish fish, ItemQuality quality)
             => fish == null ? 0f : fish.AquariumProduceAmount * 60f / EffectiveCycle(fish, quality);
 
-        /// <summary>그 재료의 시간당 생산 개수(배치된 모든 개체의 시간당 포인트 합 ÷ 요구 포인트).</summary>
+        /// <summary>그 재료의 시간당 생산 개수를 반환한다. 배치된 개체들의 시간당 포인트 합을 요구 포인트로 나눈 값이다.</summary>
         public float MaterialsPerHour(int materialId)
         {
             var mat = DataManager.GetData<ItemData_Materials>(materialId);
@@ -614,8 +603,8 @@ namespace DesktopCompanion.Systems
         // ── 표시용 상태 구조 ──
 
         /// <summary>
-        /// 물고기 1개체의 표시 정보(인벤토리·배치 공용).
-        /// <see cref="RemainingSeconds"/>는 배치된 개체만 유효하며, 인벤토리 개체는 0이다.
+        /// 물고기 1개체의 표시 정보. 인벤토리 개체와 배치 개체에 함께 쓴다.
+        /// <see cref="RemainingSeconds"/>는 배치 개체에서만 유효하고 인벤토리 개체는 0이다.
         /// </summary>
         public readonly struct AquariumFishInfo
         {
@@ -643,7 +632,7 @@ namespace DesktopCompanion.Systems
                 RemainingSeconds = remainingSeconds; Capacity = capacity;
             }
 
-            /// <summary>유효한 개체에서 만들어졌는지(조회 실패 시 default가 반환된다).</summary>
+            /// <summary>유효한 개체로부터 만들어졌는지. 조회에 실패하면 default가 반환된다.</summary>
             public bool IsValid => DataId != 0;
         }
 
@@ -663,11 +652,11 @@ namespace DesktopCompanion.Systems
             }
         }
 
-        /// <summary>개체 1마리의 표시 정보. 배치되지 않은(인벤토리) 개체도 조회할 수 있다.</summary>
+        /// <summary>개체 1마리의 표시 정보를 만든다. 배치되지 않은 인벤토리 개체도 조회할 수 있다.</summary>
         public AquariumFishInfo BuildFishInfo(EntityHandle handle)
             => BuildFishInfo(handle, m_fishHandles.IndexOf(handle), SecondsSinceSettle());
 
-        /// <summary>배치된 물고기 전체의 표시 정보(남은 시간 포함).</summary>
+        /// <summary>배치된 물고기 전체의 표시 정보를 만든다. 다음 생산까지 남은 시간이 포함된다.</summary>
         public List<AquariumFishInfo> GetPlacedFishInfos()
         {
             var list = new List<AquariumFishInfo>(m_fishHandles.Count);
@@ -707,7 +696,7 @@ namespace DesktopCompanion.Systems
 
         private double SecondsSinceSettle() => Math.Max(0.0, (DateTime.UtcNow - m_lastSettleUtc).TotalSeconds);
 
-        /// <summary>아쿠아리움이 생산 중/보류 중인 모든 재료의 상태(누적·요구 포인트·보류·시간당 생산 개수).</summary>
+        /// <summary>생산 중이거나 보류 중인 모든 재료의 상태(누적·요구 포인트, 보류 개수, 시간당 생산 개수)를 만든다.</summary>
         public List<MaterialStatus> GetMaterialStatuses()
         {
             var ids = new HashSet<int>();
@@ -792,9 +781,7 @@ namespace DesktopCompanion.Systems
                 m_lastSettleUtc = DateTime.UtcNow;   // 파싱 실패 시 방치분 없음 처리
             }
 
-            // 배치 물고기 개체 복원(인벤토리 슬롯 복원과 동형: 저장 handle로 Entity 재등록 + 롤값 주입)
-            // ※ progress는 계획 08(종 주기) 기준으로 쌓인 값일 수 있다. P5 전환 후 첫 정산에서
-            //    개체 주기 기준으로 재계산되며(총합 % 주기), 최대 1주기만큼의 1회성 오차만 생긴다.
+            // 배치 물고기 개체 복원: 저장된 handle로 Entity를 재등록하고 롤값을 주입한다.
             m_fishHandles.Clear();
             m_fishProgress.Clear();
             if (s.fish != null)

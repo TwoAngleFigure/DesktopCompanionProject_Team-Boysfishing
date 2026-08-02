@@ -4,11 +4,10 @@ using DesktopCompanion.Systems;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 재료 생산 경과 + 수족관 정보 창의 ViewModel.
-    /// 갱신 경로를 둘로 나눈다(계획 27 A-5·R-5):
-    ///  - 구조 변경(배치·회수·강화·인벤토리 변동) → 목록 재구성(<see cref="Materials"/> 재할당)
-    ///  - 1초 정산 → 기존 VD의 수치만 제자리 갱신 후 <see cref="ProgressTick"/> 증가(행 재생성 없음)
-    /// ※ 정렬은 구조 변경·사용자 조작 시에만 다시 적용한다. 매초 재정렬하면 행 순서가 흔들려 읽기 어렵다.
+    /// 재료 생산 경과와 수족관 정보 창의 ViewModel. 갱신 경로가 둘로 나뉜다.
+    ///  - 구조 변경(배치·회수·강화·인벤토리 변동): 목록을 재구성하고 <see cref="Materials"/>를 재할당한다.
+    ///  - 1초 정산: 기존 VD의 수치만 제자리 갱신하고 <see cref="ProgressTick"/>을 올린다.
+    /// 정렬은 구조 변경과 사용자 조작 시에만 다시 적용한다.
     /// </summary>
     public class AquariumStatusViewModel : UIViewModelBase
     {

@@ -50,7 +50,7 @@ namespace DesktopCompanion.Views
             {
                 m_currencySystem.OnGoldChanged += HandleGoldChanged;
 
-                //ÃÖÃÊ °ª ¸®µù
+                //ìµœì´ˆ ê°’ ë¦¬ë”©
                 Gold.Value = m_currencySystem.CurrentGold;
             }
             RefreshSlots();
@@ -205,7 +205,7 @@ namespace DesktopCompanion.Views
         }
 
         /// <summary>
-        /// ½ÇÁ¦ Entity Å¸ÀÔ¿¡ µû¶ó UI Ç¥½Ã µ¥ÀÌÅÍ¸¦ ±¸¼º
+        /// ì‹¤ì œ Entity íƒ€ì…ì— ë”°ë¼ UI í‘œì‹œ ë°ì´í„°ë¥¼ êµ¬ì„±
         /// </summary>
         private void ApplyRuntimeValues(InventorySlotViewData viewData, Entity entity)
         {
@@ -245,19 +245,19 @@ namespace DesktopCompanion.Views
             {
                 viewData.GradeText =
                     $"{GetRarityText(fish.Rarity)} / {GetQualityText(fish.Quality)}\n" +
-                    $"Å©±â {fish.Size:F1}cm";
+                    $"í¬ê¸° {fish.Size:F1}cm";
 
-                viewData.EffectText = "¼öÁ·°ü »ı»ê Á¤º¸ ¾øÀ½";
-                viewData.SellPriceText = "ÆÇ¸Å Á¤º¸ ¾øÀ½";
+                viewData.EffectText = "ìˆ˜ì¡±ê´€ ìƒì‚° ì •ë³´ ì—†ìŒ";
+                viewData.SellPriceText = "íŒë§¤ ì •ë³´ ì—†ìŒ";
                 return;
             }
 
             viewData.Tier = itemData.Tier;
 
-            // F1: ¼Ò¼öÁ¡ Ã¹Â° ÀÚ¸®±îÁö °íÁ¤ Ç¥½Ã
+            // F1: ì†Œìˆ˜ì  ì²«ì§¸ ìë¦¬ê¹Œì§€ ê³ ì • í‘œì‹œ
             viewData.GradeText =
-                $"{itemData.Tier}Æ¼¾î / {GetRarityText(fish.Rarity)} / {GetQualityText(fish.Quality)}\n" +
-                $"Å©±â {fish.Size:F1}cm";
+                $"{itemData.Tier}í‹°ì–´ / {GetRarityText(fish.Rarity)} / {GetQualityText(fish.Quality)}\n" +
+                $"í¬ê¸° {fish.Size:F1}cm";
 
             viewData.EffectText = BuildFishEffectText(fish);
 
@@ -273,11 +273,11 @@ namespace DesktopCompanion.Views
             if (itemData == null)
             {
                 viewData.GradeText = equipment.UpgradeLevel > 0
-                    ? $"+{equipment.UpgradeLevel} °­È­"
+                    ? $"+{equipment.UpgradeLevel} ê°•í™”"
                     : "";
 
-                viewData.EffectText = "Àåºñ Á¤º¸ ¾øÀ½";
-                viewData.SellPriceText = "ÆÇ¸Å Á¤º¸ ¾øÀ½";
+                viewData.EffectText = "ì¥ë¹„ ì •ë³´ ì—†ìŒ";
+                viewData.SellPriceText = "íŒë§¤ ì •ë³´ ì—†ìŒ";
                 return;
             }
 
@@ -287,11 +287,11 @@ namespace DesktopCompanion.Views
             string mountingAreaText = GetMountingAreaText(itemData.MountingArea);
 
             string upgradeText = equipment.UpgradeLevel > 0
-                ? $"+{equipment.UpgradeLevel} °­È­"
+                ? $"+{equipment.UpgradeLevel} ê°•í™”"
                 : "";
 
             viewData.GradeText =
-                $"{itemData.Tier}Æ¼¾î / {mountingAreaText}\n" +
+                $"{itemData.Tier}í‹°ì–´ / {mountingAreaText}\n" +
                 upgradeText;
 
             viewData.EffectText = BuildEquipmentEffectText(equipment);
@@ -307,15 +307,15 @@ namespace DesktopCompanion.Views
 
             if (itemData == null)
             {
-                viewData.GradeText = "Àç·á";
-                viewData.EffectText = $"º¸À¯ ¼ö·® {materials.Quantity}°³";
-                viewData.SellPriceText = "ÆÇ¸Å Á¤º¸ ¾øÀ½";
+                viewData.GradeText = "ì¬ë£Œ";
+                viewData.EffectText = $"ë³´ìœ  ìˆ˜ëŸ‰ {materials.Quantity}ê°œ";
+                viewData.SellPriceText = "íŒë§¤ ì •ë³´ ì—†ìŒ";
                 return;
             }
 
             viewData.Tier = itemData.Tier;
-            viewData.GradeText = $"{itemData.Tier}Æ¼¾î / Àç·á";
-            viewData.EffectText = $"º¸À¯ ¼ö·® {materials.Quantity}°³";
+            viewData.GradeText = $"{itemData.Tier}í‹°ì–´ / ì¬ë£Œ";
+            viewData.EffectText = $"ë³´ìœ  ìˆ˜ëŸ‰ {materials.Quantity}ê°œ";
 
             ApplySellPrice(viewData, itemData);
         }
@@ -328,12 +328,12 @@ namespace DesktopCompanion.Views
 
             if (itemData == null)
             {
-                viewData.GradeText = "¼Ò¸ğÇ°";
+                viewData.GradeText = "ì†Œëª¨í’ˆ";
                 viewData.EffectText =
-                    $"º¸À¯ ¼ö·® {consumables.Quantity}°³\n" +
-                    "È¿°ú Á¤º¸ ¾øÀ½";
+                    $"ë³´ìœ  ìˆ˜ëŸ‰ {consumables.Quantity}ê°œ\n" +
+                    "íš¨ê³¼ ì •ë³´ ì—†ìŒ";
 
-                viewData.SellPriceText = "ÆÇ¸Å Á¤º¸ ¾øÀ½";
+                viewData.SellPriceText = "íŒë§¤ ì •ë³´ ì—†ìŒ";
                 return;
             }
 
@@ -342,17 +342,17 @@ namespace DesktopCompanion.Views
 
             string categoryText = GetMountingAreaText(itemData.MountingArea);
 
-            viewData.GradeText = $"{itemData.Tier}Æ¼¾î / {categoryText}";
+            viewData.GradeText = $"{itemData.Tier}í‹°ì–´ / {categoryText}";
             viewData.EffectText = BuildConsumableDetailText(consumables);
 
             ApplySellPrice(viewData, itemData);
         }
 
         /// <summary>
-        /// ¹°°í±âÀÇ Ç°Áú¿¡ µû¶ó ¼öÁ·°ü »ı»ê ½Ã°£À» °¨¼Ò
+        /// ë¬¼ê³ ê¸°ì˜ í’ˆì§ˆì— ë”°ë¼ ìˆ˜ì¡±ê´€ ìƒì‚° ì‹œê°„ì„ ê°ì†Œ
         ///
-        /// ÃÖÁ¾ ½Ã°£
-        /// = ±âº» »ı»ê ½Ã°£ - °¨¼Ò·® ¡¿ (¼º±Ş - 1)
+        /// ìµœì¢… ì‹œê°„
+        /// = ê¸°ë³¸ ìƒì‚° ì‹œê°„ - ê°ì†ŒëŸ‰ Ã— (ì„±ê¸‰ - 1)
         /// </summary>
         private string BuildFishEffectText(Entity_Fish fish)
         {
@@ -360,7 +360,7 @@ namespace DesktopCompanion.Views
 
             if (itemData == null || itemData.AquariumMaterial == null)
             {
-                return "¼öÁ·°ü »ı»ê Á¤º¸ ¾øÀ½";
+                return "ìˆ˜ì¡±ê´€ ìƒì‚° ì •ë³´ ì—†ìŒ";
             }
 
             int qualityStep = Math.Max(0, (int)fish.Quality - 1);
@@ -371,11 +371,11 @@ namespace DesktopCompanion.Views
 
             productionTime = Math.Max(1f, productionTime);
 
-            return $"{itemData.AquariumMaterial.Name} {productionTime:0.#}ÃÊ¸¶´Ù {AquariumProduceCount}°³ »ı¼º";
+            return $"{itemData.AquariumMaterial.Name} {productionTime:0.#}ì´ˆë§ˆë‹¤ {AquariumProduceCount}ê°œ ìƒì„±";
         }
 
         /// <summary>
-        /// ÇöÀç °­È­ ´Ü°è¿¡¼­ Àû¿ëµÇ´Â Àåºñ ½ºÅÈÀ» Ç¥½Ã
+        /// í˜„ì¬ ê°•í™” ë‹¨ê³„ì—ì„œ ì ìš©ë˜ëŠ” ì¥ë¹„ ìŠ¤íƒ¯ì„ í‘œì‹œ
         /// </summary>
         private string BuildEquipmentEffectText(Entity_Equipment equipment)
         {
@@ -385,18 +385,18 @@ namespace DesktopCompanion.Views
 
             return builder.Length > 0
                 ? builder.ToString()
-                : "Àû¿ë ½ºÅÈ ¾øÀ½";
+                : "ì ìš© ìŠ¤íƒ¯ ì—†ìŒ";
         }
 
         /// <summary>
-        /// ¼Ò¸ğÇ°ÀÇ º¸À¯ ¼ö·®°ú ½ÇÁ¦ È¿°ú¸¦ Ç¥½Ã
+        /// ì†Œëª¨í’ˆì˜ ë³´ìœ  ìˆ˜ëŸ‰ê³¼ ì‹¤ì œ íš¨ê³¼ë¥¼ í‘œì‹œ
         /// </summary>
         private string BuildConsumableDetailText(Entity_Consumables consumables)
         {
             ItemData_Consumables itemData = consumables.ItemData;
             StringBuilder builder = new();
 
-            builder.Append($"º¸À¯ ¼ö·® {consumables.Quantity}°³");
+            builder.Append($"ë³´ìœ  ìˆ˜ëŸ‰ {consumables.Quantity}ê°œ");
 
             StringBuilder effectBuilder = new();
 
@@ -410,7 +410,7 @@ namespace DesktopCompanion.Views
                 }
 
                 effectBuilder.Append(itemData.SummonTarget.Name);
-                effectBuilder.Append(" ¼ÒÈ¯");
+                effectBuilder.Append(" ì†Œí™˜");
             }
 
             builder.AppendLine();
@@ -421,14 +421,14 @@ namespace DesktopCompanion.Views
             }
             else
             {
-                builder.Append("È¿°ú Á¤º¸ ¾øÀ½");
+                builder.Append("íš¨ê³¼ ì •ë³´ ì—†ìŒ");
             }
 
             return builder.ToString();
         }
 
         /// <summary>
-        /// StatModifier ¹è¿­À» »ç¶÷ÀÌ ÀĞÀ» ¼ö ÀÖ´Â ¹®±¸·Î º¯È¯
+        /// StatModifier ë°°ì—´ì„ ì‚¬ëŒì´ ì½ì„ ìˆ˜ ìˆëŠ” ë¬¸êµ¬ë¡œ ë³€í™˜
         /// </summary>
         private void AppendModifiers(StringBuilder builder, StatModifier[] modifiers)
         {
@@ -477,9 +477,9 @@ namespace DesktopCompanion.Views
         }
 
         /// <summary>
-        /// ÆÇ¸Å°¡ Ç¥½Ã
-        /// ÇöÀç´Â ÀÓ½Ã·Î ÆÇ¸Å°¡ ±×´ë·Î ¹İÈ¯
-        /// ÈÄ¿¡ ShopSystem Ãß°¡µÇ¸é API µû¿Í¼­ PlayerStat ¹İ¿µ
+        /// íŒë§¤ê°€ í‘œì‹œ
+        /// í˜„ì¬ëŠ” ì„ì‹œë¡œ íŒë§¤ê°€ ê·¸ëŒ€ë¡œ ë°˜í™˜
+        /// í›„ì— ShopSystem ì¶”ê°€ë˜ë©´ API ë”°ì™€ì„œ PlayerStat ë°˜ì˜
         /// </summary>
         private void ApplySellPrice(InventorySlotViewData viewData, ItemData itemData)
         {
@@ -503,10 +503,10 @@ namespace DesktopCompanion.Views
         {
             if (unitSellPrice <= 0)
             {
-                return "ÆÇ¸Å ºÒ°¡";
+                return "íŒë§¤ ë¶ˆê°€";
             }
 
-            return $"°³´ç ÆÇ¸Å°¡ {unitSellPrice:N0} G";
+            return $"ê°œë‹¹ íŒë§¤ê°€ {unitSellPrice:N0} G";
         }
 
         private string GetPlayerStatText(PlayerStat stat)
@@ -514,43 +514,43 @@ namespace DesktopCompanion.Views
             switch (stat)
             {
                 case PlayerStat.DamagePerClick:
-                    return "Å¬¸¯ °ø°İ·Â";
+                    return "í´ë¦­ ê³µê²©ë ¥";
 
                 case PlayerStat.ManualDamagePerHitMultiply:
-                    return "¼öµ¿ °ø°İ ¹èÀ²";
+                    return "ìˆ˜ë™ ê³µê²© ë°°ìœ¨";
 
                 case PlayerStat.BattleTimeVariable:
-                    return "ÀüÅõ ½Ã°£";
+                    return "ì „íˆ¬ ì‹œê°„";
 
                 case PlayerStat.CriticalChance:
-                    return "Å©¸®Æ¼ÄÃ È®·ü";
+                    return "í¬ë¦¬í‹°ì»¬ í™•ë¥ ";
 
                 case PlayerStat.CriticalMultiply:
-                    return "Å©¸®Æ¼ÄÃ ¹èÀ²";
+                    return "í¬ë¦¬í‹°ì»¬ ë°°ìœ¨";
 
                 case PlayerStat.AutoBattleCooltime:
-                    return "ÀÚµ¿ ³¬½Ã °£°İ";
+                    return "ìë™ ë‚šì‹œ ê°„ê²©";
 
                 case PlayerStat.AutoSpeedPerTime:
-                    return "ÀÚµ¿ °ø°İ ¼Óµµ";
+                    return "ìë™ ê³µê²© ì†ë„";
 
                 case PlayerStat.AutoDamagePerHitMultiply:
-                    return "ÀÚµ¿ °ø°İ ¹èÀ²";
+                    return "ìë™ ê³µê²© ë°°ìœ¨";
 
                 case PlayerStat.MapMovementSpeedPerTime:
-                    return "ÀÌµ¿ ¼Óµµ";
+                    return "ì´ë™ ì†ë„";
 
                 case PlayerStat.InventorySize:
-                    return "ÀÎº¥Åä¸® Å©±â";
+                    return "ì¸ë²¤í† ë¦¬ í¬ê¸°";
 
                 case PlayerStat.ProbabilityAtFishSize:
-                    return "³ôÀº ¼º±Ş µîÀå È®·ü";
+                    return "ë†’ì€ ì„±ê¸‰ ë“±ì¥ í™•ë¥ ";
 
                 case PlayerStat.ProbabilityAtFishRarity:
-                    return "³ôÀº µî±Ş µîÀå È®·ü";
+                    return "ë†’ì€ ë“±ê¸‰ ë“±ì¥ í™•ë¥ ";
 
                 case PlayerStat.GoldGettingMultiply:
-                    return "°ñµå È¹µæ ¹èÀ²";
+                    return "ê³¨ë“œ íšë“ ë°°ìœ¨";
 
                 default:
                     return stat.ToString();
@@ -562,19 +562,19 @@ namespace DesktopCompanion.Views
             switch (rarity)
             {
                 case ItemRarity.Normal:
-                    return "ÀÏ¹İ";
+                    return "ì¼ë°˜";
 
                 case ItemRarity.Uncommon:
-                    return "°í±Ş";
+                    return "ê³ ê¸‰";
 
                 case ItemRarity.Rare:
-                    return "Èñ±Í";
+                    return "í¬ê·€";
 
                 case ItemRarity.Epic:
-                    return "¿µ¿õ";
+                    return "ì˜ì›…";
 
                 case ItemRarity.Legendary:
-                    return "Àü¼³";
+                    return "ì „ì„¤";
 
                 default:
                     return rarity.ToString();
@@ -586,19 +586,19 @@ namespace DesktopCompanion.Views
             switch (quality)
             {
                 case ItemQuality.OneStar:
-                    return "¡Ú";
+                    return "â˜…";
 
                 case ItemQuality.TwoStar:
-                    return "¡Ú¡Ú";
+                    return "â˜…â˜…";
 
                 case ItemQuality.ThreeStar:
-                    return "¡Ú¡Ú¡Ú";
+                    return "â˜…â˜…â˜…";
 
                 case ItemQuality.FourStar:
-                    return "¡Ú¡Ú¡Ú¡Ú";
+                    return "â˜…â˜…â˜…â˜…";
 
                 case ItemQuality.FiveStar:
-                    return "¡Ú¡Ú¡Ú¡Ú¡Ú";
+                    return "â˜…â˜…â˜…â˜…â˜…";
 
                 default:
                     return string.Empty;
@@ -610,40 +610,40 @@ namespace DesktopCompanion.Views
             switch (mountingArea)
             {
                 case EquipmentMountingArea.FishingRod:
-                    return "³¬½Ë´ë";
+                    return "ë‚šì‹¯ëŒ€";
 
                 case EquipmentMountingArea.FishingLine:
-                    return "³¬½ËÁÙ";
+                    return "ë‚šì‹¯ì¤„";
 
                 case EquipmentMountingArea.Reel:
-                    return "¸±";
+                    return "ë¦´";
 
                 case EquipmentMountingArea.Lure:
-                    return "·ç¾î";
+                    return "ë£¨ì–´";
 
                 case EquipmentMountingArea.Hat:
-                    return "¸ğÀÚ";
+                    return "ëª¨ì";
 
                 case EquipmentMountingArea.Uniform:
-                    return "ÇÑ¹ú¿Ê";
+                    return "í•œë²Œì˜·";
 
                 case EquipmentMountingArea.Gloves:
-                    return "Àå°©";
+                    return "ì¥ê°‘";
 
                 case EquipmentMountingArea.Engine:
-                    return "¿£Áø";
+                    return "ì—”ì§„";
 
                 case EquipmentMountingArea.Storage:
-                    return "¹°°í±â Ã¢°í";
+                    return "ë¬¼ê³ ê¸° ì°½ê³ ";
 
                 case EquipmentMountingArea.GPS:
                     return "GPS";
 
                 case EquipmentMountingArea.Bait:
-                    return "¹Ì³¢";
+                    return "ë¯¸ë¼";
 
                 case EquipmentMountingArea.Groundbait:
-                    return "¶±¹ä";
+                    return "ë–¡ë°¥";
 
                 default:
                     return mountingArea.ToString();
@@ -780,7 +780,7 @@ namespace DesktopCompanion.Views
                 return false;
             }
 
-            // ÇØÁ¦ Àü, ÇöÀç ÀåÂø ÁßÀÎ Àåºñ ÇÚµé º¸°ü
+            // í•´ì œ ì „, í˜„ì¬ ì¥ì°© ì¤‘ì¸ ì¥ë¹„ í•¸ë“¤ ë³´ê´€
             EntityHandle beforeEquipHandle = m_playerSystem.GetEquippedItemHandle(sourceArea);
 
             if (beforeEquipHandle.Equals(default(EntityHandle)))
@@ -788,13 +788,13 @@ namespace DesktopCompanion.Views
                 return false;
             }
 
-            // »ç¿ëÀÚ°¡ Å¬¸¯ÇÑ ÀÎº¥Åä¸® ½½·Ô Àåºñ Á¶È¸
+            // ì‚¬ìš©ìê°€ í´ë¦­í•œ ì¸ë²¤í† ë¦¬ ìŠ¬ë¡¯ ì¥ë¹„ ì¡°íšŒ
             bool hasTargetItem = m_inventorySystem.GetHandleAt(
                 ItemType.Equipment,
                 targetSlotIndex,
                 out EntityHandle targetHandle);
 
-            // Å¬¸¯ÇÑ ½½·Ô¿¡ Àåºñ°¡ ÀÖ´Ù¸é °°Àº ÀåÂø ºÎÀ§ÀÎÁö È®ÀÎ
+            // í´ë¦­í•œ ìŠ¬ë¡¯ì— ì¥ë¹„ê°€ ìˆë‹¤ë©´ ê°™ì€ ì¥ì°© ë¶€ìœ„ì¸ì§€ í™•ì¸
             if (hasTargetItem)
             {
                 Entity_Equipment targetEquipment = EntityManager.Get<Entity_Equipment>(targetHandle);
@@ -804,7 +804,7 @@ namespace DesktopCompanion.Views
                     return false;
                 }
 
-                // ´Ù¸¥ ºÎÀ§ Àåºñ´Â ±³È¯ ºÒ°¡
+                // ë‹¤ë¥¸ ë¶€ìœ„ ì¥ë¹„ëŠ” êµí™˜ ë¶ˆê°€
                 if (targetEquipment.ItemData.MountingArea != sourceArea)
                 {
                     return false;
@@ -814,11 +814,11 @@ namespace DesktopCompanion.Views
             }
             else
             {
-                // ºó ½½·Ô Å¬¸¯ -> ±âÁ¸ Àåºñ¸¸ ÇØÁ¦
+                // ë¹ˆ ìŠ¬ë¡¯ í´ë¦­ -> ê¸°ì¡´ ì¥ë¹„ë§Œ í•´ì œ
                 m_playerSystem.Equip(sourceArea, default(EntityHandle));
             }
 
-            // ÇØÁ¦ Àåºñ°¡ ¹İÈ¯µÈ ÀÎº¥Åä¸® ½½·Ô Å½»ö
+            // í•´ì œ ì¥ë¹„ê°€ ë°˜í™˜ëœ ì¸ë²¤í† ë¦¬ ìŠ¬ë¡¯ íƒìƒ‰
             int returnedSlotIndex = FindEquipmentSlotIndex(beforeEquipHandle);
 
             if (returnedSlotIndex < 0)
@@ -831,7 +831,7 @@ namespace DesktopCompanion.Views
                 return true;
             }
 
-            // ÇØÁ¦Àåºñ¸¦ »ç¿ëÀÚ°¡ Å¬¸¯ÇÑ ½½·ÔÀ¸·Î ÀÌµ¿
+            // í•´ì œì¥ë¹„ë¥¼ ì‚¬ìš©ìê°€ í´ë¦­í•œ ìŠ¬ë¡¯ìœ¼ë¡œ ì´ë™
             return m_inventorySystem.SwapSlots(
                 ItemType.Equipment,
                 returnedSlotIndex,

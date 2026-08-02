@@ -6,9 +6,9 @@ using DesktopCompanion.Systems;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 물고기 목록 창의 ViewModel — 인벤토리 물고기(넣기)와 수족관 물고기(빼기)를 '개체 단위'로 제공한다.
-    /// 구조 변경(배치·회수·인벤토리 변동·자동판매 설정)에만 재빌드하고, 1초 정산에는 반응하지 않는다
-    /// (분당 포인트는 정적값이라 초 단위 갱신이 불필요 — 계획 27 R-4).
+    /// 물고기 목록 창의 ViewModel. 인벤토리 물고기(넣기)와 수족관 물고기(빼기)를 개체 단위로 제공하고,
+    /// 각 항목의 액션 가능 여부·차단 사유를 채운다. 두 목록은 정렬 기준·방향을 공유한다.
+    /// 배치·회수·인벤토리 변동·자동판매 설정 변경에만 목록을 재구성하고, 1초 정산에는 반응하지 않는다.
     /// </summary>
     public class AquariumFishListViewModel : UIViewModelBase
     {
@@ -66,7 +66,7 @@ namespace DesktopCompanion.Views
             m_inventory = null;
         }
 
-        /// <summary>두 목록(인벤토리·수족관)에 함께 적용되는 정렬을 바꾼다.</summary>
+        /// <summary>두 목록에 함께 적용되는 정렬을 바꾸고 설정에 저장한 뒤 목록을 재구성한다.</summary>
         public void SetSort(AquariumFishSortKey key, SortDirection direction)
         {
             m_sortKey = key;
@@ -100,7 +100,7 @@ namespace DesktopCompanion.Views
             AquariumSort.Apply(inventory, m_sortKey, m_sortDirection);
             Inventory.Value = inventory;
 
-            // 수족관 — 회수가 곧 판매가 되는 상황은 버튼 단계에서 차단한다(계획 27 P6).
+            // 수족관 — 회수가 곧 판매가 되는 상황은 버튼 단계에서 차단한다.
             var placed = new List<AquariumFishVD>();
             foreach (AquariumSystem.AquariumFishInfo info in m_aquarium.GetPlacedFishInfos())
             {

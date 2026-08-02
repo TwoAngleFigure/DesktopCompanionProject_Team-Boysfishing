@@ -31,26 +31,37 @@ public class EquipmentViewModel : UIViewModelBase
             () => m_playerSystem?.UpgradeFishStorage()
         );
 
-        // PlayerSystem의 스탯 변경 이벤트를 구독
+        // PlayerSystem의 스탯 변경 및 장비(수량) 변경 이벤트 구독
         if (m_playerSystem != null)
         {
             m_playerSystem.OnStatChanged += OnStatChanged;
-            RefreshStats(); // 처음 켰을 때 초기값 갱신
+            m_playerSystem.OnEquipmentChanged += OnPlayerEquipmentChanged;
+            RefreshStats(); // 처음 켰을 때 초기화 갱신
         }
     }
 
     public override void Unbind()
     {
-        if (m_playerSystem != null) m_playerSystem.OnStatChanged -= OnStatChanged;
+        if (m_playerSystem != null)
+        {
+            m_playerSystem.OnStatChanged -= OnStatChanged;
+            m_playerSystem.OnEquipmentChanged -= OnPlayerEquipmentChanged;
+        }
         m_playerSystem = null;
     }
 
-    // 시스템에서 스탯 변경 이벤트가 날아오면 실행되는 함수
+    // 시스템에서 스탯 변경 이벤트를 쏘아주면 실행되는 함수
     private void OnStatChanged(EntityHandle handle)
     {
         RefreshStats();
 
-        // [추가됨] 스탯이 변했다는 건 장비가 변했다는 뜻이므로, View에게 UI 갱신 신호를 보냅니다.
+        // 스탯이 변했다는 건 장비가 변했다는 뜻이므로 View에게 UI 갱신 신호를 보냅니다.
+        OnEquipmentChanged?.Invoke();
+    }
+
+    // [추가] 시스템에서 수량 등 장비 UI만 갱신하라고 신호를 쏘아주면 실행되는 함수
+    private void OnPlayerEquipmentChanged(EntityHandle handle)
+    {
         OnEquipmentChanged?.Invoke();
     }
 

@@ -4763,7 +4763,7 @@ GameObject:
   - component: {fileID: 2833560827265603003}
   - component: {fileID: 2438689797069407027}
   m_Layer: 5
-  m_Name: Canvas_PlayerStatus
+  m_Name: old_Canvas_PlayerStatus
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

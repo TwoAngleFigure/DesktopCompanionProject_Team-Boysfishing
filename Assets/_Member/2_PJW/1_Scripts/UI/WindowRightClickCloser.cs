@@ -5,10 +5,9 @@ using DesktopCompanion;   // Win32Native, TransparentWindow
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 지정 범위(Canvas RectTransform) 안에서 우클릭 시 최상단(최근) 창을 닫는다(LIFO).
-    /// 단, UIWindowBase의 '닫기 입력 허용'을 끈 보호 창은 건너뛰고 그 아래 창을 닫는다(ESC 등 다른 닫기 수단과 동일 규칙).
-    /// 오버레이 빌드는 Mouse.current가 갱신되지 않으므로 클릭관통과 동일한 Win32 전역 입력을 쓴다
-    /// (GetCursorPos + GetAsyncKeyState(VK_RBUTTON) + ScreenToClient(Hwnd)). 에디터는 Mouse.current.
+    /// 지정 범위(Canvas RectTransform) 안에서 우클릭이 발생하면 UIManager에 중앙 닫기를 요청한다.
+    /// 빌드에서는 Win32 전역 입력(GetCursorPos + GetAsyncKeyState(VK_RBUTTON) + ScreenToClient)으로,
+    /// 에디터에서는 Mouse.current로 우클릭을 읽는다.
     /// </summary>
     public class WindowRightClickCloser : MonoBehaviour
     {

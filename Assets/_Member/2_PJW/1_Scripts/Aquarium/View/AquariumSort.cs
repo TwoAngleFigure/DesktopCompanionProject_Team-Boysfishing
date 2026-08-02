@@ -3,7 +3,7 @@ using DesktopCompanion.Data;
 
 namespace DesktopCompanion.Views
 {
-    /// <summary>물고기 목록 정렬 기준(계획 27 B절).</summary>
+    /// <summary>물고기 목록의 정렬 기준.</summary>
     public enum AquariumFishSortKey
     {
         Name,
@@ -14,7 +14,7 @@ namespace DesktopCompanion.Views
         PointsPerMinute,
     }
 
-    /// <summary>재료 생산 경과 목록 정렬 기준.</summary>
+    /// <summary>재료 생산 경과 목록의 정렬 기준.</summary>
     public enum AquariumMaterialSortKey
     {
         Name,
@@ -24,7 +24,7 @@ namespace DesktopCompanion.Views
         PerHour,
     }
 
-    /// <summary>정렬 방향(유저가 지정).</summary>
+    /// <summary>정렬 방향.</summary>
     public enum SortDirection
     {
         Ascending,
@@ -32,9 +32,8 @@ namespace DesktopCompanion.Views
     }
 
     /// <summary>
-    /// 아쿠아리움 목록 정렬. 정렬은 '표시 정책'이라 System이 아닌 View 계층이 소유한다.
-    /// 키 1개 + 방향 토글이며, 동률은 항상 (이름 → dataId → 핸들)로 안정화한다 —
-    /// 같은 종 개체가 여럿 섞여도 갱신마다 순서가 뒤바뀌지 않게 하기 위함이다.
+    /// 아쿠아리움 목록의 정렬과 정렬 기준 값 표기를 담당한다.
+    /// 정렬 키 1개와 방향으로 정렬하며, 동률은 방향과 무관하게 (이름 → dataId → 핸들) 순으로 안정화한다.
     /// </summary>
     public static class AquariumSort
     {
@@ -96,9 +95,7 @@ namespace DesktopCompanion.Views
         // ── 정렬 기준 값 표시 ──
 
         /// <summary>
-        /// 현재 정렬 기준의 값만 문자열로(계획 28 P3). 상세를 툴팁으로 옮긴 뒤에도
-        /// 정렬 결과를 행에서 눈으로 확인할 수 있게 하는 한 칸이다.
-        /// 이름 정렬이면 빈 문자열 — 이름은 이미 행에 보인다.
+        /// 현재 정렬 기준의 값을 행 표시용 문자열로 만든다. 이름 정렬이면 빈 문자열을 반환한다.
         /// </summary>
         public static string FormatValue(AquariumFishVD vd, AquariumFishSortKey key)
         {
@@ -135,7 +132,7 @@ namespace DesktopCompanion.Views
             };
         }
 
-        private static readonly string[] s_rarityLabels = { "일반", "고급", "희귀", "영웅", "전설" };
+        private static readonly string[] s_rarityLabels = { "일반", "고급", "희귀", "영웅", "전설", "보스" };
 
         private static string RarityLabel(ItemRarity rarity)
         {

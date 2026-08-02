@@ -5,10 +5,13 @@ using DesktopCompanion.Data;
 
 namespace DesktopCompanion.Views
 {
-    /// <summary>물고기 상세 팝업. 종 정보(티어·레어도) + 개체 롤값(성급·크기) + 아쿠아리움 생산 정보.</summary>
+    /// <summary>
+    /// 물고기 상세 팝업 패널. 종 정보(레어도)·개체 롤값(성급·크기)·수용량·생산 재료를 표시하고,
+    /// 생산 지표가 있을 때만 아쿠아리움 생산 구역을 켠다.
+    /// </summary>
     public class FishTooltipPanel : ItemTooltipPanelBase
     {
-        private static readonly string[] s_rarityLabels = { "일반", "고급", "희귀", "영웅", "전설" };
+        private static readonly string[] s_rarityLabels = { "일반", "고급", "희귀", "영웅", "전설", "보스" };
 
         [Header("개체")]
         [SerializeField] private TMP_Text m_rarityText;

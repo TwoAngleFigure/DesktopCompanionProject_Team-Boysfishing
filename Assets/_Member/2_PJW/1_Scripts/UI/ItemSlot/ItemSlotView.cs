@@ -6,11 +6,11 @@ using TMPro;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 아이템 1칸의 공용 표시 단위(계획 28 A절). ItemData 계열 전 종류에 쓴다.
-    /// 표시: 아이콘 / 티어 테두리(전 종류) / 레어도 글로우(물고기만) / 성급(물고기만) / 스택 수량.
-    /// hover 감지도 슬롯이 직접 갖는다 — 창이 hover 인덱스를 관리하지 않으므로 어느 창에 있든 동작한다.
+    /// 아이템 1칸의 공용 표시 위젯. ItemData 계열 전 종류에 쓴다.
+    /// 아이콘·티어 테두리·레어도 글로우(물고기)·성급(물고기)·스택 수량을 표시하고,
+    /// 자체 hover 감지로 <see cref="ItemTooltipController"/>에 상세 팝업을 요청·해제한다.
     ///
-    /// 프리팹 구성 권장(뒤 → 앞): 글로우(슬롯보다 크게) → 배경 → 아이콘 → 테두리 → 성급.
+    /// 프리팹 구성 순서(뒤 → 앞): 글로우 → 배경 → 아이콘 → 테두리 → 성급.
     /// </summary>
     public class ItemSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
@@ -43,6 +43,7 @@ namespace DesktopCompanion.Views
 
         /// <summary>
         /// 슬롯 내용을 채운다. <paramref name="tooltipSource"/>가 null이면 hover해도 팝업이 뜨지 않는다.
+        /// 이미 hover 중인 상태에서 호출되면 팝업도 새 내용으로 갱신한다.
         /// </summary>
         public void Set(ItemSlotVD vd, Sprite icon, IItemTooltipSource tooltipSource)
         {
@@ -128,7 +129,7 @@ namespace DesktopCompanion.Views
             ItemTooltipController.Dismiss(this);
         }
 
-        /// <summary>창이 닫히거나 행이 풀에서 비활성될 때 유령 팝업이 남지 않게 한다.</summary>
+        /// <summary>비활성화 시 hover 상태를 해제하고 팝업을 닫는다.</summary>
         private void OnDisable()
         {
             m_isHovered = false;
@@ -137,21 +138,19 @@ namespace DesktopCompanion.Views
 
         private void RequestTooltip()
         {
-            // 배선 누락은 조용히 무시하면 원인을 찾기 어렵다 — hover 시점에만 발생하므로 로그가 넘치지 않는다.
             if (m_vd == null)
             {
-                Debug.LogWarning($"[ItemSlotView] 슬롯 데이터가 없습니다 — Set()이 호출되지 않았거나 " +
-                                 $"ItemSlotVD 생성이 실패했습니다(행 프리팹의 슬롯 참조 확인).", this);
                 return;
             }
+
             if (m_tooltipSource == null)
             {
                 Debug.LogWarning("[ItemSlotView] 툴팁 공급자가 없습니다 — 창이 Set()에 자기 자신을 넘겼는지 확인.", this);
                 return;
             }
 
-            // 상세는 마우스가 올라온 지금 1건만 조립한다(목록 갱신 때 전 행을 미리 만들지 않는다).
             ItemTooltipData data = m_tooltipSource.BuildTooltip(m_vd);
+
             if (data == null)
             {
                 Debug.LogWarning($"[ItemSlotView] 툴팁 데이터 조립 실패 — kind={m_vd.Kind}, dataId={m_vd.DataId}", this);

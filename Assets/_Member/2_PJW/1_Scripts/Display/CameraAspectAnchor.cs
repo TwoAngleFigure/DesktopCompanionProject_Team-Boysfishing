@@ -4,13 +4,11 @@ using DesktopCompanion.Rendering;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 직교 카메라의 로컬 오프셋을 재계산해 부모(배)의 화면 위치를 고정한다(계획 19·26).
-    ///
-    ///  - 가로: **화면 우측 끝 기준**. 배에서 우측 끝까지의 거리를 기준 화면비(16:9)에서 산출해 고정하므로,
+    /// 직교 카메라의 로컬 오프셋을 재계산해 부모 오브젝트의 화면 위치를 고정한다.
+    ///  - 가로: 화면 우측 끝을 기준으로 삼는다. 우측 여백을 기준 화면비에서 산출해 고정하므로,
     ///          화면비가 넓어지면 늘어난 폭이 전부 좌측으로 간다.
-    ///  - 세로: 정규화 위치 기준. orthographicSize가 상수이므로(계획 25) 결과도 상수다.
-    ///
-    /// 계산은 무상태(현재 화면비만 사용) — 이전 해상도·전환 경로와 무관하게 항상 같은 결과.
+    ///  - 세로: 정규화 위치 × orthographicSize로 산출한다.
+    /// 렌더 타깃 크기 변화를 LateUpdate에서 감시해 갱신하며, 계산은 현재 크기만 사용하는 무상태 연산이다.
     /// </summary>
     [RequireComponent(typeof(Camera))]
     public class CameraAspectAnchor : MonoBehaviour
@@ -54,7 +52,7 @@ namespace DesktopCompanion.Views
             Apply();
         }
 
-        /// <summary>현재 렌더 타깃 크기 기준으로 로컬 오프셋을 즉시 재계산한다(멱등).</summary>
+        /// <summary>현재 렌더 타깃 크기를 기준으로 로컬 오프셋을 재계산해 적용한다. 반복 호출해도 결과가 같다.</summary>
         public void Apply()
         {
             GetTargetSize(out int width, out int height);
@@ -67,9 +65,8 @@ namespace DesktopCompanion.Views
             float aspect = (float)width / height;   // Camera.aspect 대신 직접 계산(지연 갱신 회피)
             float halfWidth = size * aspect;
 
-            // 가로는 '화면 우측 끝'을 기준으로 고정한다(계획 26).
-            // 배가 우하단에 있으므로 우측 여백이 구도의 기준이고, 화면비가 넓어질 때 늘어난 폭은
-            // 전부 좌측(먼 바다)으로 가야 한다. 정규화 위치로 잡으면 좌우가 함께 늘어나 우측 여백이 벌어진다.
+            // 가로는 화면 우측 끝을 기준으로 고정한다. 정규화 위치로 잡으면 화면비가 넓어질 때
+            // 좌우가 함께 늘어나 우측 여백이 벌어진다.
             float rightMargin = (1f - _normalizedX) * size * PixelGridDesign.ReferenceAspect;
 
             Vector3 localPos = transform.localPosition;
@@ -98,8 +95,7 @@ namespace DesktopCompanion.Views
         }
 
         /// <summary>
-        /// [에디터] 현재 씬의 카메라 배치를 역산해 정규화 좌표를 채운다.
-        /// 기존 배치를 그대로 기준값으로 삼을 때 사용.
+        /// 현재 카메라 배치로부터 정규화 좌표를 역산해 채운다. 역산 후 Apply 결과가 현재 배치와 일치한다.
         /// </summary>
         [ContextMenu("현재 배치에서 정규화 좌표 역산")]
         private void CaptureFromCurrentPlacement()

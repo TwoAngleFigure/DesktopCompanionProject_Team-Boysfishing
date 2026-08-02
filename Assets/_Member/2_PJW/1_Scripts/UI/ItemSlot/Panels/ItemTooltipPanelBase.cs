@@ -7,8 +7,8 @@ using DesktopCompanion.Data;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 툴팁 팝업 패널의 베이스(계획 28 C절). 종류별로 상속해 각자의 레이아웃을 갖는다.
-    /// 공통 헤더(아이콘·이름·티어)는 여기서 처리하고, 종류별 본문만 <see cref="ApplyBody"/>에 구현한다.
+    /// 툴팁 팝업 패널의 베이스. 아이템 종류별로 상속해 각자의 레이아웃을 갖는다.
+    /// 공통 헤더(아이콘·이름·티어 뱃지)를 처리하고, 종류별 본문은 <see cref="ApplyBody"/>가 채운다.
     /// </summary>
     public abstract class ItemTooltipPanelBase : MonoBehaviour
     {
@@ -25,13 +25,13 @@ namespace DesktopCompanion.Views
         [Tooltip("뱃지 배경의 불투명도. 텍스트는 진한 원색, 배경은 옅은 같은 색으로 칠한다")]
         [SerializeField, Range(0f, 1f)] private float m_badgeBackgroundAlpha = 0.2f;
 
-        /// <summary>이 패널이 담당하는 아이템 종류. 컨트롤러가 이 값으로 패널을 고른다.</summary>
+        /// <summary>이 패널이 담당하는 아이템 종류. 컨트롤러가 이 값으로 패널을 선택한다.</summary>
         public abstract TooltipItemKind Kind { get; }
 
-        /// <summary>등급 색 소스(파생 패널이 레어도 뱃지 등에 쓴다). 미할당이면 null.</summary>
+        /// <summary>등급 색 공급 에셋. 파생 패널이 레어도 뱃지 등에 쓴다. 미할당이면 null이다.</summary>
         protected ItemGradeStyle Style => m_style;
 
-        /// <summary>에셋 조회가 필요한 하위 아이콘(생산 재료 등)을 위해 패널에 넘긴다.</summary>
+        /// <summary>하위 아이콘(생산 재료 등) 조회에 쓰는 에셋 공급자. Apply 시점에 주입된다.</summary>
         protected AssetProvider AssetProvider { get; private set; }
 
         public void Apply(ItemTooltipData data, Sprite icon, AssetProvider assets)
@@ -58,7 +58,7 @@ namespace DesktopCompanion.Views
 
         protected abstract void ApplyBody(ItemTooltipData data);
 
-        /// <summary>등급 뱃지 색칠. 텍스트는 원색, 배경은 같은 색을 옅게(가독성 확보).</summary>
+        /// <summary>등급 뱃지를 색칠한다. 텍스트는 원색, 배경은 같은 색을 지정 불투명도로 칠한다.</summary>
         protected void ApplyBadge(TMP_Text text, Image badge, Color color)
         {
             if (text != null) text.color = color;
@@ -68,7 +68,7 @@ namespace DesktopCompanion.Views
             }
         }
 
-        /// <summary>IconKey → Sprite. 키가 없거나 에셋이 없으면 null.</summary>
+        /// <summary>IconKey를 Sprite로 해석한다. 키가 없거나 에셋을 찾지 못하면 null을 반환한다.</summary>
         protected Sprite ResolveIcon(string iconKey)
         {
             if (AssetProvider == null || string.IsNullOrEmpty(iconKey))
@@ -84,13 +84,13 @@ namespace DesktopCompanion.Views
             if (target != null) target.text = text;
         }
 
-        /// <summary>구역 하나를 통째로 켜고 끈다(정보가 없는 구역은 자리도 차지하지 않게).</summary>
+        /// <summary>구역 하나를 통째로 켜고 끈다. 꺼진 구역은 레이아웃 자리도 차지하지 않는다.</summary>
         protected static void SetSection(GameObject section, bool visible)
         {
             if (section != null) section.SetActive(visible);
         }
 
-        /// <summary>스탯 변경 목록을 줄바꿈으로 이어 붙인다(장비·소모품 공용).</summary>
+        /// <summary>스탯 변경 목록을 줄바꿈으로 이어 붙인다. 항목이 없으면 "효과 없음"을 반환한다.</summary>
         protected static string FormatModifiers(StatModifier[] modifiers)
         {
             if (modifiers == null || modifiers.Length == 0)

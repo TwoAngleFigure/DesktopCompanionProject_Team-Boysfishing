@@ -5,9 +5,9 @@ using TMPro;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 화면 옵션(Full/Window · Scale · 모니터) 설정 UI.
-    /// 표시 설정은 게임 System과 무관하므로 System-바인딩 VM 없이 DisplayModeController를 직접 구동한다.
-    /// UIViewBase를 상속해 UI 프레임워크 수명(자가 등록·Bind)에 올라탄다(전체화면 UI 캔버스 배치).
+    /// 화면 옵션(모드·출력 배율·크롭 범위·모니터·창 이동) 설정 창.
+    /// 위젯 입력을 <see cref="DisplayModeController"/>에 직접 전달하고, 컨트롤러가 보정한 값을 위젯·라벨에 되돌린다.
+    /// 게임 System과 무관한 설정이므로 ViewModel을 두지 않는다.
     /// </summary>
     public class DisplaySettingsView : UIWindowBase
     {

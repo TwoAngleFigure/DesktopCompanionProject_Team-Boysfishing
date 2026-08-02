@@ -11,8 +11,8 @@ namespace DesktopCompanion.Views
     /// <summary>
     /// 장비창의 개별 슬롯을 담당하는 재사용 가능한 위젯(UI 컴포넌트)입니다.
     /// </summary>
-    // [수정됨] 마우스 드롭(IDropHandler), 드래그 시작(IBeginDragHandler), 드래그 중(IDragHandler) 인터페이스 상속
-    public class EquipmentSlotWidget : MonoBehaviour, IDropHandler, IBeginDragHandler, IDragHandler
+    // [수정됨] 마우스 드롭(IDropHandler), 드래그 시작(IBeginDragHandler), 드래그 중(IDragHandler), 드래그 종료(IEndDragHandler), 마우스 오버(IPointerEnterHandler, IPointerExitHandler) 인터페이스 상속
+    public class EquipmentSlotWidget : MonoBehaviour, IDropHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerEnterHandler, IPointerExitHandler
     {
         [SerializeField] private EquipmentMountingArea m_area;
         [SerializeField] private Button m_slotButton;
@@ -26,17 +26,26 @@ namespace DesktopCompanion.Views
         private Action<EquipmentMountingArea> m_onClickAction;
         private Action<EquipmentMountingArea> m_onDropAction;
         private Action<EquipmentMountingArea> m_onBeginDragAction;
+        private Action<EquipmentMountingArea> m_onEndDragAction; // [추가] 드래그 종료 시 호출할 콜백
+        private Action<EquipmentMountingArea> m_onPointerEnterAction; // [추가] 툴팁 표시
+        private Action<EquipmentMountingArea> m_onPointerExitAction; // [추가] 툴팁 숨김
 
-        // [수정됨] 클릭뿐만 아니라, 드롭과 드래그 이벤트도 외부에서 연결할 수 있도록 매개변수 추가
+        // [수정됨] 클릭뿐만 아니라 드롭과 드래그 이벤트도 상위에서 연결하도록 매개변수 추가
         // (기존 코드와의 호환성을 위해 = null 처리하여 에러를 방지했습니다)
         public void Bind(
             Action<EquipmentMountingArea> onClickAction,
             Action<EquipmentMountingArea> onDropAction = null,
-            Action<EquipmentMountingArea> onBeginDragAction = null)
+            Action<EquipmentMountingArea> onBeginDragAction = null,
+            Action<EquipmentMountingArea> onEndDragAction = null,
+            Action<EquipmentMountingArea> onPointerEnterAction = null,
+            Action<EquipmentMountingArea> onPointerExitAction = null)
         {
             m_onClickAction = onClickAction;
             m_onDropAction = onDropAction;
             m_onBeginDragAction = onBeginDragAction;
+            m_onEndDragAction = onEndDragAction;
+            m_onPointerEnterAction = onPointerEnterAction;
+            m_onPointerExitAction = onPointerExitAction;
 
             m_slotButton.onClick.AddListener(() => m_onClickAction?.Invoke(m_area));
         }
@@ -47,6 +56,9 @@ namespace DesktopCompanion.Views
             m_onClickAction = null;
             m_onDropAction = null;
             m_onBeginDragAction = null;
+            m_onEndDragAction = null;
+            m_onPointerEnterAction = null;
+            m_onPointerExitAction = null;
         }
 
         public void RefreshSlotUI(string itemName, Sprite icon, int quantity = 0)
@@ -98,6 +110,24 @@ namespace DesktopCompanion.Views
         {
             // 실제 마우스를 따라다니는 아이콘 이동 처리는 
             // 팀원분이 만드신 ItemPickupController에서 담당하므로 여기는 비워둡니다.
+        }
+
+        /// <summary>
+        /// 4. 드래그 종료 시
+        /// </summary>
+        public void OnEndDrag(PointerEventData eventData)
+        {
+            m_onEndDragAction?.Invoke(m_area);
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            m_onPointerEnterAction?.Invoke(m_area);
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            m_onPointerExitAction?.Invoke(m_area);
         }
     }
 }

@@ -8,16 +8,13 @@ using UnityEngine.Rendering.Universal;
 namespace DesktopCompanion.Rendering
 {
     /// <summary>
-    /// BF Pixelizer v2(계획 13) — 머티리얼 기반 오브젝트별 픽셀화 + 아웃라인.
-    /// 대상 지정 = "BFPixelizer/PixelizedLit" 머티리얼(커스텀 LightMode 태그). 컴포넌트·레이어 불필요.
-    ///
-    /// V0(현재): 오프스크린 MRT 렌더(정점 스냅) → 풀해상도 합성(CellSize=1).
-    ///  - 검증: 오브젝트가 화면에 보이고, 이동 시 N픽셀 스텝으로 움직이면 통과(크리프 해결의 선행 증거).
-    /// V1: 두 패스 사이에 포인트 다운샘플 삽입(CellSize=N) → 실제 픽셀화.
+    /// 머티리얼 기반으로 오브젝트별 픽셀화와 아웃라인을 적용하는 렌더 피처.
+    /// 대상은 "BFPixelizer/PixelizedLit" 머티리얼(커스텀 LightMode 태그)로 지정하므로 컴포넌트·레이어가 필요 없다.
+    /// 경로는 오프스크린 MRT 렌더 → 포인트 다운샘플 → 합성이며, 불투명·투명 트랙을 각각 기록한다.
     /// </summary>
     public class BFPixelizerFeature : ScriptableRendererFeature
     {
-        [Tooltip("전역 픽셀 크기(화면 픽셀). V1: 모든 대상이 이 단일 격자를 공유한다(머티리얼 _PixelSize는 유보).")]
+        [Tooltip("전역 픽셀 크기(화면 픽셀). 모든 대상이 이 단일 격자를 공유한다.")]
         [Range(1, 5)]
         [SerializeField] private int _pixelSize = 3;
 
@@ -31,7 +28,7 @@ namespace DesktopCompanion.Rendering
         [Range(1f, 4f)]
         [SerializeField] private float _pixelScale = 1f;
 
-        [Header("월드 격자 (계획 23)")]
+        [Header("월드 격자")]
         [Tooltip("블록 크기를 월드 유닛 기준으로 고정한다. 해상도가 달라도 오브젝트가 같은 도트 수로 그려진다. " +
                  "격자 기준값은 PixelGridDesign이 소유한다(640×360 · 18도트/유닛). " +
                  "해제 시 화면 격자(_pixelSize 기준)로 동작한다 — 비교·폴백용.")]
@@ -44,7 +41,7 @@ namespace DesktopCompanion.Rendering
         private const string CompositeShaderName = "Hidden/BFPixelizer/Composite";
         private const string DownsampleShaderName = "Hidden/BFPixelizer/Downsample";
 
-        // 불투명/투명 2트랙(계획 15): 렌더 큐로 분리한다. 이벤트가 달라 패스 인스턴스도 분리해야 한다.
+        // 불투명/투명 2트랙: 렌더 큐로 분리한다. 이벤트가 달라 패스 인스턴스도 분리해야 한다.
         //  - 불투명: AfterRenderingOpaques, 깊이 기록 + DepthTex 주입(현행)
         //  - 투명(유리): AfterRenderingTransparents, 블렌딩·깊이 미기록 → 물 너머가 비친다
         private BFPixelizerPass _opaquePass;
@@ -103,9 +100,8 @@ namespace DesktopCompanion.Rendering
     }
 
     /// <summary>
-    /// 프레임당 2개 라스터 패스(V0): 오프스크린 MRT → 합성.
-    /// 계획 11에서 검증된 RG 규칙 준수: 이벤트=정확히 AfterRenderingOpaques(300),
-    /// raster pass 내 행렬 설정 금지, 전역 설정 pass는 AllowGlobalStateModification(true).
+    /// 오프스크린 MRT 렌더 → 다운샘플 → 합성 패스를 Render Graph에 기록하는 패스.
+    /// raster pass 안에서는 행렬을 설정하지 않고, 전역 상태를 바꾸는 패스는 AllowGlobalStateModification을 켠다.
     /// </summary>
     public class BFPixelizerPass : ScriptableRenderPass
     {
@@ -138,10 +134,10 @@ namespace DesktopCompanion.Rendering
 
         private readonly Vector4[] _shConstants = new Vector4[7];
 
-        /// <summary>스프라이트 경로 프러스텀 컬링용 재사용 버퍼(매 프레임 할당 회피).</summary>
+        /// <summary>스프라이트 경로의 프러스텀 컬링에 재사용하는 평면 버퍼.</summary>
         private readonly Plane[] _frustumPlanes = new Plane[6];
 
-        /// <summary>RenderSettings.ambientProbe를 셰이더 SH 상수(표준 패킹)로 변환.</summary>
+        /// <summary>RenderSettings.ambientProbe를 셰이더 SH 상수(표준 패킹)로 변환한다.</summary>
         private void UpdateAmbientShConstants()
         {
             UnityEngine.Rendering.SphericalHarmonicsL2 sh = RenderSettings.ambientProbe;
@@ -163,7 +159,7 @@ namespace DesktopCompanion.Rendering
         private bool _warnedSubPixel;
         private bool _warnedDepthTexNotAttachable;
 
-        /// <summary>투명 트랙 여부. 큐 범위·합성 패스·주입 시점·깊이 기록 정책이 갈린다.</summary>
+        /// <summary>투명 트랙 여부. 큐 범위·합성 패스·주입 시점·깊이 기록 정책이 이 값에 따라 갈린다.</summary>
         private readonly bool _transparentTrack;
 
         public BFPixelizerPass(bool transparentTrack)
@@ -282,7 +278,7 @@ namespace DesktopCompanion.Rendering
             depthDescriptor.graphicsFormat = GraphicsFormat.None;
             depthDescriptor.depthStencilFormat = GraphicsFormat.D32_SFloat;
 
-            // 알파 전용 버퍼(계획 15): r = 오브젝트 알파, g = 아웃라인 투명도. 2채널이면 충분.
+            // 알파 전용 버퍼: r = 오브젝트 알파, g = 아웃라인 투명도. 2채널이면 충분.
             var alphaDescriptor = colorDescriptor;
             alphaDescriptor.colorFormat = RenderTextureFormat.RGHalf;
 
@@ -333,11 +329,11 @@ namespace DesktopCompanion.Rendering
 
             // ── Pass 1: 대상 머티리얼(커스텀 태그) 오프스크린 렌더 ──
             // 정렬은 투명 트랙도 불투명 기준을 쓴다 — 오프스크린 버퍼는 깊이로 해결되고,
-            // 픽셀화 오브젝트끼리의 반투명 정렬은 지원 범위 밖(계획 15 한계 항목).
+            // 픽셀화 오브젝트끼리의 반투명 정렬은 지원 범위 밖.
             var drawingSettings = CreateDrawingSettings(s_pixelizedTags, renderingData, cameraData, lightData, cameraData.defaultOpaqueSortFlags);
             var filteringSettings = new FilteringSettings(_transparentTrack ? RenderQueueRange.transparent : RenderQueueRange.opaque)
             {
-                // 스프라이트 모드 오브젝트는 v2(화면 격자) 경로에서 제외.
+                // 스프라이트 모드 오브젝트는 화면 격자 경로에서 제외.
                 renderingLayerMask = ~PixelizedSpriteObject.RenderingLayerBit,
             };
             var rendererListParams = new RendererListParams(renderingData.cullResults, drawingSettings, filteringSettings);
@@ -444,7 +440,7 @@ namespace DesktopCompanion.Rendering
             if (_transparentTrack)
                 return;
 
-            // ── 오브젝트 공간 모드(계획 14): 정렬 렌더 → 다운샘플 → 회전 배치 합성 ──
+            // ── 오브젝트 공간 모드: 정렬 렌더 → 다운샘플 → 회전 배치 합성 ──
             RecordSpriteObjectPasses(renderGraph, cameraData, resourceData, cellSizeRt, depthTexAttachable);
 
             // ── Pass 4: 셀 깊이를 _CameraDepthTexture에 되쓰기 ──
@@ -480,15 +476,12 @@ namespace DesktopCompanion.Rendering
         /// <summary>
         /// 격자 셀 크기(RT 픽셀)를 산출한다.
         ///
-        /// 월드 격자(계획 23): 블록의 월드 크기를 <see cref="PixelGridDesign.BlocksPerUnit"/>로 고정해
+        /// 월드 격자: 블록의 월드 크기를 <see cref="PixelGridDesign.BlocksPerUnit"/>로 고정해
         /// 해상도가 달라도 오브젝트가 같은 도트 수로 그려진다.
         ///   블록(화면px) = RT_height ÷ (2 × orthographicSize) ÷ blocksPerUnit ÷ pixelScale
+        /// 화면 블록 크기를 먼저 정수로 반올림한 뒤 배율을 곱하므로 블록 경계가 반픽셀에 걸리지 않는다.
         ///
-        /// 화면 블록 크기를 먼저 정수로 반올림한 뒤 배율을 곱하는 이유는, 그래야 표시 단계에서
-        /// 블록 경계가 반픽셀에 걸리지 않기 때문이다. 시야는 카메라가 고정하므로 반올림 오차는
-        /// 아트 해상도(유효 도트 밀도)가 흡수한다.
-        ///
-        /// 화면 격자(폴백): 블록이 항상 _pixelSize 화면 픽셀. 해상도별로 오브젝트의 도트 수가 달라진다.
+        /// 화면 격자(폴백): 블록이 항상 _pixelSize 화면 픽셀이며, 해상도별로 오브젝트의 도트 수가 달라진다.
         /// </summary>
         private int ResolveCellSize(UniversalCameraData cameraData, float pixelScale)
         {
@@ -525,7 +518,7 @@ namespace DesktopCompanion.Rendering
             return blockScreenPx * scaleStep;
         }
 
-        /// <summary>계획 14: 스프라이트 모드 오브젝트별 [정렬 렌더 → 다운샘플 → 회전 배치 합성] 기록.</summary>
+        /// <summary>스프라이트 모드 오브젝트마다 [정렬 렌더 → 다운샘플 → 회전 배치 합성] 패스를 기록한다.</summary>
         private void RecordSpriteObjectPasses(RenderGraph renderGraph, UniversalCameraData cameraData, UniversalResourceData resourceData,
             int cellSizeRt, bool depthTexAttachable)
         {
@@ -558,7 +551,7 @@ namespace DesktopCompanion.Rendering
                 if (GeometryUtility.TestPlanesAABB(_frustumPlanes, spriteObject.GetCullingBounds()) == false)
                     continue; // 시야 밖
 
-                // 화면면 회전각 θ: 오브젝트 up의 뷰 공간 성분. (부호/축은 S0 시각 검증으로 확정 — 계획 14)
+                // 화면면 회전각 θ: 오브젝트 up의 뷰 공간 성분.
                 Vector3 upVS = restoreView.MultiplyVector(spriteObject.UpWS);
                 float thetaDeg = Mathf.Atan2(upVS.x, upVS.y) * Mathf.Rad2Deg;
 

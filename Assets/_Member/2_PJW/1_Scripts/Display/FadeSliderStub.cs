@@ -5,15 +5,8 @@ using TMPro;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// [테스트 스텁] uGUI 슬라이더로 대상 렌더러의 셰이더 _Fade(0=투명 → 1=불투명)를 실시간 조절한다.
-    /// 페이드 셰이더(DitherFadeLit / DitherFadeLitSmooth / FadeLitAlpha) 확인용.
-    ///
-    /// ※ 오버레이 빌드에서 슬라이더를 만지려면 uGUI 슬라이더여야 한다(클릭관통이 GraphicRaycaster로 UI를
-    ///    감지 → 그 위에서 관통 해제). 전체화면 UI 캔버스 하위에 Slider를 두고 연결한다.
-    ///
-    /// ※ _Fade는 MaterialPropertyBlock이 아니라 '인스턴스 머티리얼'에 직접 쓴다.
-    ///    MPB는 SRP Batcher 호환 셰이더에서 나머지 UnityPerMaterial 프로퍼티(_BaseColor 등)를 0으로 만들어
-    ///    모델이 검게 렌더된다.
+    /// uGUI 슬라이더로 대상 렌더러의 셰이더 _Fade(0=투명, 1=불투명)를 실시간 조절하는 확인용 컴포넌트.
+    /// 값은 인스턴스 머티리얼에 직접 쓰며, 현재 값을 라벨에 표시한다.
     /// </summary>
     public class FadeSliderStub : MonoBehaviour
     {

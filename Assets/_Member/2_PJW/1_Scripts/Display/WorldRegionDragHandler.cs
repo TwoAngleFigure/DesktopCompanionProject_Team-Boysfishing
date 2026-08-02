@@ -3,11 +3,8 @@ using UnityEngine;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// Window 모드 + '창 이동 모드'에서 보트 창(월드 렌더 영역)을 드래그로 옮긴다.
-    ///
-    /// 입력은 빌드에서 Win32 전역(GetCursorPos + GetAsyncKeyState)으로 읽는다.
-    /// 클릭관통(WS_EX_TRANSPARENT) 오버레이는 Unity의 Mouse.current가 갱신되지 않으므로
-    /// 그것으로는 빌드에서 드래그가 동작하지 않는다. 에디터에서는 Mouse.current로 폴백한다.
+    /// Window 모드이면서 창 이동 모드가 켜져 있을 때 월드 렌더 영역을 드래그로 옮긴다.
+    /// 빌드에서는 Win32 전역 입력(GetCursorPos + GetAsyncKeyState)으로, 에디터에서는 Mouse.current로 커서를 읽는다.
     /// </summary>
     public class WorldRegionDragHandler : MonoBehaviour
     {
