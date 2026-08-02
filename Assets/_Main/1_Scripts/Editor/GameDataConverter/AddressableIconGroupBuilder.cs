@@ -37,7 +37,7 @@ namespace DesktopCompanion.EditorTools
         };
 
         // ItemData_Materials#ID → Assets/Resource/Icon_Material 내 파일명(확장자 제외).
-        // 300016~300024(1~9티어 장비 조각)는 전용 아이콘이 아직 없어 공용 "장비 조각" 파일을 공유한다.
+        // 300016~300024는 1~9티어 장비 조각으로, 티어별 전용 아이콘을 각각 쓴다.
         private static readonly Dictionary<int, string> s_materialIconFiles = new()
         {
             { 300001, "lustrous_scale" },
@@ -55,15 +55,15 @@ namespace DesktopCompanion.EditorTools
             { 300013, "abyssal_blue_pearl_fragment" },
             { 300014, "silver_spearhead_lure_fragment" },
             { 300015, "sea_giants_conch_fragment" },
-            { 300016, "장비 조각" },
-            { 300017, "장비 조각" },
-            { 300018, "장비 조각" },
-            { 300019, "장비 조각" },
-            { 300020, "장비 조각" },
-            { 300021, "장비 조각" },
-            { 300022, "장비 조각" },
-            { 300023, "장비 조각" },
-            { 300024, "장비 조각" },
+            { 300016, "tier_1_equipment_fragment" },
+            { 300017, "tier_2_equipment_fragment" },
+            { 300018, "tier_3_equipment_fragment" },
+            { 300019, "tier_4_equipment_fragment" },
+            { 300020, "tier_5_equipment_fragment" },
+            { 300021, "tier_6_equipment_fragment" },
+            { 300022, "tier_7_equipment_fragment" },
+            { 300023, "tier_8_equipment_fragment" },
+            { 300024, "tier_9_equipment_fragment" },
         };
 
         [MenuItem("Tools/DesktopCompanion/Addressables - Consumable 아이콘 그룹 등록")]
