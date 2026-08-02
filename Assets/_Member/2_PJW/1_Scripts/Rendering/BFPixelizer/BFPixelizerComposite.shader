@@ -4,6 +4,7 @@
 //  - 커버리지(a) 없는 픽셀은 discard → 원본 유지.
 //  - 가림: 씬 깊이가 셀 깊이보다 확실히 가까우면 discard(셀=단일 깊이라 경사 오차 불필요).
 //  - 아웃라인: 4이웃 셀의 커버리지/ID 비교(탐색 아님 — 결정적 4탭).
+//    ID가 다른 경계는 우선권이 높거나 같은 쪽만 그린다(계획 33 — BFPixelizerMeta.hlsl).
 //  - 셀 깊이를 SV_Depth로 출력 → 이후 물(투명) 합성 정상.
 Shader "Hidden/BFPixelizer/Composite"
 {
@@ -31,9 +32,10 @@ Shader "Hidden/BFPixelizer/Composite"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+            #include "BFPixelizerMeta.hlsl" // meta.r 언팩 + 우선권 경계 판정
 
             // _BlitTexture(Blit.hlsl) = 오프스크린/다운샘플 컬러(rgb=라이팅, a=아웃라인 강도).
-            TEXTURE2D_X(_BFP_OffMeta);            // r=ObjectId(0=배경=커버리지), gba=아웃라인 색
+            TEXTURE2D_X(_BFP_OffMeta);            // r=ObjectId+256×우선권(0=배경=커버리지), gba=아웃라인 색
             TEXTURE2D_X(_BFP_OffAlpha);           // r=오브젝트 알파, g=아웃라인 투명도
             TEXTURE2D_X_FLOAT(_BFP_OffDepth);     // 셀 깊이
             float _BFP_CellSize;                  // V0=1, V1=N_rt
@@ -74,12 +76,17 @@ Shader "Hidden/BFPixelizer/Composite"
                 half strength = saturate(cellColor.a);                      // 아웃라인 강도
 
                 // 아웃라인: 4이웃 셀이 비어 있거나 다른 ID면 경계 셀.
+                // 단 ID가 다른 경계는 우선권(계획 33)이 높거나 같은 쪽만 그린다 — 종전에는 판정이
+                // 대칭이라 양쪽 셀이 모두 경계가 되어 2셀 두께의 이중선이 됐다.
+                uint myId, myPriority;
+                BFP_UnpackMeta(cellMeta.r, myId, myPriority);
+
                 bool edge = false;
                 int2 dirs[4] = { int2(1, 0), int2(-1, 0), int2(0, 1), int2(0, -1) };
                 [unroll] for (int k = 0; k < 4; k++)
                 {
-                    half neighborId = LOAD_TEXTURE2D_X(_BFP_OffMeta, cell + dirs[k]).r;
-                    if (neighborId < 0.5 || abs(neighborId - cellMeta.r) > 0.25)
+                    half neighborPacked = LOAD_TEXTURE2D_X(_BFP_OffMeta, cell + dirs[k]).r;
+                    if (BFP_IsOutlineEdge(neighborPacked, myId, myPriority))
                         edge = true;
                 }
 
@@ -120,7 +127,8 @@ Shader "Hidden/BFPixelizer/Composite"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
-            TEXTURE2D_X(_BFP_OffMeta);        // r = ObjectId(0 = 배경 = 커버리지)
+            // r = ObjectId+256×우선권. ObjectId가 1 이상이라 0 = 배경 = 커버리지 없음이 그대로 성립한다.
+            TEXTURE2D_X(_BFP_OffMeta);
             TEXTURE2D_X_FLOAT(_BFP_OffDepth); // 저해상도 셀 깊이
             float _BFP_CellSize;
 
@@ -157,7 +165,9 @@ Shader "Hidden/BFPixelizer/Composite"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
 
-            TEXTURE2D_X(_BFP_OffMeta);        // 저해상도 스프라이트 메타(r=ObjectId=커버리지, gba=아웃라인 색)
+            // 저해상도 스프라이트 메타(r=ObjectId+256×우선권=커버리지, gba=아웃라인 색).
+            // 스프라이트 경로는 오브젝트마다 전용 버퍼라 ID 경계 자체가 없다 → 우선권 판정 불필요(커버리지만 본다).
+            TEXTURE2D_X(_BFP_OffMeta);
             TEXTURE2D_X(_BFP_OffAlpha);       // r=오브젝트 알파, g=아웃라인 투명도
             TEXTURE2D_X_FLOAT(_BFP_OffDepth); // 저해상도 스프라이트 깊이
             float _BFP_CellSize;
@@ -254,7 +264,8 @@ Shader "Hidden/BFPixelizer/Composite"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
-            TEXTURE2D_X(_BFP_OffMeta);        // r = ObjectId(0 = 배경 = 커버리지)
+            // r = ObjectId+256×우선권. ObjectId가 1 이상이라 0 = 배경 = 커버리지 없음이 그대로 성립한다.
+            TEXTURE2D_X(_BFP_OffMeta);
             TEXTURE2D_X_FLOAT(_BFP_OffDepth);
             float _BFP_CellSize;
             float4 _BFP_SpriteRot;
@@ -309,6 +320,7 @@ Shader "Hidden/BFPixelizer/Composite"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+            #include "BFPixelizerMeta.hlsl" // meta.r 언팩 + 우선권 경계 판정
 
             TEXTURE2D_X(_BFP_OffMeta);
             TEXTURE2D_X(_BFP_OffAlpha);
@@ -341,12 +353,15 @@ Shader "Hidden/BFPixelizer/Composite"
                 half2 cellAlpha = LOAD_TEXTURE2D_X(_BFP_OffAlpha, cell).rg;
                 half strength = saturate(cellColor.a);
 
+                uint myId, myPriority;
+                BFP_UnpackMeta(cellMeta.r, myId, myPriority);
+
                 bool edge = false;
                 int2 dirs[4] = { int2(1, 0), int2(-1, 0), int2(0, 1), int2(0, -1) };
                 [unroll] for (int k = 0; k < 4; k++)
                 {
-                    half neighborId = LOAD_TEXTURE2D_X(_BFP_OffMeta, cell + dirs[k]).r;
-                    if (neighborId < 0.5 || abs(neighborId - cellMeta.r) > 0.25)
+                    half neighborPacked = LOAD_TEXTURE2D_X(_BFP_OffMeta, cell + dirs[k]).r;
+                    if (BFP_IsOutlineEdge(neighborPacked, myId, myPriority))
                         edge = true;
                 }
 
