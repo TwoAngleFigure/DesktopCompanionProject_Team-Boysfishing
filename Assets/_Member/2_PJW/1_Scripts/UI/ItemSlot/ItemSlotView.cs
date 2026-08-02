@@ -138,21 +138,19 @@ namespace DesktopCompanion.Views
 
         private void RequestTooltip()
         {
-            // 배선 누락은 조용히 무시하면 원인을 찾기 어렵다 — hover 시점에만 발생하므로 로그가 넘치지 않는다.
             if (m_vd == null)
             {
-                Debug.LogWarning($"[ItemSlotView] 슬롯 데이터가 없습니다 — Set()이 호출되지 않았거나 " +
-                                 $"ItemSlotVD 생성이 실패했습니다(행 프리팹의 슬롯 참조 확인).", this);
                 return;
             }
+
             if (m_tooltipSource == null)
             {
                 Debug.LogWarning("[ItemSlotView] 툴팁 공급자가 없습니다 — 창이 Set()에 자기 자신을 넘겼는지 확인.", this);
                 return;
             }
 
-            // 상세는 마우스가 올라온 지금 1건만 조립한다(목록 갱신 때 전 행을 미리 만들지 않는다).
             ItemTooltipData data = m_tooltipSource.BuildTooltip(m_vd);
+
             if (data == null)
             {
                 Debug.LogWarning($"[ItemSlotView] 툴팁 데이터 조립 실패 — kind={m_vd.Kind}, dataId={m_vd.DataId}", this);
