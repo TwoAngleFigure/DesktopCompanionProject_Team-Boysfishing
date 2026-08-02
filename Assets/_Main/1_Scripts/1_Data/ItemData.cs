@@ -17,6 +17,7 @@ namespace DesktopCompanion.Data
         Rare = 2,
         Epic = 3,
         Legendary = 4,
+        Boss = 5,       // 티어별 보스 물고기. 일반 등급 위의 별도 축이라 자동판매 범위(≤Legendary)에서 제외된다
     }
 
     public enum ItemQuality
