@@ -388,9 +388,9 @@ namespace DesktopCompanion.Systems
         /// <param name="area">소모할 아이템이 장착된 부위 (예: Bait, Groundbait)</param>
         /// <param name="amount">소모할 수량</param>
         /// <returns>소모에 성공하면 true, 수량이 부족하거나 아이템이 없으면 false</returns>
-        public bool TryConsumeEquippedItem(EquipmentMountingArea area, out Entity consumedItem, int amount = 1)
+        public bool TryConsumeEquippedItem(EquipmentMountingArea area, out ItemData consumedItemData, int amount = 1)
         {
-            consumedItem = null;
+            consumedItemData = null;
             if (playerHandle.Value == Guid.Empty) return false;
 
             Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
@@ -407,7 +407,7 @@ namespace DesktopCompanion.Systems
                 // 소모할 수량 확인
                 if (consumable.Quantity >= amount)
                 {
-                    consumedItem = entity;
+                    consumedItemData = consumable.ItemData;
                     consumable.Add(-amount);
 
                     // 수량이 0 이하가 되면 장착 해제 및 엔티티 파기
@@ -432,7 +432,7 @@ namespace DesktopCompanion.Systems
             {
                 if (material.Quantity >= amount)
                 {
-                    consumedItem = entity;
+                    consumedItemData = material.ItemData;
                     material.Add(-amount);
                     if (material.Quantity <= 0)
                     {

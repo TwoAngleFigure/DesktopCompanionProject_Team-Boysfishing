@@ -1,36 +1,36 @@
-# Desktop Companion ÇÁ·¹ÀÓ¿öÅ© ·ê (ÆÀ¿ø °¡ÀÌµå)
+# Desktop Companion í”„ë ˆì„ì›Œí¬ ë£° (íŒ€ì› ê°€ì´ë“œ)
 
-ÇÁ·ÎÁ§Æ®¸¦ ÁøÇàÇÏ¸ç ÄÚµå ÀÛ¼º/¼öÁ¤ ½Ã ´ÙÀ½ÀÇ 3°¡Áö ÇÁ·¹ÀÓ¿öÅ© ¾ÆÅ°ÅØÃ³ ¿øÄ¢À» ¹«Á¶°Ç ÁØ¼öÇÕ´Ï´Ù.
+í”„ë¡œì íŠ¸ë¥¼ ì§„í–‰í•˜ë©° ì½”ë“œ ì‘ì„±/ìˆ˜ì • ì‹œ ë‹¤ìŒì˜ 3ê°€ì§€ í”„ë ˆì„ì›Œí¬ ì•„í‚¤í…ì²˜ ì›ì¹™ì„ ë¬´ì¡°ê±´ ì¤€ìˆ˜í•©ë‹ˆë‹¤.
 
-## 1. WorldManager API (3D ¿ùµå ºä °ü¸®)
-- **WorldViewBase »ó¼Ó**: ¿ùµå ¿ÀºêÁ§Æ®´Â WorldViewBase¸¦ »ó¼Ó. WorldManager°¡ °ü¸®.
-- **Bind() / Unbind()**: ÀÚ½ÅÀÇ System Action ÀÌº¥Æ®¸¦ ±¸µ¶(+=)/ÇØÁ¦(-=)¸¸ ÀÛ¼º. SystemManager.GetSystem<T>() È°¿ë.
-- **´Ü¹æÇâ µ¥ÀÌÅÍ Èå¸§**: System(»óÅÂ º¯È­) ¡æ Action ¹ßÇà ¡æ À¯´ÖÀÌ ±¸µ¶ÇÏ¿© ¿ùµå ¿ÀºêÁ§Æ® °»½Å(AssetProvider È°¿ë).
-- **ÆäÀÌ·Îµå ±ÔÄ¢**: SystemÀº Action ÀÌº¥Æ®¿¡ Entity °´Ã¼ ÂüÁ¶¸¦ ³Ñ±â¸é ¾È µÊ! ¿ÀÁ÷ "½Äº°ÀÚ(EntityHandle) + ¿ø½Ã/ºÒº¯ °ª(int, Vector3 µî)"¸¸ Àü´ŞÇÒ °Í.
+## 1. WorldManager API (3D ì›”ë“œ ë·° ê´€ë¦¬)
+- **WorldViewBase ìƒì†**: ì›”ë“œ ì˜¤ë¸Œì íŠ¸ëŠ” WorldViewBaseë¥¼ ìƒì†. WorldManagerê°€ ê´€ë¦¬.
+- **Bind() / Unbind()**: ìì‹ ì˜ System Action ì´ë²¤íŠ¸ë¥¼ êµ¬ë…(+=)/í•´ì œ(-=)ë§Œ ì‘ì„±. SystemManager.GetSystem<T>() í™œìš©.
+- **ë‹¨ë°©í–¥ ë°ì´í„° íë¦„**: System(ìƒíƒœ ë³€í™”) â†’ Action ë°œí–‰ â†’ ìœ ë‹›ì´ êµ¬ë…í•˜ì—¬ ì›”ë“œ ì˜¤ë¸Œì íŠ¸ ê°±ì‹ (AssetProvider í™œìš©).
+- **í˜ì´ë¡œë“œ ê·œì¹™**: Systemì€ Action ì´ë²¤íŠ¸ì— Entity ê°ì²´ ì°¸ì¡°ë¥¼ ë„˜ê¸°ë©´ ì•ˆ ë¨! ì˜¤ì§ "ì‹ë³„ì(EntityHandle) + ì›ì‹œ/ë¶ˆë³€ ê°’(int, Vector3 ë“±)"ë§Œ ì „ë‹¬í•  ê²ƒ.
 
-## 2. UIManager API (UI Áß¾Ó °ü¸® ¹× MVVM ÅëÀÏ)
-- **UI Base Å¬·¡½º »ó¼Ó**: 
-  - ÀÏ¹İ UI´Â UIViewBase »ó¼Ó.
-  - Ã¢ UI(ÀÎº¥Åä¸® µî)´Â UIWindowBase »ó¼Ó (½ºÅÃ ¹× ¿ìÅ¬¸¯ ´İ±â ÀÚµ¿ Âü¿©).
-- **ViewModel ±¸Çö (UIViewModelBase)**:
-  - Bind() / Unbind()¿¡¼­ SystemÀÇ ActionÀ» ±¸µ¶/ÇØÁ¦.
-  - ºä °»½ÅÀ» À§ÇØ BindableProperty<T> »ç¿ë (°ª º¯°æ ÅëÁö).
-  - ºä ÀÔ·ÂÀ» Ã³¸®ÇÏ±â À§ÇØ RelayCommand Á¤ÀÇ.
-- **¾ç¹æÇâ Åë½Å (MVVM)**: 
-  - [View] ¡æ RelayCommand ¡æ [ViewModel] ¡æ System ¸Ş¼­µå È£Ãâ
-  - [System] ¡æ Action ÀÌº¥Æ® ¡æ [ViewModel] ¡æ BindableProperty ¡æ [View]
+## 2. UIManager API (UI ì¤‘ì•™ ê´€ë¦¬ ë° MVVM í†µì¼)
+- **UI Base í´ë˜ìŠ¤ ìƒì†**: 
+  - ì¼ë°˜ UIëŠ” UIViewBase ìƒì†.
+  - ì°½ UI(ì¸ë²¤í† ë¦¬ ë“±)ëŠ” UIWindowBase ìƒì† (ìŠ¤íƒ ë° ìš°í´ë¦­ ë‹«ê¸° ìë™ ì°¸ì—¬).
+- **ViewModel êµ¬í˜„ (UIViewModelBase)**:
+  - Bind() / Unbind()ì—ì„œ Systemì˜ Actionì„ êµ¬ë…/í•´ì œ.
+  - ë·° ê°±ì‹ ì„ ìœ„í•´ BindableProperty<T> ì‚¬ìš© (ê°’ ë³€ê²½ í†µì§€).
+  - ë·° ì…ë ¥ì„ ì²˜ë¦¬í•˜ê¸° ìœ„í•´ RelayCommand ì •ì˜.
+- **ì–‘ë°©í–¥ í†µì‹  (MVVM)**: 
+  - [View] â†’ RelayCommand â†’ [ViewModel] â†’ System ë©”ì„œë“œ í˜¸ì¶œ
+  - [System] â†’ Action ì´ë²¤íŠ¸ â†’ [ViewModel] â†’ BindableProperty â†’ [View]
 
-## 3. ÇÁ·¹ÀÓ¿öÅ© ÄÚ¾î ¹× ¾ÆÅ°ÅØÃ³ ±ÔÄ¢
-- **ÀÇÁ¸¼º ¹æÇâ¼º**: SystemÀº EntityManager¿Í ´Ù¸¥ System(ÅëÇØ SystemManager)À» ÂüÁ¶ °¡´ÉÇÏÁö¸¸, EntityManager´Â µµ¸ŞÀÎÀ» ¾Ë¸é ¾È µÇ¸ç, SystemÀº UI³ª View¸¦ Á÷Á¢ ÂüÁ¶ÇÏ¸é ¾È µÊ.
-- **Entity**: ·ÎÁ÷ ºÒ°¡. »óÅÂ(Á¤Àû Data´Â DataManager¿¡¼­ ÀĞ°í, ·±Å¸ÀÓ °¡º¯ »óÅÂ´Â Entity¿¡ ÀúÀå)¿Í EntityHandle¸¸ À¯Áö. 
+## 3. í”„ë ˆì„ì›Œí¬ ì½”ì–´ ë° ì•„í‚¤í…ì²˜ ê·œì¹™
+- **ì˜ì¡´ì„± ë°©í–¥ì„±**: Systemì€ EntityManagerì™€ ë‹¤ë¥¸ System(í†µí•´ SystemManager)ì„ ì°¸ì¡° ê°€ëŠ¥í•˜ì§€ë§Œ, EntityManagerëŠ” ë„ë©”ì¸ì„ ì•Œë©´ ì•ˆ ë˜ë©°, Systemì€ UIë‚˜ Viewë¥¼ ì§ì ‘ ì°¸ì¡°í•˜ë©´ ì•ˆ ë¨.
+- **Entity**: ë¡œì§ ë¶ˆê°€. ìƒíƒœ(ì •ì  DataëŠ” DataManagerì—ì„œ ì½ê³ , ëŸ°íƒ€ì„ ê°€ë³€ ìƒíƒœëŠ” Entityì— ì €ì¥)ì™€ EntityHandleë§Œ ìœ ì§€. 
 - **System**:
-  - SystemBase »ó¼Ó. µµ¸ŞÀÎ ±â´É ¹× °¡º¯ »óÅÂ ¼ÒÀ¯.
-  - EntityÀÇ »ı¼º, Á¶È¸, ¼Ò¸êÀº ¹«Á¶°Ç EntityManager¸¦ ÅëÇØ¼­ ¼öÇà (Create, Get, Destroy).
-  - Entity ÀÚÃ¼¸¦ º¯¼ö¿¡ ´ãÁö ¸»°í EntityHandle·Î¸¸ º¸°üÇÒ °Í.
-  - Update°¡ ÇÊ¿äÇÏ´Ù¸é ITickableÀ» ±¸ÇöÇÏ¿© Tick(float deltaTime)¿¡¼­ Ã³¸® (MonoBehaviour ÄÚ·çÆ¾ ºÒ°¡).
-- **Data (SO)**: ¼öÁ¤ ºÒ°¡´ÉÇÑ Á¤ÀÇ/Ã»»çÁø. Ãß°¡ ½Ã GameManager.RegisterSystems/RegisterEntityFactories¿¡ µî·Ï ¹× ¼¼ÆÃ.
-- **¼¼ÀÌºê (ISaveable)**: ¿µ±¸ »óÅÂ ÀúÀåÀº DTO (POCO)¿¡ Data ID¿Í °¡º¯ »óÅÂ¸¸ Æ÷ÇÔ. Entity ÂüÁ¶´Â ¹®ÀÚ¿­ º¯È¯ (ToString("N"))ÇÏ¿© ÀúÀå.
-- **ºñÁÖ¾ó ¿¡¼Â**: Data¿¡¼­ ¿¡¼Â Á÷Á¢ ÂüÁ¶ ±İÁö. Addressables Å° ±Ô¾à({Å¬·¡½º¸í}_{ID}_{¿ëµµ})¸¦ µû¸£°í, View ´Ü¿¡¼­¸¸ AssetProvider·Î Á¶È¸ÇÏ¿© ¼¼ÆÃ (AssetKeys.Of(data, usage)).
+  - SystemBase ìƒì†. ë„ë©”ì¸ ê¸°ëŠ¥ ë° ê°€ë³€ ìƒíƒœ ì†Œìœ .
+  - Entityì˜ ìƒì„±, ì¡°íšŒ, ì†Œë©¸ì€ ë¬´ì¡°ê±´ EntityManagerë¥¼ í†µí•´ì„œ ìˆ˜í–‰ (Create, Get, Destroy).
+  - Entity ìì²´ë¥¼ ë³€ìˆ˜ì— ë‹´ì§€ ë§ê³  EntityHandleë¡œë§Œ ë³´ê´€í•  ê²ƒ.
+  - Updateê°€ í•„ìš”í•˜ë‹¤ë©´ ITickableì„ êµ¬í˜„í•˜ì—¬ Tick(float deltaTime)ì—ì„œ ì²˜ë¦¬ (MonoBehaviour ì½”ë£¨í‹´ ë¶ˆê°€).
+- **Data (SO)**: ìˆ˜ì • ë¶ˆê°€ëŠ¥í•œ ì •ì˜/ì²­ì‚¬ì§„. ì¶”ê°€ ì‹œ GameManager.RegisterSystems/RegisterEntityFactoriesì— ë“±ë¡ ë° ì„¸íŒ….
+- **ì„¸ì´ë¸Œ (ISaveable)**: ì˜êµ¬ ìƒíƒœ ì €ì¥ì€ DTO (POCO)ì— Data IDì™€ ê°€ë³€ ìƒíƒœë§Œ í¬í•¨. Entity ì°¸ì¡°ëŠ” ë¬¸ìì—´ ë³€í™˜ (ToString("N"))í•˜ì—¬ ì €ì¥.
+- **ë¹„ì£¼ì–¼ ì—ì…‹**: Dataì—ì„œ ì—ì…‹ ì§ì ‘ ì°¸ì¡° ê¸ˆì§€. Addressables í‚¤ ê·œì•½({í´ë˜ìŠ¤ëª…}_{ID}_{ìš©ë„})ë¥¼ ë”°ë¥´ê³ , View ë‹¨ì—ì„œë§Œ AssetProviderë¡œ ì¡°íšŒí•˜ì—¬ ì„¸íŒ… (AssetKeys.Of(data, usage)).
 
 ## 4. ì‘ì—… ê¶Œí•œ ë° í´ë” ì ‘ê·¼ ê·œì¹™
 - **1_KSS í´ë” ì „ìš©**: ì½”ë“œ ìˆ˜ì • ë° ìƒì„±ì€ ë°˜ë“œì‹œ 1_KSS í´ë” ë‚´ì—ì„œë§Œ ì´ë£¨ì–´ì ¸ì•¼ í•©ë‹ˆë‹¤.
