@@ -9851,7 +9851,7 @@
     "m_type": "Consumables",
     "m_tier": 1,
     "m_basePrice": 10,
-    "m_mountingArea": "Groundbait",
+    "m_mountingArea": "Bait",
     "m_summonTarget": {
       "type": "BattleFishData",
       "id": 500011

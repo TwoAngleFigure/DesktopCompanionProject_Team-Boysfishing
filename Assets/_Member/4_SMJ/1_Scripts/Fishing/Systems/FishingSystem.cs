@@ -21,6 +21,10 @@ namespace DesktopCompanion.Systems
 
     public class FishingSystem : SystemBase, ITickable
     {
+        // 미끼/떡밥 확률 검증용 로그 스위치입니다.
+        // 테스트가 끝난 뒤 false로 바꾸면 낚시 디버그 로그만 끌 수 있습니다.
+        private const bool EnableFishingItemDebugLog = true;
+
         private StageSystem m_stageSystem;
         private PlayerSystem m_playerSystem;
         private InventorySystem m_inventorySystem;
@@ -384,6 +388,12 @@ namespace DesktopCompanion.Systems
 
             battleFish.SetRollResult(size, quality);
 
+            // 한 번의 낚시에 실제 적용된 소모품 스냅샷과 최종 결과를 한 줄로 확인합니다.
+            LogFishingItemDebug(
+                $"[최종 결과] fish={fishData.Name}(id={fishData.ID}), " +
+                $"rarity={fishData.ItemFish.Rarity}, quality={quality}, size={size:0.0}, " +
+                $"baitStat={m_appliedBaitStat:0.##}, groundbaitStat={m_appliedGroundbaitStat:0.##}");
+
             m_battleDuration = CalculateBattleDuration(fishData, size);
             m_battleTimer = m_battleDuration;
             m_autoAttackTimer = 0f;
@@ -571,28 +581,47 @@ namespace DesktopCompanion.Systems
 
         private void ScheduleNextFishing()
         {
+            // 소모 전에 현재 장착 효과를 저장합니다.
+            // 낚시 도중 장비를 바꿔도 아래 스냅샷은 이번 낚시가 끝날 때까지 유지됩니다.
             m_appliedBaitStat = m_playerSystem != null ? m_playerSystem.BaseProbabilityAtFishSize : 0f;
             m_appliedGroundbaitStat = m_playerSystem != null ? m_playerSystem.BaseProbabilityAtFishRarity : 0f;
             m_appliedSummonTarget = null;
 
+            bool consumedBait = false;
+            bool consumedGroundbait = false;
+            ItemData consumedBaitData = null;
+            ItemData consumedGroundbaitData = null;
+
             if (m_playerSystem != null)
             {
-                bool consumedBait = m_playerSystem.TryConsumeEquippedItem(
+                consumedBait = m_playerSystem.TryConsumeEquippedItem(
                     EquipmentMountingArea.Bait,
-                    out ItemData consumedBaitData);
+                    out consumedBaitData);
 
                 if (consumedBait && consumedBaitData is ItemData_Consumables baitData)
                 {
                     m_appliedSummonTarget = baitData.SummonTarget;
                 }
 
+                // 보스 미끼가 적용된 낚시는 일반 물고기 희귀도 추첨을 하지 않으므로 떡밥도 소비하지 않습니다.
                 if (m_appliedSummonTarget == null)
                 {
-                    m_playerSystem.TryConsumeEquippedItem(
+                    consumedGroundbait = m_playerSystem.TryConsumeEquippedItem(
                         EquipmentMountingArea.Groundbait,
-                        out _);
+                        out consumedGroundbaitData);
                 }
             }
+
+            string groundbaitResult = m_appliedSummonTarget != null
+                ? "소비 생략(보스 미끼 우선)"
+                : $"consumed={consumedGroundbait}, item={GetItemDebugName(consumedGroundbaitData)}";
+
+            // 소비된 아이템과 이번 낚시에 저장된 스탯이 서로 일치하는지 확인하는 로그입니다.
+            LogFishingItemDebug(
+                $"[소모품 적용] baitConsumed={consumedBait}, bait={GetItemDebugName(consumedBaitData)}, " +
+                $"baitStat={m_appliedBaitStat:0.##}, groundbait={groundbaitResult}, " +
+                $"groundbaitStat={m_appliedGroundbaitStat:0.##}, " +
+                $"summonTarget={GetFishDebugName(m_appliedSummonTarget)}");
 
             m_waitDuration = CalculateNextFishingDelay();
             m_waitTimer = m_waitDuration;
@@ -619,7 +648,10 @@ namespace DesktopCompanion.Systems
             BattleFishData summonTarget = m_appliedSummonTarget;
             m_appliedSummonTarget = null;
 
-            Debug.Log($"[FishingSystem] 보스 미끼 적용: fish={summonTarget.Name}");
+            // 보스 미끼는 TierPool과 희귀도 가중치 추첨을 거치지 않고 지정 대상을 사용합니다.
+            LogFishingItemDebug(
+                $"[보스 선택] 일반 희귀도 추첨 생략, target={GetFishDebugName(summonTarget)}, " +
+                $"rarity={summonTarget.ItemFish.Rarity}");
             return summonTarget;
         }
 
@@ -739,8 +771,23 @@ namespace DesktopCompanion.Systems
                 {
                     List<BattleFishData> selectedRarityFish = m_fishByRarity[i];
                     int fishIndex = UnityEngine.Random.Range(0, selectedRarityFish.Count);
+                    BattleFishData selectedFish = selectedRarityFish[fishIndex];
+                    ItemRarity selectedRarity = (ItemRarity)i;
 
-                    return selectedRarityFish[fishIndex];
+                    // 0인 항목은 해당 TierPool에 그 희귀도의 물고기가 없어서 추첨에서 제외된 경우입니다.
+                    LogFishingItemDebug(
+                        $"[희귀도 추첨] groundbaitStat={m_appliedGroundbaitStat:0.##}, tier={pool.Tier}, " +
+                        $"weights=" +
+                        $"Normal:{FormatWeight(m_rarityWeights[0], totalWeight)}, " +
+                        $"Uncommon:{FormatWeight(m_rarityWeights[1], totalWeight)}, " +
+                        $"Rare:{FormatWeight(m_rarityWeights[2], totalWeight)}, " +
+                        $"Epic:{FormatWeight(m_rarityWeights[3], totalWeight)}, " +
+                        $"Legendary:{FormatWeight(m_rarityWeights[4], totalWeight)}, " +
+                        $"roll={randomValue:0.###}/{totalWeight:0.###}, " +
+                        $"selected={selectedRarity}, candidates={selectedRarityFish.Count}, " +
+                        $"fish={GetFishDebugName(selectedFish)}");
+
+                    return selectedFish;
                 }
             }
 
@@ -792,12 +839,63 @@ namespace DesktopCompanion.Systems
 
                 if (randomValue <= accumulatedWeight)
                 {
-                    return (ItemQuality)(i + 1);
+                    ItemQuality selectedQuality = (ItemQuality)(i + 1);
+
+                    // 각 가중치와 실제 확률, 랜덤 값, 선택 결과를 함께 출력합니다.
+                    LogQualityRoll(baitStat, totalWeight, randomValue, selectedQuality);
+                    return selectedQuality;
                 }
             }
 
             // 부동소수점 오차에 대한 마지막 반환값
+            LogQualityRoll(baitStat, totalWeight, randomValue, ItemQuality.FiveStar);
             return ItemQuality.FiveStar;
+        }
+
+        private void LogQualityRoll(
+            float baitStat,
+            float totalWeight,
+            float randomValue,
+            ItemQuality selectedQuality)
+        {
+            LogFishingItemDebug(
+                $"[성급 추첨] baitStat={baitStat:0.##}, " +
+                $"weights=" +
+                $"1성:{FormatWeight(m_qualityWeights[0], totalWeight)}, " +
+                $"2성:{FormatWeight(m_qualityWeights[1], totalWeight)}, " +
+                $"3성:{FormatWeight(m_qualityWeights[2], totalWeight)}, " +
+                $"4성:{FormatWeight(m_qualityWeights[3], totalWeight)}, " +
+                $"5성:{FormatWeight(m_qualityWeights[4], totalWeight)}, " +
+                $"roll={randomValue:0.###}/{totalWeight:0.###}, selected={selectedQuality}");
+        }
+
+        // 가중치 원본 값과 전체 합계 기준 실제 확률을 같이 표시합니다.
+        private static string FormatWeight(float weight, float totalWeight)
+        {
+            float probability = weight / totalWeight * 100f;
+            return $"{weight:0.###}({probability:0.00}%)";
+        }
+
+        private static string GetItemDebugName(ItemData itemData)
+        {
+            return itemData == null
+                ? "없음"
+                : $"{itemData.Name}(id={itemData.ID})";
+        }
+
+        private static string GetFishDebugName(BattleFishData fishData)
+        {
+            return fishData == null
+                ? "없음"
+                : $"{fishData.Name}(id={fishData.ID})";
+        }
+
+        private static void LogFishingItemDebug(string message)
+        {
+            if (EnableFishingItemDebugLog)
+            {
+                Debug.Log($"[FishingDebug] {message}");
+            }
         }
 
         private float RollFishSize(BattleFishData fishData, ItemQuality quality)
