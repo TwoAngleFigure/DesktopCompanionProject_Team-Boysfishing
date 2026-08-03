@@ -132,7 +132,7 @@ namespace DesktopCompanion.Views
             };
         }
 
-        private static readonly string[] s_rarityLabels = { "일반", "고급", "희귀", "영웅", "전설" };
+        private static readonly string[] s_rarityLabels = { "일반", "고급", "희귀", "영웅", "전설", "보스" };
 
         private static string RarityLabel(ItemRarity rarity)
         {

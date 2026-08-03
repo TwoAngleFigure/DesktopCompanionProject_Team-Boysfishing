@@ -32,7 +32,7 @@ namespace DesktopCompanion.Views
         [SerializeField, Range(0.1f, 1f)] private float m_cycleValueFalloff = 0.65f;
 
         [Header("레어도 글로우 — 물고기 전용")]
-        [Tooltip("index = ItemRarity (0=Normal … 4=Legendary). 비우면 글로우 없음")]
+        [Tooltip("index = ItemRarity (0=Normal … 4=Legendary, 5=Boss). 비우면 글로우 없음")]
         [SerializeField] private GlowEntry[] m_rarityGlows;
 
         [System.Serializable]

@@ -11,7 +11,7 @@ namespace DesktopCompanion.Views
     /// </summary>
     public class FishTooltipPanel : ItemTooltipPanelBase
     {
-        private static readonly string[] s_rarityLabels = { "일반", "고급", "희귀", "영웅", "전설" };
+        private static readonly string[] s_rarityLabels = { "일반", "고급", "희귀", "영웅", "전설", "보스" };
 
         [Header("개체")]
         [SerializeField] private TMP_Text m_rarityText;
