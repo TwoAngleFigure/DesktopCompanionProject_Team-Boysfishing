@@ -53,12 +53,7 @@ namespace DesktopCompanion.Systems
         };
         private float m_appliedBaitStat;
         private float m_appliedGroundbaitStat;
-
-#if UNITY_EDITOR
-        private bool m_isDebugCatchOverrideEnabled;
-        private int m_debugNextBattleFishDataId;
-        private float m_debugNextFishSize;
-#endif
+        private BattleFishData m_appliedSummonTarget;
 
         #region Events
 
@@ -256,47 +251,6 @@ namespace DesktopCompanion.Systems
             };
         }
 
-#if UNITY_EDITOR
-        public bool TrySetDebugCatchOverride(int battleFishDataId, float size)
-        {
-            BattleFishData fishData = DataManager.GetData<BattleFishData>(battleFishDataId);
-
-            if (fishData == null)
-            {
-                Debug.LogWarning(
-                    $"[FishingSystem] 디버그 다음 포획 설정 실패: " +
-                    $"BattleFishData를 찾을 수 없습니다. id={battleFishDataId}");
-                return false;
-            }
-
-            float roundedSize = Mathf.Round(size * 10f) / 10f;
-
-            if (roundedSize < fishData.MinSize || roundedSize > fishData.MaxSize)
-            {
-                Debug.LogWarning(
-                    "[FishingSystem] 디버그 다음 포획 설정 실패: " +
-                    $"크기가 물고기 범위를 벗어났습니다. fish={fishData.Name}, " +
-                    $"size={roundedSize:0.0}, range={fishData.MinSize:0.0}~{fishData.MaxSize:0.0}");
-                return false;
-            }
-
-            m_isDebugCatchOverrideEnabled = true;
-            m_debugNextBattleFishDataId = fishData.ID;
-            m_debugNextFishSize = roundedSize;
-
-            Debug.Log(
-                $"[FishingSystem] 디버그 강제 포획 활성화: " +
-                $"fish={fishData.Name}, size={roundedSize:0.0}, " +
-                $"quality={fishData.GetQuality(roundedSize)}");
-            return true;
-        }
-
-        public void ClearDebugCatchOverride()
-        {
-            m_isDebugCatchOverrideEnabled = false;
-        }
-#endif
-
         #region Pending
 
         private bool ShouldCreatePendingCatch(bool isCollectionUpdated, FishCollectionUpdateResult collectionResult)
@@ -403,18 +357,7 @@ namespace DesktopCompanion.Systems
 
         private void StartBattle()
         {
-#if UNITY_EDITOR
-            bool hasDebugOverride = TryGetDebugCatchOverride(
-                out BattleFishData fishData,
-                out float debugSize);
-
-            if (!hasDebugOverride)
-            {
-                fishData = SelectBattleFish();
-            }
-#else
-            BattleFishData fishData = SelectBattleFish();
-#endif
+            BattleFishData fishData = SelectBattleFishForCurrentAttempt();
 
             if (fishData == null)
             {
@@ -434,21 +377,8 @@ namespace DesktopCompanion.Systems
                 return;
             }
 
-            ItemQuality quality;
-            float rolledSize;
-
-#if UNITY_EDITOR
-            if (hasDebugOverride)
-            {
-                rolledSize = debugSize;
-                quality = fishData.GetQuality(rolledSize);
-            }
-            else
-#endif
-            {
-                quality = RollFishQuality(m_appliedBaitStat);
-                rolledSize = RollFishSize(fishData, quality);
-            }
+            ItemQuality quality = RollFishQuality(m_appliedBaitStat);
+            float rolledSize = RollFishSize(fishData, quality);
 
             float size = Mathf.Round(rolledSize * 10f) / 10f;
 
@@ -463,35 +393,6 @@ namespace DesktopCompanion.Systems
             OnBattleHpChanged?.Invoke(m_currentBattleFish, battleFish.CurrentHp, fishData.MaxHp);
             Debug.Log($"[FishingSystem] 전투 시작: {fishData.Name}, HP={battleFish.CurrentHp}/{fishData.MaxHp}, Size={size:0.00}, Quality={quality}, 제한시간={m_battleTimer:0.00}초");
         }
-
-#if UNITY_EDITOR
-        private bool TryGetDebugCatchOverride(
-            out BattleFishData fishData,
-            out float size)
-        {
-            fishData = null;
-            size = 0f;
-
-            if (!m_isDebugCatchOverrideEnabled)
-            {
-                return false;
-            }
-
-            fishData = DataManager.GetData<BattleFishData>(m_debugNextBattleFishDataId);
-            size = m_debugNextFishSize;
-
-            if (fishData != null)
-            {
-                return true;
-            }
-
-            Debug.LogWarning(
-                "[FishingSystem] 디버그 강제 포획을 적용하지 못했습니다. " +
-                $"BattleFishData를 찾을 수 없습니다. id={m_debugNextBattleFishDataId}");
-            return false;
-        }
-#endif
-
 
         private void ApplyDamage(int damage)
         {
@@ -672,9 +573,26 @@ namespace DesktopCompanion.Systems
         {
             m_appliedBaitStat = m_playerSystem != null ? m_playerSystem.BaseProbabilityAtFishSize : 0f;
             m_appliedGroundbaitStat = m_playerSystem != null ? m_playerSystem.BaseProbabilityAtFishRarity : 0f;
+            m_appliedSummonTarget = null;
 
-            m_playerSystem?.TryConsumeEquippedItem(EquipmentMountingArea.Bait);
-            m_playerSystem?.TryConsumeEquippedItem(EquipmentMountingArea.Groundbait);
+            if (m_playerSystem != null)
+            {
+                bool consumedBait = m_playerSystem.TryConsumeEquippedItem(
+                    EquipmentMountingArea.Bait,
+                    out ItemData consumedBaitData);
+
+                if (consumedBait && consumedBaitData is ItemData_Consumables baitData)
+                {
+                    m_appliedSummonTarget = baitData.SummonTarget;
+                }
+
+                if (m_appliedSummonTarget == null)
+                {
+                    m_playerSystem.TryConsumeEquippedItem(
+                        EquipmentMountingArea.Groundbait,
+                        out _);
+                }
+            }
 
             m_waitDuration = CalculateNextFishingDelay();
             m_waitTimer = m_waitDuration;
@@ -690,6 +608,20 @@ namespace DesktopCompanion.Systems
         #endregion
 
         #region Fish Selection
+
+        private BattleFishData SelectBattleFishForCurrentAttempt()
+        {
+            if (m_appliedSummonTarget == null)
+            {
+                return SelectBattleFish();
+            }
+
+            BattleFishData summonTarget = m_appliedSummonTarget;
+            m_appliedSummonTarget = null;
+
+            Debug.Log($"[FishingSystem] 보스 미끼 적용: fish={summonTarget.Name}");
+            return summonTarget;
+        }
 
         private BattleFishData SelectBattleFish()
         {
