@@ -664,7 +664,6 @@ MonoBehaviour:
   m_storageSizeText: {fileID: 7968193866818283747}
   m_storageUpgradeBtn: {fileID: 8578007380023501862}
   m_itemPickupController: {fileID: 0}
-  m_itemTooltip: {fileID: 0}
   m_tabPlayerEquipBtn: {fileID: 8849796892555862261}
   m_tabShipEquipBtn: {fileID: 7109400801781491493}
   m_tabStatsBtn: {fileID: 6985966455003216744}

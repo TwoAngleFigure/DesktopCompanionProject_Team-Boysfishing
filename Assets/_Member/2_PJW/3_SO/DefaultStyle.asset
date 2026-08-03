@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b47be7f3dadd69646b9ef9acb4c2639d, type: 3}
-  m_Name: New Item Grade Style
+  m_Name: DefaultStyle
   m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Views.ItemGradeStyle
-  m_startHue: 112
-  m_stepDegrees: 40
-  m_saturation: 1
+  m_startHue: 140
+  m_stepDegrees: 35
+  m_saturation: 0.95
   m_baseValue: 0.88235295
   m_cycleValueFalloff: 1
   m_rarityGlows:
@@ -24,7 +24,7 @@ MonoBehaviour:
     Strength: 0
   - Color: {r: 0.17383398, g: 0.6793823, b: 0.96981126, a: 1}
     Strength: 0
-  - Color: {r: 0.21960786, g: 0.21960786, b: 0.21960786, a: 1}
+  - Color: {r: 0.98490566, g: 0.6045024, b: 0, a: 1}
     Strength: 0
   - Color: {r: 0.8415094, g: 0.08097541, b: 0.08528235, a: 1}
     Strength: 0
