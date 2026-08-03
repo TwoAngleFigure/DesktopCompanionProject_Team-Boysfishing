@@ -361,6 +361,8 @@ namespace DesktopCompanion.Systems
 
         private void StartBattle()
         {
+            PrepareConsumablesForBattle();
+
             BattleFishData fishData = SelectBattleFishForCurrentAttempt();
 
             if (fishData == null)
@@ -581,8 +583,20 @@ namespace DesktopCompanion.Systems
 
         private void ScheduleNextFishing()
         {
-            // 소모 전에 현재 장착 효과를 저장합니다.
-            // 낚시 도중 장비를 바꿔도 아래 스냅샷은 이번 낚시가 끝날 때까지 유지됩니다.
+            m_waitDuration = CalculateNextFishingDelay();
+            m_waitTimer = m_waitDuration;
+            m_battleDuration = 0f;
+            m_battleTimer = 0f;
+            m_autoAttackTimer = 0f;
+
+            ChangeState(FishingState.Waiting);
+
+            Debug.Log($"[FishingSystem] 다음 입질 대기: {m_waitTimer:0.00}초");
+        }
+
+        private void PrepareConsumablesForBattle()
+        {
+            // 소비로 마지막 아이템이 장착 해제되기 전에 현재 스탯을 저장
             m_appliedBaitStat = m_playerSystem != null ? m_playerSystem.BaseProbabilityAtFishSize : 0f;
             m_appliedGroundbaitStat = m_playerSystem != null ? m_playerSystem.BaseProbabilityAtFishRarity : 0f;
             m_appliedSummonTarget = null;
@@ -594,6 +608,7 @@ namespace DesktopCompanion.Systems
 
             if (m_playerSystem != null)
             {
+                // 전투 시작 순간 장착된 미끼를 소비하므로 대기 중 교체한 미끼를 적용
                 consumedBait = m_playerSystem.TryConsumeEquippedItem(
                     EquipmentMountingArea.Bait,
                     out consumedBaitData);
@@ -603,7 +618,6 @@ namespace DesktopCompanion.Systems
                     m_appliedSummonTarget = baitData.SummonTarget;
                 }
 
-                // 보스 미끼가 적용된 낚시는 일반 물고기 희귀도 추첨을 하지 않으므로 떡밥도 소비하지 않습니다.
                 if (m_appliedSummonTarget == null)
                 {
                     consumedGroundbait = m_playerSystem.TryConsumeEquippedItem(
@@ -616,22 +630,11 @@ namespace DesktopCompanion.Systems
                 ? "소비 생략(보스 미끼 우선)"
                 : $"consumed={consumedGroundbait}, item={GetItemDebugName(consumedGroundbaitData)}";
 
-            // 소비된 아이템과 이번 낚시에 저장된 스탯이 서로 일치하는지 확인하는 로그입니다.
             LogFishingItemDebug(
-                $"[소모품 적용] baitConsumed={consumedBait}, bait={GetItemDebugName(consumedBaitData)}, " +
-                $"baitStat={m_appliedBaitStat:0.##}, groundbait={groundbaitResult}, " +
-                $"groundbaitStat={m_appliedGroundbaitStat:0.##}, " +
+                $"[전투 시작 소모품 적용] baitConsumed={consumedBait}, " +
+                $"bait={GetItemDebugName(consumedBaitData)}, baitStat={m_appliedBaitStat:0.##}, " +
+                $"groundbait={groundbaitResult}, groundbaitStat={m_appliedGroundbaitStat:0.##}, " +
                 $"summonTarget={GetFishDebugName(m_appliedSummonTarget)}");
-
-            m_waitDuration = CalculateNextFishingDelay();
-            m_waitTimer = m_waitDuration;
-            m_battleDuration = 0f;
-            m_battleTimer = 0f;
-            m_autoAttackTimer = 0f;
-
-            ChangeState(FishingState.Waiting);
-
-            Debug.Log($"[FishingSystem] 다음 입질 대기: {m_waitTimer:0.00}초");
         }
 
         #endregion
