@@ -120,3 +120,6 @@ InitTestScene*.unity*
 # Addressables 설정 폴더 전체 — Git 공유 안 함(각자 로컬 관리)
 /[Aa]ssets/AddressableAssetsData/
 /[Aa]ssets/AddressableAssetsData.meta
+
+# Agent customizations folder
+.agents/
