@@ -14,13 +14,27 @@ namespace DesktopCompanion.Views
         public readonly BindableProperty<FishCollectionDisplayEntry?>
             SelectedEntry = new(null);
 
+        public readonly BindableProperty<FishCollectionSortKey>
+            CurrentSortKey = new(FishCollectionSortKey.None);
+
+        public readonly BindableProperty<SortDirection>
+            CurrentSortDirection = new(SortDirection.Ascending);
+
         public RelayCommand<int> SelectFish { get; private set; }
+        public RelayCommand<FishCollectionSortKey> ChangeSort { get; private set; }
+        public RelayCommand ToggleSortDirection { get; private set; }
 
         public override void Bind()
         {
             m_fishCollectionSystem = SystemManager.GetSystem<FishCollectionSystem>();
 
             SelectFish = new RelayCommand<int>(ExecuteSelectFish);
+
+            SelectFish = new RelayCommand<int>(ExecuteSelectFish);
+
+            ChangeSort = new RelayCommand<FishCollectionSortKey>(ExecuteChangeSort);
+
+            ToggleSortDirection = new RelayCommand(ExecuteToggleSortDirection);
 
             if (m_fishCollectionSystem != null)
             {
@@ -59,6 +73,44 @@ namespace DesktopCompanion.Views
             SelectedEntry.Value = null;
         }
 
+        private void ExecuteChangeSort(FishCollectionSortKey sortKey)
+        {
+            if (CurrentSortKey.Value == sortKey)
+            {
+                return;
+            }
+
+            CurrentSortKey.Value = sortKey;
+            CurrentSortDirection.Value = GetDefaultDirection(sortKey);
+
+            RefreshDisplayEntries();
+        }
+
+        private void ExecuteToggleSortDirection()
+        {
+            CurrentSortDirection.Value =
+                CurrentSortDirection.Value == SortDirection.Ascending
+                    ? SortDirection.Descending
+                    : SortDirection.Ascending;
+
+            RefreshDisplayEntries();
+        }
+
+        private static SortDirection GetDefaultDirection(
+            FishCollectionSortKey sortKey)
+        {
+            return sortKey switch
+            {
+                FishCollectionSortKey.RecentlyUpdated =>
+                    SortDirection.Descending,
+
+                FishCollectionSortKey.BestRecord =>
+                    SortDirection.Descending,
+
+                _ => SortDirection.Ascending
+            };
+        }
+
         private void HandleCollectionUpdated(FishCollectionUpdateResult result)
         {
             RefreshDisplayEntries();
@@ -73,8 +125,7 @@ namespace DesktopCompanion.Views
                 return;
             }
 
-            IReadOnlyList<FishCollectionDisplayEntry> entries =
-                m_fishCollectionSystem.GetAllDisplayEntries();
+            IReadOnlyList<FishCollectionDisplayEntry> entries = CreateSortedEntries();
 
             DisplayEntries.Value = entries;
 
@@ -103,6 +154,115 @@ namespace DesktopCompanion.Views
             }
 
             SelectedEntry.Value = null;
+        }
+
+        private IReadOnlyList<FishCollectionDisplayEntry> CreateSortedEntries()
+        {
+            List<FishCollectionDisplayEntry> allEntries =
+                new(m_fishCollectionSystem.GetAllDisplayEntries());
+
+            if (CurrentSortKey.Value == FishCollectionSortKey.None)
+            {
+                if (CurrentSortDirection.Value ==
+                    SortDirection.Descending)
+                {
+                    allEntries.Reverse();
+                }
+
+                return allEntries;
+            }
+
+            List<FishCollectionDisplayEntry> registeredEntries = new();
+            List<FishCollectionDisplayEntry> unregisteredEntries = new();
+
+            foreach (FishCollectionDisplayEntry entry in allEntries)
+            {
+                if (entry.IsRegistered)
+                {
+                    registeredEntries.Add(entry);
+                }
+                else
+                {
+                    unregisteredEntries.Add(entry);
+                }
+            }
+
+            registeredEntries.Sort(CompareRegisteredEntries);
+
+            if (CurrentSortKey.Value == FishCollectionSortKey.CollectionNumber)
+            {
+                unregisteredEntries.Sort(CompareCollectionNumbers);
+            }
+            else
+            {
+                unregisteredEntries.Sort((left, right) => left.FishDataId.CompareTo(right.FishDataId));
+            }
+
+            registeredEntries.AddRange(unregisteredEntries);
+
+            return registeredEntries;
+        }
+
+        private int CompareRegisteredEntries(
+            FishCollectionDisplayEntry left,
+            FishCollectionDisplayEntry right)
+        {
+            int comparison = CurrentSortKey.Value switch
+            {
+                FishCollectionSortKey.CollectionNumber => left.FishDataId.CompareTo(right.FishDataId),
+
+                FishCollectionSortKey.Name =>
+                    string.Compare(
+                        left.FishName,
+                        right.FishName,
+                        StringComparison.Ordinal),
+
+                FishCollectionSortKey.RecentlyUpdated =>
+                    left.LastUpdatedOrder.CompareTo(
+                        right.LastUpdatedOrder),
+
+                FishCollectionSortKey.BestRecord => CompareBestRecord(left, right),
+
+                _ => 0
+            };
+
+            if (CurrentSortDirection.Value == SortDirection.Descending)
+            {
+                comparison = -comparison;
+            }
+
+            if (comparison != 0)
+            {
+                return comparison;
+            }
+
+            return left.FishDataId.CompareTo(right.FishDataId);
+        }
+
+        private static int CompareBestRecord(
+            FishCollectionDisplayEntry left,
+            FishCollectionDisplayEntry right)
+        {
+            int qualityComparison = left.BestQuality.CompareTo(right.BestQuality);
+
+            if (qualityComparison != 0)
+            {
+                return qualityComparison;
+            }
+
+            return left.BestSize.CompareTo(right.BestSize);
+        }
+
+        private int CompareCollectionNumbers(
+            FishCollectionDisplayEntry left,
+            FishCollectionDisplayEntry right)
+        {
+            int comparison = left.FishDataId.CompareTo(right.FishDataId);
+
+            return CurrentSortDirection.Value ==
+                   SortDirection.Ascending
+                   ? comparison
+                   : -comparison;
         }
     }
 }
