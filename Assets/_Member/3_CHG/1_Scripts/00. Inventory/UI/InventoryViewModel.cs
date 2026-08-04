@@ -576,6 +576,9 @@ namespace DesktopCompanion.Views
                 case ItemRarity.Legendary:
                     return "전설";
 
+                case ItemRarity.Boss:
+                    return "보스";
+
                 default:
                     return rarity.ToString();
             }

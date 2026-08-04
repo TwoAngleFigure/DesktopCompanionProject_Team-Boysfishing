@@ -4,7 +4,6 @@ using DesktopCompanion.Save;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using static UnityEngine.EventSystems.EventTrigger;
 
 namespace DesktopCompanion.Systems
 {
