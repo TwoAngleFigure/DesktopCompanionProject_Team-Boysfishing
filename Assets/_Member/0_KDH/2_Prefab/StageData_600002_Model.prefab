@@ -60,27 +60,189 @@ MonoBehaviour:
     m_targetWorldOffsetFromCamera: 0
     m_targetLocalY: -0.6
     m_isSpawned: 0
-    m_spawnTriggerX: -55
-    m_targetWorldX: -85
-    m_targetCameraX: -85
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
   - m_assetKey: Dummy_Lighthouse
     m_layerDepth: 2
     m_spawnDistanceTrigger: 55
     m_targetWorldOffsetFromCamera: 0
     m_targetLocalY: -1.4
     m_isSpawned: 0
-    m_spawnTriggerX: -55
-    m_targetWorldX: -85
-    m_targetCameraX: -85
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
   - m_assetKey: Dummy_Buoy
     m_layerDepth: 0
     m_spawnDistanceTrigger: 25
     m_targetWorldOffsetFromCamera: 0
     m_targetLocalY: -5.5
     m_isSpawned: 0
-    m_spawnTriggerX: -55
-    m_targetWorldX: -85
-    m_targetCameraX: -85
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_4
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 40
+    m_targetWorldOffsetFromCamera: 10
+    m_targetLocalY: 2.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_4
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 40
+    m_targetWorldOffsetFromCamera: 2
+    m_targetLocalY: 2.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_3
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 40
+    m_targetWorldOffsetFromCamera: -7
+    m_targetLocalY: 2.3
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_3
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 40
+    m_targetWorldOffsetFromCamera: -13
+    m_targetLocalY: 2.3
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_4
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 40
+    m_targetWorldOffsetFromCamera: -24
+    m_targetLocalY: 2.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_2
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 25
+    m_targetWorldOffsetFromCamera: -20
+    m_targetLocalY: 4.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_2
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 25
+    m_targetWorldOffsetFromCamera: 8
+    m_targetLocalY: 4.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_1
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 25
+    m_targetWorldOffsetFromCamera: -1
+    m_targetLocalY: 4.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_1
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 25
+    m_targetWorldOffsetFromCamera: -27
+    m_targetLocalY: 4.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: log
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 25
+    m_targetWorldOffsetFromCamera: -11
+    m_targetLocalY: 0
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: reeds
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 25
+    m_targetWorldOffsetFromCamera: -11
+    m_targetLocalY: -0.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: reeds
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 25
+    m_targetWorldOffsetFromCamera: -15
+    m_targetLocalY: -0.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: reeds
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 25
+    m_targetWorldOffsetFromCamera: -3
+    m_targetLocalY: -0.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: reeds
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 25
+    m_targetWorldOffsetFromCamera: 1
+    m_targetLocalY: -0.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: reeds
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 25
+    m_targetWorldOffsetFromCamera: 4
+    m_targetLocalY: -0.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_background_1
+    m_layerDepth: 2
+    m_spawnDistanceTrigger: 55
+    m_targetWorldOffsetFromCamera: 74
+    m_targetLocalY: 2
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_background_2
+    m_layerDepth: 2
+    m_spawnDistanceTrigger: 55
+    m_targetWorldOffsetFromCamera: -67
+    m_targetLocalY: 2.6
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_background_3
+    m_layerDepth: 2
+    m_spawnDistanceTrigger: 55
+    m_targetWorldOffsetFromCamera: -2
+    m_targetLocalY: 3
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
 --- !u!1 &606873470048552616
 GameObject:
   m_ObjectHideFlags: 0
