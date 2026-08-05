@@ -4288,8 +4288,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 403728747}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.00401366, y: 0.9659115, z: -0.0036807542, w: 0.25881526}
-  m_LocalPosition: {x: -4.593, y: -0.013803688, z: 2.733}
+  m_LocalRotation: {x: 0.000040786872, y: 0.96591675, z: 0.0043368726, w: 0.25881666}
+  m_LocalPosition: {x: -4.593, y: 0.002372534, z: 2.733}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -12415,7 +12415,7 @@ SpriteRenderer:
   m_Size: {x: 9.7, y: 7.43}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
 --- !u!1 &1203955972
@@ -15124,8 +15124,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1445137105}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.0010753588, y: 0.13052583, z: 0.0021370365, w: 0.991442}
-  m_LocalPosition: {x: -11.16, y: -0.0252119, z: 7.36}
+  m_LocalRotation: {x: -0.0014932031, y: 0.13052595, z: -0.0012900939, w: 0.991443}
+  m_LocalPosition: {x: -11.16, y: 0.012066819, z: 7.36}
   m_LocalScale: {x: 0.68887, y: 0.68887, z: 0.68887}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -22147,7 +22147,7 @@ MonoBehaviour:
   m_spriteRendererA: {fileID: 398193917}
   m_spriteRendererB: {fileID: 1192299199}
   m_defaultBackgroundSpriteA: {fileID: -1412601019, guid: 201dbd000581bb040af79d60268a094e, type: 3}
-  m_defaultBackgroundSpriteB: {fileID: 2117224895, guid: a858225c48356e84dafff2d9d22d8cfd, type: 3}
+  m_defaultBackgroundSpriteB: {fileID: 374368090, guid: 65d4a1ccaeba61f4fa728a9b7430dafc, type: 3}
   m_autoFitToCamera: 1
   m_scaleMultiplier: {x: 1, y: 1}
   m_customScale: {x: 1, y: 1}
@@ -52805,8 +52805,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 74827879233646106}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.0008925954, y: -0, z: 0.0016065453, w: 0.99999833}
-  m_LocalPosition: {x: 0, y: 0.033740688, z: 0}
+  m_LocalRotation: {x: -0.0016441958, y: -0, z: 0.0014692701, w: 0.9999976}
+  m_LocalPosition: {x: 0, y: 0.061029688, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:

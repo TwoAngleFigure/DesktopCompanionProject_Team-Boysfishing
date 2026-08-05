@@ -46,16 +46,11 @@ namespace DesktopCompanion.Views
         public List<BlueprintData> m_blueprintList = new List<BlueprintData>();
 
         private Transform m_cameraTransform;
-
         private AssetProvider m_assetProvider;
-
         public void InitProvider(AssetProvider provider, float startCamX, float targetCamX, bool isFirstLoad)
         {
             m_assetProvider = provider;
 
-            Debug.Log($"[StageBlueprint] 🛠️ InitProvider 호출! (시작CamX: {startCamX:F2}, 목적지CamX: {targetCamX:F2}, isFirstLoad: {isFirstLoad})");
-
-            // 🎯 이전 항해에서 남아있던 자식 Prop 오브젝트들 클리어! (왕복 항해 100% 재생성 보장)
             ClearSpawnedProps();
 
             foreach (var data in m_blueprintList)
@@ -70,18 +65,12 @@ namespace DesktopCompanion.Views
                 }
                 else
                 {
+                    data.m_spawnTriggerX = targetCamX + data.m_spawnDistanceTrigger;
                     data.m_targetCameraX = targetCamX;
                     data.m_targetWorldX = targetCamX + data.m_targetWorldOffsetFromCamera;
-                    // 🎯 항해 출발 직후(startCamX) 미리 스폰되어 부드럽게 흘러오다가 도착 시점에 exact 1자로 겹침!
-                    data.m_spawnTriggerX = startCamX - 5f;
                 }
-                Debug.Log($"[StageBlueprint-설정] 키:{data.m_assetKey}, 깊이:{data.m_layerDepth}, 트리거X:{data.m_spawnTriggerX:F2}, targetWorldX:{data.m_targetWorldX:F2}");
             }
-
-            if (isFirstLoad)
-            {
-                ForceInitialSpawnCheck(isFirstLoad);
-            }
+            ForceInitialSpawnCheck(isFirstLoad);
         }
 
         private void ClearSpawnedProps()
@@ -115,10 +104,8 @@ namespace DesktopCompanion.Views
             {
                 if (data.m_isSpawned) continue;
 
-                // 🎯 배는 무조건 왼쪽(-X)으로 전진하므로 currentCamX <= data.m_spawnTriggerX 조건 검사!
                 if (currentCamX <= data.m_spawnTriggerX)
                 {
-                    Debug.Log($"[StageBlueprint-스폰발동] 현재CamX: {currentCamX:F2} <= 트리거X: {data.m_spawnTriggerX:F2} -> '{data.m_assetKey}' 스폰 실행!");
                     SpawnProp(data);
                     data.m_isSpawned = true;
                 }
@@ -127,7 +114,7 @@ namespace DesktopCompanion.Views
 
         private void ForceInitialSpawnCheck(bool isFirstLoad)
         {
-            if (!isFirstLoad) return; // 🎯 사전 로드된 목적지 맵은 출발 시 조기 강제 스폰 100% 차단!
+            if (!isFirstLoad) return;
 
             if (m_cameraTransform == null && Camera.main != null)
             {
@@ -142,10 +129,11 @@ namespace DesktopCompanion.Views
 
             foreach (var data in m_blueprintList)
             {
-                if (data.m_isSpawned) continue;
-
-                SpawnProp(data);
-                data.m_isSpawned = true;
+                if (!data.m_isSpawned)
+                {
+                    SpawnProp(data);
+                    data.m_isSpawned = true;
+                }
             }
         }
 

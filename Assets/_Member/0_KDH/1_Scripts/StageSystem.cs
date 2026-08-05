@@ -34,8 +34,8 @@ namespace DesktopCompanion.Systems
         // 🌄 실시간 위치(영역) 변경 이벤트 추가 (가장 가까운 스테이지 노드 기준 50% 분할)
         public event Action<StageData> OnAreaStageChanged;
 
-        private const float DEPARTURE_DURATION = 9.0f;
-        private const float ARRIVAL_DURATION = 9.0f;
+        private const float DEPARTURE_DURATION = 21.0f;
+        private const float ARRIVAL_DURATION = 21.0f;
 
         // ⚡ 성능 최적화: 0.25초 간격으로만 실시간 영역 검사
         private float m_areaCheckTimer = 0f;
@@ -121,17 +121,20 @@ namespace DesktopCompanion.Systems
         public void MoveToStage(int targetDataId)
         {
             var voyageCtrl = SystemManager.GetSystem<VoyageSystem>();
+            if (voyageCtrl == null) return;
 
-            // 1. 이미 항해 중이면 무시 (상태 체크를 VoyageController에게 물어봄)
-            if (voyageCtrl == null || voyageCtrl.CurrentState != VoyageState.Anchored)
+            // 🎯 출발(21초), 도착(21초), 멈춤(9초) 연출 중일 때는 목적지 변경 차단! (순수 Traveling/Anchored 시엔 허용)
+            if (voyageCtrl.CurrentState == VoyageState.Departing ||
+                voyageCtrl.CurrentState == VoyageState.Arriving ||
+                voyageCtrl.CurrentState == VoyageState.Stopping)
             {
-                Debug.Log($"[StageSystem] 이미 연출 중이거나 항해 중이므로 목적지를 변경할 수 없습니다.");
+                Debug.LogWarning($"[StageSystem] 출발/도착/멈춤 연출 중에는 목적지를 변경할 수 없습니다.");
                 return;
             }
 
             var targetStageData = DataManager.GetData<StageData>(targetDataId);
             var currentStageData = CurrentStageData;
-            if (targetStageData == null || currentStageData == null) return;
+            if (targetStageData == null) return;
 
             // 2. 라이센스(조건) 체크
             var playerSystem = SystemManager.GetSystem<PlayerSystem>();
@@ -142,7 +145,7 @@ namespace DesktopCompanion.Systems
                 return;
             }
 
-            // 🎯 3. 배의 실시간 현재 위치(CurrentLogicalPosition) 기반 A* 최단 경로 탐색 (역주행/육지 뚫기 0% 보장)
+            // 🎯 3. 배의 실시간 현재 위치(CurrentLogicalPosition) 기반 A* 최단 경로 탐색
             Vector2 startPos = voyageCtrl.CurrentLogicalPosition;
             var pathfinder = SystemManager.GetSystem<PathfindingSystem>();
             List<Vector2> path = pathfinder.FindPath(startPos, targetStageData.MapPosition);
@@ -153,9 +156,7 @@ namespace DesktopCompanion.Systems
                 return;
             }
 
-            Debug.Log($" [경로 탐색 완료] A* 알고리즘이 총 {path.Count}개의 웨이포인트(경유지)를 찾았습니다!");
-
-            // 🎯 A* 경로의 실제 총 물리적 거리 연산 (곡선/우회로 100% 반영)
+            // 🎯 A* 경로의 실제 총 물리적 거리 연산
             float distance = 0f;
             Vector2 prev = startPos;
             for (int i = 0; i < path.Count; i++)
@@ -165,6 +166,17 @@ namespace DesktopCompanion.Systems
             }
 
             float maxSpeed = voyageCtrl.MaxSpeed;
+
+            // 🎯 4. 새 목적지까지의 거리가 21초 이동거리(maxSpeed * 21.0f) 이내면 시스템적 차단!
+            float minRequiredDist = maxSpeed * 21.0f;
+            if (distance < minRequiredDist)
+            {
+                Debug.LogWarning($"[StageSystem] ⚠️ 새 목적지까지의 거리({distance:F1})가 21초 이동거리({minRequiredDist:F1}) 이내로 너무 가까워 이동할 수 없습니다!");
+                return;
+            }
+
+            Debug.Log($" [경로 탐색 완료] A* 알고리즘이 총 {path.Count}개의 웨이포인트(경유지)를 찾았습니다! 총거리: {distance:F1}");
+
             float arrivalTriggerDistance = maxSpeed * ARRIVAL_DURATION * 0.5f;
             float departureDistance = maxSpeed * DEPARTURE_DURATION * 0.5f;
 
@@ -181,14 +193,18 @@ namespace DesktopCompanion.Systems
             voyageCtrl.StartVoyage(path, totalTravelTime);
         }
 
-        // ✅ UI에서 호출하는 취소 기능 (정박 완료 전 언제든 9초 브레이크 수용)
+        // ✅ UI에서 호출하는 취소 기능 (순수 항해 Traveling 상태일 때만 21초 브레이크 수용)
         public void CancelTravel()
         {
             var voyageCtrl = SystemManager.GetSystem<VoyageSystem>();
-            if (voyageCtrl != null && voyageCtrl.CurrentState != VoyageState.Anchored)
+            if (voyageCtrl != null && voyageCtrl.CurrentState == VoyageState.Traveling)
             {
                 voyageCtrl.CancelVoyage(); // 컨트롤러 정지
                 OnTravelCanceled?.Invoke(); // UI 방송
+            }
+            else
+            {
+                Debug.LogWarning("[StageSystem] 출발(21초) 또는 도착(21초) 시퀀스 중에는 항해를 중단할 수 없습니다.");
             }
         }
 
@@ -218,11 +234,45 @@ namespace DesktopCompanion.Systems
         public StageData TargetStageData => DataManager.GetData<StageData>(m_targetStageDataId);
         public IReadOnlyList<StageData> GetAllStageDatas() => DataManager.GetAll<StageData>();
 
-        public bool IsTraveling => SystemManager.GetSystem<VoyageSystem>()?.CurrentState != VoyageState.Anchored;
+        public VoyageState CurrentState => SystemManager.GetSystem<VoyageSystem>()?.CurrentState ?? VoyageState.Anchored;
+        public bool IsTraveling => CurrentState != VoyageState.Anchored;
         public float RemainingTravelTime => SystemManager.GetSystem<VoyageSystem>()?.RemainingTravelTime ?? 0f;
         public float TravelProgress => SystemManager.GetSystem<VoyageSystem>()?.TravelProgress ?? 0f;
         public float RemainingDistance => SystemManager.GetSystem<VoyageSystem>()?.RemainingDistance ?? 0f;
         public float MaxSpeed => SystemManager.GetSystem<VoyageSystem>()?.MaxSpeed ?? 5f;
+
+        public void SyncSpeed(float speed)
+        {
+        }
+
+        public void SequenceComplete_Departure()
+        {
+            var voyage = SystemManager.GetSystem<VoyageSystem>();
+            if (voyage != null && voyage.CurrentState == VoyageState.Departing)
+            {
+                m_currentStageDataId = 0;
+            }
+        }
+
+        public void SequenceComplete_Arrival()
+        {
+            var voyage = SystemManager.GetSystem<VoyageSystem>();
+            if (voyage != null && voyage.CurrentState == VoyageState.Arriving)
+            {
+                m_currentStageDataId = m_targetStageDataId;
+                m_targetStageDataId = 0;
+                OnStageChanged?.Invoke(m_currentStageDataId);
+            }
+        }
+
+        public void SequenceComplete_Stop()
+        {
+            var voyage = SystemManager.GetSystem<VoyageSystem>();
+            if (voyage != null && voyage.CurrentState == VoyageState.Stopping)
+            {
+                m_targetStageDataId = 0;
+            }
+        }
 
         public List<TierPool> GetAvailableTierPools(int playerLicense)
         {

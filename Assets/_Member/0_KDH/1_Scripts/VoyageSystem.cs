@@ -13,8 +13,8 @@ namespace DesktopCompanion.Systems
 
         private float m_currentSpeed = 0f;
         private float m_maxSpeed = 5f;
-        private const float DEPARTURE_TIME = 9.0f;
-        private const float ARRIVAL_TIME = 9.0f;
+        private const float DEPARTURE_TIME = 21.0f;
+        private const float ARRIVAL_TIME = 21.0f;
         private const float STOPPING_TIME = 9.0f; // 🎯 원래 감속 시간인 9초로 복원
         private int m_pathIndex = 0;
 
@@ -169,6 +169,11 @@ namespace DesktopCompanion.Systems
         private void ChangeState(VoyageState newState)
         {
             m_currentState = newState;
+            if (m_currentState == VoyageState.Anchored)
+            {
+                m_remainingTravelTime = 0f;
+                m_totalTravelTime = 0f;
+            }
             OnVoyageStateChanged?.Invoke(m_currentState);
         }
 
