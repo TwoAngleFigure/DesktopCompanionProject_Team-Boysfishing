@@ -4,7 +4,7 @@ using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
 using DesktopCompanion.Systems;
 // [세이브 관련 주석 처리 해제]
-using DesktopCompanion.Save; 
+using DesktopCompanion.Save;
 using UnityEngine;
 
 namespace DesktopCompanion.Systems
@@ -80,7 +80,7 @@ namespace DesktopCompanion.Systems
         public object CaptureState()
         {
             PlayerSave save = new PlayerSave();
-            
+
             if (entity_Player != null)
             {
                 save.currentLicense = entity_Player.CurrentLicense;
@@ -167,7 +167,7 @@ namespace DesktopCompanion.Systems
 
             m_bonusInventorySize = m_loadedSave.bonusInventorySize;
             m_currentStorageUpgradeCost = m_loadedSave.currentStorageUpgradeCost;
-            
+
             Debug.Log("[PlayerSystem] Player save restored successfully.");
         }
 
@@ -183,7 +183,7 @@ namespace DesktopCompanion.Systems
         {
             m_inventorySystem = SystemManager.GetSystem<InventorySystem>();
             Entity_Player entity_Player = EntityManager.Get<Entity_Player>(playerHandle);
-            
+
             if (m_loadedSave != null)
             {
                 RestoreLoadedSave();
@@ -388,8 +388,9 @@ namespace DesktopCompanion.Systems
         /// <param name="area">소모할 아이템이 장착된 부위 (예: Bait, Groundbait)</param>
         /// <param name="amount">소모할 수량</param>
         /// <returns>소모에 성공하면 true, 수량이 부족하거나 아이템이 없으면 false</returns>
-        public bool TryConsumeEquippedItem(EquipmentMountingArea area, int amount = 1)
+        public bool TryConsumeEquippedItem(EquipmentMountingArea area, out ItemData consumedItemData, int amount = 1)
         {
+            consumedItemData = null;
             if (playerHandle.Value == Guid.Empty) return false;
 
             Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
@@ -406,6 +407,7 @@ namespace DesktopCompanion.Systems
                 // 소모할 수량 확인
                 if (consumable.Quantity >= amount)
                 {
+                    consumedItemData = consumable.ItemData;
                     consumable.Add(-amount);
 
                     // 수량이 0 이하가 되면 장착 해제 및 엔티티 파기
@@ -430,6 +432,7 @@ namespace DesktopCompanion.Systems
             {
                 if (material.Quantity >= amount)
                 {
+                    consumedItemData = material.ItemData;
                     material.Add(-amount);
                     if (material.Quantity <= 0)
                     {
@@ -456,7 +459,7 @@ namespace DesktopCompanion.Systems
         // [나중에 수정할 부분] 현재 0으로 두어 무한 테스트 가능. 실전 시 100 등으로 변경!
         private int m_currentStorageUpgradeCost = 0;
         private float m_storageUpgradeCostMultiplier = 1.25f; // 비용 1.25배 증가
-        
+
         private const int MAX_INVENTORY_SIZE = 150; // 최대 인벤토리 확장 제한
 
         public void UpgradeFishStorage()
@@ -539,7 +542,7 @@ namespace DesktopCompanion.Systems
 
             // 4. 비용 차감
             player.AddGold(-nextStep.GoldCost);
-            
+
             // 재료 차감
             if (nextStep.MaterialCosts != null)
             {
