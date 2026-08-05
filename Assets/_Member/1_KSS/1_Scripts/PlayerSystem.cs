@@ -72,6 +72,46 @@ namespace DesktopCompanion.Systems
 
         #endregion
 
+        #region Region Resistance Penalty
+
+        /// <summary>
+        /// 현재 지역의 저항값에 따른 쿨타임 페널티 비율을 계산하여 반환합니다.
+        /// </summary>
+        /// <param name="regionResistance">현재 지역의 m_regionResistance (요구 저항값)</param>
+        /// <returns>적용될 페널티 비율 (0.0f = 0%, 0.2f = 20% 느려짐)</returns>
+        public float GetAutoCooltimePenaltyRate(int regionResistance)
+        {
+            if (entity_Player == null || entity_Player.BaseData == null) return 0f;
+
+            // 플레이어의 '쿨타임 파워' = 기본 쿨타임 - 현재 장비로 적용된 쿨타임
+            float playerPower = entity_Player.BaseData.BaseAutoBattleCooltime - m_baseAutoBattleCooltime;
+
+            if (playerPower < regionResistance)
+            {
+                // 부족한 파워 1포인트당 5% 페널티 부여
+                float powerDeficit = regionResistance - playerPower;
+                return powerDeficit * 0.05f; 
+            }
+
+            return 0f; // 파워가 충분하면 페널티 없음
+        }
+
+        /// <summary>
+        /// 지역 저항 페널티가 적용된 최종 오토 전투 쿨타임을 계산하여 반환합니다.
+        /// </summary>
+        /// <param name="regionResistance">현재 지역의 저항값 (m_regionResistance)</param>
+        /// <returns>페널티가 적용된 최종 오토 쿨타임</returns>
+        public float GetFinalAutoCooltime(int regionResistance)
+        {
+            float penaltyRate = GetAutoCooltimePenaltyRate(regionResistance);
+            float originalCooltime = BaseAutoBattleCooltime;
+
+            // 페널티 비율만큼 쿨타임이 늘어남 (느려짐)
+            return originalCooltime * (1f + penaltyRate);
+        }
+
+        #endregion
+
         #region Save
 
         public string SaveId => "player_system_stats";
@@ -118,7 +158,6 @@ namespace DesktopCompanion.Systems
             }
 
             save.bonusInventorySize = m_bonusInventorySize;
-            save.currentStorageUpgradeCost = m_currentStorageUpgradeCost;
 
             return save;
         }
@@ -166,7 +205,6 @@ namespace DesktopCompanion.Systems
             }
 
             m_bonusInventorySize = m_loadedSave.bonusInventorySize;
-            m_currentStorageUpgradeCost = m_loadedSave.currentStorageUpgradeCost;
 
             Debug.Log("[PlayerSystem] Player save restored successfully.");
         }
@@ -456,11 +494,33 @@ namespace DesktopCompanion.Systems
         // =========================================================
         private int m_bonusInventorySize = 0; // 강화로 영구적으로 늘어난 인벤토리 칸 수
 
-        // [나중에 수정할 부분] 현재 0으로 두어 무한 테스트 가능. 실전 시 100 등으로 변경!
-        private int m_currentStorageUpgradeCost = 0;
-        private float m_storageUpgradeCostMultiplier = 1.25f; // 비용 1.25배 증가
-
         private const int MAX_INVENTORY_SIZE = 150; // 최대 인벤토리 확장 제한
+
+        // 동적으로 현재 칸 수에 따른 업그레이드 비용 계산
+        public int GetStorageUpgradeCost()
+        {
+            if (playerHandle.Value == Guid.Empty) return 0;
+            Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
+            if (player == null) return 0;
+
+            int currentSize = player.BaseData.BaseInventorySize + m_bonusInventorySize;
+
+            if (currentSize < 50)
+            {
+                // 20칸->1000, 25칸->2000, 30칸->3000, 35칸->4000, 40칸->5000, 45칸->6000
+                return ((currentSize - 15) / 5) * 1000;
+            }
+            else if (currentSize < 100)
+            {
+                // 50칸->10000, 55칸->20000 ... 95칸->100000
+                return ((currentSize - 45) / 5) * 10000;
+            }
+            else
+            {
+                // 100칸 이후부터는 100,000 골드 고정
+                return 100000;
+            }
+        }
 
         public void UpgradeFishStorage()
         {
@@ -468,34 +528,32 @@ namespace DesktopCompanion.Systems
 
             Entity_Player player = EntityManager.Get<Entity_Player>(playerHandle);
 
-            if (player.BaseData.BaseInventorySize + m_bonusInventorySize >= MAX_INVENTORY_SIZE)
+            int currentSize = player.BaseData.BaseInventorySize + m_bonusInventorySize;
+            if (currentSize >= MAX_INVENTORY_SIZE)
             {
                 Debug.LogWarning($"[물고기 창고] 이미 최대 크기({MAX_INVENTORY_SIZE}칸)에 도달하여 더 이상 확장할 수 없습니다.");
                 return;
             }
 
+            int upgradeCost = GetStorageUpgradeCost();
+
             // 플레이어의 골드가 업그레이드 비용보다 같거나 많은지 확인
-            if (player != null && player.Gold >= m_currentStorageUpgradeCost)
+            if (player != null && player.Gold >= upgradeCost)
             {
                 // 1. 골드 차감
-                player.AddGold(-m_currentStorageUpgradeCost);
+                player.AddGold(-upgradeCost);
 
-                // 2. 인벤토리 크기 1 증가
-                m_bonusInventorySize += 1;
+                // 2. 인벤토리 크기 5 증가
+                m_bonusInventorySize += 5;
 
-                // 3. 다음 업그레이드 비용 1.25배 계산 
-                // (Mathf.CeilToInt를 써서 소수점은 올림 처리합니다. 예: 125.5 골드 -> 126 골드)
-                // 현재는 0 * 1.25 이므로 계속 0이 됩니다.
-                m_currentStorageUpgradeCost = Mathf.CeilToInt(m_currentStorageUpgradeCost * m_storageUpgradeCostMultiplier);
-
-                // 4. 스탯 재계산 및 UI/인벤토리 자동 확장 방송(OnStatChanged) 송출!
+                // 3. 스탯 재계산 및 UI/인벤토리 자동 확장 방송(OnStatChanged) 송출!
                 CaculatedStat();
 
-                Debug.Log($"[물고기 창고] 강화 성공! 총 추가 칸 수: {m_bonusInventorySize} / 다음 필요 골드: {m_currentStorageUpgradeCost}");
+                Debug.Log($"[물고기 창고] 강화 성공! 총 추가 칸 수: {m_bonusInventorySize} / 다음 필요 골드: {GetStorageUpgradeCost()}");
             }
             else
             {
-                Debug.LogWarning($"[물고기 창고] 골드가 부족합니다! (필요 골드: {m_currentStorageUpgradeCost} / 보유 골드: {player?.Gold})");
+                Debug.LogWarning($"[물고기 창고] 골드가 부족합니다! (필요 골드: {upgradeCost} / 보유 골드: {player?.Gold})");
             }
         }
 

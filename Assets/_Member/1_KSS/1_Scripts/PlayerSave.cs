@@ -11,7 +11,6 @@ namespace DesktopCompanion.Systems
         public int gold;
 
         public int bonusInventorySize;
-        public int currentStorageUpgradeCost;
 
         public List<EquippedItemSave> equippedItems = new List<EquippedItemSave>();
 
