@@ -90,6 +90,7 @@ namespace DesktopCompanion.Systems
             List<FishCollectionDisplayEntry> entries = new(fishDatas.Count);
 
             Dictionary<int, List<int>> stageDataIdsByFishDataId = BuildStageDataIdsByFishDataId();
+            Dictionary<int, string> stageNamesByStageDataId = BuildStageNamesByStageDataId();
 
             foreach (ItemData_Fish fishData in fishDatas)
             {
@@ -101,12 +102,30 @@ namespace DesktopCompanion.Systems
                     ? mappedStageDataIds 
                     : Array.Empty<int>();
 
+                List<string> stageNames = new(stageDataIds.Count);
+
+                foreach (int stageDataId in stageDataIds)
+                {
+                    if (stageNamesByStageDataId.TryGetValue(
+                            stageDataId,
+                            out string stageName))
+                    {
+                        stageNames.Add(stageName);
+                    }
+                }
+
+                string productionMaterialName = fishData.AquariumMaterial != null
+                    ? fishData.AquariumMaterial.Name
+                    : "-";
+
                 entries.Add(new FishCollectionDisplayEntry(
                     fishData.ID,
                     fishData.Name,
                     fishData.Rarity,
                     fishData.Tier,
                     stageDataIds,
+                    stageNames,
+                    productionMaterialName,
                     isRegistered,
                     isRegistered ? record.BestQuality : default,
                     isRegistered ? record.BestSize : 0f,
@@ -114,6 +133,44 @@ namespace DesktopCompanion.Systems
             }
 
             return entries;
+        }
+
+        public IReadOnlyList<FishCollectionStageInfo> GetAllStageInfos()
+        {
+            List<FishCollectionStageInfo> result = new();
+
+            foreach (StageData stageData in DataManager.GetAll<StageData>())
+            {
+                if (stageData == null)
+                {
+                    continue;
+                }
+
+                result.Add(new FishCollectionStageInfo(
+                    stageData.ID,
+                    stageData.Name));
+            }
+
+            result.Sort(
+                (left, right) =>
+                    left.StageDataId.CompareTo(right.StageDataId));
+
+            return result;
+        }
+
+        private Dictionary<int, string> BuildStageNamesByStageDataId()
+        {
+            Dictionary<int, string> result = new();
+
+            foreach (StageData stageData in DataManager.GetAll<StageData>())
+            {
+                if (stageData != null)
+                {
+                    result.Add(stageData.ID, stageData.Name);
+                }
+            }
+
+            return result;
         }
 
         /// <summary>

@@ -11,6 +11,8 @@ namespace DesktopCompanion.Systems
         public ItemRarity Rarity { get; }
         public int Tier { get; }
         public IReadOnlyList<int> StageDataIds { get; }
+        public IReadOnlyList<string> StageNames { get; }
+        public string ProductionMaterialName { get; }
 
         public bool IsRegistered { get; }
         public ItemQuality BestQuality { get; }
@@ -23,6 +25,8 @@ namespace DesktopCompanion.Systems
             ItemRarity rarity,
             int tier,
             IReadOnlyList<int> stageDataIds,
+            IReadOnlyList<string> stageNames,
+            string productionMaterialName,
             bool isRegistered,
             ItemQuality bestQuality,
             float bestSize,
@@ -34,6 +38,8 @@ namespace DesktopCompanion.Systems
             Tier = tier;
             IsRegistered = isRegistered;
             StageDataIds = stageDataIds;
+            StageNames = stageNames;
+            ProductionMaterialName = productionMaterialName;
             BestQuality = bestQuality;
             BestSize = bestSize;
             LastUpdatedOrder = lastUpdatedOrder;
