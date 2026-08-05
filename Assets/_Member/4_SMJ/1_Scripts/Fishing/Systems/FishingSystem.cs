@@ -493,7 +493,10 @@ namespace DesktopCompanion.Systems
 
             OnFishCaughtPresentation?.Invoke(caughtHandle, collectionResult);
 
-            IReadOnlyList<FishingGrantedDropInfo> grantedDrops = m_rewardProcessor.Process(battleFish.BattleData.Drops, battleFish.Quality);
+            IReadOnlyList<FishingGrantedDropInfo> grantedDrops = m_rewardProcessor.Process(
+                battleFish.BattleData.Drops,
+                battleFish.Quality,
+                battleFish.BattleData.IsBoss);
 
             foreach (FishingGrantedDropInfo grantedDrop in grantedDrops)
             {
