@@ -3,228 +3,279 @@ using DesktopCompanion.Systems;
 using DesktopCompanion.Core;
 using DesktopCompanion.Controllers;
 using DesktopCompanion.Data;
-using DG.Tweening;
+using System.Collections.Generic;
 
 namespace DesktopCompanion.Views
 {
     public class StageWorldView : UIViewBase
     {
         private readonly StageViewModel m_vm = new();
-
-        [Header("배 컨트롤러 연결")]
         public ShipController m_shipController;
-
-        private GameObject m_currentStageInstance;
-        private string m_lastLoadedAssetKey = "";
-
-        private float m_absoluteStartCamX = 0f;
-        private float m_absoluteTargetCamX = 0f;
-
-        private const float DEPARTURE_TIME = 9.0f;
-        private const float ARRIVAL_TIME = 9.0f;
-        private const float STOPPING_TIME = 9.0f;
+        private readonly Dictionary<int, GameObject> m_spawnedStageInstances = new();
+        private int m_loadedStageId = 0;
 
         public override void Bind()
         {
             m_vm.Inject(SystemManager, EntityManager);
             m_vm.Bind();
 
-            var stageSystem = SystemManager.GetSystem<StageSystem>();
-            if (stageSystem != null)
+            var voyageCtrl = SystemManager.GetSystem<VoyageSystem>();
+            if (voyageCtrl != null)
             {
-                stageSystem.OnVoyageStateChanged += HandleVoyageStateChanged;
-                stageSystem.OnTravelStarted += HandleTravelStarted;
-                HandleVoyageStateChanged(stageSystem.CurrentState);
+                voyageCtrl.OnVoyageStateChanged += HandleVoyageStateChanged;
+                voyageCtrl.OnSpeedChanged += HandleSpeedChanged;
+                voyageCtrl.OnBiomeChanged += HandleBiomeChanged;
+            }
+
+            var stageSys = SystemManager.GetSystem<StageSystem>();
+            if (stageSys != null)
+            {
+                stageSys.OnTravelStarted += HandleTravelStarted;
+                stageSys.OnStageChanged += HandleStageChanged;
+            }
+
+            // 🎯 초기 1회 1번째 맵 블루프린트 자동 생성 배치! (isFirstLoad: true)
+            if (stageSys != null && stageSys.CurrentStageData != null)
+            {
+                LoadStageData(stageSys.CurrentStageData, isFirstLoad: true);
+            }
+            else
+            {
+                Vector2 currentPos = voyageCtrl != null ? voyageCtrl.CurrentLogicalPosition : Vector2.zero;
+                var mapSys = SystemManager.GetSystem<MapSystem>();
+                BiomeType currentBiome = mapSys != null ? mapSys.GetBiomeAt(currentPos) : BiomeType.None;
+                LoadStageByBiome(currentBiome, isFirstLoad: true);
             }
         }
 
         public override void Unbind()
         {
-            if (SystemManager != null)
+            var voyageCtrl = SystemManager.GetSystem<VoyageSystem>();
+            if (voyageCtrl != null)
             {
-                var stageSystem = SystemManager.GetSystem<StageSystem>();
-                if (stageSystem != null)
+                voyageCtrl.OnVoyageStateChanged -= HandleVoyageStateChanged;
+                voyageCtrl.OnSpeedChanged -= HandleSpeedChanged;
+                voyageCtrl.OnBiomeChanged -= HandleBiomeChanged;
+            }
+
+            var stageSys = SystemManager.GetSystem<StageSystem>();
+            if (stageSys != null)
+            {
+                stageSys.OnTravelStarted -= HandleTravelStarted;
+                stageSys.OnStageChanged -= HandleStageChanged;
+            }
+
+            m_vm.Unbind();
+            ClearAllStages();
+        }
+
+        // 🎯 항해 출발 시: 목적지 맵 블루프린트를 준비하고 (없으면 생성, 있으면 재사용), 스폰 트리거 세팅!
+        private void HandleTravelStarted(int targetStageId, float totalTravelTime)
+        {
+            var stageSys = SystemManager?.GetSystem<StageSystem>();
+            StageData targetStage = stageSys?.TargetStageData;
+            if (targetStage == null && stageSys != null)
+            {
+                var allDatas = stageSys.GetAllStageDatas();
+                if (allDatas != null)
                 {
-                    stageSystem.OnVoyageStateChanged -= HandleVoyageStateChanged;
-                    stageSystem.OnTravelStarted -= HandleTravelStarted;
+                    foreach (var data in allDatas)
+                    {
+                        if (data != null && data.ID == targetStageId)
+                        {
+                            targetStage = data;
+                            break;
+                        }
+                    }
                 }
             }
 
-            if (m_vm != null)
+            if (targetStage != null)
             {
-                m_vm.Unbind();
+                PrepareNextStageData(targetStage);
             }
-
-            DOTween.Kill(this);
-            ClearCurrentStage();
         }
 
-        private void Update()
+        // 🎯 목적지 도착 정박 시: 맵 데이터를 파괴하지 않고 안전 유지 (롤백)!
+        private void HandleStageChanged(int newStageId)
         {
-            if (m_vm == null || SystemManager == null) return;
-            var stageSystem = SystemManager.GetSystem<StageSystem>();
-            if (stageSystem == null) return;
+            m_loadedStageId = newStageId;
+        }
 
-            if (m_shipController != null) m_shipController.SetTraveling(stageSystem.IsTraveling);
+        private void HandleSpeedChanged(float newSpeed)
+        {
+            if (m_shipController != null)
+            {
+                m_shipController.m_speed = newSpeed;
+            }
+        }
+
+        private void HandleBiomeChanged(BiomeType newBiome)
+        {
+            if (m_loadedStageId == 0 && m_spawnedStageInstances.Count == 0)
+            {
+                LoadStageByBiome(newBiome, isFirstLoad: true);
+            }
         }
 
         private void HandleVoyageStateChanged(VoyageState newState)
         {
-            var stageSystem = SystemManager.GetSystem<StageSystem>();
-            if (stageSystem == null) return;
-
-            switch (newState)
+            if (m_shipController != null)
             {
-                case VoyageState.Anchored:
-                    if (stageSystem.CurrentStageData != null)
-                    {
-                        LoadStage(AssetKeys.Of(stageSystem.CurrentStageData, AssetUsage.Model), isTarget: false);
-                    }
-                    else
-                    {
-                        ClearCurrentStage();
-                    }
-                    break;
-
-                case VoyageState.Departing:
-                    PlayDepartureSequence(stageSystem);
-                    break;
-
-                case VoyageState.Traveling:
-                    if (stageSystem.TargetStageData != null) LoadStage(AssetKeys.Of(stageSystem.TargetStageData, AssetUsage.Model), isTarget: true);
-                    break;
-
-                case VoyageState.Arriving:
-                    PlayArrivalSequence(stageSystem);
-                    break;
-
-                case VoyageState.Stopping:
-                    ClearCurrentStage();
-                    PlayStoppingSequence(stageSystem);
-                    break;
+                m_shipController.SetTraveling(newState != VoyageState.Anchored);
             }
         }
 
-        private void HandleTravelStarted(int targetDataId, float duration)
+        private void PrepareNextStageData(StageData targetStage)
         {
-            var stageSystem = SystemManager.GetSystem<StageSystem>();
-            if (stageSystem == null) return;
+            if (targetStage == null) return;
 
-            if (stageSystem.CurrentState == VoyageState.Traveling && stageSystem.TargetStageData != null)
+            float startCamX = Camera.main != null ? Camera.main.transform.position.x : 0f;
+            float targetCamX = targetStage.MapPosition.x;
+
+            // 이미 생성되어 존재하는 맵 데이터면 파괴 없이 재사용!
+            if (m_spawnedStageInstances.TryGetValue(targetStage.ID, out GameObject existingInstance) && existingInstance != null)
             {
-                LoadStage(AssetKeys.Of(stageSystem.TargetStageData, AssetUsage.Model), isTarget: true);
-            }
-        }
-
-        private void PlayDepartureSequence(StageSystem stageSystem)
-        {
-            DOTween.Kill(this);
-            float maxSpeed = stageSystem.MaxSpeed;
-
-            if (m_shipController != null) m_shipController.m_speed = 0f;
-            stageSystem.SyncSpeed(0f);
-
-            DOVirtual.Float(0f, 1f, DEPARTURE_TIME, (v) =>
-            {
-                float currentSpeed = maxSpeed * v;
-                if (m_shipController != null) m_shipController.m_speed = currentSpeed;
-                stageSystem.SyncSpeed(currentSpeed);
-            })
-            .SetEase(Ease.InOutSine)
-            .SetId(this)
-            .OnComplete(() =>
-            {
-                if (m_shipController != null) m_shipController.m_speed = maxSpeed;
-                stageSystem.SyncSpeed(maxSpeed);
-                stageSystem.SequenceComplete_Departure();
-            });
-        }
-
-        private void PlayArrivalSequence(StageSystem stageSystem)
-        {
-            DOTween.Kill(this);
-            float maxSpeed = stageSystem.MaxSpeed;
-
-            DOVirtual.Float(1f, 0f, ARRIVAL_TIME, (v) =>
-            {
-                float currentSpeed = maxSpeed * v;
-                if (m_shipController != null) m_shipController.m_speed = currentSpeed;
-                stageSystem.SyncSpeed(currentSpeed);
-            })
-            .SetEase(Ease.InOutSine)
-            .SetId(this)
-            .OnComplete(() =>
-            {
-                if (m_shipController != null) m_shipController.m_speed = 0f;
-                stageSystem.SyncSpeed(0f);
-                stageSystem.SequenceComplete_Arrival();
-            });
-        }
-
-        private void PlayStoppingSequence(StageSystem stageSystem)
-        {
-            DOTween.Kill(this);
-            float maxSpeed = stageSystem.MaxSpeed;
-            float currentRatio = (m_shipController != null && maxSpeed > 0f) ? Mathf.Clamp01(m_shipController.m_speed / maxSpeed) : 1f;
-
-            DOVirtual.Float(currentRatio, 0f, STOPPING_TIME, (v) =>
-            {
-                float currentSpeed = maxSpeed * v;
-                if (m_shipController != null) m_shipController.m_speed = currentSpeed;
-                stageSystem.SyncSpeed(currentSpeed);
-            })
-            .SetEase(Ease.InOutSine)
-            .SetId(this)
-            .OnComplete(() =>
-            {
-                if (m_shipController != null) m_shipController.m_speed = 0f;
-                stageSystem.SyncSpeed(0f);
-                stageSystem.SequenceComplete_Stop();
-            });
-        }
-
-        private void LoadStage(string stageAssetKey, bool isTarget)
-        {
-            if (m_lastLoadedAssetKey == stageAssetKey) return;
-            bool isFirstLoad = string.IsNullOrEmpty(m_lastLoadedAssetKey) && !isTarget;
-            ClearCurrentStage();
-
-            var stageSystem = SystemManager.GetSystem<StageSystem>();
-            bool isActuallyAnchored = stageSystem != null && stageSystem.CurrentState == VoyageState.Anchored;
-
-            if (isFirstLoad && m_shipController != null) m_shipController.ResetToOrigin();
-            m_lastLoadedAssetKey = stageAssetKey;
-
-            if (AssetProvider != null && AssetProvider.TryGet(stageAssetKey, out GameObject stagePrefab))
-            {
-                m_currentStageInstance = Instantiate(stagePrefab, Vector3.zero, Quaternion.identity, transform);
-                StageBlueprint blueprint = m_currentStageInstance.GetComponent<StageBlueprint>();
-
+                var blueprint = existingInstance.GetComponent<StageBlueprint>();
                 if (blueprint != null)
                 {
-                    float currentCamX = Camera.main != null ? Camera.main.transform.position.x : 0f;
+                    blueprint.InitProvider(AssetProvider, startCamX, targetCamX, isFirstLoad: false);
+                    Debug.Log($"[StageWorldView] 🎨 기존 맵 에셋({targetStage.ID}) 파괴 없이 재사용 및 트리거 재초기화 완료!");
+                }
+                return;
+            }
 
-                    if (!isTarget)
-                    {
-                        m_absoluteStartCamX = currentCamX;
-                        m_absoluteTargetCamX = m_absoluteStartCamX;
-                    }
-                    else
-                    {
-                        float remainingDist = stageSystem != null ? stageSystem.RemainingDistance : 0f;
-                        m_absoluteStartCamX = currentCamX;
-                        m_absoluteTargetCamX = m_absoluteStartCamX - remainingDist;
-                    }
+            var mapSys = SystemManager.GetSystem<MapSystem>();
+            BiomeType biome = mapSys != null ? mapSys.GetBiomeAt(targetStage.MapPosition) : BiomeType.None;
 
-                    blueprint.InitProvider(AssetProvider, m_absoluteStartCamX, m_absoluteTargetCamX, isFirstLoad);
+            List<string> candidateKeys = new List<string>
+            {
+                $"StageData_{targetStage.ID}_Model",
+                $"StageData_{targetStage.ID}",
+                $"Stage_{targetStage.ID}",
+                $"StageBlueprint_{targetStage.ID}",
+                GetAssetKeyByBiome(biome),
+                "StageBlueprint_Default"
+            };
+
+            GameObject prefab = FindPrefabFromKeys(candidateKeys, out string matchedKey);
+            if (prefab != null)
+            {
+                GameObject newInstance = Instantiate(prefab, transform);
+                m_spawnedStageInstances[targetStage.ID] = newInstance;
+
+                var blueprint = newInstance.GetComponent<StageBlueprint>();
+                if (blueprint != null)
+                {
+                    blueprint.InitProvider(AssetProvider, startCamX, targetCamX, isFirstLoad: false);
+                    Debug.Log($"[StageWorldView] 🎨 목적지 맵 '{matchedKey}' 신규 생성 및 트리거 세팅 완료!");
                 }
             }
         }
 
-        private void ClearCurrentStage()
+        private void LoadStageData(StageData stageData, bool isFirstLoad)
         {
-            if (m_currentStageInstance != null) { Destroy(m_currentStageInstance); m_currentStageInstance = null; }
-            m_lastLoadedAssetKey = "";
+            if (stageData == null) return;
+
+            float startCamX = Camera.main != null ? Camera.main.transform.position.x : 0f;
+            float targetCamX = stageData.MapPosition.x;
+
+            if (m_spawnedStageInstances.TryGetValue(stageData.ID, out GameObject existingInstance) && existingInstance != null)
+            {
+                var blueprint = existingInstance.GetComponent<StageBlueprint>();
+                if (blueprint != null)
+                {
+                    blueprint.InitProvider(AssetProvider, startCamX, targetCamX, isFirstLoad);
+                }
+                m_loadedStageId = stageData.ID;
+                return;
+            }
+
+            var mapSys = SystemManager.GetSystem<MapSystem>();
+            BiomeType biome = mapSys != null ? mapSys.GetBiomeAt(stageData.MapPosition) : BiomeType.None;
+
+            List<string> candidateKeys = new List<string>
+            {
+                $"StageData_{stageData.ID}_Model",
+                $"StageData_{stageData.ID}",
+                $"Stage_{stageData.ID}",
+                $"StageBlueprint_{stageData.ID}",
+                GetAssetKeyByBiome(biome),
+                "StageBlueprint_Default"
+            };
+
+            GameObject prefab = FindPrefabFromKeys(candidateKeys, out string matchedKey);
+            if (prefab != null)
+            {
+                GameObject newInstance = Instantiate(prefab, transform);
+                m_spawnedStageInstances[stageData.ID] = newInstance;
+                m_loadedStageId = stageData.ID;
+
+                var blueprint = newInstance.GetComponent<StageBlueprint>();
+                if (blueprint != null)
+                {
+                    blueprint.InitProvider(AssetProvider, startCamX, targetCamX, isFirstLoad);
+                }
+            }
+        }
+
+        private void LoadStageByBiome(BiomeType biome, bool isFirstLoad)
+        {
+            string key = GetAssetKeyByBiome(biome);
+            GameObject prefab = FindPrefabFromKeys(new List<string> { key, "StageBlueprint_Default" }, out string matchedKey);
+            if (prefab != null)
+            {
+                ClearAllStages();
+                GameObject newInstance = Instantiate(prefab, transform);
+                m_spawnedStageInstances[0] = newInstance;
+                var blueprint = newInstance.GetComponent<StageBlueprint>();
+                if (blueprint != null)
+                {
+                    float startCamX = Camera.main != null ? Camera.main.transform.position.x : 0f;
+                    blueprint.InitProvider(AssetProvider, startCamX, startCamX, isFirstLoad);
+                }
+            }
+        }
+
+        private GameObject FindPrefabFromKeys(List<string> keys, out string matchedKey)
+        {
+            matchedKey = null;
+            if (AssetProvider == null) return null;
+
+            foreach (string key in keys)
+            {
+                if (string.IsNullOrEmpty(key)) continue;
+                if (AssetProvider.TryGet<GameObject>(key, out GameObject prefab) && prefab != null)
+                {
+                    matchedKey = key;
+                    return prefab;
+                }
+            }
+            return null;
+        }
+
+        private void ClearAllStages()
+        {
+            foreach (var kvp in m_spawnedStageInstances)
+            {
+                if (kvp.Value != null)
+                {
+                    Destroy(kvp.Value);
+                }
+            }
+            m_spawnedStageInstances.Clear();
+            m_loadedStageId = 0;
+        }
+
+        private string GetAssetKeyByBiome(BiomeType biome)
+        {
+            switch (biome)
+            {
+                case BiomeType.River: return "StageBlueprint_River";
+                case BiomeType.ColdSea: return "StageBlueprint_ColdSea";
+                case BiomeType.Mudflat: return "StageBlueprint_Mudflat";
+                default: return "StageBlueprint_Default";
+            }
         }
     }
 }

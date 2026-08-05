@@ -4,47 +4,105 @@ using UnityEngine;
 using DesktopCompanion.Systems;
 using DesktopCompanion.Data;
 using DesktopCompanion.Save;
-using DesktopCompanion.Controllers;
 
 namespace DesktopCompanion.Systems
 {
     public enum VoyageState
     {
-        Anchored, 
-        Departing, 
+        Anchored,
+        Departing,
         Traveling,
         Arriving,
         Stopping,
         None
     }
 
-    public class StageSystem : SystemBase, ISaveable, ITickable
+    public class StageSystem : SystemBase, ITickable, ISaveable
     {
         private int m_currentStageDataId;
         private int m_targetStageDataId;
-
-        private VoyageState m_currentState = VoyageState.Anchored;
-
-        private Vector2 m_currentLogicalPosition;
-        private float m_currentSpeed;
-        private float m_maxSpeed = 50f;
-
-        private float m_remainingTravelTime;
-        private float m_totalTravelTime;
-
-        private const float DEPARTURE_DURATION = 9.0f;
-        private const float ARRIVAL_DURATION = 9.0f;
-
-        public event Action<int> OnStageChanged;
-        public event Action<int, float> OnTravelStarted;
-        public event Action OnTravelCanceled;
-        public event Action<VoyageState> OnVoyageStateChanged;
+        private int m_currentAreaStageDataId;
 
         public string SaveId => "stage_system";
         public Type StateType => typeof(StageSaveData);
 
-        public override void PostInitialize() { ForceSetInitialStage(600001); }
+        // ✅ UI 및 View에서 요구하는 이벤트들
+        public event Action<int> OnStageChanged;
+        public event Action<int, float> OnTravelStarted;
+        public event Action OnTravelCanceled;
+        public event Action<VoyageState> OnVoyageStateChanged;
+        // 🌄 실시간 위치(영역) 변경 이벤트 추가 (가장 가까운 스테이지 노드 기준 50% 분할)
+        public event Action<StageData> OnAreaStageChanged;
+
+        private const float DEPARTURE_DURATION = 9.0f;
+        private const float ARRIVAL_DURATION = 9.0f;
+
+        // ⚡ 성능 최적화: 0.25초 간격으로만 실시간 영역 검사
+        private float m_areaCheckTimer = 0f;
+        private const float AREA_CHECK_INTERVAL = 0.25f;
+
         public override void Initialize() { }
+
+        public override void PostInitialize()
+        {
+            ForceSetInitialStage(600001);
+
+            // VoyageController의 상태 변화를 UI용으로 중계(Proxy)하기 위해 구독
+            var voyageCtrl = SystemManager.GetSystem<VoyageSystem>();
+            if (voyageCtrl != null)
+            {
+                voyageCtrl.OnVoyageStateChanged += HandleVoyageStateChanged;
+            }
+        }
+
+        public void Tick(float dt)
+        {
+            // ⚡ 성능 최적화: 0.25초 간격 타임 인터벌 연산
+            m_areaCheckTimer += dt;
+            if (m_areaCheckTimer >= AREA_CHECK_INTERVAL)
+            {
+                m_areaCheckTimer = 0f;
+                UpdateCurrentAreaStage();
+            }
+        }
+
+        private void UpdateCurrentAreaStage()
+        {
+            var voyageCtrl = SystemManager.GetSystem<VoyageSystem>();
+            if (voyageCtrl == null) return;
+
+            Vector2 currentPos = voyageCtrl.CurrentLogicalPosition;
+            var allStages = GetAllStageDatas();
+            if (allStages == null || allStages.Count == 0) return;
+
+            int nearestStageId = m_currentStageDataId;
+            float minSqrDistance = float.MaxValue;
+
+            // ⚡ 최적화: sqrMagnitude (제곱거리)를 사용하여 가장 가까운 스테이지 노드 감지 (50% 경계선 판정)
+            for (int i = 0; i < allStages.Count; i++)
+            {
+                var stage = allStages[i];
+                if (stage == null) continue;
+
+                float sqrDst = (stage.MapPosition - currentPos).sqrMagnitude;
+                if (sqrDst < minSqrDistance)
+                {
+                    minSqrDistance = sqrDst;
+                    nearestStageId = stage.ID;
+                }
+            }
+
+            if (nearestStageId != m_currentAreaStageDataId)
+            {
+                m_currentAreaStageDataId = nearestStageId;
+                var newAreaStage = DataManager.GetData<StageData>(m_currentAreaStageDataId);
+                if (newAreaStage != null)
+                {
+                    Debug.Log($"[StageSystem] 🌄 영역(Stage) 변경 감지! 가장 가까운 스테이지: {newAreaStage.name} ({m_currentAreaStageDataId})");
+                    OnAreaStageChanged?.Invoke(newAreaStage);
+                }
+            }
+        }
 
         private void ForceSetInitialStage(int defaultDataId)
         {
@@ -52,41 +110,31 @@ namespace DesktopCompanion.Systems
             if (stageData != null)
             {
                 m_currentStageDataId = defaultDataId;
-                m_currentLogicalPosition = stageData.MapPosition;
-                ChangeState(VoyageState.Anchored);
+
+                // 초기 위치 갱신
+                var voyageCtrl = SystemManager.GetSystem<VoyageSystem>();
+                if (voyageCtrl != null) voyageCtrl.SetLogicalPosition(stageData.MapPosition);
             }
         }
 
-        private void ChangeState(VoyageState newState)
-        {
-            if (m_currentState == newState) return;
-            m_currentState = newState;
-            OnVoyageStateChanged?.Invoke(m_currentState);
-            Debug.Log($"[StageSystem] 배 상태 변경 ➡️ {newState}");
-        }
-
-        public void SyncSpeed(float speed) { m_currentSpeed = speed; }
-
+        // 유저가 목적지를 클릭했을 때 호출되는 핵심 진입점
         public void MoveToStage(int targetDataId)
         {
-            if (m_currentState == VoyageState.Departing || m_currentState == VoyageState.Arriving || m_currentState == VoyageState.Stopping)
+            var voyageCtrl = SystemManager.GetSystem<VoyageSystem>();
+
+            // 1. 이미 항해 중이면 무시 (상태 체크를 VoyageController에게 물어봄)
+            if (voyageCtrl == null || voyageCtrl.CurrentState != VoyageState.Anchored)
             {
-                Debug.Log($"[StageSystem] 현재 {m_currentState} 연출 중이므로 목적지를 변경할 수 없습니다.");
+                Debug.Log($"[StageSystem] 이미 연출 중이거나 항해 중이므로 목적지를 변경할 수 없습니다.");
                 return;
             }
 
-            if (m_currentState == VoyageState.Traveling && m_targetStageDataId == targetDataId) return;
-
             var targetStageData = DataManager.GetData<StageData>(targetDataId);
-            if (targetStageData == null) return;
+            var currentStageData = CurrentStageData;
+            if (targetStageData == null || currentStageData == null) return;
 
-            if (m_currentState == VoyageState.Anchored && Vector2.Distance(m_currentLogicalPosition, targetStageData.MapPosition) <= 0.001f) return;
-
+            // 2. 라이센스(조건) 체크
             var playerSystem = SystemManager.GetSystem<PlayerSystem>();
-            //float playerSpeed = playerSystem != null ? playerSystem.BaseMapMovementSpeedPerTime : 5f;
-            //m_maxSpeed = Mathf.Max(playerSpeed, 0.1f);
-            m_maxSpeed = 5.0f;
-
             int playerLicense = playerSystem != null ? playerSystem.StartingLicense : 1;
             if (playerLicense < targetStageData.RequiredLicense)
             {
@@ -94,116 +142,87 @@ namespace DesktopCompanion.Systems
                 return;
             }
 
-            float distance = Vector2.Distance(m_currentLogicalPosition, targetStageData.MapPosition);
+            // 🎯 3. 배의 실시간 현재 위치(CurrentLogicalPosition) 기반 A* 최단 경로 탐색 (역주행/육지 뚫기 0% 보장)
+            Vector2 startPos = voyageCtrl.CurrentLogicalPosition;
+            var pathfinder = SystemManager.GetSystem<PathfindingSystem>();
+            List<Vector2> path = pathfinder.FindPath(startPos, targetStageData.MapPosition);
 
-            float arrivalTriggerDistance = m_maxSpeed * ARRIVAL_DURATION * 0.5f;
-
-            if (distance <= arrivalTriggerDistance + 0.1f)
+            if (path == null || path.Count == 0)
             {
-                Debug.Log("[StageSystem] 이미 해당 맵의 도착 연출 거리에 진입했습니다. 변경이 취소됩니다.");
+                Debug.LogWarning("[StageSystem] 목적지까지 갈 수 있는 경로가 없습니다! (장애물 또는 데이터 오류)");
                 return;
             }
 
-            float departureDistance = (m_currentState == VoyageState.Anchored) ? (m_maxSpeed * DEPARTURE_DURATION * 0.5f) : 0f;
+            Debug.Log($" [경로 탐색 완료] A* 알고리즘이 총 {path.Count}개의 웨이포인트(경유지)를 찾았습니다!");
+
+            // 🎯 A* 경로의 실제 총 물리적 거리 연산 (곡선/우회로 100% 반영)
+            float distance = 0f;
+            Vector2 prev = startPos;
+            for (int i = 0; i < path.Count; i++)
+            {
+                distance += Vector2.Distance(prev, path[i]);
+                prev = path[i];
+            }
+
+            float maxSpeed = voyageCtrl.MaxSpeed;
+            float arrivalTriggerDistance = maxSpeed * ARRIVAL_DURATION * 0.5f;
+            float departureDistance = maxSpeed * DEPARTURE_DURATION * 0.5f;
+
             float pureTravelDistance = distance - arrivalTriggerDistance - departureDistance;
             if (pureTravelDistance < 0f) pureTravelDistance = 0f;
 
-            float pureTravelTime = pureTravelDistance / m_maxSpeed;
-            float departureTime = (m_currentState == VoyageState.Anchored) ? DEPARTURE_DURATION : 0f;
-
-            float totalTravelTime = departureTime + pureTravelTime + ARRIVAL_DURATION;
+            float pureTravelTime = pureTravelDistance / maxSpeed;
+            float totalTravelTime = DEPARTURE_DURATION + pureTravelTime + ARRIVAL_DURATION;
 
             m_targetStageDataId = targetDataId;
-            m_remainingTravelTime = totalTravelTime;
-            m_totalTravelTime = totalTravelTime;
 
-            OnTravelStarted?.Invoke(targetDataId, pureTravelTime);
-
-            if (m_currentState == VoyageState.Anchored) ChangeState(VoyageState.Departing);
-            else ChangeState(VoyageState.Traveling);
+            // ✅ UI에 출발 이벤트 방송 및 VoyageController에 명령 하달
+            OnTravelStarted?.Invoke(targetDataId, totalTravelTime);
+            voyageCtrl.StartVoyage(path, totalTravelTime);
         }
 
+        // ✅ UI에서 호출하는 취소 기능 (정박 완료 전 언제든 9초 브레이크 수용)
         public void CancelTravel()
         {
-            if (m_currentState != VoyageState.Traveling) return;
-            ChangeState(VoyageState.Stopping);
-            OnTravelCanceled?.Invoke();
-        }
-
-        public void Tick(float dt)
-        {
-            if (m_currentState == VoyageState.Anchored) return;
-
-            if (m_currentState == VoyageState.Departing || m_currentState == VoyageState.Traveling || m_currentState == VoyageState.Arriving)
+            var voyageCtrl = SystemManager.GetSystem<VoyageSystem>();
+            if (voyageCtrl != null && voyageCtrl.CurrentState != VoyageState.Anchored)
             {
-                m_remainingTravelTime -= dt;
-                if (m_remainingTravelTime <= 0f) m_remainingTravelTime = 0f;
-            }
-
-            var targetStageData = DataManager.GetData<StageData>(m_targetStageDataId);
-            if (targetStageData != null)
-            {
-                m_currentLogicalPosition = Vector2.MoveTowards(m_currentLogicalPosition, targetStageData.MapPosition, m_currentSpeed * dt);
-
-                if (m_currentState == VoyageState.Traveling)
-                {
-                    if (m_remainingTravelTime <= ARRIVAL_DURATION)
-                    {
-                        ChangeState(VoyageState.Arriving);
-                    }
-                }
-            }
-        }
-        public void SequenceComplete_Departure()
-        {
-            if (m_currentState == VoyageState.Departing)
-            {
-                m_currentStageDataId = 0;
-                ChangeState(VoyageState.Traveling);
+                voyageCtrl.CancelVoyage(); // 컨트롤러 정지
+                OnTravelCanceled?.Invoke(); // UI 방송
             }
         }
 
-        public void SequenceComplete_Arrival()
+        // VoyageController가 상태를 바꿀 때 데이터를 갱신합니다.
+        private void HandleVoyageStateChanged(VoyageState state)
         {
-            if (m_currentState == VoyageState.Arriving)
-            {
-                var targetStageData = DataManager.GetData<StageData>(m_targetStageDataId);
-                if (targetStageData != null) m_currentLogicalPosition = targetStageData.MapPosition;
+            // UI를 위해 상태 변경 이벤트 중계
+            OnVoyageStateChanged?.Invoke(state);
 
+            if (state == VoyageState.Anchored && m_targetStageDataId != 0)
+            {
                 m_currentStageDataId = m_targetStageDataId;
                 m_targetStageDataId = 0;
-                ChangeState(VoyageState.Anchored);
+
                 OnStageChanged?.Invoke(m_currentStageDataId);
+                Debug.Log($"[StageSystem] {m_currentStageDataId} 스테이지에 성공적으로 정박했습니다.");
             }
-        }
-
-        public void SequenceComplete_Stop()
-        {
-            if (m_currentState == VoyageState.Stopping)
+            else if (state == VoyageState.Anchored && m_targetStageDataId == 0)
             {
-                m_targetStageDataId = 0;
-                ChangeState(VoyageState.Anchored);
-            }
-        }
-        public float MaxSpeed => m_maxSpeed;
-
-        public float RemainingDistance
-        {
-            get
-            {
-                var target = TargetStageData;
-                return target != null ? Vector2.Distance(m_currentLogicalPosition, target.MapPosition) : 0f;
+                // 취소 후 정박이 완료되었을 때의 처리 (필요 시 확장)
             }
         }
 
+        // ✅ UI가 참조하던 상태 Getter들 복구 (VoyageController의 데이터를 대리 반환)
         public StageData CurrentStageData => DataManager.GetData<StageData>(m_currentStageDataId);
+        public StageData CurrentAreaStageData => DataManager.GetData<StageData>(m_currentAreaStageDataId > 0 ? m_currentAreaStageDataId : m_currentStageDataId);
         public StageData TargetStageData => DataManager.GetData<StageData>(m_targetStageDataId);
-        public bool IsTraveling => m_currentState != VoyageState.Anchored;
-        public VoyageState CurrentState => m_currentState;
+        public IReadOnlyList<StageData> GetAllStageDatas() => DataManager.GetAll<StageData>();
 
-        public float RemainingTravelTime => m_remainingTravelTime;
-        public Vector2 CurrentLogicalPosition => m_currentLogicalPosition;
-        public float TravelProgress => (m_currentState != VoyageState.Anchored && m_totalTravelTime > 0f) ? (1f - (m_remainingTravelTime / m_totalTravelTime)) : 0f;
+        public bool IsTraveling => SystemManager.GetSystem<VoyageSystem>()?.CurrentState != VoyageState.Anchored;
+        public float RemainingTravelTime => SystemManager.GetSystem<VoyageSystem>()?.RemainingTravelTime ?? 0f;
+        public float TravelProgress => SystemManager.GetSystem<VoyageSystem>()?.TravelProgress ?? 0f;
+        public float RemainingDistance => SystemManager.GetSystem<VoyageSystem>()?.RemainingDistance ?? 0f;
+        public float MaxSpeed => SystemManager.GetSystem<VoyageSystem>()?.MaxSpeed ?? 5f;
 
         public List<TierPool> GetAvailableTierPools(int playerLicense)
         {
@@ -214,19 +233,24 @@ namespace DesktopCompanion.Systems
             return availablePools;
         }
 
-        public IReadOnlyList<StageData> GetAllStageDatas() => DataManager.GetAll<StageData>();
-
-        public object CaptureState() { return new StageSaveData { currentStageDataId = m_currentStageDataId, savedPosX = m_currentLogicalPosition.x, savedPosY = m_currentLogicalPosition.y }; }
+        // === Save / Load 로직 ===
+        public object CaptureState()
+        {
+            return new StageSaveData { currentStageDataId = m_currentStageDataId };
+        }
 
         public void RestoreState(object state)
         {
             var save = (StageSaveData)state;
             m_currentStageDataId = save.currentStageDataId;
-            if (save.savedPosX != 0 || save.savedPosY != 0) m_currentLogicalPosition = new Vector2(save.savedPosX, save.savedPosY);
-            else ForceSetInitialStage(m_currentStageDataId != 0 ? m_currentStageDataId : 600001);
+            if (m_currentStageDataId == 0) ForceSetInitialStage(600001);
+            else ForceSetInitialStage(m_currentStageDataId);
         }
     }
 
     [Serializable]
-    public class StageSaveData { public int currentStageDataId; public float savedPosX; public float savedPosY; }
+    public class StageSaveData
+    {
+        public int currentStageDataId;
+    }
 }

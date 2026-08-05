@@ -53,7 +53,10 @@ namespace DesktopCompanion.Views
         {
             m_assetProvider = provider;
 
-            float totalDistance = targetCamX - startCamX;
+            Debug.Log($"[StageBlueprint] 🛠️ InitProvider 호출! (시작CamX: {startCamX:F2}, 목적지CamX: {targetCamX:F2}, isFirstLoad: {isFirstLoad})");
+
+            // 🎯 이전 항해에서 남아있던 자식 Prop 오브젝트들 클리어! (왕복 항해 100% 재생성 보장)
+            ClearSpawnedProps();
 
             foreach (var data in m_blueprintList)
             {
@@ -67,13 +70,33 @@ namespace DesktopCompanion.Views
                 }
                 else
                 {
-                    data.m_spawnTriggerX = targetCamX + data.m_spawnDistanceTrigger;
                     data.m_targetCameraX = targetCamX;
                     data.m_targetWorldX = targetCamX + data.m_targetWorldOffsetFromCamera;
+                    // 🎯 항해 출발 직후(startCamX) 미리 스폰되어 부드럽게 흘러오다가 도착 시점에 exact 1자로 겹침!
+                    data.m_spawnTriggerX = startCamX - 5f;
+                }
+                Debug.Log($"[StageBlueprint-설정] 키:{data.m_assetKey}, 깊이:{data.m_layerDepth}, 트리거X:{data.m_spawnTriggerX:F2}, targetWorldX:{data.m_targetWorldX:F2}");
+            }
+
+            if (isFirstLoad)
+            {
+                ForceInitialSpawnCheck(isFirstLoad);
+            }
+        }
+
+        private void ClearSpawnedProps()
+        {
+            Transform[] layers = new Transform[] { m_nearLayer, m_midLayer, m_farLayer };
+            foreach (var layer in layers)
+            {
+                if (layer == null) continue;
+                for (int i = layer.childCount - 1; i >= 0; i--)
+                {
+                    Destroy(layer.GetChild(i).gameObject);
                 }
             }
-            ForceInitialSpawnCheck(isFirstLoad);
         }
+
         private void Start()
         {
             if (Camera.main != null)
@@ -92,8 +115,10 @@ namespace DesktopCompanion.Views
             {
                 if (data.m_isSpawned) continue;
 
+                // 🎯 배는 무조건 왼쪽(-X)으로 전진하므로 currentCamX <= data.m_spawnTriggerX 조건 검사!
                 if (currentCamX <= data.m_spawnTriggerX)
                 {
+                    Debug.Log($"[StageBlueprint-스폰발동] 현재CamX: {currentCamX:F2} <= 트리거X: {data.m_spawnTriggerX:F2} -> '{data.m_assetKey}' 스폰 실행!");
                     SpawnProp(data);
                     data.m_isSpawned = true;
                 }
@@ -102,6 +127,8 @@ namespace DesktopCompanion.Views
 
         private void ForceInitialSpawnCheck(bool isFirstLoad)
         {
+            if (!isFirstLoad) return; // 🎯 사전 로드된 목적지 맵은 출발 시 조기 강제 스폰 100% 차단!
+
             if (m_cameraTransform == null && Camera.main != null)
             {
                 m_cameraTransform = Camera.main.transform;
@@ -115,11 +142,10 @@ namespace DesktopCompanion.Views
 
             foreach (var data in m_blueprintList)
             {
-                if (!data.m_isSpawned && (isFirstLoad || currentCamX <= data.m_spawnTriggerX))
-                {
-                    SpawnProp(data);
-                    data.m_isSpawned = true;
-                }
+                if (data.m_isSpawned) continue;
+
+                SpawnProp(data);
+                data.m_isSpawned = true;
             }
         }
 
@@ -133,13 +159,13 @@ namespace DesktopCompanion.Views
         private void SpawnProp(BlueprintData data)
         {
             Transform parentLayer = GetLayerTransform(data.m_layerDepth);
-
             float parallaxFactor = GetParallaxFactor(data.m_layerDepth);
 
             if (m_assetProvider != null && m_assetProvider.TryGet(data.m_assetKey, out GameObject prefab))
             {
                 GameObject obj = Instantiate(prefab, parentLayer);
 
+                // 🎯 배가 목적지 targetCamX 에 정차했을 때 Far, Mid, Near 3개 오브젝트가 1자로 exact 포개어지는 고정 수식!
                 float convertedLocalX = data.m_targetWorldX - (data.m_targetCameraX * parallaxFactor);
 
                 obj.transform.localPosition = new Vector3(convertedLocalX, data.m_targetLocalY, 0f);
