@@ -7,6 +7,7 @@ namespace DesktopCompanion.Systems
     {
         public int FishDataId { get; }
         public string FishName { get; }
+        public string CollectionNumberText => $"No.{FishDataId % 1000:000}";
 
         public ItemRarity Rarity { get; }
         public int Tier { get; }

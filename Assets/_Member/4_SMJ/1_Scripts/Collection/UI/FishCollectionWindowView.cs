@@ -121,13 +121,13 @@ namespace DesktopCompanion.Views
 
             if (!entry.IsRegistered)
             {
-                m_detailNameText.text = "???";
+                m_detailNameText.text = $"{entry.CollectionNumberText} ???";
                 m_bestQualityText.text = "최고 품질: -";
                 m_bestSizeText.text = "최고 크기: -";
                 return;
             }
 
-            m_detailNameText.text = entry.FishName;
+            m_detailNameText.text = $"{entry.CollectionNumberText} {entry.FishName}";
             m_bestQualityText.text = "최고 품질:";
             SetBestQualityStars((int)entry.BestQuality);
             m_bestSizeText.text = $"최고 크기: {entry.BestSize:0.0} cm";
