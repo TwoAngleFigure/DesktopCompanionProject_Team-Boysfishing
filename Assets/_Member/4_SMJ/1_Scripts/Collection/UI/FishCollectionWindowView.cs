@@ -1,3 +1,4 @@
+using DesktopCompanion.Data;
 using DesktopCompanion.Systems;
 using System.Collections.Generic;
 using TMPro;
@@ -21,6 +22,15 @@ namespace DesktopCompanion.Views
         [SerializeField] private TMP_Text m_detailNameText;
         [SerializeField] private TMP_Text m_bestQualityText;
         [SerializeField] private TMP_Text m_bestSizeText;
+        [SerializeField] private TMP_Text m_metadataText;
+
+        [Header("Filter")]
+        [SerializeField]
+        private FishCollectionFilterPanelView m_filterPanel;
+
+        [Header("Control Bar")]
+        [SerializeField]
+        private FishCollectionControlBarView m_controlBar;
 
         private readonly FishCollectionVM m_vm = new();
         private readonly List<FishCollectionEntryView> m_entryViews = new();
@@ -35,6 +45,9 @@ namespace DesktopCompanion.Views
             m_vm.Inject(SystemManager, EntityManager);
             m_vm.Bind();
 
+            m_filterPanel?.Bind(m_vm);
+            m_controlBar?.Bind(m_vm, m_filterPanel);
+
             m_vm.DisplayEntries.Bind(HandleDisplayEntriesChanged);
             m_vm.SelectedEntry.Bind(HandleSelectedEntryChanged);
 
@@ -47,6 +60,9 @@ namespace DesktopCompanion.Views
             m_vm.SelectedEntry.Unbind(HandleSelectedEntryChanged);
 
             m_closeButton?.onClick.RemoveListener(Close);
+
+            m_controlBar?.Unbind();
+            m_filterPanel?.Unbind();
 
             ClearEntryViews();
 
@@ -93,29 +109,31 @@ namespace DesktopCompanion.Views
 
             FishCollectionDisplayEntry entry = selectedEntry.Value;
 
-            if (!entry.IsRegistered)
-            {
-                m_detailNameText.text = "???";
-                m_bestQualityText.text = "최고 품질: -";
-                m_bestSizeText.text = "최고 크기: -";
-                return;
-            }
+            m_metadataText.text = BuildMetadataText(entry);
 
             string iconKey = $"ItemData_Fish_{entry.FishDataId}_Icon";
 
             if (AssetProvider != null &&
                 AssetProvider.TryGet(iconKey, out Sprite fishIcon))
             {
-                SetFishIcon(fishIcon);
+                SetFishIcon(fishIcon, !entry.IsRegistered);
             }
 
-            m_detailNameText.text = entry.FishName;
+            if (!entry.IsRegistered)
+            {
+                m_detailNameText.text = $"{entry.CollectionNumberText} ???";
+                m_bestQualityText.text = "최고 품질: -";
+                m_bestSizeText.text = "최고 크기: -";
+                return;
+            }
+
+            m_detailNameText.text = $"{entry.CollectionNumberText} {entry.FishName}";
             m_bestQualityText.text = "최고 품질:";
             SetBestQualityStars((int)entry.BestQuality);
             m_bestSizeText.text = $"최고 크기: {entry.BestSize:0.0} cm";
         }
 
-        private void SetFishIcon(Sprite icon)
+        private void SetFishIcon(Sprite icon, bool isSilhouette = false)
         {
             if (m_fishIconImage == null)
             {
@@ -123,6 +141,9 @@ namespace DesktopCompanion.Views
             }
 
             m_fishIconImage.sprite = icon;
+            m_fishIconImage.color = isSilhouette
+                ? Color.black
+                : Color.white;
             m_fishIconImage.gameObject.SetActive(icon != null);
         }
 
@@ -161,6 +182,38 @@ namespace DesktopCompanion.Views
                 m_bestSizeText.gameObject.SetActive(isVisible);
             }
 
+            if (m_metadataText != null)
+            {
+                m_metadataText.gameObject.SetActive(isVisible);
+            }
+        }
+
+        private static string BuildMetadataText(
+            FishCollectionDisplayEntry entry)
+        {
+            string stageNames = entry.StageNames.Count > 0
+                ? string.Join(", ", entry.StageNames)
+                : "-";
+
+            return
+                $"희귀도: {GetRarityText(entry.Rarity)}\n\n" +
+                $"티어: T{entry.Tier}\n\n" +
+                $"생산 재료: {entry.ProductionMaterialName}\n\n" +
+                $"출현 지역: {stageNames}";
+        }
+
+        private static string GetRarityText(ItemRarity rarity)
+        {
+            return rarity switch
+            {
+                ItemRarity.Normal => "일반",
+                ItemRarity.Uncommon => "고급",
+                ItemRarity.Rare => "희귀",
+                ItemRarity.Epic => "영웅",
+                ItemRarity.Legendary => "전설",
+                ItemRarity.Boss => "보스",
+                _ => rarity.ToString()
+            };
         }
 
         private void ClearEntryViews()

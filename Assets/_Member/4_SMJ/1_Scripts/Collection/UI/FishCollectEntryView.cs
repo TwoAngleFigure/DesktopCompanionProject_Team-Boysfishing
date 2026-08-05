@@ -34,12 +34,12 @@ namespace DesktopCompanion.Views
 
             if (!entry.IsRegistered)
             {
-                m_nameText.text = "???";
+                m_nameText.text = $"{entry.CollectionNumberText} ???";
                 SetQualityStars(0);
                 return;
             }
 
-            m_nameText.text = entry.FishName;
+            m_nameText.text = $"{entry.CollectionNumberText} {entry.FishName}";
             SetQualityStars((int)entry.BestQuality);
         }
 
