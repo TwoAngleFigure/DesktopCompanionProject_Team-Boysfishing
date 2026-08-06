@@ -41,6 +41,19 @@ namespace DesktopCompanion.Views
                  "끄면 TMP 기본 동작대로 내용에 맞춰 목록이 줄어든다")]
         [SerializeField] private bool m_keepTemplateHeight = true;
 
+        [Header("옵션 수에 맞춘 높이")]
+        [Tooltip("체크 시 목록 높이를 '옵션 수 × 항목 높이'로 정한다. Template 높이와 Keep Template Height는 무시된다. " +
+                 "ContentSizeFitter로는 안 되는 이유: TMP_Dropdown.Show()가 아이템 배치와 Content 크기를 직접 쓰므로 " +
+                 "레이아웃 시스템이 개입할 여지가 없다")]
+        [SerializeField] private bool m_fitHeightToOptions = false;
+
+        [Tooltip("높이 상한(px). 옵션이 많아 이 값을 넘으면 목록이 스크롤된다. " +
+                 "0 이하면 상한 없이 옵션 수만큼 계속 길어진다")]
+        [SerializeField] private float m_maxHeight = 0f;
+
+        [Tooltip("항목 높이 합계에 더할 위·아래 여백(px)")]
+        [SerializeField] private float m_verticalPadding = 0f;
+
         [Header("Arrow 반동 — 위로 튀었다가 탄성으로 복귀(회전 없음)")]
         [Tooltip("비우면 자식에서 이름 'Arrow'를 찾는다")]
         [SerializeField] private RectTransform m_arrow;
@@ -214,11 +227,57 @@ namespace DesktopCompanion.Views
         /// </summary>
         private float ResolveTargetHeight(float shownHeight)
         {
+            if (m_fitHeightToOptions)
+            {
+                return FitHeightToOptions(shownHeight);
+            }
             if (m_keepTemplateHeight == false || m_dropdown.template == null)
             {
                 return shownHeight;
             }
             return Mathf.Max(shownHeight, m_dropdown.template.rect.height);
+        }
+
+        /// <summary>
+        /// 옵션 수 × 항목 높이로 목표 높이를 구한다. 상한을 넘으면 상한에서 멈추고 목록이 스크롤된다.
+        ///
+        /// Show()가 계산한 Content 높이(itemSize.y * count + offsetMin.y - offsetMax.y)를 쓰지 않는다.
+        /// 그 offset은 Template의 Content rect와 Item rect의 차이라 프리팹 설정에 좌우되며,
+        /// Content 높이가 Item 높이보다 작으면 음수가 되어 목록이 그만큼 짧아진다.
+        /// 항목 높이에서 직접 구하면 그 설정 실수와 무관하게 같은 결과가 나온다.
+        /// ※ 단, 아이템 배치 자체는 Show()가 정하므로 Content 높이는 Item 높이와 맞춰 둬야 정렬이 맞다.
+        /// </summary>
+        private float FitHeightToOptions(float shownHeight)
+        {
+            float itemHeight = ResolveItemHeight();
+            if (itemHeight <= 0f)
+            {
+                Debug.LogWarning("[DropdownAnimator] Template에서 항목 높이를 얻지 못해 옵션 수 맞춤을 건너뜁니다.", this);
+                return shownHeight;
+            }
+
+            int count = m_dropdown.options != null ? m_dropdown.options.Count : 0;
+            float desired = itemHeight * Mathf.Max(1, count) + m_verticalPadding;
+
+            // 상한을 지정하지 않았으면 자르지 않는다. Template 높이를 상한으로 되돌려 쓰면
+            // 옵션 수 맞춤이라는 전제 자체가 무너져 옵션이 많을 때 목록이 잘린다.
+            return m_maxHeight > 0f ? Mathf.Min(desired, m_maxHeight) : desired;
+        }
+
+        /// <summary>
+        /// 항목 하나의 높이. TMP_Dropdown이 itemSize로 쓰는 값과 같은 출처(Template의 Item rect)다.
+        /// </summary>
+        private float ResolveItemHeight()
+        {
+            RectTransform template = m_dropdown.template;
+            if (template == null)
+            {
+                return 0f;
+            }
+
+            // TMP_Dropdown.SetupTemplate과 같은 방식으로 아이템을 찾는다.
+            Toggle item = template.GetComponentInChildren<Toggle>(true);
+            return item != null && item.transform is RectTransform rect ? rect.rect.height : 0f;
         }
 
         private void ReleaseList()

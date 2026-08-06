@@ -37,7 +37,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 105}
+  m_SizeDelta: {x: 0, y: 120}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &2663772127125934959
 CanvasRenderer:
@@ -140,10 +140,10 @@ RectTransform:
   - {fileID: 8679551897764256385}
   m_Father: {fileID: 8430902002247034376}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.5}
-  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 28}
+  m_SizeDelta: {x: 160, y: 28}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &8476328108268392146
 MonoBehaviour:
@@ -357,8 +357,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4290427578
+  m_fontColor: {r: 0.7283019, g: 0.7283019, b: 0.7283019, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -604,7 +604,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 38}
+  m_SizeDelta: {x: 0, y: 28}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!1 &6488541690520384820
 GameObject:
@@ -950,6 +950,9 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   m_keepTemplateHeight: 1
+  m_fitHeightToOptions: 1
+  m_maxHeight: 0
+  m_verticalPadding: 0
   m_arrow: {fileID: 4892777038861086814}
   m_arrowPunchHeight: 6
   m_arrowPunchDuration: 0.28
@@ -1004,5 +1007,5 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_optionNormalColor: {r: 0.121568635, g: 0.08235294, b: 0.06666667, a: 1}
+  m_optionNormalColor: {r: 0.7294118, g: 0.7294118, b: 0.7294118, a: 1}
   m_optionHoverColor: {r: 1, g: 1, b: 1, a: 1}
