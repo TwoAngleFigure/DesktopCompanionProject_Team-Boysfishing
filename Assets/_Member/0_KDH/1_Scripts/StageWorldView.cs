@@ -20,8 +20,8 @@ namespace DesktopCompanion.Views
         private float m_absoluteStartCamX = 0f;
         private float m_absoluteTargetCamX = 0f;
 
-        private const float DEPARTURE_TIME = 9.0f;
-        private const float ARRIVAL_TIME = 9.0f;
+        private const float DEPARTURE_TIME = 30.0f;
+        private const float ARRIVAL_TIME = 30.0f;
         private const float STOPPING_TIME = 9.0f;
 
         public override void Bind()

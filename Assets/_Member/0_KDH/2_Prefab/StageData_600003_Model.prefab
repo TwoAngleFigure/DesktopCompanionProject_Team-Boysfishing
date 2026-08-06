@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4945223346026452647}
   - component: {fileID: 1045052723150630618}
   m_Layer: 0
-  m_Name: StageData_600002_Model
+  m_Name: StageData_600003_Model
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -54,101 +54,83 @@ MonoBehaviour:
   m_midParallax: 0.35
   m_farParallax: 0.65
   m_blueprintList:
-  - m_assetKey: islands_background_5
+  - m_assetKey: ocean_back_1
     m_layerDepth: 2
-    m_spawnDistanceTrigger: 150
-    m_targetWorldOffsetFromCamera: 30
-    m_targetLocalY: 1.7
+    m_spawnDistanceTrigger: 140
+    m_targetWorldOffsetFromCamera: 23
+    m_targetLocalY: 1.76
     m_isSpawned: 0
     m_spawnTriggerX: 0
     m_targetWorldX: -15
     m_targetCameraX: -15
-  - m_assetKey: islands_background_6
+  - m_assetKey: ocean_back_2
     m_layerDepth: 1
-    m_spawnDistanceTrigger: 120
-    m_targetWorldOffsetFromCamera: 52
-    m_targetLocalY: 1.5
+    m_spawnDistanceTrigger: 55
+    m_targetWorldOffsetFromCamera: 3
+    m_targetLocalY: 1.38
     m_isSpawned: 0
     m_spawnTriggerX: 0
     m_targetWorldX: -15
     m_targetCameraX: -15
-  - m_assetKey: islands_background_1
-    m_layerDepth: 2
-    m_spawnDistanceTrigger: 70
-    m_targetWorldOffsetFromCamera: -12
-    m_targetLocalY: 1.7
-    m_isSpawned: 0
-    m_spawnTriggerX: 0
-    m_targetWorldX: -15
-    m_targetCameraX: -15
-  - m_assetKey: islands_fishship
-    m_layerDepth: 1
+  - m_assetKey: ocean_back_3
+    m_layerDepth: 0
     m_spawnDistanceTrigger: 40
-    m_targetWorldOffsetFromCamera: -15
-    m_targetLocalY: -1
+    m_targetWorldOffsetFromCamera: 1
+    m_targetLocalY: 1.99
     m_isSpawned: 0
     m_spawnTriggerX: 0
     m_targetWorldX: -15
     m_targetCameraX: -15
-  - m_assetKey: islands_wooden
+  - m_assetKey: ocean_back_2
     m_layerDepth: 0
     m_spawnDistanceTrigger: 25
-    m_targetWorldOffsetFromCamera: -2
-    m_targetLocalY: 1.7
-    m_isSpawned: 0
-    m_spawnTriggerX: 0
-    m_targetWorldX: -15
-    m_targetCameraX: -15
-  - m_assetKey: islands_wooden
-    m_layerDepth: 0
-    m_spawnDistanceTrigger: 35
-    m_targetWorldOffsetFromCamera: 11
-    m_targetLocalY: 1.7
-    m_isSpawned: 0
-    m_spawnTriggerX: 0
-    m_targetWorldX: -15
-    m_targetCameraX: -15
-  - m_assetKey: islands_wooden
-    m_layerDepth: 0
-    m_spawnDistanceTrigger: 0
-    m_targetWorldOffsetFromCamera: -25
-    m_targetLocalY: 1.7
-    m_isSpawned: 0
-    m_spawnTriggerX: 0
-    m_targetWorldX: -15
-    m_targetCameraX: -15
-  - m_assetKey: islands_background_3
-    m_layerDepth: 1
-    m_spawnDistanceTrigger: 10
     m_targetWorldOffsetFromCamera: -19
-    m_targetLocalY: 3.01
+    m_targetLocalY: 1.57
     m_isSpawned: 0
     m_spawnTriggerX: 0
     m_targetWorldX: -15
     m_targetCameraX: -15
-  - m_assetKey: islands_background_2
+  - m_assetKey: ocean_rock
     m_layerDepth: 0
-    m_spawnDistanceTrigger: -5
-    m_targetWorldOffsetFromCamera: -42
-    m_targetLocalY: 2.46
+    m_spawnDistanceTrigger: 25
+    m_targetWorldOffsetFromCamera: -14
+    m_targetLocalY: -0.49
     m_isSpawned: 0
     m_spawnTriggerX: 0
     m_targetWorldX: -15
     m_targetCameraX: -15
-  - m_assetKey: islands_wooden
-    m_layerDepth: 0
-    m_spawnDistanceTrigger: 45
-    m_targetWorldOffsetFromCamera: 12
-    m_targetLocalY: 2.46
-    m_isSpawned: 0
-    m_spawnTriggerX: 0
-    m_targetWorldX: -15
-    m_targetCameraX: -15
-  - m_assetKey: river_log
+  - m_assetKey: ocean_rock_middle
     m_layerDepth: 1
-    m_spawnDistanceTrigger: 75
-    m_targetWorldOffsetFromCamera: 23
-    m_targetLocalY: -0.69
+    m_spawnDistanceTrigger: 55
+    m_targetWorldOffsetFromCamera: -19
+    m_targetLocalY: -0.49
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: ocean_rock_middle
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 120
+    m_targetWorldOffsetFromCamera: 48
+    m_targetLocalY: -0.49
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: ocean_tree
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 55
+    m_targetWorldOffsetFromCamera: 9
+    m_targetLocalY: -0.91
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: ocean_back_9
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 80
+    m_targetWorldOffsetFromCamera: 25
+    m_targetLocalY: 0.87
     m_isSpawned: 0
     m_spawnTriggerX: 0
     m_targetWorldX: -15
