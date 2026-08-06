@@ -361,12 +361,13 @@ namespace DesktopCompanion.Core
                 ["m_probability"] = ParseFloat(parts[3]),
             });
 
-        // "battleFishId:weight;..." → FishPoolEntry[]
+        // "battleFishId;..." → FishPoolEntry[]
+        // 가중치는 폐지됐다(풀 안에서 균등 추첨). 시트 정리 전의 옛 "battleFishId:weight" 표기가
+        // 남아 있어도 변환이 깨지지 않도록 뒤 토큰은 받아서 버린다.
         private static JArray ParsePoolEntries(JToken token, int stageId)
-            => ParseCompact(token, 2, SheetStageTierPools, stageId, parts => new JObject
+            => ParseCompact(token, 1, 2, SheetStageTierPools, stageId, parts => new JObject
             {
-                ["m_fish"] = MakeRef("BattleFishData", int.Parse(parts[0])),
-                ["m_weight"] = ParseFloat(parts[1]),
+                ["m_fish"] = MakeRef("BattleFishData", ParseId(parts[0])),
             });
 
         // "v1;v2;v3;v4" → float[]
@@ -394,6 +395,10 @@ namespace DesktopCompanion.Core
         }
 
         private static JArray ParseCompact(JToken token, int expectedParts, string context, int id, Func<string[], JObject> build)
+            => ParseCompact(token, expectedParts, expectedParts, context, id, build);
+
+        // 토큰 수가 [minParts, maxParts] 범위면 통과시킨다. 초과분은 build에 넘어가되 쓰지 않으면 버려진다.
+        private static JArray ParseCompact(JToken token, int minParts, int maxParts, string context, int id, Func<string[], JObject> build)
         {
             string text = AsString(token);
             if (text == null)
@@ -406,9 +411,10 @@ namespace DesktopCompanion.Core
                 foreach (string entry in SplitItems(text))
                 {
                     string[] parts = entry.Split(':');
-                    if (parts.Length != expectedParts)
+                    if (parts.Length < minParts || parts.Length > maxParts)
                     {
-                        throw new FormatException($"'{entry}' — 토큰 {expectedParts}개 필요");
+                        string need = minParts == maxParts ? $"{minParts}개" : $"{minParts}~{maxParts}개";
+                        throw new FormatException($"'{entry}' — 토큰 {need} 필요");
                     }
                     for (int i = 0; i < parts.Length; i++)
                     {
@@ -493,6 +499,11 @@ namespace DesktopCompanion.Core
 
         private static float ParseFloat(string text)
             => float.Parse(text.Trim(), CultureInfo.InvariantCulture);
+
+        // 숫자 하나만 든 셀은 스프레드시트가 실수로 넘겨(500001 → "500001.0") int.Parse가 터진다.
+        // 소수부 0인 실수 표기를 허용해 id로 복원한다.
+        private static int ParseId(string text)
+            => checked((int)Math.Round(double.Parse(text.Trim(), CultureInfo.InvariantCulture)));
 
         private static string AsString(JToken token)
             => token == null || token.Type == JTokenType.Null ? null
