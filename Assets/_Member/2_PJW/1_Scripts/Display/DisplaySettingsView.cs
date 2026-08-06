@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -5,8 +6,10 @@ using TMPro;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 화면 옵션(모드·출력 배율·크롭 범위·모니터·창 이동) 설정 창.
-    /// 위젯 입력을 <see cref="DisplayModeController"/>에 직접 전달하고, 컨트롤러가 보정한 값을 위젯·라벨에 되돌린다.
+    /// 화면 옵션(모드·출력 배율·UI 배율·크롭 범위·모니터·창 이동) 설정 창.
+    /// 위젯 입력을 <see cref="DisplayModeController"/>에 직접 전달하고, 컨트롤러가 보정한 값을 위젯에 되돌린다.
+    /// 값을 고르는 항목은 드롭다운으로, 즉시 실행되는 동작(창 이동 모드)만 버튼으로 둔다.
+    /// 현재 값은 드롭다운 자신이 표시하므로 별도 값 라벨을 두지 않는다.
     /// 게임 System과 무관한 설정이므로 ViewModel을 두지 않는다.
     /// </summary>
     public class DisplaySettingsView : UIWindowBase
@@ -15,31 +18,36 @@ namespace DesktopCompanion.Views
         [SerializeField] private DisplayModeController m_controller;
 
         [Header("Mode")]
-        [SerializeField] private Button m_fullButton;
-        [SerializeField] private Button m_windowButton;
+        [SerializeField] private TMP_Dropdown m_modeDropdown;
 
         [Header("Scale (Window 모드 출력 배율)")]
-        [SerializeField] private Slider m_scaleSlider;
-        [SerializeField] private TMP_Text m_scaleLabel;
+        [SerializeField] private TMP_Dropdown m_scaleDropdown;
 
-        [Header("Scale 프리셋")]
-        [SerializeField] private Button m_scale075Button;
-        [SerializeField] private Button m_scale100Button;
-        [SerializeField] private Button m_scale125Button;
+        [Header("UI 배율")]
+        [Tooltip("UI 픽셀 격자가 깨지지 않도록 1/4 단위 항목만 노출한다.")]
+        [SerializeField] private TMP_Dropdown m_uiScaleDropdown;
+
+        [Header("FPS")]
+        [SerializeField] private TMP_Dropdown m_fpsDropdown;
 
         [Header("Crop (Window 모드에서 볼 가로 구간)")]
-        [SerializeField] private Slider m_cropLeftSlider;
-        [SerializeField] private Slider m_cropRightSlider;
+        [SerializeField] private RangeSlider m_cropSlider;
         [SerializeField] private TMP_Text m_cropLabel;
 
         [Header("Monitor")]
-        [SerializeField] private Button m_monitorPrevButton;
-        [SerializeField] private Button m_monitorNextButton;
-        [SerializeField] private TMP_Text m_monitorLabel;
+        [SerializeField] private TMP_Dropdown m_monitorDropdown;
 
         [Header("Window Move")]
         [SerializeField] private Button m_moveButton;
         [SerializeField] private TMP_Text m_moveLabel;
+
+        [Header("Window 전용 항목 비활성 표시")]
+        [Tooltip("Full 모드에서 함께 반투명해질 텍스트. 출력 배율·크롭의 항목 제목 등을 넣는다.")]
+        [SerializeField] private TMP_Text[] m_windowOnlyTexts;
+        [SerializeField, Range(0f, 1f)] private float m_disabledTextAlpha = 0.4f;
+
+        // 순서는 ScreenMode 열거 순서와 일치해야 한다(인덱스를 그대로 캐스팅한다).
+        private static readonly string[] ModeLabels = { "전체 화면", "창 모드" };
 
         public override void Bind()
         {
@@ -49,116 +57,144 @@ namespace DesktopCompanion.Views
                 return;
             }
 
-            if (m_fullButton != null) m_fullButton.onClick.AddListener(() => { m_controller.SetMode(ScreenMode.Full); RefreshLabel(); });
-            if (m_windowButton != null) m_windowButton.onClick.AddListener(() => { m_controller.SetMode(ScreenMode.Window); RefreshLabel(); });
+            BindModeDropdown();
+            BindScaleDropdown();
+            BindUiScaleDropdown();
+            BindFpsDropdown();
+            BindCropSlider();
+            BindMonitorDropdown();
 
-            BindScaleSlider();
-            BindScalePreset(m_scale075Button, 0.75f);
-            BindScalePreset(m_scale100Button, 1f);
-            BindScalePreset(m_scale125Button, 1.25f);
-            BindCropSliders();
+            if (m_moveButton != null) m_moveButton.onClick.AddListener(() => { m_controller.ToggleWindowMoveMode(); Refresh(); });
 
-            if (m_monitorPrevButton != null) m_monitorPrevButton.onClick.AddListener(() => ChangeMonitor(-1));
-            if (m_monitorNextButton != null) m_monitorNextButton.onClick.AddListener(() => ChangeMonitor(+1));
-
-            if (m_moveButton != null) m_moveButton.onClick.AddListener(() => { m_controller.ToggleWindowMoveMode(); RefreshLabel(); });
-
-            RefreshLabel();
+            Refresh();
         }
 
         public override void Unbind()
         {
-            m_fullButton?.onClick.RemoveAllListeners();
-            m_windowButton?.onClick.RemoveAllListeners();
-            m_scaleSlider?.onValueChanged.RemoveAllListeners();
-            m_scale075Button?.onClick.RemoveAllListeners();
-            m_scale100Button?.onClick.RemoveAllListeners();
-            m_scale125Button?.onClick.RemoveAllListeners();
-            m_cropLeftSlider?.onValueChanged.RemoveAllListeners();
-            m_cropRightSlider?.onValueChanged.RemoveAllListeners();
-            m_monitorPrevButton?.onClick.RemoveAllListeners();
-            m_monitorNextButton?.onClick.RemoveAllListeners();
+            m_modeDropdown?.onValueChanged.RemoveAllListeners();
+            m_scaleDropdown?.onValueChanged.RemoveAllListeners();
+            m_uiScaleDropdown?.onValueChanged.RemoveAllListeners();
+            m_fpsDropdown?.onValueChanged.RemoveAllListeners();
+            if (m_cropSlider != null) m_cropSlider.OnValueChanged -= HandleCropChanged;
+            m_monitorDropdown?.onValueChanged.RemoveAllListeners();
             m_moveButton?.onClick.RemoveAllListeners();
         }
 
-        private void ChangeMonitor(int delta)
+        // 옵션을 교체한다. 재바인딩 시 목록이 누적되거나 리스너가 중복 구독되는 것을 막는다.
+        private static void SetOptions(TMP_Dropdown dropdown, IEnumerable<string> labels)
         {
-            int count = Mathf.Max(1, m_controller.MonitorCount);
-            int next = ((m_controller.MonitorIndex + delta) % count + count) % count;
-            m_controller.SetMonitor(next);
-            RefreshLabel();
+            dropdown.onValueChanged.RemoveAllListeners();
+            dropdown.ClearOptions();
+            dropdown.AddOptions(new List<string>(labels));
         }
 
-        private void BindScaleSlider()
+        // 선택을 알림 없이 반영한다. 알림을 태우면 컨트롤러를 다시 호출해 재귀가 된다.
+        private static void Select(TMP_Dropdown dropdown, int index)
         {
-            if (m_scaleSlider == null) return;
+            dropdown.SetValueWithoutNotify(Mathf.Clamp(index, 0, Mathf.Max(0, dropdown.options.Count - 1)));
+            dropdown.RefreshShownValue();
+        }
 
-            m_scaleSlider.minValue = ViewScaleRange.Min;
-            m_scaleSlider.maxValue = ViewScaleRange.Max;
-            m_scaleSlider.SetValueWithoutNotify(m_controller.Scale);
-            m_scaleSlider.onValueChanged.AddListener(value =>
+        private void BindModeDropdown()
+        {
+            if (m_modeDropdown == null) return;
+
+            SetOptions(m_modeDropdown, ModeLabels);
+            Select(m_modeDropdown, (int)m_controller.Mode);
+            m_modeDropdown.onValueChanged.AddListener(index =>
             {
-                m_controller.SetScale(value);
-                RefreshLabel();
+                m_controller.SetMode((ScreenMode)index);
+                Refresh();
             });
         }
 
-        // 프리셋 버튼은 슬라이더와 같은 값을 조작하므로, 누른 뒤 슬라이더를 결과에 동기화한다.
-        private void BindScalePreset(Button button, float value)
+        private void BindScaleDropdown()
         {
-            if (button == null) return;
+            if (m_scaleDropdown == null) return;
 
-            button.onClick.AddListener(() =>
+            SetOptions(m_scaleDropdown, ViewScaleRange.Labels());
+
+            // 슬라이더 시절에 저장된 연속값(예: 0.9)은 목록에 없다. 가장 가까운 항목으로 정규화해
+            // 표시와 실제 값이 어긋나지 않게 맞춘다.
+            int index = ViewScaleRange.NearestIndex(m_controller.Scale);
+            m_controller.SetScale(ViewScaleRange.Options[index]);
+            Select(m_scaleDropdown, index);
+
+            m_scaleDropdown.onValueChanged.AddListener(i =>
             {
-                m_controller.SetScale(value);
-                m_scaleSlider?.SetValueWithoutNotify(m_controller.Scale);
-                RefreshLabel();
+                m_controller.SetScale(ViewScaleRange.Options[i]);
+                Refresh();
             });
         }
 
-        // 크롭 슬라이더는 서로를 밀어내며(최소 폭 유지) 컨트롤러에 즉시 반영한다.
-        private void BindCropSliders()
+        // UI 배율은 연속값을 허용하지 않는다. 1/4 단위를 벗어나면 아트 1픽셀이 정수 화면픽셀로 떨어지지 않는다.
+        private void BindUiScaleDropdown()
         {
-            if (m_cropLeftSlider != null)
-            {
-                m_cropLeftSlider.minValue = 0f;
-                m_cropLeftSlider.maxValue = 1f;
-                m_cropLeftSlider.SetValueWithoutNotify(m_controller.CropLeft);
-                m_cropLeftSlider.onValueChanged.AddListener(left =>
-                {
-                    m_controller.SetCropRange(left, m_controller.CropRight);
-                    SyncCropSliders();
-                });
-            }
+            if (m_uiScaleDropdown == null) return;
 
-            if (m_cropRightSlider != null)
+            SetOptions(m_uiScaleDropdown, UiScaleRange.Labels());
+            Select(m_uiScaleDropdown, UiScaleRange.NearestIndex(m_controller.UiScale));
+            m_uiScaleDropdown.onValueChanged.AddListener(i =>
             {
-                m_cropRightSlider.minValue = 0f;
-                m_cropRightSlider.maxValue = 1f;
-                m_cropRightSlider.SetValueWithoutNotify(m_controller.CropRight);
-                m_cropRightSlider.onValueChanged.AddListener(right =>
-                {
-                    m_controller.SetCropRange(m_controller.CropLeft, right);
-                    SyncCropSliders();
-                });
-            }
+                m_controller.SetUiScale(UiScaleRange.Options[i]);
+                Refresh();
+            });
         }
 
-        // 컨트롤러가 보정한 값(순서 교정·최소 폭)을 슬라이더에 되돌린다. 알림 없이 써서 재귀를 막는다.
-        private void SyncCropSliders()
+        // 프레임 상한은 화면 모드와 무관하므로 Full에서도 살려 둔다.
+        private void BindFpsDropdown()
         {
-            m_cropLeftSlider?.SetValueWithoutNotify(m_controller.CropLeft);
-            m_cropRightSlider?.SetValueWithoutNotify(m_controller.CropRight);
+            if (m_fpsDropdown == null) return;
+
+            SetOptions(m_fpsDropdown, FpsOptions.Labels());
+            Select(m_fpsDropdown, FpsOptions.NearestIndex(m_controller.TargetFps));
+            m_fpsDropdown.onValueChanged.AddListener(i =>
+            {
+                m_controller.SetTargetFps(FpsOptions.Options[i]);
+                Refresh();
+            });
+        }
+
+        private void BindMonitorDropdown()
+        {
+            if (m_monitorDropdown == null) return;
+
+            SetOptions(m_monitorDropdown, m_controller.MonitorLabels());
+            Select(m_monitorDropdown, m_controller.MonitorIndex);
+            m_monitorDropdown.onValueChanged.AddListener(index =>
+            {
+                m_controller.SetMonitor(index);
+                Select(m_monitorDropdown, m_controller.MonitorIndex);   // 컨트롤러가 클램프한 결과를 되돌린다
+                Refresh();
+            });
+        }
+
+        // 좌·우 경계를 핸들 두 개로 다루는 단일 슬라이더다. 드래그 중 매 프레임 컨트롤러에 반영된다.
+        private void BindCropSlider()
+        {
+            if (m_cropSlider == null) return;
+
+            m_cropSlider.SetValuesWithoutNotify(m_controller.CropLeft, m_controller.CropRight);
+            m_cropSlider.OnValueChanged += HandleCropChanged;
+        }
+
+        private void HandleCropChanged(float left, float right)
+        {
+            m_controller.SetCropRange(left, right);
+
+            // 컨트롤러가 보정한 값(순서 교정·최소 폭)을 되돌린다. 알림 없이 써서 재귀를 막는다.
+            m_cropSlider.SetValuesWithoutNotify(m_controller.CropLeft, m_controller.CropRight);
+            Refresh();
+        }
+
+        private void Refresh()
+        {
             RefreshLabel();
+            RefreshWindowOnlyOptions();
         }
 
         private void RefreshLabel()
         {
-            if (m_monitorLabel != null)
-            {
-                // 번호는 Windows 디스플레이 설정의 번호와 일치시킨다(열거 순서가 아님).
-                m_monitorLabel.text = $"Monitor {m_controller.CurrentDisplayNumber()} / {Mathf.Max(1, m_controller.MonitorCount)}";
-            }
             if (m_moveLabel != null)
             {
                 m_moveLabel.text = m_controller.WindowMoveMode ? "이동 모드: ON" : "이동 모드: OFF";
@@ -167,10 +203,42 @@ namespace DesktopCompanion.Views
             {
                 m_cropLabel.text = $"보이는 구간 {m_controller.CropLeft:0.00} ~ {m_controller.CropRight:0.00}";
             }
-            if (m_scaleLabel != null)
+        }
+
+        /// <summary>
+        /// 출력 배율·크롭·창 이동은 Window 모드에서만 적용된다
+        /// (Full은 uv 전체·화면 크기 고정이고, 창 이동은 컨트롤러가 Window 모드에서만 켜 준다).
+        /// Full 모드에서는 상호작용을 끄고 텍스트를 반투명으로 낮춰 쓸 수 없는 항목임을 보인다.
+        /// </summary>
+        private void RefreshWindowOnlyOptions()
+        {
+            bool windowMode = m_controller.Mode == ScreenMode.Window;
+            float alpha = windowMode ? 1f : m_disabledTextAlpha;
+
+            if (m_scaleDropdown != null)
             {
-                m_scaleLabel.text = $"크기 {m_controller.Scale:0.00}배";
+                m_scaleDropdown.interactable = windowMode;
+                SetTextAlpha(m_scaleDropdown.captionText, alpha);
             }
+            if (m_cropSlider != null) m_cropSlider.Interactable = windowMode;
+            SetTextAlpha(m_cropLabel, alpha);
+
+            if (m_moveButton != null) m_moveButton.interactable = windowMode;
+            SetTextAlpha(m_moveLabel, alpha);
+
+            // 항목 제목처럼 위젯 밖에 있는 텍스트는 계층을 알 수 없어 인스펙터에서 받는다.
+            if (m_windowOnlyTexts != null)
+            {
+                foreach (var text in m_windowOnlyTexts)
+                {
+                    SetTextAlpha(text, alpha);
+                }
+            }
+        }
+
+        private static void SetTextAlpha(TMP_Text text, float alpha)
+        {
+            if (text != null) text.alpha = alpha;
         }
     }
 }

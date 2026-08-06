@@ -17,6 +17,8 @@ namespace DesktopCompanion.Views
         [Tooltip("창이 포커스 아웃되면 유휴 상한으로 낮출지")]
         [SerializeField] private bool m_lowerWhenUnfocused = true;
 
+        private bool m_focused = true;
+
         private void Start()
         {
             QualitySettings.vSyncCount = 0;   // targetFrameRate가 적용되도록 VSync 해제
@@ -25,9 +27,24 @@ namespace DesktopCompanion.Views
 
         private void OnApplicationFocus(bool focused)
         {
+            m_focused = focused;
             if (m_lowerWhenUnfocused)
             {
                 Apply(focused ? m_activeFrameRate : m_idleFrameRate);
+            }
+        }
+
+        /// <summary>
+        /// 활성 프레임 상한을 지정한다. 설정 창의 FPS 옵션이 이 경로로 값을 넘긴다.
+        /// 유휴(포커스 아웃) 상태면 값만 갱신하고, 포커스 복귀 시 반영된다.
+        /// ※ Start보다 먼저 호출돼도 안전하다. 필드를 바꿔 두므로 Start가 같은 값을 다시 적용한다.
+        /// </summary>
+        public void SetActiveFrameRate(int fps)
+        {
+            m_activeFrameRate = Mathf.Max(1, fps);
+            if (m_focused || m_lowerWhenUnfocused == false)
+            {
+                Apply(m_activeFrameRate);
             }
         }
 
