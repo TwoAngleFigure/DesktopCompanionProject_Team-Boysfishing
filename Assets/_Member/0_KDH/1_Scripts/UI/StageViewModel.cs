@@ -46,13 +46,13 @@ namespace DesktopCompanion.Views
 
         private void HandleTravelStarted(int targetMapId, float duration)
         {
-            // 🎯 출항 시퀀스(Departing 9초) 동안에는 중단 버튼 비활성화 (기획 의도 준수 및 팝인 방지)
+            // 출항 시퀀스(Departing 9초) 동안에는 중단 버튼 비활성화 (기획 의도 준수 및 팝인 방지)
             IsCancelButtonInteractable.Value = false;
         }
 
         private void HandleVoyageStateChanged(VoyageState state)
         {
-            // 🎯 실제 본 항해 중(Traveling)일 때에만 중단 버튼 활성화!
+            // 실제 본 항해 중(Traveling)일 때에만 중단 버튼 활성화!
             // Departing(출항) 및 Arriving(도착), Anchored(정박), Stopping(중지 중) 동안에는 비활성화
             IsCancelButtonInteractable.Value = (state == VoyageState.Traveling);
         }

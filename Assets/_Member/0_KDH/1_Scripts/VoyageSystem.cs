@@ -15,7 +15,7 @@ namespace DesktopCompanion.Systems
         private float m_maxSpeed = 5f;
         private const float DEPARTURE_TIME = 21.0f;
         private const float ARRIVAL_TIME = 21.0f;
-        private const float STOPPING_TIME = 9.0f; // 🎯 원래 감속 시간인 9초로 복원
+        private const float STOPPING_TIME = 9.0f; // 원래 감속 시간인 9초로 복원
         private int m_pathIndex = 0;
 
         // 논리적 좌표 및 경로
@@ -31,7 +31,7 @@ namespace DesktopCompanion.Systems
         private float m_totalPathDistance = 0f;
         public bool IsCanceled { get; private set; } = false;
 
-        // View들이 구독할 이벤트들 ✅
+        // View들이 구독할 이벤트들
         public event Action<VoyageState> OnVoyageStateChanged;
         public event Action<float> OnSpeedChanged;
         public event Action<BiomeType> OnBiomeChanged;
@@ -92,7 +92,7 @@ namespace DesktopCompanion.Systems
                 }
             }
 
-            m_currentSpeed = 0f; // 🎯 새 항해 시작 시 이전 중단 속도 잔여 영향 차단 (0부터 출발)
+            m_currentSpeed = 0f; // 새 항해 시작 시 이전 중단 속도 잔여 영향 차단 (0부터 출발)
             ChangeState(VoyageState.Departing);
         }
 
@@ -115,7 +115,7 @@ namespace DesktopCompanion.Systems
             {
                 Vector2 targetWaypoint = m_currentPath[m_pathIndex];
 
-                // 🎯 100% 순수 물리 이동: 위치 강제 대입 없이 오직 MoveTowards로만 연속 이동!
+                // 100% 순수 물리 이동: 위치 강제 대입 없이 오직 MoveTowards로만 연속 이동!
                 m_currentLogicalPosition = Vector2.MoveTowards(m_currentLogicalPosition, targetWaypoint, m_currentSpeed * dt);
 
                 bool isFinalNode = (m_pathIndex == m_currentPath.Count - 1);
@@ -129,7 +129,7 @@ namespace DesktopCompanion.Systems
                     }
                     else
                     {
-                        // 🎯 강제 대입 0%! 오직 MoveTowards 결과로 노드 정중앙에 100% 안착한 프레임에 정박!
+                        // 강제 대입 0%! 오직 MoveTowards 결과로 노드 정중앙에 100% 안착한 프레임에 정박!
                         m_currentSpeed = 0f;
                         ChangeState(VoyageState.Anchored);
                     }
@@ -195,13 +195,13 @@ namespace DesktopCompanion.Systems
             }
             else if (m_currentState == VoyageState.Arriving)
             {
-                // 🎯 시각적으로 확연히 체감되는 거리 비례 부드러운 감속 커브 적용
+                // 시각적으로 확연히 체감되는 거리 비례 부드러운 감속 커브 적용
                 float decelDistance = m_maxSpeed * ARRIVAL_TIME * 0.5f; // 22.5 unit
                 float remDist = RemainingDistance;
 
                 float ratio = (decelDistance > 0f) ? Mathf.Clamp01(remDist / decelDistance) : 0f;
 
-                // 🎯 최저 안착 속도(1.5f) 보장: 속도가 무한히 0으로 줄어들지 않고,
+                // 최저 안착 속도(1.5f) 보장: 속도가 무한히 0으로 줄어들지 않고,
                 // 1.5f 속도로 목적지 노드 정중앙(targetWaypoint)까지 MoveTowards가 깔끔히 밀고 들어갈 수 있게 함!
                 float calculatedSpeed = m_maxSpeed * ratio;
                 m_currentSpeed = Mathf.Max(calculatedSpeed, 1.5f);
@@ -215,7 +215,7 @@ namespace DesktopCompanion.Systems
             }
             else if (m_currentState == VoyageState.Stopping)
             {
-                // 🎯 중단 시 부드럽게 감속 브레이크 후 정박
+                // 중단 시 부드럽게 감속 브레이크 후 정박
                 m_currentSpeed -= (m_maxSpeed / STOPPING_TIME) * dt;
 
                 if (m_currentSpeed <= 0f)

@@ -31,7 +31,7 @@ namespace DesktopCompanion.Views
 
             if (m_cancelButton != null)
             {
-                // 🎯 궁극의 타겟팅 리셋: 유니티 인스펙터에 숨어있던 모든 악성 닫기 바인딩을 영구 무력화!
+                // 궁극의 타겟팅 리셋: 유니티 인스펙터에 숨어있던 모든 악성 닫기 바인딩을 영구 무력화!
                 m_cancelButton.onClick = new UnityEngine.UI.Button.ButtonClickedEvent();
                 m_cancelButton.onClick.AddListener(() =>
                 {
@@ -101,7 +101,7 @@ namespace DesktopCompanion.Views
             }
             else if (m_wasTraveling)
             {
-                // 🎯 중단 버튼 클릭에 의한 정박 시 "항해 중단", 목적지 정상 도착 시 "도착 완료!" 출력!
+                // 중단 버튼 클릭에 의한 정박 시 "항해 중단", 목적지 정상 도착 시 "도착 완료!" 출력!
                 m_timerText.text = m_vm.IsCanceled ? "항해 중단" : "도착 완료!";
             }
 

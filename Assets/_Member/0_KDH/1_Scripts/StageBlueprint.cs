@@ -153,7 +153,7 @@ namespace DesktopCompanion.Views
             {
                 GameObject obj = Instantiate(prefab, parentLayer);
 
-                // 🎯 배가 목적지 targetCamX 에 정차했을 때 Far, Mid, Near 3개 오브젝트가 1자로 exact 포개어지는 고정 수식!
+                // 배가 목적지 targetCamX 에 정차했을 때 Far, Mid, Near 3개 오브젝트가 1자로 exact 포개어지는 고정 수식!
                 float convertedLocalX = data.m_targetWorldX - (data.m_targetCameraX * parallaxFactor);
 
                 obj.transform.localPosition = new Vector3(convertedLocalX, data.m_targetLocalY, 0f);

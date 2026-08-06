@@ -163,7 +163,7 @@ namespace DesktopCompanion.Views
                 }
             }
 
-            // 🎯 런타임 재생 중일 때만 계층구조(SetParent) 변경 실행 (OnValidate 에러 방지)
+            // 런타임 재생 중일 때만 계층구조(SetParent) 변경 실행 (OnValidate 에러 방지)
             if (Application.isPlaying && m_mainCamera != null && m_fadeOverlaySprite != null && m_fadeOverlaySprite.transform.parent != m_mainCamera.transform)
             {
                 m_fadeOverlaySprite.transform.SetParent(m_mainCamera.transform);
@@ -227,7 +227,7 @@ namespace DesktopCompanion.Views
         {
             if (m_fadeOverlaySprite == null || m_mainCamera == null) return;
 
-            // 🎯 메인 카메라의 직속 자식으로서 카메라 정중앙 (0, 0) 및 Z축 바로 앞에 밀착!
+            // 메인 카메라의 직속 자식으로서 카메라 정중앙 (0, 0) 및 Z축 바로 앞에 밀착!
             m_fadeOverlaySprite.transform.localPosition = new Vector3(0f, 0f, m_mainCamera.nearClipPlane + 0.2f);
             m_fadeOverlaySprite.transform.localRotation = Quaternion.identity;
 
@@ -235,7 +235,7 @@ namespace DesktopCompanion.Views
             float camHeight = m_mainCamera.orthographic ? (2f * m_mainCamera.orthographicSize) : 20f;
             float camWidth = camHeight * m_mainCamera.aspect;
 
-            // 🎯 카메라 화면 전체 상/하/좌/우를 넉넉하게 가리도록 5배 거대 스케일 적용
+            // 카메라 화면 전체 상/하/좌/우를 넉넉하게 가리도록 5배 거대 스케일 적용
             float scaleX = Mathf.Max(camWidth * 5f, 200f);
             float scaleY = Mathf.Max(camHeight * 5f, 200f);
             m_fadeOverlaySprite.transform.localScale = new Vector3(scaleX, scaleY, 1f);
@@ -376,7 +376,7 @@ namespace DesktopCompanion.Views
 
             Debug.Log($"[ParallaxLoopBackgroundView] 🎬 [2/3] 화면 가려짐 -> 배경 에셋 교체!");
 
-            // 2. 🌄 새 맵 배경 에셋 교체
+            // 2. 새 맵 배경 에셋 교체
             ApplyStageBackgroundSprite(newStage);
 
             // TODO: [확장 포인트] BluePrint 3D/2D 오브젝트 생성 및 제거 로직 연동 예정 지점

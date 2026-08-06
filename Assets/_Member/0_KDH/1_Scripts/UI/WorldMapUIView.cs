@@ -11,7 +11,7 @@ namespace DesktopCompanion.Views
         [SerializeField] private GameObject m_nodePrefab;
         [SerializeField] private Transform m_nodeContainer;
 
-        [Header("플레이어 아이콘 (내 배)")] // ✨ 배 UI 연결 필드 추가
+        [Header("플레이어 아이콘 (내 배)")] // 배 UI 연결 필드 추가
         [SerializeField] private RectTransform m_shipIconRect;
 
         [Header("UI 제어")]
@@ -75,7 +75,7 @@ namespace DesktopCompanion.Views
 
             if (m_closeButton != null)
             {
-                // 🎯 100% 범인 해결: m_closeButton에 잘못 연결된 중지 버튼(Btn_HUDCancel)의 닫기 바인딩 무력화!
+                // 100% 범인 해결: m_closeButton에 잘못 연결된 중지 버튼(Btn_HUDCancel)의 닫기 바인딩 무력화!
                 if (m_closeButton.name.Contains("Cancel") || m_closeButton.name.Contains("cancel"))
                 {
                     Debug.LogWarning($"[WorldMapUIView] m_closeButton에 중지 버튼({m_closeButton.name})이 잘못 바인딩되어 있어 닫기 이벤트를 제외합니다.");
@@ -95,7 +95,7 @@ namespace DesktopCompanion.Views
             m_vm.Unbind();
         }
 
-        // ✨ 실시간으로 배 아이콘의 위치를 업데이트하는 로직 추가
+        // 실시간으로 배 아이콘의 위치를 업데이트하는 로직 추가
         private void Update()
         {
             if (m_vm == null || m_shipIconRect == null) return;

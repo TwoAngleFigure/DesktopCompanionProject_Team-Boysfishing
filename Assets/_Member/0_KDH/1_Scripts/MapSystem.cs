@@ -75,7 +75,7 @@ namespace DesktopCompanion.Systems
                     int pixelX = Mathf.Clamp(Mathf.FloorToInt(u * texWidth), 0, texWidth - 1);
                     int pixelY = Mathf.Clamp(Mathf.FloorToInt(v * texHeight), 0, texHeight - 1);
 
-                    // 🚀 바다 색상 판정
+                    // 바다 색상 판정
                     Color walkColor = walkableMapTex.GetPixel(pixelX, pixelY);
                     m_walkableGrid[x, y] = walkColor.b > (walkColor.r + 0.15f);
 
@@ -84,7 +84,7 @@ namespace DesktopCompanion.Systems
                 }
             }
 
-            Debug.Log($"🗺️ [MapSystem] 맵 스캔 완료! 🌊바다: {seaCount}개 | ⛰️육지: {landCount}개");
+            Debug.Log($"[MapSystem] 맵 스캔 완료! 바다: {seaCount}개 | 육지: {landCount}개");
         }
 
         private BiomeType DetermineBiomeByColor(Color color)

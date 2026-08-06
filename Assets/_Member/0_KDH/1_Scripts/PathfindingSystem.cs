@@ -32,7 +32,7 @@ namespace DesktopCompanion.Systems
             Vector2Int startGridRaw = mapManager.WorldToGridPosition(startWorldPos);
             Vector2Int targetGridRaw = mapManager.WorldToGridPosition(targetWorldPos);
 
-            // ✨ 반경 15칸(150px 범위)까지 유연하게 가장 가까운 바다로 스냅 보정
+            // 반경 15칸(150px 범위)까지 유연하게 가장 가까운 바다로 스냅 보정
             Vector2Int startGrid = FindNearestWalkableWater(startGridRaw, mapManager, 15);
             Vector2Int targetGrid = FindNearestWalkableWater(targetGridRaw, mapManager, 15);
 
@@ -103,7 +103,7 @@ namespace DesktopCompanion.Systems
             return new List<Vector2>();
         }
 
-        // 🚀 [완전히 새로운 방식] 큐(Queue)를 버리고, 동심원 형태로 1칸, 2칸씩 외곽선을 훑으며 가장 가까운 바다를 100% 확실하게 찾아냅니다.
+        // [완전히 새로운 방식] 큐(Queue)를 버리고, 동심원 형태로 1칸, 2칸씩 외곽선을 훑으며 가장 가까운 바다를 100% 확실하게 찾아냅니다.
         private Vector2Int FindNearestWalkableWater(Vector2Int gridPos, MapSystem map, int maxRadius)
         {
             // 1. 이미 바다면 그대로 통과
@@ -179,7 +179,7 @@ namespace DesktopCompanion.Systems
             }
             path.Reverse();
 
-            // 🎯 스냅된 바다 위치에서 실제 목적지 노드 중심 좌표(targetWorldPos)로 마지막 마침표 추가!
+            // 스냅된 바다 위치에서 실제 목적지 노드 중심 좌표(targetWorldPos)로 마지막 마침표 추가
             if (path.Count == 0 || Vector2.Distance(path[path.Count - 1], targetWorldPos) > 0.01f)
             {
                 path.Add(targetWorldPos);

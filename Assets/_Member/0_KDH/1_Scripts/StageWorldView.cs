@@ -83,7 +83,7 @@ namespace DesktopCompanion.Views
                     var voyage = SystemManager.GetSystem<VoyageSystem>();
                     bool isCanceled = voyage != null && voyage.IsCanceled;
 
-                    // 🎯 항해 중단(취소) 정박일 경우 순간이동 로드(LoadStage)를 부르지 않고 현 위치에 자연 정박!
+                    // 항해 중단(취소) 정박일 경우 순간이동 로드(LoadStage)를 부르지 않고 현 위치에 자연 정박!
                     if (!isCanceled && stageSystem.CurrentStageData != null)
                     {
                         LoadStage(GetStageAssetKey(stageSystem.CurrentStageData), isTarget: false);
@@ -103,7 +103,7 @@ namespace DesktopCompanion.Views
                     break;
 
                 case VoyageState.Stopping:
-                    // 🎯 Stopping 중단 9초 동안 물과 맵 배경을 절대 파괴하지 않고 유지!
+                    // Stopping 중단 9초 동안 물과 맵 배경을 절대 파괴하지 않고 유지!
                     PlayStoppingSequence(stageSystem);
                     break;
             }
@@ -283,7 +283,7 @@ namespace DesktopCompanion.Views
         {
             if (stageData == null) return "StageBlueprint_Default";
 
-            // 🎯 StageData.ID 기준 정직 탐색 (예: 첫번째 맵 600001 -> StageData_600001_Model)
+            // StageData.ID 기준 정직 탐색 (예: 첫번째 맵 600001 -> StageData_600001_Model)
             string keyWithModel = $"StageData_{stageData.ID}_Model";
             if (AssetProvider != null && AssetProvider.TryGet<GameObject>(keyWithModel, out GameObject _))
             {
