@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 using TMPro;
 
@@ -34,6 +35,10 @@ namespace DesktopCompanion.Views
         [SerializeField] private RangeSlider m_cropSlider;
         [SerializeField] private TMP_Text m_cropLabel;
 
+        [Header("Always On Top")]
+        [Tooltip("창 최상단 고정. 화면 모드와 무관하게 항상 쓸 수 있다")]
+        [SerializeField] private Toggle m_topMostToggle;
+
         [Header("Monitor")]
         [SerializeField] private TMP_Dropdown m_monitorDropdown;
 
@@ -62,28 +67,36 @@ namespace DesktopCompanion.Views
             BindUiScaleDropdown();
             BindFpsDropdown();
             BindCropSlider();
+            BindTopMostToggle();
             BindMonitorDropdown();
 
-            if (m_moveButton != null) m_moveButton.onClick.AddListener(() => { m_controller.ToggleWindowMoveMode(); Refresh(); });
+            if (m_moveButton != null)
+            {
+                m_moveButton.onClick.RemoveListener(HandleMoveClicked);
+                m_moveButton.onClick.AddListener(HandleMoveClicked);
+            }
 
             Refresh();
         }
 
         public override void Unbind()
         {
-            m_modeDropdown?.onValueChanged.RemoveAllListeners();
-            m_scaleDropdown?.onValueChanged.RemoveAllListeners();
-            m_uiScaleDropdown?.onValueChanged.RemoveAllListeners();
-            m_fpsDropdown?.onValueChanged.RemoveAllListeners();
+            // ※ RemoveAllListeners를 쓰면 안 된다. 인스펙터 연결은 남기고 런타임 AddListener로 붙은 것을
+            //   전부 지우는데, 위젯의 연출 컴포넌트(ToggleSpriteAnimator 등)가 바로 그 방식으로 구독한다.
+            //   이 창이 건 핸들러만 정확히 떼어낸다.
+            m_modeDropdown?.onValueChanged.RemoveListener(HandleModeChanged);
+            m_scaleDropdown?.onValueChanged.RemoveListener(HandleScaleChanged);
+            m_uiScaleDropdown?.onValueChanged.RemoveListener(HandleUiScaleChanged);
+            m_fpsDropdown?.onValueChanged.RemoveListener(HandleFpsChanged);
             if (m_cropSlider != null) m_cropSlider.OnValueChanged -= HandleCropChanged;
-            m_monitorDropdown?.onValueChanged.RemoveAllListeners();
-            m_moveButton?.onClick.RemoveAllListeners();
+            m_topMostToggle?.onValueChanged.RemoveListener(HandleTopMostChanged);
+            m_monitorDropdown?.onValueChanged.RemoveListener(HandleMonitorChanged);
+            m_moveButton?.onClick.RemoveListener(HandleMoveClicked);
         }
 
-        // 옵션을 교체한다. 재바인딩 시 목록이 누적되거나 리스너가 중복 구독되는 것을 막는다.
+        // 옵션 목록을 교체한다. 재바인딩 시 목록이 누적되지 않도록 항상 비우고 채운다.
         private static void SetOptions(TMP_Dropdown dropdown, IEnumerable<string> labels)
         {
-            dropdown.onValueChanged.RemoveAllListeners();
             dropdown.ClearOptions();
             dropdown.AddOptions(new List<string>(labels));
         }
@@ -101,11 +114,20 @@ namespace DesktopCompanion.Views
 
             SetOptions(m_modeDropdown, ModeLabels);
             Select(m_modeDropdown, (int)m_controller.Mode);
-            m_modeDropdown.onValueChanged.AddListener(index =>
-            {
-                m_controller.SetMode((ScreenMode)index);
-                Refresh();
-            });
+            Subscribe(m_modeDropdown, HandleModeChanged);
+        }
+
+        // 중복 구독을 막고 다른 컴포넌트의 구독은 건드리지 않는다.
+        private static void Subscribe(TMP_Dropdown dropdown, UnityAction<int> handler)
+        {
+            dropdown.onValueChanged.RemoveListener(handler);
+            dropdown.onValueChanged.AddListener(handler);
+        }
+
+        private void HandleModeChanged(int index)
+        {
+            m_controller.SetMode((ScreenMode)index);
+            Refresh();
         }
 
         private void BindScaleDropdown()
@@ -119,12 +141,13 @@ namespace DesktopCompanion.Views
             int index = ViewScaleRange.NearestIndex(m_controller.Scale);
             m_controller.SetScale(ViewScaleRange.Options[index]);
             Select(m_scaleDropdown, index);
+            Subscribe(m_scaleDropdown, HandleScaleChanged);
+        }
 
-            m_scaleDropdown.onValueChanged.AddListener(i =>
-            {
-                m_controller.SetScale(ViewScaleRange.Options[i]);
-                Refresh();
-            });
+        private void HandleScaleChanged(int index)
+        {
+            m_controller.SetScale(ViewScaleRange.Options[index]);
+            Refresh();
         }
 
         // UI 배율은 연속값을 허용하지 않는다. 1/4 단위를 벗어나면 아트 1픽셀이 정수 화면픽셀로 떨어지지 않는다.
@@ -134,11 +157,13 @@ namespace DesktopCompanion.Views
 
             SetOptions(m_uiScaleDropdown, UiScaleRange.Labels());
             Select(m_uiScaleDropdown, UiScaleRange.NearestIndex(m_controller.UiScale));
-            m_uiScaleDropdown.onValueChanged.AddListener(i =>
-            {
-                m_controller.SetUiScale(UiScaleRange.Options[i]);
-                Refresh();
-            });
+            Subscribe(m_uiScaleDropdown, HandleUiScaleChanged);
+        }
+
+        private void HandleUiScaleChanged(int index)
+        {
+            m_controller.SetUiScale(UiScaleRange.Options[index]);
+            Refresh();
         }
 
         // 프레임 상한은 화면 모드와 무관하므로 Full에서도 살려 둔다.
@@ -148,11 +173,29 @@ namespace DesktopCompanion.Views
 
             SetOptions(m_fpsDropdown, FpsOptions.Labels());
             Select(m_fpsDropdown, FpsOptions.NearestIndex(m_controller.TargetFps));
-            m_fpsDropdown.onValueChanged.AddListener(i =>
-            {
-                m_controller.SetTargetFps(FpsOptions.Options[i]);
-                Refresh();
-            });
+            Subscribe(m_fpsDropdown, HandleFpsChanged);
+        }
+
+        private void HandleFpsChanged(int index)
+        {
+            m_controller.SetTargetFps(FpsOptions.Options[index]);
+            Refresh();
+        }
+
+        // 최상단 고정은 화면 모드와 무관하므로 Full에서도 살려 둔다.
+        private void BindTopMostToggle()
+        {
+            if (m_topMostToggle == null) return;
+
+            m_topMostToggle.SetIsOnWithoutNotify(m_controller.TopMost);
+            m_topMostToggle.onValueChanged.RemoveListener(HandleTopMostChanged);
+            m_topMostToggle.onValueChanged.AddListener(HandleTopMostChanged);
+        }
+
+        private void HandleTopMostChanged(bool on)
+        {
+            m_controller.SetTopMost(on);
+            Refresh();
         }
 
         private void BindMonitorDropdown()
@@ -161,12 +204,20 @@ namespace DesktopCompanion.Views
 
             SetOptions(m_monitorDropdown, m_controller.MonitorLabels());
             Select(m_monitorDropdown, m_controller.MonitorIndex);
-            m_monitorDropdown.onValueChanged.AddListener(index =>
-            {
-                m_controller.SetMonitor(index);
-                Select(m_monitorDropdown, m_controller.MonitorIndex);   // 컨트롤러가 클램프한 결과를 되돌린다
-                Refresh();
-            });
+            Subscribe(m_monitorDropdown, HandleMonitorChanged);
+        }
+
+        private void HandleMonitorChanged(int index)
+        {
+            m_controller.SetMonitor(index);
+            Select(m_monitorDropdown, m_controller.MonitorIndex);   // 컨트롤러가 클램프한 결과를 되돌린다
+            Refresh();
+        }
+
+        private void HandleMoveClicked()
+        {
+            m_controller.ToggleWindowMoveMode();
+            Refresh();
         }
 
         // 좌·우 경계를 핸들 두 개로 다루는 단일 슬라이더다. 드래그 중 매 프레임 컨트롤러에 반영된다.

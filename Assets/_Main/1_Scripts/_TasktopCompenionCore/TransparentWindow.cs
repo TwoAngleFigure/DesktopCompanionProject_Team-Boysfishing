@@ -23,6 +23,9 @@ namespace DesktopCompanion
         [Tooltip("작업표시줄에서 창을 숨길지 여부")]
         [SerializeField] private bool _hideFromTaskbar = false;
 
+        [Tooltip("시작 시 창을 최상단에 고정할지 여부. 런타임 변경은 ApplyTopMost로 한다")]
+        [SerializeField] private bool _topMost = true;
+
         [Tooltip("HWND 확보 실패 시 재시도할 최대 프레임 수")]
         [SerializeField] private int _hwndRetryFrames = 30;
 
@@ -252,7 +255,8 @@ namespace DesktopCompanion
             const int maxCorrections = 4;
             for (int attempt = 0; attempt < maxCorrections; attempt++)
             {
-                Win32Native.SetWindowPos(_hwnd, Win32Native.HWND_TOPMOST, posX, posY, w, h,
+                IntPtr insertAfter = _topMost ? Win32Native.HWND_TOPMOST : Win32Native.HWND_NOTOPMOST;
+                Win32Native.SetWindowPos(_hwnd, insertAfter, posX, posY, w, h,
                     Win32Native.SWP_NOACTIVATE | Win32Native.SWP_SHOWWINDOW | Win32Native.SWP_FRAMECHANGED);
 
                 // DPI 변경 메시지가 처리될 시간을 준다.
@@ -286,7 +290,7 @@ namespace DesktopCompanion
             //    (이 순서가 어긋나 배경이 하얗게 남았고, F12 수동 재적용으로만 복구됐다.)
             ApplyTransparency();
             TrySetSquareCorners();
-            ApplyTopMost(true);
+            ApplyTopMost(_topMost);
             SetClickThrough(_clickThrough);
         }
 #endif
@@ -305,7 +309,7 @@ namespace DesktopCompanion
             ApplyBorderless();
             ApplyTransparency();
             TrySetSquareCorners();
-            ApplyTopMost(true);
+            ApplyTopMost(_topMost);
             SetClickThrough(_clickThrough);
 #endif
         }
@@ -356,9 +360,14 @@ namespace DesktopCompanion
         }
 #endif
 
-        /// <summary>창을 최상단으로 고정하거나 해제한다.</summary>
+        /// <summary>
+        /// 창을 최상단으로 고정하거나 해제한다.
+        /// 값을 필드에 보관하므로 HWND 확보 전에 호출해도 초기화가 끝날 때 반영되고,
+        /// 리사이즈·모니터 전환으로 창 스타일을 다시 적용할 때도 이 상태가 유지된다.
+        /// </summary>
         public void ApplyTopMost(bool on)
         {
+            _topMost = on;
 #if UNITY_STANDALONE_WIN && !UNITY_EDITOR
             if (_hwnd == IntPtr.Zero)
             {

@@ -43,6 +43,7 @@ namespace DesktopCompanion.Views
         public float Scale => m_data.Scale;
         public float UiScale => m_data.UiScale;
         public int TargetFps => m_data.TargetFps;
+        public bool TopMost => m_data.TopMost;
         public int MonitorIndex => m_data.MonitorIndex;
         public int MonitorCount { get; private set; } = 1;
         public bool WindowMoveMode { get; private set; }
@@ -68,6 +69,7 @@ namespace DesktopCompanion.Views
             Apply(m_data.Mode, m_data.Scale, save: false);
             PixelUiCanvasScaler.SetScale(m_data.UiScale);
             ApplyTargetFps();
+            ApplyTopMost();
             Save();
 
             // 클릭관통이 커서→월드카메라 좌표 매핑(RawImage uv→RT)을 쓰도록 연결.
@@ -240,6 +242,27 @@ namespace DesktopCompanion.Views
             if (m_frameRate != null)
             {
                 m_frameRate.SetActiveFrameRate(m_data.TargetFps);
+            }
+        }
+
+        // ── 최상단 고정 ──
+
+        /// <summary>
+        /// 창 최상단 고정을 켜고 끈다. TransparentWindow가 상태를 보관하므로,
+        /// 모니터 전환·리사이즈로 창 스타일을 다시 적용해도 이 설정이 유지된다.
+        /// </summary>
+        public void SetTopMost(bool on)
+        {
+            m_data.TopMost = on;
+            ApplyTopMost();
+            Save();
+        }
+
+        private void ApplyTopMost()
+        {
+            if (m_transparentWindow != null)
+            {
+                m_transparentWindow.ApplyTopMost(m_data.TopMost);
             }
         }
 
