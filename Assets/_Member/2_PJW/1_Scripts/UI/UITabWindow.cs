@@ -7,7 +7,8 @@ using UnityEngine.UI;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 여러 UIWindowBase를 탭으로 묶는 컨테이너 창. 탭 버튼을 누르면 짝지은 창만 표시하고 나머지는 숨긴다.
+    /// 여러 UIWindowBase를 탭으로 묶는 컨테이너 창. 탭 버튼을 누르면 그 탭에 묶인 창들만 표시하고 나머지는 숨긴다.
+    /// 탭 하나에 창을 여러 개 지정할 수 있고, 같은 창을 여러 탭에 걸쳐 지정해도 된다.
     /// 컨테이너 자신이 UIManager의 활성 스택·자동 배치·닫기 입력에 참여하며,
     /// 자식 창은 이 컨테이너가 Show()/Hide()로 제어한다(각 창의 HideMode는 유지된다).
     ///
@@ -15,19 +16,68 @@ namespace DesktopCompanion.Views
     /// </summary>
     public class UITabWindow : UIWindowBase
     {
-        /// <summary>탭 하나의 구성. 전환 버튼과 그 버튼이 표시할 창의 쌍이다.</summary>
+        /// <summary>탭 하나의 구성. 전환 버튼과 그 버튼이 표시할 창 목록이다.</summary>
         [Serializable]
         public class Tab
         {
             [Tooltip("이 탭으로 전환하는 버튼")]
             [SerializeField] private Button m_button;
 
-            [Tooltip("이 탭에서 보일 창")]
+            [Tooltip("이 탭에서 함께 보일 창들. 나열 순서대로 Show한다(마지막 것이 활성 스택 top)")]
+            [SerializeField] private List<UIWindowBase> m_panels = new();
+
+            [Tooltip("(구버전 호환) 단일 창 필드. 값이 남아 있으면 창 목록 맨 앞으로 이관된다")]
             [SerializeField] private UIWindowBase m_panel;
 
             public Button Button => m_button;
-            public UIWindowBase Panel => m_panel;
-            public bool IsValid => m_button != null && m_panel != null;
+
+            /// <summary>이 탭에서 보일 창 목록. 이관 전이면 구 단일 필드는 포함되지 않으므로 <see cref="MigrateLegacyPanel"/>를 먼저 부른다.</summary>
+            public IReadOnlyList<UIWindowBase> Panels => m_panels;
+
+            /// <summary>버튼과 창이 최소 하나씩 지정됐는지.</summary>
+            public bool IsValid => m_button != null && HasPanel();
+
+            /// <summary>구버전의 단일 창 필드를 목록 맨 앞으로 옮긴다. 이미 목록에 있으면 버린다.</summary>
+            public void MigrateLegacyPanel()
+            {
+                if (m_panel == null)
+                {
+                    return;
+                }
+
+                if (m_panels.Contains(m_panel) == false)
+                {
+                    m_panels.Insert(0, m_panel);   // 기존 동작과 표시 순서를 맞추기 위해 맨 앞
+                }
+                m_panel = null;
+            }
+
+            /// <summary>이 탭의 창을 모두 연다.</summary>
+            public void ShowPanels()
+            {
+                for (int i = 0; i < m_panels.Count; i++)
+                {
+                    if (m_panels[i] != null) m_panels[i].Show();
+                }
+            }
+
+            /// <summary>이 탭의 창을 모두 닫는다.</summary>
+            public void HidePanels()
+            {
+                for (int i = 0; i < m_panels.Count; i++)
+                {
+                    if (m_panels[i] != null) m_panels[i].Hide();
+                }
+            }
+
+            private bool HasPanel()
+            {
+                for (int i = 0; i < m_panels.Count; i++)
+                {
+                    if (m_panels[i] != null) return true;
+                }
+                return m_panel != null;   // 아직 이관 전인 구버전 데이터
+            }
         }
 
         [Header("Tabs")]
@@ -53,6 +103,12 @@ namespace DesktopCompanion.Views
 
         public int TabCount => m_tabs.Count;
 
+        /// <summary>
+        /// 선택 탭이 바뀔 때 발행한다. 인자는 새 선택 인덱스다.
+        /// 탭 버튼 연출처럼 선택 상태를 '표시'만 하는 쪽이 구독한다(상태 소유자는 이 창이다).
+        /// </summary>
+        public event Action<int> SelectedChanged;
+
         public override void Bind()
         {
             m_handlers = new UnityAction[m_tabs.Count];
@@ -60,7 +116,14 @@ namespace DesktopCompanion.Views
             for (int i = 0; i < m_tabs.Count; i++)
             {
                 Tab tab = m_tabs[i];
-                if (tab == null || tab.IsValid == false)
+                if (tab == null)
+                {
+                    continue;
+                }
+
+                tab.MigrateLegacyPanel();   // OnValidate가 저장되지 않은 경우에도 런타임 동작을 보장한다
+
+                if (tab.IsValid == false)
                 {
                     Debug.LogWarning($"[UITabWindow] 탭 {i} 설정 누락(버튼 또는 창 미할당)", this);
                     continue;
@@ -99,6 +162,27 @@ namespace DesktopCompanion.Views
         /// <summary>탭을 전환한다. 인덱스가 범위를 벗어나면 무시한다.</summary>
         public void SelectTab(int index) => ApplyTab(index, false);
 
+        /// <summary>
+        /// 버튼이 몇 번째 탭인지 돌려준다. 목록에 없으면 -1.
+        /// 탭 버튼이 자기 인덱스를 스스로 알아내는 데 쓴다 — 인스펙터에 손으로 적으면 탭 순서를 바꿀 때 어긋난다.
+        /// </summary>
+        public int IndexOf(Button button)
+        {
+            if (button == null)
+            {
+                return -1;
+            }
+
+            for (int i = 0; i < m_tabs.Count; i++)
+            {
+                if (m_tabs[i] != null && m_tabs[i].Button == button)
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
         /// <param name="force">이미 선택된 탭이어도 표시 상태를 다시 적용할지(초기화용).</param>
         private void ApplyTab(int index, bool force)
         {
@@ -128,25 +212,33 @@ namespace DesktopCompanion.Views
                     continue;
                 }
 
-                tab.Panel.Hide();
+                tab.HidePanels();
                 if (m_lockSelectedButton)
                 {
                     tab.Button.interactable = true;
                 }
             }
 
-            selected.Panel.Show();
+            // 창을 탭끼리 공유해도 되도록, 전부 숨긴 뒤에 선택 탭을 켠다.
+            selected.ShowPanels();
             if (m_lockSelectedButton)
             {
                 selected.Button.interactable = false;
             }
 
             m_selectedIndex = index;
+            SelectedChanged?.Invoke(index);   // 탭 버튼 연출 등 표시자에게 알린다
         }
 
         private void OnValidate()
         {
             m_defaultTabIndex = Mathf.Clamp(m_defaultTabIndex, 0, Mathf.Max(0, m_tabs.Count - 1));
+
+            // 구버전의 단일 창 할당을 창 목록으로 옮긴다. 인스펙터를 한 번 건드리면 데이터가 정리된다.
+            for (int i = 0; i < m_tabs.Count; i++)
+            {
+                if (m_tabs[i] != null) m_tabs[i].MigrateLegacyPanel();
+            }
         }
     }
 }

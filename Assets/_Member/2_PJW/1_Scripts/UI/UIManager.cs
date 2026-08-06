@@ -33,6 +33,12 @@ namespace DesktopCompanion.Views
         private readonly List<UIViewBase> m_views = new();
         private readonly List<UIWindowBase> m_activeWindows = new();   // 마지막에 열린 것이 맨 뒤(top)
 
+        /// <summary>
+        /// 윈도우가 활성 스택 top으로 올라온 직후 방송한다(신규 열림·이미 열린 창의 재활성 모두 포함).
+        /// 창의 활성 상태(OnEnable)로는 CanvasGroup 개폐 창을 잡을 수 없어 이 경로를 공통 알림으로 쓴다.
+        /// </summary>
+        public static event System.Action<UIWindowBase> OnWindowShown;
+
         private void AdoptPending(UIViewBase view)
         {
             if (view == null)
@@ -155,6 +161,8 @@ namespace DesktopCompanion.Views
             m_activeWindows.Remove(window);   // 재진입 시 중복 방지
             m_activeWindows.Add(window);      // 최근 열림 = 맨 뒤
             RelayoutWindows();
+
+            OnWindowShown?.Invoke(window);    // 배치까지 끝난 뒤 알린다(구독자가 최종 위치를 읽을 수 있게)
         }
 
         /// <summary>윈도우를 활성 스택에서 제거하고 재배치한다.</summary>
