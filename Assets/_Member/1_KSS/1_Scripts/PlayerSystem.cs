@@ -72,46 +72,6 @@ namespace DesktopCompanion.Systems
 
         #endregion
 
-        #region Region Resistance Penalty
-
-        /// <summary>
-        /// 현재 지역의 저항값에 따른 쿨타임 페널티 비율을 계산하여 반환합니다.
-        /// </summary>
-        /// <param name="regionResistance">현재 지역의 m_regionResistance (요구 저항값)</param>
-        /// <returns>적용될 페널티 비율 (0.0f = 0%, 0.2f = 20% 느려짐)</returns>
-        public float GetAutoCooltimePenaltyRate(int regionResistance)
-        {
-            if (entity_Player == null || entity_Player.BaseData == null) return 0f;
-
-            // 플레이어의 '쿨타임 파워' = 기본 쿨타임 - 현재 장비로 적용된 쿨타임
-            float playerPower = entity_Player.BaseData.BaseAutoBattleCooltime - m_baseAutoBattleCooltime;
-
-            if (playerPower < regionResistance)
-            {
-                // 부족한 파워 1포인트당 5% 페널티 부여
-                float powerDeficit = regionResistance - playerPower;
-                return powerDeficit * 0.05f; 
-            }
-
-            return 0f; // 파워가 충분하면 페널티 없음
-        }
-
-        /// <summary>
-        /// 지역 저항 페널티가 적용된 최종 오토 전투 쿨타임을 계산하여 반환합니다.
-        /// </summary>
-        /// <param name="regionResistance">현재 지역의 저항값 (m_regionResistance)</param>
-        /// <returns>페널티가 적용된 최종 오토 쿨타임</returns>
-        public float GetFinalAutoCooltime(int regionResistance)
-        {
-            float penaltyRate = GetAutoCooltimePenaltyRate(regionResistance);
-            float originalCooltime = BaseAutoBattleCooltime;
-
-            // 페널티 비율만큼 쿨타임이 늘어남 (느려짐)
-            return originalCooltime * (1f + penaltyRate);
-        }
-
-        #endregion
-
         #region Save
 
         public string SaveId => "player_system_stats";
@@ -300,7 +260,7 @@ namespace DesktopCompanion.Systems
                             m_baseCriticalMultiply += stat.Value;
                             break;
                         case PlayerStat.AutoBattleCooltime:
-                            m_baseAutoBattleCooltime -= stat.Value;
+                            m_baseAutoBattleCooltime += stat.Value;
                             break;
                         case PlayerStat.AutoSpeedPerTime:
                             m_baseAutoSpeedPerTime += stat.Value;
