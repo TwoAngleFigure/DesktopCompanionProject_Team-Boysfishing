@@ -1,13 +1,10 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using System;
 
 namespace DesktopCompanion.Views
 {
     public class MapZoomController : MonoBehaviour
     {
-        public static event Action<float, float> OnMapContentSizeReady;
-
         [Header("줌 대상 (지도의 섬들이 들어있는 컨테이너)")]
         public RectTransform m_mapContainer;
 
@@ -27,8 +24,6 @@ namespace DesktopCompanion.Views
             if (m_mapContainer != null)
             {
                 m_targetScale = m_mapContainer.localScale.x;
-
-                OnMapContentSizeReady?.Invoke(m_mapContainer.rect.width, m_mapContainer.rect.height);
             }
         }
 
@@ -37,14 +32,17 @@ namespace DesktopCompanion.Views
             if (Mouse.current == null || m_mapContainer == null) return;
 
             float scrollY = Mouse.current.scroll.ReadValue().y;
+
             if (scrollY != 0f)
             {
                 float scrollDirection = Mathf.Sign(scrollY);
+
                 m_targetScale += scrollDirection * m_zoomSpeed;
                 m_targetScale = Mathf.Clamp(m_targetScale, m_minZoom, m_maxZoom);
             }
 
             float currentScaleX = m_mapContainer.localScale.x;
+
             float smoothedScale = Mathf.Lerp(currentScaleX, m_targetScale, Time.deltaTime * m_smoothSpeed);
 
             m_mapContainer.localScale = new Vector3(smoothedScale, smoothedScale, 1f);
