@@ -6,7 +6,7 @@ namespace DesktopCompanion.Views
     {
         [Header("소멸 설정")]
         [Tooltip("카메라 우측 화면 밖으로 얼마나 멀어지면 파괴될지 (여유 공간)")]
-        public float m_destroyMargin = 25f;
+        public float m_destroyMargin = 5f;
 
         private Camera m_mainCamera;
         private bool m_isInitialized = false;
@@ -15,6 +15,7 @@ namespace DesktopCompanion.Views
         {
             m_mainCamera = Camera.main;
             m_isInitialized = true;
+            Debug.Log($"[WorldProp] {gameObject.name} 생명주기 시작!");
         }
 
         private void Update()
@@ -24,21 +25,11 @@ namespace DesktopCompanion.Views
             float halfHeight = m_mainCamera.orthographicSize;
             float halfWidth = halfHeight * m_mainCamera.aspect;
 
-            float parallaxFactor = 0f;
-            StageBlueprint blueprint = GetComponentInParent<StageBlueprint>();
-            if (blueprint != null && transform.parent != null)
-            {
-                if (transform.parent == blueprint.m_farLayer) parallaxFactor = blueprint.m_farParallax;
-                else if (transform.parent == blueprint.m_midLayer) parallaxFactor = blueprint.m_midParallax;
-                else if (transform.parent == blueprint.m_nearLayer) parallaxFactor = blueprint.m_nearParallax;
-            }
+            float cameraRightEdgeX = m_mainCamera.transform.position.x + halfWidth;
 
-            float effectiveFactor = Mathf.Max(1f - parallaxFactor, 0.15f);
-            float rawRelativeOffset = transform.position.x - m_mainCamera.transform.position.x;
-            float correctedOffset = rawRelativeOffset * effectiveFactor;
-
-            if (correctedOffset > halfWidth + m_destroyMargin)
+            if (transform.position.x > cameraRightEdgeX + m_destroyMargin)
             {
+                Debug.Log($"[WorldProp] {gameObject.name} 카메라 뒤로 멀어짐 -> 스스로 파괴");
                 Destroy(gameObject);
             }
         }

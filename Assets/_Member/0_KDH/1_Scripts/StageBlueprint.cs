@@ -46,12 +46,14 @@ namespace DesktopCompanion.Views
         public List<BlueprintData> m_blueprintList = new List<BlueprintData>();
 
         private Transform m_cameraTransform;
+
         private AssetProvider m_assetProvider;
+
         public void InitProvider(AssetProvider provider, float startCamX, float targetCamX, bool isFirstLoad)
         {
             m_assetProvider = provider;
 
-            ClearSpawnedProps();
+            float totalDistance = targetCamX - startCamX;
 
             foreach (var data in m_blueprintList)
             {
@@ -72,20 +74,6 @@ namespace DesktopCompanion.Views
             }
             ForceInitialSpawnCheck(isFirstLoad);
         }
-
-        private void ClearSpawnedProps()
-        {
-            Transform[] layers = new Transform[] { m_nearLayer, m_midLayer, m_farLayer };
-            foreach (var layer in layers)
-            {
-                if (layer == null) continue;
-                for (int i = layer.childCount - 1; i >= 0; i--)
-                {
-                    Destroy(layer.GetChild(i).gameObject);
-                }
-            }
-        }
-
         private void Start()
         {
             if (Camera.main != null)
@@ -114,8 +102,6 @@ namespace DesktopCompanion.Views
 
         private void ForceInitialSpawnCheck(bool isFirstLoad)
         {
-            if (!isFirstLoad) return;
-
             if (m_cameraTransform == null && Camera.main != null)
             {
                 m_cameraTransform = Camera.main.transform;
@@ -129,7 +115,7 @@ namespace DesktopCompanion.Views
 
             foreach (var data in m_blueprintList)
             {
-                if (!data.m_isSpawned)
+                if (!data.m_isSpawned && (isFirstLoad || currentCamX <= data.m_spawnTriggerX))
                 {
                     SpawnProp(data);
                     data.m_isSpawned = true;
@@ -147,13 +133,13 @@ namespace DesktopCompanion.Views
         private void SpawnProp(BlueprintData data)
         {
             Transform parentLayer = GetLayerTransform(data.m_layerDepth);
+
             float parallaxFactor = GetParallaxFactor(data.m_layerDepth);
 
             if (m_assetProvider != null && m_assetProvider.TryGet(data.m_assetKey, out GameObject prefab))
             {
                 GameObject obj = Instantiate(prefab, parentLayer);
 
-                // 🎯 배가 목적지 targetCamX 에 정차했을 때 Far, Mid, Near 3개 오브젝트가 1자로 exact 포개어지는 고정 수식!
                 float convertedLocalX = data.m_targetWorldX - (data.m_targetCameraX * parallaxFactor);
 
                 obj.transform.localPosition = new Vector3(convertedLocalX, data.m_targetLocalY, 0f);
