@@ -1,5 +1,6 @@
 using System.Text;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 using DesktopCompanion.Data;
 
@@ -14,6 +15,8 @@ namespace DesktopCompanion.Views
         [Header("장비")]
         [SerializeField] private TMP_Text m_mountingAreaText;
         [SerializeField] private TMP_Text m_upgradeText;
+        [Tooltip("강화 단계 색으로 칠할 뱃지 배경(선택). 강화창의 강화 뱃지와 같은 색이 나온다")]
+        [SerializeField] private Image m_upgradeBadge;
         [SerializeField] private TMP_Text m_modifierText;
 
         [Header("다음 강화")]
@@ -33,10 +36,14 @@ namespace DesktopCompanion.Views
                 return;
             }
 
-            SetText(m_mountingAreaText, MountingAreaLabel(equipment.MountingArea));
+            SetText(m_mountingAreaText, ItemLabels.MountingArea(equipment.MountingArea));
             SetText(m_upgradeText, equipment.UpgradeLevel > 0
                 ? $"+{equipment.UpgradeLevel} / {equipment.MaxUpgradeLevel}"
                 : "무강화");
+
+            // 강화창의 강화 뱃지와 같은 규칙(2단계마다 팔레트 한 칸)으로 칠한다.
+            if (Style != null) ApplyBadge(m_upgradeText, m_upgradeBadge, Style.UpgradeColor(equipment.UpgradeLevel));
+
             SetText(m_modifierText, FormatModifiers(equipment.Modifiers));
 
             bool hasNext = equipment.NextStep != null;
@@ -64,22 +71,5 @@ namespace DesktopCompanion.Views
             }
             return builder.Length > 0 ? builder.ToString() : "무료";
         }
-
-        private static string MountingAreaLabel(EquipmentMountingArea area) => area switch
-        {
-            EquipmentMountingArea.FishingRod => "낚싯대",
-            EquipmentMountingArea.FishingLine => "낚싯줄",
-            EquipmentMountingArea.Reel => "릴",
-            EquipmentMountingArea.Lure => "루어",
-            EquipmentMountingArea.Hat => "모자",
-            EquipmentMountingArea.Uniform => "한벌옷",
-            EquipmentMountingArea.Gloves => "장갑",
-            EquipmentMountingArea.Engine => "배 엔진",
-            EquipmentMountingArea.Storage => "물고기 창고",
-            EquipmentMountingArea.GPS => "GPS",
-            EquipmentMountingArea.Bait => "미끼",
-            EquipmentMountingArea.Groundbait => "떡밥",
-            _ => area.ToString(),
-        };
     }
 }

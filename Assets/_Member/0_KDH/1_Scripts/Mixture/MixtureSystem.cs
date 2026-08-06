@@ -174,29 +174,28 @@ namespace DesktopCompanion.Systems
             return true;
         }
 
-        public string GetItemName(ItemType itemType, int dataId)
+        /// <summary>
+        /// 종류·ID로 아이템 정의를 찾는다. 표시 계층이 아이콘·티어·툴팁 상세를 만들 때 쓴다.
+        /// </summary>
+        public ItemData GetItemData(ItemType itemType, int dataId)
         {
             var dataManager = this.DataManager;
 
-            if (dataManager == null) return "알 수 없음";
-
-            GameData itemData = null;
+            if (dataManager == null) return null;
 
             switch (itemType)
             {
-                case ItemType.Materials:
-                    itemData = dataManager.GetData<ItemData_Materials>(dataId);
-                    break;
-                case ItemType.Consumables:
-                    itemData = dataManager.GetData<ItemData_Consumables>(dataId);
-                    break;
-                case ItemType.Equipment:
-                    itemData = dataManager.GetData<ItemData_Equipment>(dataId);
-                    break;
-                case ItemType.Fish:
-                    itemData = dataManager.GetData<ItemData_Fish>(dataId);
-                    break;
+                case ItemType.Materials: return dataManager.GetData<ItemData_Materials>(dataId);
+                case ItemType.Consumables: return dataManager.GetData<ItemData_Consumables>(dataId);
+                case ItemType.Equipment: return dataManager.GetData<ItemData_Equipment>(dataId);
+                case ItemType.Fish: return dataManager.GetData<ItemData_Fish>(dataId);
+                default: return null;
             }
+        }
+
+        public string GetItemName(ItemType itemType, int dataId)
+        {
+            ItemData itemData = GetItemData(itemType, dataId);
 
             return itemData != null ? itemData.Name : "알 수 없음";
         }
@@ -204,6 +203,28 @@ namespace DesktopCompanion.Systems
         public List<RecipeData_Mixture> GetAllRecipes()
         {
             return new List<RecipeData_Mixture>(m_recipeDatabase.Values);
+        }
+
+        /// <summary>
+        /// 그 아이템을 만들어 내는 레시피. 같은 결과물의 레시피가 여럿이면 먼저 찾은 하나를 준다.
+        /// 제작 비용의 출처는 아이템 정의가 아니라 이 레시피다 — 표시 계층이 비용을 물어볼 때 쓴다.
+        /// </summary>
+        public RecipeData_Mixture GetRecipeByResult(ItemType itemType, int dataId)
+        {
+            foreach (RecipeData_Mixture recipe in m_recipeDatabase.Values)
+            {
+                if (recipe == null || recipe.m_resultId != dataId) continue;
+
+                string typeString = recipe.m_resultType != null
+                    ? recipe.m_resultType.Replace("ItemData_", "")
+                    : string.Empty;
+
+                if (Enum.TryParse(typeString, out ItemType resultType) && resultType == itemType)
+                {
+                    return recipe;
+                }
+            }
+            return null;
         }
     }
 

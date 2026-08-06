@@ -2,62 +2,43 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using DesktopCompanion.Entities;
-using TMPro;
 
 namespace DesktopCompanion.Views
 {
+    /// <summary>
+    /// 강화 대상 장비 칸의 입력 담당. 아이콘·티어 테두리·hover 팝업 등 표시는 같은 오브젝트의
+    /// <see cref="ItemSlotView"/>가 맡고, 이 위젯은 드롭과 클릭만 창(<see cref="ReinforceWindowView"/>)에 전달한다.
+    /// </summary>
     public class ReinforceSlotWidget : MonoBehaviour, IDropHandler
     {
-        [SerializeField] private Image m_itemIcon;
-        [SerializeField] private TextMeshProUGUI m_levelText; // "+3" 등 표시
-        [SerializeField] private TextMeshProUGUI m_itemNameText; // 아이템 이름 표시
+        [Tooltip("비우면 같은 오브젝트에서 자동으로 찾는다")]
         [SerializeField] private Button m_slotButton;
 
-        public event Action<EntityHandle> OnSlotClicked;
+        public event Action OnSlotClicked;
         public event Action OnSlotDropped;
-        
-        private EntityHandle m_currentHandle;
 
         private void Awake()
         {
+            if (m_slotButton == null)
+            {
+                m_slotButton = GetComponent<Button>();
+            }
             if (m_slotButton != null)
             {
-                m_slotButton.onClick.AddListener(() => OnSlotClicked?.Invoke(m_currentHandle));
+                m_slotButton.onClick.AddListener(RaiseClicked);
             }
         }
 
-        public void SetItem(EntityHandle handle, Sprite icon, int currentLevel, string itemName = "")
+        private void OnDestroy()
         {
-            m_currentHandle = handle;
-            
-            if (handle.Value == Guid.Empty)
+            if (m_slotButton != null)
             {
-                if (m_itemIcon != null) m_itemIcon.enabled = false;
-                if (m_levelText != null) m_levelText.text = "";
-                if (m_itemNameText != null) m_itemNameText.text = "";
-            }
-            else
-            {
-                if (m_itemIcon != null) 
-                {
-                    m_itemIcon.enabled = true;
-                    m_itemIcon.sprite = icon;
-                }
-                if (m_levelText != null) 
-                {
-                    m_levelText.text = currentLevel > 0 ? $"+{currentLevel}" : "";
-                }
-                if (m_itemNameText != null)
-                {
-                    m_itemNameText.text = itemName;
-                }
+                m_slotButton.onClick.RemoveListener(RaiseClicked);
             }
         }
 
-        public void OnDrop(PointerEventData eventData)
-        {
-            OnSlotDropped?.Invoke();
-        }
+        private void RaiseClicked() => OnSlotClicked?.Invoke();
+
+        public void OnDrop(PointerEventData eventData) => OnSlotDropped?.Invoke();
     }
 }

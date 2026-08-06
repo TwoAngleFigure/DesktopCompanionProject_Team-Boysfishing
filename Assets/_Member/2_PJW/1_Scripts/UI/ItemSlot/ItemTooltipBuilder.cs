@@ -7,13 +7,15 @@ namespace DesktopCompanion.Views
 {
     /// <summary>
     /// 개체(Entity) 또는 정의(ItemData)로부터 <see cref="ItemTooltipData"/>를 조립한다.
-    /// AquariumSystem은 선택 인자이며, 넘기면 아쿠아리움 생산 지표가 채워지고
-    /// 넘기지 않으면 HasAquariumInfo가 false가 되어 패널이 해당 구역을 감춘다.
+    /// AquariumSystem·MixtureSystem은 선택 인자다. 넘기면 아쿠아리움 생산 지표와
+    /// 조합 레시피 기준의 제작 비용이 채워지고, 넘기지 않으면 해당 구역을 패널이 감추거나
+    /// 아이템 정의에 적힌 제작 비용으로 대체한다.
     /// </summary>
     public static class ItemTooltipBuilder
     {
         /// <summary>개체로부터 조립한다. 물고기의 성급·크기·레어도는 개체 롤값을 쓴다.</summary>
-        public static ItemTooltipData FromEntity(EntityHandle handle, EntityManager entities, AquariumSystem aquarium = null)
+        public static ItemTooltipData FromEntity(EntityHandle handle, EntityManager entities,
+            AquariumSystem aquarium = null, MixtureSystem mixture = null)
         {
             Entity entity = entities != null ? entities.Get(handle) : null;
             if (entity == null)
@@ -26,7 +28,7 @@ namespace DesktopCompanion.Views
                 case Entity_Fish fish: return BuildFish(fish, handle, aquarium);
                 case Entity_Materials materials: return BuildMaterial(materials.ItemData);
                 case Entity_Equipment equipment: return BuildEquipment(equipment);
-                case Entity_Consumables consumables: return BuildConsumable(consumables);
+                case Entity_Consumables consumables: return BuildConsumable(consumables, null, mixture);
                 default: return null;
             }
         }
@@ -34,14 +36,14 @@ namespace DesktopCompanion.Views
         /// <summary>
         /// 정의로부터 조립한다. 개체 롤값이 없으므로 물고기라도 성급·크기·생산 지표는 채워지지 않는다.
         /// </summary>
-        public static ItemTooltipData FromData(ItemData data)
+        public static ItemTooltipData FromData(ItemData data, MixtureSystem mixture = null)
         {
             switch (data)
             {
                 case ItemData_Fish fish: return BuildFish(null, default, null, fish);
                 case ItemData_Materials materials: return BuildMaterial(materials);
                 case ItemData_Equipment equipment: return BuildEquipment(null, equipment);
-                case ItemData_Consumables consumables: return BuildConsumable(null, consumables);
+                case ItemData_Consumables consumables: return BuildConsumable(null, consumables, mixture);
                 default: return null;
             }
         }
@@ -117,7 +119,8 @@ namespace DesktopCompanion.Views
             return tooltip;
         }
 
-        private static ItemTooltipData BuildConsumable(Entity_Consumables consumables, ItemData_Consumables fallbackData = null)
+        private static ItemTooltipData BuildConsumable(Entity_Consumables consumables,
+            ItemData_Consumables fallbackData = null, MixtureSystem mixture = null)
         {
             ItemData_Consumables data = consumables != null ? consumables.ItemData : fallbackData;
             if (data == null)
@@ -130,13 +133,60 @@ namespace DesktopCompanion.Views
                 Category = data.MountingArea,
                 Modifiers = data.Modifiers,
                 Quantity = consumables != null ? consumables.Quantity : 0,
-                CraftMaterials = data.CraftMaterials,
-                CraftGoldCost = data.CraftGoldCost,
             };
+
+            FillCraftCost(section, data, mixture);
 
             ItemTooltipData tooltip = Head(data, TooltipItemKind.Consumables);
             tooltip.Consumable = section;
             return tooltip;
+        }
+
+        /// <summary>
+        /// 제작 비용을 채운다. 조합 레시피를 찾으면 그쪽이 기준이고(비용의 진짜 출처),
+        /// MixtureSystem을 못 받았거나 레시피가 없으면 아이템 정의에 적힌 값으로 대체한다.
+        /// </summary>
+        private static void FillCraftCost(ItemTooltipData.ConsumableSection section, ItemData_Consumables data,
+            MixtureSystem mixture)
+        {
+            RecipeData_Mixture recipe = mixture != null
+                ? mixture.GetRecipeByResult(ItemType.Consumables, data.ID)
+                : null;
+
+            if (recipe != null)
+            {
+                var parsed = mixture.ParseIngredients(recipe.m_ingredients);
+                var costs = new ItemTooltipData.CraftCost[parsed.Count];
+
+                for (int i = 0; i < parsed.Count; i++)
+                {
+                    costs[i] = new ItemTooltipData.CraftCost
+                    {
+                        Item = mixture.GetItemData(parsed[i].itemType, parsed[i].dataId),
+                        Count = parsed[i].amount,
+                    };
+                }
+
+                section.CraftMaterials = costs;
+                section.CraftGoldCost = recipe.m_goldCost;
+                return;
+            }
+
+            MaterialCost[] defined = data.CraftMaterials;
+            if (defined != null)
+            {
+                var costs = new ItemTooltipData.CraftCost[defined.Length];
+                for (int i = 0; i < defined.Length; i++)
+                {
+                    costs[i] = new ItemTooltipData.CraftCost
+                    {
+                        Item = defined[i] != null ? defined[i].Material : null,
+                        Count = defined[i] != null ? defined[i].Count : 0,
+                    };
+                }
+                section.CraftMaterials = costs;
+            }
+            section.CraftGoldCost = data.CraftGoldCost;
         }
 
         /// <summary>공통 헤더(이름·아이콘·티어)만 채운 툴팁을 만든다. 섹션은 호출자가 붙인다.</summary>
@@ -147,6 +197,7 @@ namespace DesktopCompanion.Views
             Name = data.Name,
             IconKey = AssetKeys.Of(data, AssetUsage.Icon),
             Tier = data.Tier,
+            Description = data.Description,
         };
     }
 }

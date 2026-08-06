@@ -19,6 +19,9 @@ namespace DesktopCompanion.Views
         [Tooltip("티어 색으로 칠할 뱃지 배경(선택). 슬롯 프리팹과 같은 ItemGradeStyle 에셋을 쓰면 색이 일치한다")]
         [SerializeField] private Image m_tierBadge;
 
+        [Tooltip("ItemData.Description을 표시한다(선택). 설명이 비어 있으면 이 오브젝트를 통째로 끈다")]
+        [SerializeField] private TMP_Text m_descriptionText;
+
         [Header("등급 색")]
         [Tooltip("슬롯 프리팹에 넣은 것과 같은 에셋을 할당할 것 — 테두리와 뱃지 색이 어긋나지 않게")]
         [SerializeField] private ItemGradeStyle m_style;
@@ -52,6 +55,14 @@ namespace DesktopCompanion.Views
 
             // 슬롯 테두리와 같은 티어 색 — 슬롯에서 팝업으로 시선이 옮겨가도 같은 색이라 연결이 읽힌다.
             if (m_style != null) ApplyBadge(m_tierText, m_tierBadge, m_style.TierColor(data.Tier));
+
+            // 설명이 없는 아이템이 대부분이라, 비면 줄을 통째로 감춰 빈 여백이 생기지 않게 한다.
+            if (m_descriptionText != null)
+            {
+                bool hasDescription = string.IsNullOrEmpty(data.Description) == false;
+                m_descriptionText.gameObject.SetActive(hasDescription);
+                if (hasDescription) m_descriptionText.text = data.Description;
+            }
 
             ApplyBody(data);
         }
@@ -91,45 +102,6 @@ namespace DesktopCompanion.Views
         }
 
         /// <summary>스탯 변경 목록을 줄바꿈으로 이어 붙인다. 항목이 없으면 "효과 없음"을 반환한다.</summary>
-        protected static string FormatModifiers(StatModifier[] modifiers)
-        {
-            if (modifiers == null || modifiers.Length == 0)
-            {
-                return "효과 없음";
-            }
-
-            var builder = new StringBuilder();
-            for (int i = 0; i < modifiers.Length; i++)
-            {
-                StatModifier modifier = modifiers[i];
-                if (modifier == null) continue;
-                if (builder.Length > 0) builder.Append('\n');
-
-                builder.Append(StatLabel(modifier.Stat));
-                builder.Append(' ');
-                builder.Append(modifier.Operation == ModifierOperation.Multiply
-                    ? $"×{modifier.Value:0.##}"
-                    : $"{(modifier.Value >= 0f ? "+" : string.Empty)}{modifier.Value:0.##}");
-            }
-            return builder.Length > 0 ? builder.ToString() : "효과 없음";
-        }
-
-        private static string StatLabel(PlayerStat stat) => stat switch
-        {
-            PlayerStat.DamagePerClick => "공격력",
-            PlayerStat.ManualDamagePerHitMultiply => "수동 데미지 배율",
-            PlayerStat.BattleTimeVariable => "전투 시간",
-            PlayerStat.CriticalChance => "치명타 확률",
-            PlayerStat.CriticalMultiply => "치명타 배율",
-            PlayerStat.AutoBattleCooltime => "자동 낚시 간격",
-            PlayerStat.AutoSpeedPerTime => "자동 공격 속도",
-            PlayerStat.AutoDamagePerHitMultiply => "자동 데미지 배율",
-            PlayerStat.MapMovementSpeedPerTime => "이동 속도",
-            PlayerStat.InventorySize => "인벤토리 칸",
-            PlayerStat.ProbabilityAtFishSize => "높은 성급 확률",
-            PlayerStat.ProbabilityAtFishRarity => "높은 등급 확률",
-            PlayerStat.GoldGettingMultiply => "판매 골드 배율",
-            _ => stat.ToString(),
-        };
+        protected static string FormatModifiers(StatModifier[] modifiers) => ItemLabels.Modifiers(modifiers);
     }
 }
