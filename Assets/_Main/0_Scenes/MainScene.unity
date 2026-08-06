@@ -19169,7 +19169,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8466568223800940152, guid: 50e6300c2729b9c47af18a51e4db3d13, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -40
       objectReference: {fileID: 0}
     - target: {fileID: 8466568223800940152, guid: 50e6300c2729b9c47af18a51e4db3d13, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -27601,7 +27601,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8466568223800940152, guid: 50e6300c2729b9c47af18a51e4db3d13, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -304
       objectReference: {fileID: 0}
     - target: {fileID: 8466568223800940152, guid: 50e6300c2729b9c47af18a51e4db3d13, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -35737,7 +35737,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8466568223800940152, guid: 50e6300c2729b9c47af18a51e4db3d13, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -216
       objectReference: {fileID: 0}
     - target: {fileID: 8466568223800940152, guid: 50e6300c2729b9c47af18a51e4db3d13, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -36494,7 +36494,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8466568223800940152, guid: 50e6300c2729b9c47af18a51e4db3d13, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -128
       objectReference: {fileID: 0}
     - target: {fileID: 8466568223800940152, guid: 50e6300c2729b9c47af18a51e4db3d13, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -36965,7 +36965,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1940977332
 RectTransform:
   m_ObjectHideFlags: 0
@@ -37018,6 +37018,7 @@ MonoBehaviour:
   - m_button: {fileID: 1916836837}
     m_panels:
     - {fileID: 1300838249951066661}
+    - {fileID: 5458321998529756795}
     m_panel: {fileID: 0}
   - m_button: {fileID: 1498321990}
     m_panels:
@@ -50831,6 +50832,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3702406880453899676}
   - component: {fileID: 1189844380272172434}
+  - component: {fileID: 5458321998529756795}
   m_Layer: 5
   m_Name: Collection_Fish
   m_TagString: Untagged
@@ -50838,6 +50840,24 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 0
+--- !u!114 &5458321998529756795
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5458321998529756794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 923aa2143129c3c4e9458b03527abc37, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Views.SimpleWindow
+  m_participateInLayout: 0
+  m_closableByShortcut: 0
+  m_hideMode: 0
+  m_canvasGroup: {fileID: 0}
+  m_ownCanvas: {fileID: 0}
+  m_openOnStart: 0
 --- !u!1 &5460571795983545663
 GameObject:
   m_ObjectHideFlags: 0
@@ -56434,8 +56454,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 74827879233646106}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.0014095466, y: -0, z: -0.0048830323, w: 0.9999871}
-  m_LocalPosition: {x: 0, y: 0.047117405, z: 0}
+  m_LocalRotation: {x: -0.0011677238, y: -0, z: -0.00047039703, w: 0.9999992}
+  m_LocalPosition: {x: 0, y: 0.035184845, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
