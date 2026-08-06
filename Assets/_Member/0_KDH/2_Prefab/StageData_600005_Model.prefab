@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4945223346026452647}
   - component: {fileID: 1045052723150630618}
   m_Layer: 0
-  m_Name: StageData_600002_Model
+  m_Name: StageData_600005_Model
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -54,65 +54,155 @@ MonoBehaviour:
   m_midParallax: 0.35
   m_farParallax: 0.65
   m_blueprintList:
-  - m_assetKey: islands_background_5
-    m_layerDepth: 2
-    m_spawnDistanceTrigger: 55
-    m_targetWorldOffsetFromCamera: 3
-    m_targetLocalY: 1.7
-    m_isSpawned: 0
-    m_spawnTriggerX: 0
-    m_targetWorldX: -15
-    m_targetCameraX: -15
-  - m_assetKey: islands_background_6
-    m_layerDepth: 1
-    m_spawnDistanceTrigger: 40
-    m_targetWorldOffsetFromCamera: 20
-    m_targetLocalY: 1
-    m_isSpawned: 0
-    m_spawnTriggerX: 0
-    m_targetWorldX: -15
-    m_targetCameraX: -15
-  - m_assetKey: islands_background_7
-    m_layerDepth: 2
-    m_spawnDistanceTrigger: 55
-    m_targetWorldOffsetFromCamera: 38
-    m_targetLocalY: 1.3
-    m_isSpawned: 0
-    m_spawnTriggerX: 0
-    m_targetWorldX: -15
-    m_targetCameraX: -15
-  - m_assetKey: islands_background_1
-    m_layerDepth: 2
-    m_spawnDistanceTrigger: 55
-    m_targetWorldOffsetFromCamera: -16
-    m_targetLocalY: 1.7
-    m_isSpawned: 0
-    m_spawnTriggerX: 0
-    m_targetWorldX: -15
-    m_targetCameraX: -15
-  - m_assetKey: islands_fishship
-    m_layerDepth: 1
-    m_spawnDistanceTrigger: 40
-    m_targetWorldOffsetFromCamera: -18
-    m_targetLocalY: 1.7
-    m_isSpawned: 0
-    m_spawnTriggerX: 0
-    m_targetWorldX: -15
-    m_targetCameraX: -15
-  - m_assetKey: islands_wooden
+  - m_assetKey: islands_buoy_near
     m_layerDepth: 0
     m_spawnDistanceTrigger: 25
-    m_targetWorldOffsetFromCamera: -2
-    m_targetLocalY: 1.7
+    m_targetWorldOffsetFromCamera: -7
+    m_targetLocalY: -5.5
     m_isSpawned: 0
     m_spawnTriggerX: 0
     m_targetWorldX: -15
     m_targetCameraX: -15
-  - m_assetKey: islands_wooden
+  - m_assetKey: islands_buoy_near
     m_layerDepth: 0
     m_spawnDistanceTrigger: 25
-    m_targetWorldOffsetFromCamera: 11
-    m_targetLocalY: 1.7
+    m_targetWorldOffsetFromCamera: -14
+    m_targetLocalY: -5.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: islands_buoy_near
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 25
+    m_targetWorldOffsetFromCamera: -21
+    m_targetLocalY: -5.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: islands_buoy_middle
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 40
+    m_targetWorldOffsetFromCamera: 7
+    m_targetLocalY: -5.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: islands_buoy_middle
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 40
+    m_targetWorldOffsetFromCamera: 12
+    m_targetLocalY: -5.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: islands_buoy_middle
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 40
+    m_targetWorldOffsetFromCamera: 17
+    m_targetLocalY: -5.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: islands_background_8
+    m_layerDepth: 2
+    m_spawnDistanceTrigger: 55
+    m_targetWorldOffsetFromCamera: -9
+    m_targetLocalY: 0.1
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: islands_background_3
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 40
+    m_targetWorldOffsetFromCamera: 6
+    m_targetLocalY: 3
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: islands_background_4_middle
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 40
+    m_targetWorldOffsetFromCamera: -24
+    m_targetLocalY: 0.7
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: islands_background_9
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 25
+    m_targetWorldOffsetFromCamera: -19
+    m_targetLocalY: 3.1
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: islands_background_4_near
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 25
+    m_targetWorldOffsetFromCamera: 10
+    m_targetLocalY: 0.8
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: islands_ship_near
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 25
+    m_targetWorldOffsetFromCamera: -10
+    m_targetLocalY: 0.8
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: islands_ship_middle
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 40
+    m_targetWorldOffsetFromCamera: 4
+    m_targetLocalY: -0.26
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: islands_ship_middle
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 40
+    m_targetWorldOffsetFromCamera: -1
+    m_targetLocalY: -0.26
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: islands_ship_far
+    m_layerDepth: 2
+    m_spawnDistanceTrigger: 55
+    m_targetWorldOffsetFromCamera: -3
+    m_targetLocalY: -1.3
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: islands_ship_far
+    m_layerDepth: 2
+    m_spawnDistanceTrigger: 55
+    m_targetWorldOffsetFromCamera: -5
+    m_targetLocalY: -1.3
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: islands_ship_far
+    m_layerDepth: 2
+    m_spawnDistanceTrigger: 55
+    m_targetWorldOffsetFromCamera: -7
+    m_targetLocalY: -1.3
     m_isSpawned: 0
     m_spawnTriggerX: 0
     m_targetWorldX: -15
