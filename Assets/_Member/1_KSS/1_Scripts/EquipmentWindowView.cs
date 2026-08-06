@@ -27,7 +27,6 @@ namespace DesktopCompanion.Views
 
         [Header("Inventory Link")]
         [SerializeField] private ItemPickupController m_itemPickupController;
-        //[SerializeField] private DesktopCompanion.Views.InventoryItemTooltipView m_itemTooltip; // [추가] 인벤토리용 툴팁 컴포넌트 참조
 
         [Header("Tab Buttons")]
         [SerializeField] private Button m_tabPlayerEquipBtn;
@@ -38,20 +37,6 @@ namespace DesktopCompanion.Views
         [SerializeField] private GameObject m_playerEquipPanel;
         [SerializeField] private GameObject m_shipEquipPanel;
         [SerializeField] private GameObject m_statsPanel;
-
-        private void Awake()
-        {
-            /*
-            if (m_itemTooltip != null)
-            {
-                // 인벤토리 창이 꺼져있어도 작동하도록 장비창 전용으로 툴팁 복제
-                m_itemTooltip = Instantiate(m_itemTooltip, this.transform);
-                // 툴팁 루트 컴포넌트 전체를 꺼버리면 내부의 m_tooltipRoot.SetActive(true)가 작동하지 않으므로, 정상적인 숨김 처리(Hide)를 호출합니다.
-                m_itemTooltip.gameObject.SetActive(true);
-                m_itemTooltip.Hide();
-            }
-            */
-        }
 
         public override void Bind()
         {
@@ -311,98 +296,37 @@ namespace DesktopCompanion.Views
 
         private void ShowTooltip(EquipmentMountingArea area, RectTransform slotRect)
         {
-            ///if (m_itemTooltip == null) return;
-
             EntityHandle equippedItem = m_vm.GetEquippedHandleForArea(area);
             
-            // 1. 빈 슬롯인 경우: 부위 이름 안내 툴팁 표시
+            // 1. 빈 슬롯인 경우 툴팁 생략 (새 툴팁 시스템은 빈 툴팁 데이터 형태가 없으므로)
             if (equippedItem.Equals(default(EntityHandle)))
             {
-                DesktopCompanion.Views.InventorySlotViewData emptyData = new DesktopCompanion.Views.InventorySlotViewData
-                {
-                    IsEmpty = false,
-                    ItemName = $"{area} 슬롯",
-                    GradeText = "장착된 아이템 없음",
-                    EffectText = "클릭하여 장착하거나 아이템을 드래그하세요.",
-                    SellPriceText = ""
-                };
-               // m_itemTooltip.Show(emptyData, null, slotRect);
                 return;
             }
 
             Entity entity = EntityManager.Get(equippedItem);
             if (entity == null) return;
 
-            // 2. 아이템이 장착된 경우
-            string gradeText = "장착중";
-            string effectText = "상세 정보는 인벤토리에서 확인하세요.";
-            string assetKey = string.Empty;
-            int quantity = 1;
-
-            if (entity is Entity_Equipment equip && equip.ItemData != null)
-            {
-                gradeText = $"{equip.ItemData.Tier}티어 / 장비";
-                if (equip.UpgradeLevel > 0) gradeText += $"\n+{equip.UpgradeLevel} 강화";
-                assetKey = AssetKeys.Of(equip.ItemData, AssetUsage.Icon);
-                effectText = $"현재 부위: {area}";
-                string modifiersText = BuildModifiersText(equip.CurrentModifiers);
-                if (!string.IsNullOrEmpty(modifiersText))
-                {
-                    effectText += $"\n{modifiersText}";
-                }
-            }
-            else if (entity is Entity_Consumables cons && cons.ItemData != null)
-            {
-                gradeText = $"{cons.ItemData.Tier}티어 / 소모품";
-                assetKey = AssetKeys.Of(cons.ItemData, AssetUsage.Icon);
-                effectText = $"남은 개수: {cons.Quantity}개";
-                string modifiersText = BuildModifiersText(cons.ItemData.Modifiers);
-                if (!string.IsNullOrEmpty(modifiersText))
-                {
-                    effectText += $"\n{modifiersText}";
-                }
-                quantity = cons.Quantity;
-            }
-            // 미끼/떡밥이 만약 Entity_Materials로 처리되는 예외 상황 대비 (방어 코드)
-            else if (entity is Entity_Materials mat && mat.ItemData != null)
-            {
-                gradeText = $"{mat.ItemData.Tier}티어 / 재료";
-                assetKey = AssetKeys.Of(mat.ItemData, AssetUsage.Icon);
-                effectText = $"남은 개수: {mat.Quantity}개";
-                quantity = mat.Quantity;
-            }
-            else
-            {
-                // 기타 타입 방어 코드
-                effectText = $"현재 부위: {area}\n상세 정보는 인벤토리에서 확인하세요.";
-            }
-
-            DesktopCompanion.Views.InventorySlotViewData dummyData = new DesktopCompanion.Views.InventorySlotViewData
-            {
-                IsEmpty = false,
-                ItemName = entity.Name,
-                GradeText = gradeText,
-                EffectText = effectText,
-                SellPriceText = ""
-            };
-
             Sprite icon = null;
-            if (!string.IsNullOrEmpty(assetKey))
+            if (TryGetEquipmentOrConsumableData(equippedItem, out _, out string assetKey, out _))
             {
-                AssetProvider.TryGet<Sprite>(assetKey, out icon);
+                if (!string.IsNullOrEmpty(assetKey))
+                {
+                    AssetProvider.TryGet<Sprite>(assetKey, out icon);
+                }
             }
 
-           // m_itemTooltip.Show(dummyData, icon, slotRect);
+            // 2. 새 툴팁 시스템(PJW님 개발)의 Builder를 이용해 데이터를 조립하고 띄움
+            DesktopCompanion.Views.ItemTooltipData data = DesktopCompanion.Views.ItemTooltipBuilder.FromEntity(equippedItem, EntityManager);
+            if (data != null)
+            {
+                DesktopCompanion.Views.ItemTooltipController.Request(null, data, icon, slotRect);
+            }
         }
 
         private void HideTooltip()
         {
-            /*
-            if (m_itemTooltip != null)
-            {
-                m_itemTooltip.Hide();
-            }
-            */
+            DesktopCompanion.Views.ItemTooltipController.Dismiss(null);
         }
 
         // =======================================================

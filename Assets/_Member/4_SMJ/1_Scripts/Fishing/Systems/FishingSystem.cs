@@ -21,6 +21,10 @@ namespace DesktopCompanion.Systems
 
     public class FishingSystem : SystemBase, ITickable
     {
+        // 미끼/떡밥 확률 검증용 로그 스위치입니다.
+        // 테스트가 끝난 뒤 false로 바꾸면 낚시 디버그 로그만 끌 수 있습니다.
+        private const bool EnableFishingItemDebugLog = true;
+
         private StageSystem m_stageSystem;
         private PlayerSystem m_playerSystem;
         private InventorySystem m_inventorySystem;
@@ -41,12 +45,19 @@ namespace DesktopCompanion.Systems
         private float m_battleTimer;
         private float m_autoAttackTimer;
         private bool m_isResolvingPending;
-
-#if UNITY_EDITOR
-        private bool m_isDebugCatchOverrideEnabled;
-        private int m_debugNextBattleFishDataId;
-        private float m_debugNextFishSize;
-#endif
+        private readonly float[] m_qualityWeights = new float[5];
+        private readonly float[] m_rarityWeights = new float[5];
+        private readonly List<BattleFishData>[] m_fishByRarity =
+        {
+            new(),
+            new(),
+            new(),
+            new(),
+            new()
+        };
+        private float m_appliedBaitStat;
+        private float m_appliedGroundbaitStat;
+        private BattleFishData m_appliedSummonTarget;
 
         #region Events
 
@@ -244,47 +255,6 @@ namespace DesktopCompanion.Systems
             };
         }
 
-#if UNITY_EDITOR
-        public bool TrySetDebugCatchOverride(int battleFishDataId, float size)
-        {
-            BattleFishData fishData = DataManager.GetData<BattleFishData>(battleFishDataId);
-
-            if (fishData == null)
-            {
-                Debug.LogWarning(
-                    $"[FishingSystem] 디버그 다음 포획 설정 실패: " +
-                    $"BattleFishData를 찾을 수 없습니다. id={battleFishDataId}");
-                return false;
-            }
-
-            float roundedSize = Mathf.Round(size * 10f) / 10f;
-
-            if (roundedSize < fishData.MinSize || roundedSize > fishData.MaxSize)
-            {
-                Debug.LogWarning(
-                    "[FishingSystem] 디버그 다음 포획 설정 실패: " +
-                    $"크기가 물고기 범위를 벗어났습니다. fish={fishData.Name}, " +
-                    $"size={roundedSize:0.0}, range={fishData.MinSize:0.0}~{fishData.MaxSize:0.0}");
-                return false;
-            }
-
-            m_isDebugCatchOverrideEnabled = true;
-            m_debugNextBattleFishDataId = fishData.ID;
-            m_debugNextFishSize = roundedSize;
-
-            Debug.Log(
-                $"[FishingSystem] 디버그 강제 포획 활성화: " +
-                $"fish={fishData.Name}, size={roundedSize:0.0}, " +
-                $"quality={fishData.GetQuality(roundedSize)}");
-            return true;
-        }
-
-        public void ClearDebugCatchOverride()
-        {
-            m_isDebugCatchOverrideEnabled = false;
-        }
-#endif
-
         #region Pending
 
         private bool ShouldCreatePendingCatch(bool isCollectionUpdated, FishCollectionUpdateResult collectionResult)
@@ -391,18 +361,9 @@ namespace DesktopCompanion.Systems
 
         private void StartBattle()
         {
-#if UNITY_EDITOR
-            bool hasDebugOverride = TryGetDebugCatchOverride(
-                out BattleFishData fishData,
-                out float debugSize);
+            PrepareConsumablesForBattle();
 
-            if (!hasDebugOverride)
-            {
-                fishData = SelectBattleFish();
-            }
-#else
-            BattleFishData fishData = SelectBattleFish();
-#endif
+            BattleFishData fishData = SelectBattleFishForCurrentAttempt();
 
             if (fishData == null)
             {
@@ -422,15 +383,18 @@ namespace DesktopCompanion.Systems
                 return;
             }
 
-            float rolledSize =
-#if UNITY_EDITOR
-                hasDebugOverride ? debugSize :
-#endif
-                RollFishSize(fishData);
+            ItemQuality quality = RollFishQuality(m_appliedBaitStat);
+            float rolledSize = RollFishSize(fishData, quality);
+
             float size = Mathf.Round(rolledSize * 10f) / 10f;
 
-            ItemQuality quality = fishData.GetQuality(size);
             battleFish.SetRollResult(size, quality);
+
+            // 한 번의 낚시에 실제 적용된 소모품 스냅샷과 최종 결과를 한 줄로 확인합니다.
+            LogFishingItemDebug(
+                $"[최종 결과] fish={fishData.Name}(id={fishData.ID}), " +
+                $"rarity={fishData.ItemFish.Rarity}, quality={quality}, size={size:0.0}, " +
+                $"baitStat={m_appliedBaitStat:0.##}, groundbaitStat={m_appliedGroundbaitStat:0.##}");
 
             m_battleDuration = CalculateBattleDuration(fishData, size);
             m_battleTimer = m_battleDuration;
@@ -441,35 +405,6 @@ namespace DesktopCompanion.Systems
             OnBattleHpChanged?.Invoke(m_currentBattleFish, battleFish.CurrentHp, fishData.MaxHp);
             Debug.Log($"[FishingSystem] 전투 시작: {fishData.Name}, HP={battleFish.CurrentHp}/{fishData.MaxHp}, Size={size:0.00}, Quality={quality}, 제한시간={m_battleTimer:0.00}초");
         }
-
-#if UNITY_EDITOR
-        private bool TryGetDebugCatchOverride(
-            out BattleFishData fishData,
-            out float size)
-        {
-            fishData = null;
-            size = 0f;
-
-            if (!m_isDebugCatchOverrideEnabled)
-            {
-                return false;
-            }
-
-            fishData = DataManager.GetData<BattleFishData>(m_debugNextBattleFishDataId);
-            size = m_debugNextFishSize;
-
-            if (fishData != null)
-            {
-                return true;
-            }
-
-            Debug.LogWarning(
-                "[FishingSystem] 디버그 강제 포획을 적용하지 못했습니다. " +
-                $"BattleFishData를 찾을 수 없습니다. id={m_debugNextBattleFishDataId}");
-            return false;
-        }
-#endif
-
 
         private void ApplyDamage(int damage)
         {
@@ -648,7 +583,6 @@ namespace DesktopCompanion.Systems
 
         private void ScheduleNextFishing()
         {
-
             m_waitDuration = CalculateNextFishingDelay();
             m_waitTimer = m_waitDuration;
             m_battleDuration = 0f;
@@ -660,9 +594,69 @@ namespace DesktopCompanion.Systems
             Debug.Log($"[FishingSystem] 다음 입질 대기: {m_waitTimer:0.00}초");
         }
 
+        private void PrepareConsumablesForBattle()
+        {
+            // 소비로 마지막 아이템이 장착 해제되기 전에 현재 스탯을 저장
+            m_appliedBaitStat = m_playerSystem != null ? m_playerSystem.BaseProbabilityAtFishSize : 0f;
+            m_appliedGroundbaitStat = m_playerSystem != null ? m_playerSystem.BaseProbabilityAtFishRarity : 0f;
+            m_appliedSummonTarget = null;
+
+            bool consumedBait = false;
+            bool consumedGroundbait = false;
+            ItemData consumedBaitData = null;
+            ItemData consumedGroundbaitData = null;
+
+            if (m_playerSystem != null)
+            {
+                // 전투 시작 순간 장착된 미끼를 소비하므로 대기 중 교체한 미끼를 적용
+                consumedBait = m_playerSystem.TryConsumeEquippedItem(
+                    EquipmentMountingArea.Bait,
+                    out consumedBaitData);
+
+                if (consumedBait && consumedBaitData is ItemData_Consumables baitData)
+                {
+                    m_appliedSummonTarget = baitData.SummonTarget;
+                }
+
+                if (m_appliedSummonTarget == null)
+                {
+                    consumedGroundbait = m_playerSystem.TryConsumeEquippedItem(
+                        EquipmentMountingArea.Groundbait,
+                        out consumedGroundbaitData);
+                }
+            }
+
+            string groundbaitResult = m_appliedSummonTarget != null
+                ? "소비 생략(보스 미끼 우선)"
+                : $"consumed={consumedGroundbait}, item={GetItemDebugName(consumedGroundbaitData)}";
+
+            LogFishingItemDebug(
+                $"[전투 시작 소모품 적용] baitConsumed={consumedBait}, " +
+                $"bait={GetItemDebugName(consumedBaitData)}, baitStat={m_appliedBaitStat:0.##}, " +
+                $"groundbait={groundbaitResult}, groundbaitStat={m_appliedGroundbaitStat:0.##}, " +
+                $"summonTarget={GetFishDebugName(m_appliedSummonTarget)}");
+        }
+
         #endregion
 
         #region Fish Selection
+
+        private BattleFishData SelectBattleFishForCurrentAttempt()
+        {
+            if (m_appliedSummonTarget == null)
+            {
+                return SelectBattleFish();
+            }
+
+            BattleFishData summonTarget = m_appliedSummonTarget;
+            m_appliedSummonTarget = null;
+
+            // 보스 미끼는 TierPool과 희귀도 가중치 추첨을 거치지 않고 지정 대상을 사용합니다.
+            LogFishingItemDebug(
+                $"[보스 선택] 일반 희귀도 추첨 생략, target={GetFishDebugName(summonTarget)}, " +
+                $"rarity={summonTarget.ItemFish.Rarity}");
+            return summonTarget;
+        }
 
         private BattleFishData SelectBattleFish()
         {
@@ -721,14 +715,42 @@ namespace DesktopCompanion.Systems
                 return null;
             }
 
-            float totalWeight = 0f;
+            for (int i = 0; i < m_fishByRarity.Length; i++)
+            {
+                m_fishByRarity[i].Clear();
+            }
 
             foreach (FishPoolEntry entry in pool.Entries)
             {
-                if (entry != null && entry.Fish != null && entry.Weight > 0f)
+                if (entry == null || entry.Fish == null)
                 {
-                    totalWeight += entry.Weight;
+                    continue;
                 }
+
+                ItemRarity rarity = entry.Fish.ItemFish.Rarity;
+                int rarityIndex = (int)rarity;
+
+                m_fishByRarity[rarityIndex].Add(entry.Fish);
+            }
+
+            float totalWeight = 0f;
+
+            for (int i = 0; i < m_fishByRarity.Length; i++)
+            {
+                m_rarityWeights[i] = 0f;
+
+                if (m_fishByRarity[i].Count == 0)
+                {
+                    continue;
+                }
+
+                ItemRarity rarity = (ItemRarity)i;
+                float weight = FishingWeightCalculator.CalculateRarityWeight(
+                    rarity,
+                    m_appliedGroundbaitStat);
+
+                m_rarityWeights[i] = weight;
+                totalWeight += weight;
             }
 
             if (totalWeight <= 0f)
@@ -737,20 +759,38 @@ namespace DesktopCompanion.Systems
             }
 
             float randomValue = UnityEngine.Random.Range(0f, totalWeight);
-            float currentWeight = 0f;
+            float accumulatedWeight = 0f;
 
-            foreach (FishPoolEntry entry in pool.Entries)
+            for (int i = 0; i < m_fishByRarity.Length; i++)
             {
-                if (entry == null || entry.Fish == null || entry.Weight <= 0f)
+                if (m_fishByRarity[i].Count == 0)
                 {
                     continue;
                 }
 
-                currentWeight += entry.Weight;
+                accumulatedWeight += m_rarityWeights[i];
 
-                if (randomValue <= currentWeight)
+                if (randomValue <= accumulatedWeight)
                 {
-                    return entry.Fish;
+                    List<BattleFishData> selectedRarityFish = m_fishByRarity[i];
+                    int fishIndex = UnityEngine.Random.Range(0, selectedRarityFish.Count);
+                    BattleFishData selectedFish = selectedRarityFish[fishIndex];
+                    ItemRarity selectedRarity = (ItemRarity)i;
+
+                    // 0인 항목은 해당 TierPool에 그 희귀도의 물고기가 없어서 추첨에서 제외된 경우입니다.
+                    LogFishingItemDebug(
+                        $"[희귀도 추첨] groundbaitStat={m_appliedGroundbaitStat:0.##}, tier={pool.Tier}, " +
+                        $"weights=" +
+                        $"Normal:{FormatWeight(m_rarityWeights[0], totalWeight)}, " +
+                        $"Uncommon:{FormatWeight(m_rarityWeights[1], totalWeight)}, " +
+                        $"Rare:{FormatWeight(m_rarityWeights[2], totalWeight)}, " +
+                        $"Epic:{FormatWeight(m_rarityWeights[3], totalWeight)}, " +
+                        $"Legendary:{FormatWeight(m_rarityWeights[4], totalWeight)}, " +
+                        $"roll={randomValue:0.###}/{totalWeight:0.###}, " +
+                        $"selected={selectedRarity}, candidates={selectedRarityFish.Count}, " +
+                        $"fish={GetFishDebugName(selectedFish)}");
+
+                    return selectedFish;
                 }
             }
 
@@ -771,12 +811,114 @@ namespace DesktopCompanion.Systems
             return m_playerSystem.StartingLicense;
         }
 
-        private float RollFishSize(BattleFishData fishData)
+        private ItemQuality RollFishQuality(float baitStat)
         {
-            float minSize = fishData.MinSize;
-            float maxSize = fishData.MaxSize;
+            float totalWeight = 0f;
 
-            return UnityEngine.Random.Range(minSize, maxSize);
+            // 1~5성의 가중치를 계산하고 전체 합계를 구한다.
+            for (int i = 0; i < m_qualityWeights.Length; i++)
+            {
+                ItemQuality quality = (ItemQuality)(i + 1);
+
+                float weight =
+                    FishingWeightCalculator.CalculateQualityWeight(
+                        quality,
+                        baitStat);
+
+                m_qualityWeights[i] = weight;
+                totalWeight += weight;
+            }
+
+            // 전체 가중치 범위에서 랜덤 값을 뽑는다.
+            float randomValue =
+                UnityEngine.Random.Range(0f, totalWeight);
+
+            float accumulatedWeight = 0f;
+
+            // 누적 가중치로 성급을 결정한다.
+            for (int i = 0; i < m_qualityWeights.Length; i++)
+            {
+                accumulatedWeight += m_qualityWeights[i];
+
+                if (randomValue <= accumulatedWeight)
+                {
+                    ItemQuality selectedQuality = (ItemQuality)(i + 1);
+
+                    // 각 가중치와 실제 확률, 랜덤 값, 선택 결과를 함께 출력합니다.
+                    LogQualityRoll(baitStat, totalWeight, randomValue, selectedQuality);
+                    return selectedQuality;
+                }
+            }
+
+            // 부동소수점 오차에 대한 마지막 반환값
+            LogQualityRoll(baitStat, totalWeight, randomValue, ItemQuality.FiveStar);
+            return ItemQuality.FiveStar;
+        }
+
+        private void LogQualityRoll(
+            float baitStat,
+            float totalWeight,
+            float randomValue,
+            ItemQuality selectedQuality)
+        {
+            LogFishingItemDebug(
+                $"[성급 추첨] baitStat={baitStat:0.##}, " +
+                $"weights=" +
+                $"1성:{FormatWeight(m_qualityWeights[0], totalWeight)}, " +
+                $"2성:{FormatWeight(m_qualityWeights[1], totalWeight)}, " +
+                $"3성:{FormatWeight(m_qualityWeights[2], totalWeight)}, " +
+                $"4성:{FormatWeight(m_qualityWeights[3], totalWeight)}, " +
+                $"5성:{FormatWeight(m_qualityWeights[4], totalWeight)}, " +
+                $"roll={randomValue:0.###}/{totalWeight:0.###}, selected={selectedQuality}");
+        }
+
+        // 가중치 원본 값과 전체 합계 기준 실제 확률을 같이 표시합니다.
+        private static string FormatWeight(float weight, float totalWeight)
+        {
+            float probability = weight / totalWeight * 100f;
+            return $"{weight:0.###}({probability:0.00}%)";
+        }
+
+        private static string GetItemDebugName(ItemData itemData)
+        {
+            return itemData == null
+                ? "없음"
+                : $"{itemData.Name}(id={itemData.ID})";
+        }
+
+        private static string GetFishDebugName(BattleFishData fishData)
+        {
+            return fishData == null
+                ? "없음"
+                : $"{fishData.Name}(id={fishData.ID})";
+        }
+
+        private static void LogFishingItemDebug(string message)
+        {
+            if (EnableFishingItemDebugLog)
+            {
+                Debug.Log($"[FishingDebug] {message}");
+            }
+        }
+
+        private float RollFishSize(BattleFishData fishData, ItemQuality quality)
+        {
+            fishData.GetSizeRange(
+                quality,
+                out float minSize,
+                out float maxSize);
+
+            int minSizeStep = Mathf.RoundToInt(minSize * 10f);
+
+            int maxSizeStepExclusive = quality == ItemQuality.FiveStar
+                ? Mathf.RoundToInt(maxSize * 10f) + 1
+                : Mathf.RoundToInt(maxSize * 10f);
+
+            int selectedSizeStep = UnityEngine.Random.Range(
+                minSizeStep,
+                maxSizeStepExclusive);
+
+            return selectedSizeStep / 10f;
         }
 
         private float CalculateBattleDuration(BattleFishData fishData, float fishSize)

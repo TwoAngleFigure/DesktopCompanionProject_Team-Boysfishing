@@ -13,9 +13,11 @@ namespace DesktopCompanion.Systems
         {
             public ItemQuality BestQuality;
             public float BestSize;
+            public int LastUpdatedOrder;
         }
 
         private readonly Dictionary<int, Entry> m_entries = new();
+        private int m_updateSequence;
 
         /// <summary>
         /// 신규 어종 등록 또는 기존 기록 갱신 시 발생
@@ -30,6 +32,7 @@ namespace DesktopCompanion.Systems
         public override void Initialize()
         {
             m_entries.Clear();
+            m_updateSequence = 0;
         }
 
         /// <summary>
@@ -86,19 +89,88 @@ namespace DesktopCompanion.Systems
 
             List<FishCollectionDisplayEntry> entries = new(fishDatas.Count);
 
+            Dictionary<int, List<int>> stageDataIdsByFishDataId = BuildStageDataIdsByFishDataId();
+            Dictionary<int, string> stageNamesByStageDataId = BuildStageNamesByStageDataId();
+
             foreach (ItemData_Fish fishData in fishDatas)
             {
                 bool isRegistered = m_entries.TryGetValue(fishData.ID, out Entry record);
 
+                IReadOnlyList<int> stageDataIds = stageDataIdsByFishDataId.TryGetValue(
+                    fishData.ID,
+                    out List<int> mappedStageDataIds) 
+                    ? mappedStageDataIds 
+                    : Array.Empty<int>();
+
+                List<string> stageNames = new(stageDataIds.Count);
+
+                foreach (int stageDataId in stageDataIds)
+                {
+                    if (stageNamesByStageDataId.TryGetValue(
+                            stageDataId,
+                            out string stageName))
+                    {
+                        stageNames.Add(stageName);
+                    }
+                }
+
+                string productionMaterialName = fishData.AquariumMaterial != null
+                    ? fishData.AquariumMaterial.Name
+                    : "-";
+
                 entries.Add(new FishCollectionDisplayEntry(
                     fishData.ID,
                     fishData.Name,
+                    fishData.Rarity,
+                    fishData.Tier,
+                    stageDataIds,
+                    stageNames,
+                    productionMaterialName,
                     isRegistered,
                     isRegistered ? record.BestQuality : default,
-                    isRegistered ? record.BestSize : 0f));
+                    isRegistered ? record.BestSize : 0f,
+                    isRegistered ? record.LastUpdatedOrder : 0));
             }
 
             return entries;
+        }
+
+        public IReadOnlyList<FishCollectionStageInfo> GetAllStageInfos()
+        {
+            List<FishCollectionStageInfo> result = new();
+
+            foreach (StageData stageData in DataManager.GetAll<StageData>())
+            {
+                if (stageData == null)
+                {
+                    continue;
+                }
+
+                result.Add(new FishCollectionStageInfo(
+                    stageData.ID,
+                    stageData.Name));
+            }
+
+            result.Sort(
+                (left, right) =>
+                    left.StageDataId.CompareTo(right.StageDataId));
+
+            return result;
+        }
+
+        private Dictionary<int, string> BuildStageNamesByStageDataId()
+        {
+            Dictionary<int, string> result = new();
+
+            foreach (StageData stageData in DataManager.GetAll<StageData>())
+            {
+                if (stageData != null)
+                {
+                    result.Add(stageData.ID, stageData.Name);
+                }
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -129,7 +201,8 @@ namespace DesktopCompanion.Systems
                 entry = new Entry
                 {
                     BestQuality = quality,
-                    BestSize = size
+                    BestSize = size,
+                    LastUpdatedOrder = IssueUpdateOrder()
                 };
 
                 m_entries.Add(fishDataId, entry);
@@ -157,15 +230,6 @@ namespace DesktopCompanion.Systems
                 // 최고 품질이 상승했다면 최대 크기도 반드시 상승해야 한다.
                 if (size <= previousBestSize)
                 {
-                    Debug.LogError(
-                        "[FishCollectionSystem] 도감 갱신 실패. " +
-                        "품질은 상승했지만 크기가 증가하지 않았습니다. " +
-                        $"fishDataId={fishDataId}, " +
-                        $"previousQuality={previousBestQuality}, " +
-                        $"caughtQuality={quality}, " +
-                        $"previousSize={previousBestSize:0.###}, " +
-                        $"caughtSize={size:0.###}");
-
                     return false;
                 }
 
@@ -179,20 +243,17 @@ namespace DesktopCompanion.Systems
                 // 더 큰 개체가 더 낮은 품질을 갖는 경우는 존재하면 안된다.
                 if (quality < previousBestQuality)
                 {
-                    Debug.LogError(
-                        "[FishCollectionSystem] 도감 갱신 실패. " +
-                        "크기는 증가했지만 품질이 낮아졌습니다. " +
-                        $"fishDataId={fishDataId}, " +
-                        $"previousQuality={previousBestQuality}, " +
-                        $"caughtQuality={quality}, " +
-                        $"previousSize={previousBestSize:0.###}, " +
-                        $"caughtSize={size:0.###}");
 
                     return false;
                 }
 
                 entry.BestSize = size;
                 updateType = FishCollectionUpdateType.BestSizeImproved;
+            }
+
+            if (updateType != FishCollectionUpdateType.None)
+            {
+                entry.LastUpdatedOrder = IssueUpdateOrder();
             }
 
             result = new FishCollectionUpdateResult(
@@ -227,7 +288,8 @@ namespace DesktopCompanion.Systems
                 {
                     fishDataId = fishDataId,
                     bestQuality = entry.BestQuality,
-                    bestSize = entry.BestSize
+                    bestSize = entry.BestSize,
+                    lastUpdatedOrder = entry.LastUpdatedOrder
                 });
             }
 
@@ -246,6 +308,7 @@ namespace DesktopCompanion.Systems
             }
 
             m_entries.Clear();
+            m_updateSequence = 0;
 
             if (save.entries == null)
             {
@@ -285,8 +348,14 @@ namespace DesktopCompanion.Systems
                     new Entry
                     {
                         BestQuality = savedEntry.bestQuality,
-                        BestSize = savedEntry.bestSize
+                        BestSize = savedEntry.bestSize,
+                        LastUpdatedOrder = savedEntry.lastUpdatedOrder
                     });
+
+                if (savedEntry.lastUpdatedOrder > m_updateSequence)
+                {
+                    m_updateSequence = savedEntry.lastUpdatedOrder;
+                }
             }
 
             Debug.Log(
@@ -341,6 +410,76 @@ namespace DesktopCompanion.Systems
             }
 
             return true;
+        }
+
+        private int IssueUpdateOrder()
+        {
+            return ++m_updateSequence;
+        }
+
+        private Dictionary<int, List<int>> BuildStageDataIdsByFishDataId()
+        {
+            Dictionary<int, List<int>> result = new();
+
+            foreach (StageData stageData in DataManager.GetAll<StageData>())
+            {
+                if (stageData == null)
+                {
+                    continue;
+                }
+
+                if (stageData.TierPools != null)
+                {
+                    foreach (TierPool tierPool in stageData.TierPools)
+                    {
+                        if (tierPool?.Entries == null)
+                        {
+                            continue;
+                        }
+
+                        foreach (FishPoolEntry poolEntry in tierPool.Entries)
+                        {
+                            AddStageDataId(
+                                result,
+                                poolEntry?.Fish,
+                                stageData.ID);
+                        }
+                    }
+                }
+
+                AddStageDataId(result, stageData.Boss, stageData.ID);
+            }
+
+            foreach (List<int> stageDataIds in result.Values)
+            {
+                stageDataIds.Sort();
+            }
+
+            return result;
+        }
+
+        private static void AddStageDataId(
+            Dictionary<int, List<int>> result,
+            BattleFishData battleFishData,
+            int stageDataId)
+        {
+            if (battleFishData?.ItemFish == null)
+            {
+                return;
+            }
+
+            int fishDataId = battleFishData.ItemFish.ID;
+
+            if (!result.TryGetValue(fishDataId, out List<int> stageDataIds))
+            {
+                stageDataIds = new List<int>();
+                result.Add(fishDataId, stageDataIds);
+            }
+
+            if (!stageDataIds.Contains(stageDataId))
+            {
+                stageDataIds.Add(stageDataId);
+            }
         }
     }
 }

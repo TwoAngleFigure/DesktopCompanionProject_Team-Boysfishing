@@ -15,6 +15,7 @@ namespace DesktopCompanion.Save
             public int fishDataId;
             public ItemQuality bestQuality;
             public float bestSize;
+            public int lastUpdatedOrder;
         }
     }
 
