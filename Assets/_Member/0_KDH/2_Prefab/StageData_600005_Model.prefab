@@ -56,7 +56,7 @@ MonoBehaviour:
   m_blueprintList:
   - m_assetKey: islands_buoy_near
     m_layerDepth: 0
-    m_spawnDistanceTrigger: 25
+    m_spawnDistanceTrigger: 20
     m_targetWorldOffsetFromCamera: -7
     m_targetLocalY: -5.5
     m_isSpawned: 0
@@ -65,7 +65,7 @@ MonoBehaviour:
     m_targetCameraX: -15
   - m_assetKey: islands_buoy_near
     m_layerDepth: 0
-    m_spawnDistanceTrigger: 25
+    m_spawnDistanceTrigger: 10
     m_targetWorldOffsetFromCamera: -14
     m_targetLocalY: -5.5
     m_isSpawned: 0
@@ -74,7 +74,7 @@ MonoBehaviour:
     m_targetCameraX: -15
   - m_assetKey: islands_buoy_near
     m_layerDepth: 0
-    m_spawnDistanceTrigger: 25
+    m_spawnDistanceTrigger: 10
     m_targetWorldOffsetFromCamera: -21
     m_targetLocalY: -5.5
     m_isSpawned: 0
@@ -83,35 +83,35 @@ MonoBehaviour:
     m_targetCameraX: -15
   - m_assetKey: islands_buoy_middle
     m_layerDepth: 1
-    m_spawnDistanceTrigger: 40
+    m_spawnDistanceTrigger: 75
     m_targetWorldOffsetFromCamera: 7
-    m_targetLocalY: -5.5
+    m_targetLocalY: -0.33
     m_isSpawned: 0
     m_spawnTriggerX: 0
     m_targetWorldX: -15
     m_targetCameraX: -15
   - m_assetKey: islands_buoy_middle
     m_layerDepth: 1
-    m_spawnDistanceTrigger: 40
+    m_spawnDistanceTrigger: 75
     m_targetWorldOffsetFromCamera: 12
-    m_targetLocalY: -5.5
+    m_targetLocalY: -0.33
     m_isSpawned: 0
     m_spawnTriggerX: 0
     m_targetWorldX: -15
     m_targetCameraX: -15
   - m_assetKey: islands_buoy_middle
     m_layerDepth: 1
-    m_spawnDistanceTrigger: 40
+    m_spawnDistanceTrigger: 75
     m_targetWorldOffsetFromCamera: 17
-    m_targetLocalY: -5.5
+    m_targetLocalY: -0.33
     m_isSpawned: 0
     m_spawnTriggerX: 0
     m_targetWorldX: -15
     m_targetCameraX: -15
   - m_assetKey: islands_background_8
     m_layerDepth: 2
-    m_spawnDistanceTrigger: 55
-    m_targetWorldOffsetFromCamera: -9
+    m_spawnDistanceTrigger: 75
+    m_targetWorldOffsetFromCamera: 1
     m_targetLocalY: 0.1
     m_isSpawned: 0
     m_spawnTriggerX: 0
@@ -119,8 +119,8 @@ MonoBehaviour:
     m_targetCameraX: -15
   - m_assetKey: islands_background_3
     m_layerDepth: 1
-    m_spawnDistanceTrigger: 40
-    m_targetWorldOffsetFromCamera: 6
+    m_spawnDistanceTrigger: 60
+    m_targetWorldOffsetFromCamera: 16
     m_targetLocalY: 3
     m_isSpawned: 0
     m_spawnTriggerX: 0
@@ -129,7 +129,7 @@ MonoBehaviour:
   - m_assetKey: islands_background_4_middle
     m_layerDepth: 1
     m_spawnDistanceTrigger: 40
-    m_targetWorldOffsetFromCamera: -24
+    m_targetWorldOffsetFromCamera: -14
     m_targetLocalY: 0.7
     m_isSpawned: 0
     m_spawnTriggerX: 0
@@ -138,7 +138,7 @@ MonoBehaviour:
   - m_assetKey: islands_background_9
     m_layerDepth: 0
     m_spawnDistanceTrigger: 25
-    m_targetWorldOffsetFromCamera: -19
+    m_targetWorldOffsetFromCamera: -9
     m_targetLocalY: 3.1
     m_isSpawned: 0
     m_spawnTriggerX: 0
@@ -146,9 +146,9 @@ MonoBehaviour:
     m_targetCameraX: -15
   - m_assetKey: islands_background_4_near
     m_layerDepth: 0
-    m_spawnDistanceTrigger: 25
-    m_targetWorldOffsetFromCamera: 10
-    m_targetLocalY: 0.8
+    m_spawnDistanceTrigger: 60
+    m_targetWorldOffsetFromCamera: 20
+    m_targetLocalY: 0.7
     m_isSpawned: 0
     m_spawnTriggerX: 0
     m_targetWorldX: -15
@@ -164,7 +164,7 @@ MonoBehaviour:
     m_targetCameraX: -15
   - m_assetKey: islands_ship_middle
     m_layerDepth: 1
-    m_spawnDistanceTrigger: 40
+    m_spawnDistanceTrigger: 50
     m_targetWorldOffsetFromCamera: 4
     m_targetLocalY: -0.26
     m_isSpawned: 0
