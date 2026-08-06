@@ -15,6 +15,12 @@ namespace DesktopCompanion.Views
         public readonly BindableProperty<bool> IsBattleGaugeVisible = new(false);
         public readonly BindableProperty<string> ToggleButtonText = new("낚시 시작");
 
+        /// <summary>
+        /// 수동 공격 버튼을 쓸 수 있는지. <see cref="CanManualAttack"/>과 같은 조건(전투 중)이다.
+        /// RelayCommand가 실행을 막아도 버튼은 눌리는 채로 남으므로, 표시용으로 따로 내보낸다.
+        /// </summary>
+        public readonly BindableProperty<bool> IsManualAttackEnabled = new(false);
+
         public RelayCommand ToggleFishingState { get; private set; }
         public RelayCommand ManualAttack { get; private set; }
 
@@ -79,6 +85,7 @@ namespace DesktopCompanion.Views
                     HpRatio.Value = 0f;
                     BattleTimeRemainingRatio.Value = 0f;
                     IsBattleGaugeVisible.Value = false;
+                    IsManualAttackEnabled.Value = false;
                     ToggleButtonText.Value = "낚시 시작";
                     break;
 
@@ -88,6 +95,7 @@ namespace DesktopCompanion.Views
                     HpRatio.Value = 0f;
                     BattleTimeRemainingRatio.Value = 0f;
                     IsBattleGaugeVisible.Value = false;
+                    IsManualAttackEnabled.Value = false;   // 입질 전 — 때릴 대상이 없다
 
                     ToggleButtonText.Value = "낚시 중지";
                     break;
@@ -96,6 +104,7 @@ namespace DesktopCompanion.Views
                     StateText.Value = "낚시 중";
                     BattleTimeRemainingRatio.Value = 1f;
                     IsBattleGaugeVisible.Value = true;
+                    IsManualAttackEnabled.Value = true;
                     ToggleButtonText.Value = "낚시 중지";
                     break;
             }

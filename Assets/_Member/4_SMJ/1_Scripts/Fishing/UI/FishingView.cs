@@ -33,6 +33,7 @@ public class FishingView : UIViewBase
         m_vm.ToggleButtonText.Bind(OnToggleButtonTextChanged);
         m_vm.BattleTimeRemainingRatio.Bind(OnBattleTimeRemainingRatioChanged);
         m_vm.IsBattleGaugeVisible.Bind(OnBattleGaugeVisibleChanged);
+        m_vm.IsManualAttackEnabled.Bind(OnManualAttackEnabledChanged);
 
         if (m_toggleFishingButton != null)
         {
@@ -53,6 +54,7 @@ public class FishingView : UIViewBase
         m_vm.ToggleButtonText.Unbind(OnToggleButtonTextChanged);
         m_vm.BattleTimeRemainingRatio.Unbind(OnBattleTimeRemainingRatioChanged);
         m_vm.IsBattleGaugeVisible.Unbind(OnBattleGaugeVisibleChanged);
+        m_vm.IsManualAttackEnabled.Unbind(OnManualAttackEnabledChanged);
 
         if (m_toggleFishingButton != null)
         {
@@ -120,6 +122,14 @@ public class FishingView : UIViewBase
         {
             m_timeLimitSlider.SetValueWithoutNotify(
                 Mathf.Clamp01(ratio));
+        }
+    }
+
+    private void OnManualAttackEnabledChanged(bool isEnabled)
+    {
+        if (m_manualAttackButton != null)
+        {
+            m_manualAttackButton.interactable = isEnabled;
         }
     }
 

@@ -101,26 +101,6 @@ namespace DesktopCompanion.Views
             }
 
 
-            if (m_quantityText != null)
-            {
-                switch (data.ItemType)
-                {
-                    case ItemType.Equipment:
-                        m_quantityText.text =  data.UpgradeLevel > 0 ? $"+{data.UpgradeLevel}" : string.Empty;
-                        break;
-
-                    case ItemType.Consumables:
-                    case ItemType.Materials:
-                        m_quantityText.text = data.Quantity > 1 ? data.Quantity.ToString() : string.Empty;
-                        break;
-
-                    case ItemType.Fish:
-                    default:
-                        m_quantityText.text = string.Empty;
-                        break;
-                }
-            }
-
             if (m_subInfoText != null)
             {
                 m_subInfoText.text = GetSubInfoText(data);
@@ -140,6 +120,51 @@ namespace DesktopCompanion.Views
             {
                 m_slotView.Set(vd, icon, tooltipSource);
             }
+
+            // ItemSlotView.Set이 수량 칸을 자기 기준(Quantity > 1)으로 덮어쓰므로 그 뒤에 적용한다.
+            // 강화 수치(+3) 같은 이 창 고유의 표시가 지워지지 않게 하기 위함이다.
+            ApplyQuantityText(data);
+        }
+
+        // 아이템 종류별 수량·강화 수치. 표시할 값이 없으면 빈 문자열이 되어 텍스트와 배경이 함께 꺼진다.
+        private void ApplyQuantityText(InventorySlotViewData data)
+        {
+            string text;
+
+            switch (data.ItemType)
+            {
+                case ItemType.Equipment:
+                    text = data.UpgradeLevel > 0 ? $"+{data.UpgradeLevel}" : string.Empty;
+                    break;
+
+                case ItemType.Consumables:
+                case ItemType.Materials:
+                    text = data.Quantity > 1 ? data.Quantity.ToString() : string.Empty;
+                    break;
+
+                case ItemType.Fish:
+                default:
+                    text = string.Empty;
+                    break;
+            }
+
+            SetQuantityText(text);
+        }
+
+        // 수량 칸의 주인은 ItemSlotView다. 그쪽을 거쳐야 배경 이미지가 텍스트와 같이 켜고 꺼진다.
+        // m_quantityText 직접 쓰기는 ItemSlotView가 없는 구성에서의 폴백이다(배경은 동기화되지 않는다).
+        private void SetQuantityText(string text)
+        {
+            if (m_slotView != null)
+            {
+                m_slotView.SetQuantityText(text);
+                return;
+            }
+
+            if (m_quantityText != null)
+            {
+                m_quantityText.text = text;
+            }
         }
 
         private void SetEmpty(InventorySlotViewData data)
@@ -158,10 +183,7 @@ namespace DesktopCompanion.Views
                 m_iconImage.enabled = false;
             }
 
-            if (m_quantityText != null)
-            {
-                m_quantityText.text = string.Empty;
-            }
+            SetQuantityText(string.Empty);
 
             if (m_subInfoText != null)
             {

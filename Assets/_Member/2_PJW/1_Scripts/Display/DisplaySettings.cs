@@ -7,6 +7,9 @@ namespace DesktopCompanion.Views
     {
         public ScreenMode Mode;
         public float Scale;          // Window 모드 출력 배율(ViewScaleRange)
+        public float UiScale;        // UI 캔버스 배율(UiScaleRange). 월드 출력 배율과 별개다.
+        public int TargetFps;        // 포커스 상태 프레임 상한(FpsOptions)
+        public bool TopMost;         // 창 최상단 고정
         public int MonitorIndex;
         public Vector2 WindowRectPos; // 정규화 rect 위치(x,y)
 
@@ -24,6 +27,9 @@ namespace DesktopCompanion.Views
         // 배율이 열거형(int)에서 연속값(float)으로 바뀌어 키를 분리했다.
         // 예전 "display.scale"(int)은 더 이상 읽지 않는다.
         private const string K_Scale = "display.scaleFactor";
+        private const string K_UiScale = "display.uiScale";
+        private const string K_Fps = "display.targetFps";
+        private const string K_TopMost = "display.topMost";
         private const string K_Monitor = "display.monitor";
         private const string K_PosX = "display.window.posX";
         private const string K_PosY = "display.window.posY";
@@ -38,6 +44,10 @@ namespace DesktopCompanion.Views
         {
             Mode = ReadEnum(K_Mode, ScreenMode.Full),
             Scale = ViewScaleRange.Clamp(PlayerPrefs.GetFloat(K_Scale, ViewScaleRange.Default)),
+            UiScale = UiScaleRange.Snap(PlayerPrefs.GetFloat(K_UiScale, UiScaleRange.Default)),
+            TargetFps = FpsOptions.Snap(PlayerPrefs.GetInt(K_Fps, FpsOptions.Default)),
+            // PlayerPrefs에 bool이 없어 int로 저장한다. 기본값 1 — 도입 전과 같은 최상단 고정 상태다.
+            TopMost = PlayerPrefs.GetInt(K_TopMost, 1) != 0,
             MonitorIndex = PlayerPrefs.GetInt(K_Monitor, 0),
             // 기본 위치: 우하단(보트 쪽)
             WindowRectPos = new Vector2(
@@ -51,6 +61,9 @@ namespace DesktopCompanion.Views
         {
             PlayerPrefs.SetInt(K_Mode, (int)data.Mode);
             PlayerPrefs.SetFloat(K_Scale, data.Scale);
+            PlayerPrefs.SetFloat(K_UiScale, data.UiScale);
+            PlayerPrefs.SetInt(K_Fps, data.TargetFps);
+            PlayerPrefs.SetInt(K_TopMost, data.TopMost ? 1 : 0);
             PlayerPrefs.SetInt(K_Monitor, data.MonitorIndex);
             PlayerPrefs.SetFloat(K_PosX, data.WindowRectPos.x);
             PlayerPrefs.SetFloat(K_PosY, data.WindowRectPos.y);
