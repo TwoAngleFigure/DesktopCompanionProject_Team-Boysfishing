@@ -117,7 +117,11 @@ namespace DesktopCompanion.Views
                 // 칸에 보이는 것은 레시피가 아니라 '결과물 아이템'이다 — 정의 기반으로 슬롯을 만든다.
                 ItemSlotVD slotVD = ItemSlotVD.FromData(m_viewModel.GetResultData(recipe), recipe.m_resultCount);
 
-                slotObj.Set(recipe, slotVD, ResolveIcon(slotVD != null ? slotVD.IconKey : null), this, SelectRecipe);
+                // 결과 아이템 정의가 없는 레시피(랜덤 장비 생산 등)는 아이콘 키도 없다.
+                // 칸이 통째로 비어 보이지 않도록 기본 아이콘으로 대신 채운다.
+                string iconKey = slotVD != null ? slotVD.IconKey : AssetKeys.DefaultOf(AssetUsage.Icon);
+
+                slotObj.Set(recipe, slotVD, ResolveIcon(iconKey), this, SelectRecipe);
             }
         }
 
