@@ -90,6 +90,27 @@ namespace DesktopCompanion.EditorTools
                 dataManager.GetAll<ItemData_Materials>());
         }
 
+        [MenuItem("Tools/DesktopCompanion/Addressables - Fish 아이콘 그룹 등록")]
+        public static void BuildFishIconGroup()
+        {
+            var dataManager = new DataManager();
+            dataManager.Load();
+
+            // Assets/Resource/Icon_Fish/ItemData_Fish_{ID}_Icon.png — 파일명이 곧 주소라 매핑표 불필요.
+            // AssetKeys로 만들어 두면 m_assetKey 오버라이드 시 주소와 기대 파일명이 함께 움직인다.
+            var iconFiles = new Dictionary<int, string>();
+            foreach (ItemData_Fish data in dataManager.GetAll<ItemData_Fish>())
+            {
+                iconFiles[data.ID] = AssetKeys.Of(data, AssetUsage.Icon);
+            }
+
+            BuildIconGroup(
+                "Icon_Fish",
+                "Assets/Resource/Icon_Fish",
+                iconFiles,
+                dataManager.GetAll<ItemData_Fish>());
+        }
+
         [MenuItem("Tools/DesktopCompanion/Addressables - Fish 모델 그룹 등록")]
         public static void BuildFishModelGroup()
         {
