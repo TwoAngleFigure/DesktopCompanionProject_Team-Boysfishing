@@ -14,6 +14,9 @@ namespace DesktopCompanion.Views
         public string IconKey;
         public int Tier;
 
+        /// <summary>표시용 설명 문장(ItemData.Description). 비어 있으면 패널이 그 줄을 감춘다.</summary>
+        public string Description;
+
         // 재료는 전용 섹션이 없다(헤더만 표시).
         public FishSection Fish;
         public EquipmentSection Equipment;
@@ -49,8 +52,18 @@ namespace DesktopCompanion.Views
             public EquipmentMountingArea Category;
             public StatModifier[] Modifiers;
             public int Quantity;
-            public MaterialCost[] CraftMaterials;
+            public CraftCost[] CraftMaterials;
             public int CraftGoldCost;
+        }
+
+        /// <summary>
+        /// 제작 비용 1건. 조합 레시피(문자열 재료 목록)와 아이템 정의(MaterialCost) 어느 쪽에서 왔든
+        /// 표시 계층이 같은 모양으로 다루게 하는 표시용 형태다. 정의를 찾지 못하면 <see cref="Item"/>이 null이다.
+        /// </summary>
+        public class CraftCost
+        {
+            public ItemData Item;
+            public int Count;
         }
     }
 

@@ -31,8 +31,10 @@ namespace DesktopCompanion.Views
 
         [Header("공통")]
         [SerializeField] private ItemGradeStyle m_style;
-        [Tooltip("스택 수량(재료·소모품). 1 이하면 빈 문자열")]
+        [Tooltip("스택 수량(재료·소모품). 표시할 값이 없으면 배경과 함께 꺼진다")]
         [SerializeField] private TMP_Text m_quantityText;
+        [Tooltip("수량 텍스트 뒤 배경. 텍스트와 항상 같이 켜고 꺼진다")]
+        [SerializeField] private Image m_quantityBackground;
 
         private ItemSlotVD m_vd;
         private IItemTooltipSource m_tooltipSource;
@@ -61,15 +63,33 @@ namespace DesktopCompanion.Views
             ApplyRarityGlow(vd);
             ApplyStar(vd);
 
-            if (m_quantityText != null)
-            {
-                m_quantityText.text = vd != null && vd.Quantity > 1 ? vd.Quantity.ToString() : string.Empty;
-            }
+            // 수량 정보가 없거나(vd null) 1개면 빈 문자열 — 텍스트·배경이 함께 꺼진다.
+            SetQuantityText(vd != null && vd.Quantity > 1 ? vd.Quantity.ToString() : string.Empty);
 
             // 행 풀링으로 내용만 바뀐 경우 — 마우스가 그대로 올라가 있으면 팝업도 새 아이템으로 갱신한다.
             if (m_isHovered)
             {
                 RequestTooltip();
+            }
+        }
+
+        /// <summary>
+        /// 수량 칸을 갱신한다. 빈 문자열이면 텍스트와 배경을 함께 끈다.
+        /// 배경만 남아 빈 칸이 떠 있는 것을 막기 위해, 슬롯 위의 다른 컴포넌트가 수량 칸을 쓸 때도
+        /// TMP_Text에 직접 쓰지 말고 이 경로를 타야 한다.
+        /// </summary>
+        public void SetQuantityText(string text)
+        {
+            bool show = string.IsNullOrEmpty(text) == false;
+
+            if (m_quantityText != null)
+            {
+                m_quantityText.text = text;
+                m_quantityText.enabled = show;
+            }
+            if (m_quantityBackground != null)
+            {
+                m_quantityBackground.enabled = show;
             }
         }
 

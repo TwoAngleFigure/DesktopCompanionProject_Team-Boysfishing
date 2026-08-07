@@ -16,6 +16,10 @@ namespace DesktopCompanion.Views
     ///
     /// 키가 아예 없는 경우 기본(대체) 에셋으로 대신 응답한다(UseFallback). 대체 우선순위는
     /// "Default_{용도}" → "Default" → 절차적 플레이스홀더(Sprite/Texture2D 한정) 순이다.
+    ///
+    /// 빌드(Packed)에서는 스프라이트 png의 주소에 메인 에셋인 Texture2D 하나만 실린다
+    /// (에디터 AssetDatabase 모드에서는 Sprite 표현까지 함께 잡힌다). 이 차이로 Sprite 조회가
+    /// 빌드에서만 빈손이 되므로, 캐시에 Texture2D뿐인 키는 Sprite를 한 번 만들어 함께 캐시한다.
     /// </summary>
     public class AssetProvider
     {
@@ -28,6 +32,8 @@ namespace DesktopCompanion.Views
         private readonly HashSet<string> m_reportedKeys = new();
         // 타입별 절차적 플레이스홀더(런타임 생성, ReleaseAll에서 파기)
         private readonly Dictionary<System.Type, Object> m_placeholders = new();
+        // Texture2D에서 만들어 낸 Sprite(런타임 생성, ReleaseAll에서 파기). 캐시에도 함께 들어간다.
+        private readonly List<Sprite> m_createdSprites = new();
 
         public bool IsPreloaded { get; private set; }
 
@@ -101,7 +107,8 @@ namespace DesktopCompanion.Views
 
         /// <summary>
         /// 에셋 조회. 키가 카탈로그에 아예 없으면 기본 에셋으로 대체한다(UseFallback).
-        /// 키는 있으나 요청 타입이 다른 경우(예: Sprite 요청 · Texture2D 캐시)에는 대체하지 않는다 —
+        /// Sprite 요청인데 캐시에 Texture2D뿐인 경우(빌드)는 대체하지 않고 Sprite를 만들어 준다.
+        /// 그 밖에 키는 있으나 타입이 맞지 않는 경우에는 대체하지 않는다 —
         /// 호출부의 자체 변환 경로를 가로채지 않기 위함이다.
         /// </summary>
         public bool TryGet<T>(string key, out T asset) where T : Object
@@ -137,14 +144,77 @@ namespace DesktopCompanion.Views
                         return true;
                     }
                 }
+
+                // 빌드에서 Texture2D만 실린 경우(§클래스 주석). 한 번 만들어 캐시에 넣으므로
+                // 다음 조회부터는 위 순회에서 끝난다.
+                if (typeof(T) == typeof(Sprite) && TryCreateSprite(key, list, out Sprite created))
+                {
+                    asset = (T)(Object)created;
+                    return true;
+                }
             }
             asset = null;
             return false;
         }
 
+        /// <summary>
+        /// 캐시에 Texture2D뿐인 키에서 Sprite를 만들어 캐시에 함께 넣는다.
+        /// 원본 스프라이트의 피벗·보더는 Texture2D만으로는 알 수 없으므로
+        /// 중앙 피벗·전체 사각형으로 만든다(아이콘 용도 기준).
+        /// 텍스처 읽기 권한이 없어도 되도록 <see cref="SpriteMeshType.FullRect"/>를 쓴다.
+        /// </summary>
+        private bool TryCreateSprite(string key, List<Object> list, out Sprite sprite)
+        {
+            sprite = null;
+
+            Texture2D texture = null;
+            foreach (Object cached in list)
+            {
+                if (cached is Texture2D found && found != null)
+                {
+                    texture = found;
+                    break;
+                }
+            }
+            if (texture == null)
+            {
+                return false;
+            }
+
+            sprite = Sprite.Create(
+                texture,
+                new Rect(0f, 0f, texture.width, texture.height),
+                new Vector2(0.5f, 0.5f),
+                100f,
+                0,
+                SpriteMeshType.FullRect);
+
+            if (sprite == null)
+            {
+                return false;
+            }
+
+            sprite.name = $"{key}_RuntimeSprite";
+            sprite.hideFlags = HideFlags.HideAndDontSave;
+
+            list.Add(sprite);            // 다음 조회부터는 캐시 순회에서 바로 잡힌다
+            m_createdSprites.Add(sprite);
+            return true;
+        }
+
         /// <summary>전체 해제 훅(§16.5 후속 최적화용 — 현 단계에서는 종료 외 호출 없음).</summary>
         public void ReleaseAll()
         {
+            // 캐시 리스트를 비우기 전에, 런타임 생성 Sprite부터 파기한다(원본 에셋은 핸들이 해제한다).
+            foreach (Sprite created in m_createdSprites)
+            {
+                if (created != null)
+                {
+                    Object.Destroy(created);
+                }
+            }
+            m_createdSprites.Clear();
+
             foreach (AsyncOperationHandle handle in m_handles)
             {
                 Addressables.Release(handle);

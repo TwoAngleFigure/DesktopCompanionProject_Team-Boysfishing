@@ -72,5 +72,19 @@ namespace DesktopCompanion.Views
         /// 레어도 식별 색을 반환한다. 글로우 강도와 무관하므로 강도 0인 레어도도 자기 색을 반환한다.
         /// </summary>
         public Color RarityColor(ItemRarity rarity) => RarityGlow(rarity).Color;
+
+        /// <summary>
+        /// 레어도 팔레트의 index번째 색. 레어도가 아닌 등급 표현(장비 강화 단계 등)에
+        /// 같은 색 계열을 재사용할 때 쓴다. 범위를 벗어나면 흰색을 반환한다.
+        /// </summary>
+        public Color PaletteColorAt(int index) => RarityGlow((ItemRarity)index).Color;
+
+        /// <summary>
+        /// 장비 강화 단계의 표시 색. 레어도 팔레트를 2단계마다 한 칸씩 빌려 쓴다 —
+        /// 0~2강=0번, 3~4강=1번, 5~6강=2번, 7~8강=3번, 9강 이상=4번 색.
+        /// 강화창과 툴팁 팝업이 같은 색을 쓰도록 규칙을 여기 한 곳에 둔다.
+        /// </summary>
+        public Color UpgradeColor(int upgradeLevel)
+            => PaletteColorAt(Mathf.Clamp((Mathf.Max(upgradeLevel, 1) - 1) / 2, 0, 4));
     }
 }

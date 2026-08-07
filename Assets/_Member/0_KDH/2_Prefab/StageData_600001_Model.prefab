@@ -54,29 +54,218 @@ MonoBehaviour:
   m_midParallax: 0.35
   m_farParallax: 0.65
   m_blueprintList:
-  - m_assetKey: Dummy_Rock
+  - m_assetKey: river_back_4
     m_layerDepth: 1
-    m_spawnDistanceTrigger: 40
-    m_targetWorldOffsetFromCamera: 0
-    m_targetLocalY: -0.6
+    m_spawnDistanceTrigger: 65
+    m_targetWorldOffsetFromCamera: 18
+    m_targetLocalY: 2.5
     m_isSpawned: 0
     m_spawnTriggerX: 0
     m_targetWorldX: -15
     m_targetCameraX: -15
-  - m_assetKey: Dummy_Lighthouse
-    m_layerDepth: 2
+  - m_assetKey: river_back_4
+    m_layerDepth: 1
     m_spawnDistanceTrigger: 55
-    m_targetWorldOffsetFromCamera: 0
-    m_targetLocalY: -1.4
+    m_targetWorldOffsetFromCamera: 10
+    m_targetLocalY: 2.5
     m_isSpawned: 0
     m_spawnTriggerX: 0
     m_targetWorldX: -15
     m_targetCameraX: -15
-  - m_assetKey: Dummy_Buoy
+  - m_assetKey: river_back_3
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 38
+    m_targetWorldOffsetFromCamera: 1
+    m_targetLocalY: 2.3
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_4
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 23
+    m_targetWorldOffsetFromCamera: -8
+    m_targetLocalY: 2.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_4
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 16
+    m_targetWorldOffsetFromCamera: -16
+    m_targetLocalY: 2.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_3
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 9
+    m_targetWorldOffsetFromCamera: -24
+    m_targetLocalY: 2.3
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_2
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 48
+    m_targetWorldOffsetFromCamera: 16
+    m_targetLocalY: 4.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_1
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 40
+    m_targetWorldOffsetFromCamera: 7
+    m_targetLocalY: 4.3
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_2
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 12
+    m_targetWorldOffsetFromCamera: -12
+    m_targetLocalY: 4.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_1
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 2
+    m_targetWorldOffsetFromCamera: -22
+    m_targetLocalY: 4.3
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_2
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: -17
+    m_targetWorldOffsetFromCamera: -35
+    m_targetLocalY: 4.3
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_1
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: -24
+    m_targetWorldOffsetFromCamera: -44
+    m_targetLocalY: 4.3
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_log_2
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 6
+    m_targetWorldOffsetFromCamera: -26
+    m_targetLocalY: 0
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_log
     m_layerDepth: 0
     m_spawnDistanceTrigger: 25
-    m_targetWorldOffsetFromCamera: 0
-    m_targetLocalY: -5.5
+    m_targetWorldOffsetFromCamera: -11
+    m_targetLocalY: 0
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_reeds
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 35
+    m_targetWorldOffsetFromCamera: 4
+    m_targetLocalY: -0.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_reeds
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 31
+    m_targetWorldOffsetFromCamera: 1
+    m_targetLocalY: -0.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_reeds
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 28
+    m_targetWorldOffsetFromCamera: -3
+    m_targetLocalY: -0.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_reeds
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 25
+    m_targetWorldOffsetFromCamera: -11
+    m_targetLocalY: -0.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_reeds
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 25
+    m_targetWorldOffsetFromCamera: -15
+    m_targetLocalY: -0.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_reeds
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 25
+    m_targetWorldOffsetFromCamera: -15
+    m_targetLocalY: -0.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_reeds
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 20
+    m_targetWorldOffsetFromCamera: -19
+    m_targetLocalY: -0.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_reeds
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 3
+    m_targetWorldOffsetFromCamera: -34
+    m_targetLocalY: -0.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_reeds
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: -1
+    m_targetWorldOffsetFromCamera: -39
+    m_targetLocalY: -0.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_background_3
+    m_layerDepth: 2
+    m_spawnDistanceTrigger: 160
+    m_targetWorldOffsetFromCamera: 37
+    m_targetLocalY: 2
     m_isSpawned: 0
     m_spawnTriggerX: 0
     m_targetWorldX: -15

@@ -13,7 +13,11 @@ namespace DesktopCompanion.EditorTools
     /// <summary>
     /// GameData.json의 ID/이름을 기준으로 Assets/Resource 아이콘을 찾아
     /// Addressables 그룹(Icon_Consumable, Icon_Material 등)에 AssetKeys 규약 주소로 등록한다(D18 연계).
-    /// 신규 아이콘 폴더/타입이 늘어나면 매핑표와 메뉴 항목을 추가할 것.
+    /// 신규 아이콘 폴더/타입이 늘어나면 메뉴 항목을 추가할 것.
+    ///
+    /// 파일명 규약은 두 갈래다. Consumable·Material은 아트가 준 영어 이름을 쓰므로 ID→파일명 매핑표가 필요하고,
+    /// Fish·Equipment는 파일명이 곧 주소({클래스명}_{ID}_{용도})라 매핑표 없이 전량 처리된다.
+    /// 종류가 많은 쪽은 후자를 택할 것 — 매핑표를 손으로 유지하는 비용이 금방 커진다.
     /// </summary>
     public static class AddressableIconGroupBuilder
     {
@@ -88,6 +92,48 @@ namespace DesktopCompanion.EditorTools
                 "Assets/Resource/Icon_Material",
                 s_materialIconFiles,
                 dataManager.GetAll<ItemData_Materials>());
+        }
+
+        [MenuItem("Tools/DesktopCompanion/Addressables - Fish 아이콘 그룹 등록")]
+        public static void BuildFishIconGroup()
+        {
+            var dataManager = new DataManager();
+            dataManager.Load();
+
+            // Assets/Resource/Icon_Fish/ItemData_Fish_{ID}_Icon.png — 파일명이 곧 주소라 매핑표 불필요.
+            // AssetKeys로 만들어 두면 m_assetKey 오버라이드 시 주소와 기대 파일명이 함께 움직인다.
+            var iconFiles = new Dictionary<int, string>();
+            foreach (ItemData_Fish data in dataManager.GetAll<ItemData_Fish>())
+            {
+                iconFiles[data.ID] = AssetKeys.Of(data, AssetUsage.Icon);
+            }
+
+            BuildIconGroup(
+                "Icon_Fish",
+                "Assets/Resource/Icon_Fish",
+                iconFiles,
+                dataManager.GetAll<ItemData_Fish>());
+        }
+
+        [MenuItem("Tools/DesktopCompanion/Addressables - Equipment 아이콘 그룹 등록")]
+        public static void BuildEquipmentIconGroup()
+        {
+            var dataManager = new DataManager();
+            dataManager.Load();
+
+            // Assets/Resource/Icon_Equipment/ItemData_Equipment_{ID}_Icon.png — Fish와 같은 ID 규약이라 매핑표가 없다.
+            // 장비는 63종이라 이름 매핑표를 손으로 유지하기 어렵고, 아트가 파일명만 규약에 맞추면 등록이 끝난다.
+            var iconFiles = new Dictionary<int, string>();
+            foreach (ItemData_Equipment data in dataManager.GetAll<ItemData_Equipment>())
+            {
+                iconFiles[data.ID] = AssetKeys.Of(data, AssetUsage.Icon);
+            }
+
+            BuildIconGroup(
+                "Icon_Equipment",
+                "Assets/Resource/Icon_Equipment",
+                iconFiles,
+                dataManager.GetAll<ItemData_Equipment>());
         }
 
         [MenuItem("Tools/DesktopCompanion/Addressables - Fish 모델 그룹 등록")]

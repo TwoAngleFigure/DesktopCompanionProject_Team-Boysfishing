@@ -29,6 +29,25 @@ namespace DesktopCompanion.Rendering
         public static float BlocksPerUnit =>
             BaseDotsHigh / (2f * ReferenceOrthographicSize);
 
+        // ── UI 기준 ──
+        //
+        // UI 캔버스는 Constant Pixel Size를 쓴다. 아트 1픽셀 = UnitsPerDot 캔버스 유닛이고,
+        // 캔버스 1유닛 = scaleFactor 화면픽셀이므로 아트 1픽셀은 항상 UnitsPerDot × scaleFactor 화면픽셀이다.
+        // scaleFactor를 1/UnitsPerDot 단위로만 움직이면(UiScaleRange) 해상도와 무관하게 정수 크기가 유지된다.
+        //
+        // 참고: 기준 해상도 1920×1080(월드 도트 3px)에서 배율 1(UI 4px)이면 UI가 월드보다 크게 보인다.
+        //       월드와 눈높이를 맞추려면 사용자가 배율을 0.75로 내리면 된다.
+
+        /// <summary>아트 1픽셀에 대응하는 UI 캔버스 유닛 수.</summary>
+        public const int UnitsPerDot = 4;
+
+        /// <summary>
+        /// UI 캔버스의 Reference Pixels Per Unit.
+        /// 스프라이트 임포트 PPU를 이 값 / UnitsPerDot(= 25)로 맞추면 Image의 Pixels Per Unit Multiplier가
+        /// 1로 떨어지고, Set Native Size가 그대로 UnitsPerDot 배 크기를 만든다.
+        /// </summary>
+        public const float UiReferencePixelsPerUnit = 100f;
+
         // 정합 조건: BaseDotsWide == WorldWidth × BlocksPerUnit  (640 == 35.556 × 18)
         // 위 네 상수를 바꿀 때는 이 등식이 유지되는지 확인할 것.
     }

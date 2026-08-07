@@ -2,15 +2,19 @@ using UnityEngine;
 
 namespace DesktopCompanion.Data
 {
-    /// <summary>등장 물고기 + 가중치.</summary>
+    /// <summary>등장 물고기. 풀 안에서는 모두 동등한 확률로 뽑힌다(가중치 폐지).</summary>
     [System.Serializable]
     public class FishPoolEntry
     {
         [SerializeField] private BattleFishData m_fish;
-        [SerializeField] private float m_weight;
 
         public BattleFishData Fish => m_fish;
-        public float Weight => m_weight;
+
+        /// <summary>
+        /// 가중치 폐지 후 남긴 호환 프로퍼티 — 항상 1(균등). 기존 룰렛 추첨 코드가
+        /// 그대로 컴파일되며 균등 추첨으로 동작한다. 소비자 정리가 끝나면 삭제한다.
+        /// </summary>
+        public float Weight => 1f;
     }
 
     /// <summary>

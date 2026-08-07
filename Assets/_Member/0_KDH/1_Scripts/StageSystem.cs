@@ -32,8 +32,8 @@ namespace DesktopCompanion.Systems
         private float m_remainingTravelTime;
         private float m_totalTravelTime;
 
-        private const float DEPARTURE_DURATION = 9.0f;
-        private const float ARRIVAL_DURATION = 9.0f;
+        private const float DEPARTURE_DURATION = 30.0f;
+        private const float ARRIVAL_DURATION = 30.0f;
 
         public event Action<int> OnStageChanged;
         public event Action<int, float> OnTravelStarted;

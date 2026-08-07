@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using DesktopCompanion.Rendering;
@@ -31,6 +32,8 @@ namespace DesktopCompanion.Views
         [Header("Refs")]
         [SerializeField] private TransparentWindow m_transparentWindow;
         [SerializeField] private ClickThroughManager m_clickThrough;
+        [Tooltip("FPS 옵션이 활성 프레임 상한을 넘길 대상. 미할당이면 FPS 설정이 적용되지 않는다.")]
+        [SerializeField] private FrameRateController m_frameRate;
 
         private RectTransform m_worldRect;
         private RenderTexture m_rt;
@@ -38,6 +41,9 @@ namespace DesktopCompanion.Views
 
         public ScreenMode Mode => m_data.Mode;
         public float Scale => m_data.Scale;
+        public float UiScale => m_data.UiScale;
+        public int TargetFps => m_data.TargetFps;
+        public bool TopMost => m_data.TopMost;
         public int MonitorIndex => m_data.MonitorIndex;
         public int MonitorCount { get; private set; } = 1;
         public bool WindowMoveMode { get; private set; }
@@ -61,6 +67,9 @@ namespace DesktopCompanion.Views
             ApplyMonitor(m_data.MonitorIndex, save: false);
             EnsureRT();
             Apply(m_data.Mode, m_data.Scale, save: false);
+            PixelUiCanvasScaler.SetScale(m_data.UiScale);
+            ApplyTargetFps();
+            ApplyTopMost();
             Save();
 
             // 클릭관통이 커서→월드카메라 좌표 매핑(RawImage uv→RT)을 쓰도록 연결.
@@ -201,6 +210,62 @@ namespace DesktopCompanion.Views
             }
         }
 
+        // ── UI 배율 ──
+
+        /// <summary>
+        /// UI 캔버스 배율을 지정하고 저장한다. 값은 UiScaleRange 규칙(1/4 단위)으로 스냅되며,
+        /// 실제 적용은 <see cref="PixelUiCanvasScaler"/>가 등록된 캔버스 전체에 수행한다.
+        /// 월드 출력 배율(<see cref="SetScale"/>)과는 독립이다.
+        /// </summary>
+        public void SetUiScale(float scale)
+        {
+            m_data.UiScale = UiScaleRange.Snap(scale);
+            PixelUiCanvasScaler.SetScale(m_data.UiScale);
+            Save();
+        }
+
+        // ── 프레임 상한 ──
+
+        /// <summary>
+        /// 활성 프레임 상한을 지정하고 저장한다. 값은 FpsOptions 목록으로 스냅된다.
+        /// 실제 적용과 포커스 아웃 절전은 <see cref="FrameRateController"/>가 담당한다.
+        /// </summary>
+        public void SetTargetFps(int fps)
+        {
+            m_data.TargetFps = FpsOptions.Snap(fps);
+            ApplyTargetFps();
+            Save();
+        }
+
+        private void ApplyTargetFps()
+        {
+            if (m_frameRate != null)
+            {
+                m_frameRate.SetActiveFrameRate(m_data.TargetFps);
+            }
+        }
+
+        // ── 최상단 고정 ──
+
+        /// <summary>
+        /// 창 최상단 고정을 켜고 끈다. TransparentWindow가 상태를 보관하므로,
+        /// 모니터 전환·리사이즈로 창 스타일을 다시 적용해도 이 설정이 유지된다.
+        /// </summary>
+        public void SetTopMost(bool on)
+        {
+            m_data.TopMost = on;
+            ApplyTopMost();
+            Save();
+        }
+
+        private void ApplyTopMost()
+        {
+            if (m_transparentWindow != null)
+            {
+                m_transparentWindow.ApplyTopMost(m_data.TopMost);
+            }
+        }
+
         // ── 크롭 범위 ──
 
         public float CropLeft => m_data.CropLeft;
@@ -311,12 +376,25 @@ namespace DesktopCompanion.Views
             if (save) Save();
         }
 
-        /// <summary>현재 선택된 모니터의 Windows 디스플레이 번호를 반환한다. 조회에 실패하면 index+1을 반환한다.</summary>
-        public int CurrentDisplayNumber()
+        /// <summary>
+        /// 모니터 선택 드롭다운에 쓸 라벨 목록. 인덱스는 <see cref="SetMonitor"/>의 인자와 같다.
+        /// 번호는 Windows 디스플레이 설정의 번호와 일치시킨다(열거 순서가 아님).
+        /// </summary>
+        public List<string> MonitorLabels()
         {
             var monitors = Win32Native.GetMonitors();
-            int i = Mathf.Clamp(m_data.MonitorIndex, 0, Mathf.Max(0, monitors.Count - 1));
-            return i < monitors.Count ? monitors[i].displayNumber : i + 1;
+            MonitorCount = Mathf.Max(1, monitors.Count);
+
+            var labels = new List<string>(MonitorCount);
+            foreach (var monitor in monitors)
+            {
+                labels.Add($"모니터 {monitor.displayNumber}");
+            }
+            if (labels.Count == 0)
+            {
+                labels.Add("모니터 1");   // 조회 실패 시에도 드롭다운이 비지 않게 한다
+            }
+            return labels;
         }
 
         private void RefreshMonitorCount()
