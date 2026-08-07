@@ -952,19 +952,17 @@ namespace DesktopCompanion.Systems
 
         private float CalculateNextFishingDelay()
         {
+            int playerLicense = GetPlayerLicense();
+            List<TierPool> pools = m_stageSystem.GetAvailableTierPools(playerLicense);
 
-            if (m_playerSystem == null)
-            {
-                Debug.LogWarning("[FishingSystem] PlayerSystem을 찾지 못해 기본 낚시 대기시간을 사용합니다.");
-                return 10f;
-            }
+            TierPool selectedPool = SelectHighestTierPool(pools);
 
-            float baseDelay = m_playerSystem.BaseAutoBattleCooltime;
+            float calculatedCooldown = 30f - (m_playerSystem.BaseAutoBattleCooltime - selectedPool.RegionResistance) * 5f;
 
-            float minDelay = baseDelay * 0.8f;
-            float maxDelay = baseDelay * 1.2f;
+            float randomMultiplier = UnityEngine.Random.Range(0.8f, 1.2f);
+            float randomizedCooldown = calculatedCooldown * randomMultiplier;
 
-            return UnityEngine.Random.Range(minDelay, maxDelay);
+            return Mathf.Clamp(randomizedCooldown, 3f, 60f);
         }
 
         private int CalculateManualDamage()
