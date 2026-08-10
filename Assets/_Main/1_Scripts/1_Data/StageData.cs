@@ -25,10 +25,12 @@ namespace DesktopCompanion.Data
     {
         [SerializeField] private int m_tier;
         [SerializeField] private int m_requiredLicense;    // 이 풀 개방에 필요한 라이센스
+        [SerializeField] private int m_regionResistance;
         [SerializeField] private FishPoolEntry[] m_entries;
 
         public int Tier => m_tier;
         public int RequiredLicense => m_requiredLicense;
+        public int RegionResistance => m_regionResistance;
         public FishPoolEntry[] Entries => m_entries;
     }
 
