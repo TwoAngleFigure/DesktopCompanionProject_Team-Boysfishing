@@ -1,6 +1,8 @@
 #if UNITY_EDITOR
 using DesktopCompanion.Data;
+using DesktopCompanion.Entities;
 using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -31,6 +33,7 @@ namespace DesktopCompanion.Systems
             VerifyTimingCalculations(ref verifiedCaseCount);
             VerifyCombatCalculations(ref verifiedCaseCount);
             VerifyInventoryFullPolicies(ref verifiedCaseCount);
+            VerifyStateFlow(ref verifiedCaseCount);
 
             return verifiedCaseCount;
         }
@@ -336,6 +339,189 @@ namespace DesktopCompanion.Systems
                 criterion,
                 isCollectionUpdated,
                 collectionResult);
+        }
+
+        private static void VerifyStateFlow(ref int caseCount)
+        {
+            VerifyStateMachineTransition(ref caseCount);
+            VerifySessionReset(ref caseCount);
+            VerifyWaitingBoundary(ref caseCount);
+            VerifyNextStateTickTiming(ref caseCount);
+        }
+
+        private static void VerifyStateMachineTransition(ref int caseCount)
+        {
+            var order = new List<string>();
+            var stopped = new TrackingFishingState(
+                FishingState.Stopped,
+                "stopped",
+                order);
+            var battling = new TrackingFishingState(
+                FishingState.Battling,
+                "battling",
+                order);
+            var stateMachine = new FishingStateMachine(stopped);
+            int stateChangedCount = 0;
+
+            stateMachine.OnStateChanged += state =>
+            {
+                order.Add($"event:{state}");
+                stateChangedCount++;
+            };
+
+            AssertEqual(
+                "최초 상태 설정 이벤트 미발행",
+                0,
+                stateChangedCount,
+                ref caseCount);
+
+            order.Clear();
+            stateMachine.ChangeState(battling);
+
+            AssertEqual(
+                "상태 전환 Exit Enter 이벤트 순서",
+                "stopped:exit,battling:enter,event:Battling",
+                string.Join(",", order),
+                ref caseCount);
+            AssertEqual(
+                "상태 전환 이벤트 1회",
+                1,
+                stateChangedCount,
+                ref caseCount);
+
+            int enterCount = battling.EnterCount;
+            int exitCount = battling.ExitCount;
+            stateMachine.ChangeState(battling);
+
+            AssertEqual(
+                "동일 State 재진입 없음 Enter",
+                enterCount,
+                battling.EnterCount,
+                ref caseCount);
+            AssertEqual(
+                "동일 State 재진입 없음 Exit",
+                exitCount,
+                battling.ExitCount,
+                ref caseCount);
+        }
+
+        private static void VerifySessionReset(ref int caseCount)
+        {
+            var session = new FishingSession();
+            EntityHandle pendingHandle = EntityHandle.New();
+            EntityHandle battleHandle = EntityHandle.New();
+            var attempt = new FishingAttempt(
+                null,
+                1f,
+                ItemQuality.OneStar,
+                10f,
+                0f,
+                0f);
+
+            session.SetPendingCatch(pendingHandle);
+            session.BeginBattle(attempt, battleHandle);
+            session.ResetProgress();
+
+            AssertEqual(
+                "Session 진행 초기화 Pending 보존",
+                pendingHandle,
+                session.PendingCatch,
+                ref caseCount);
+            AssertEqual(
+                "Session 진행 초기화 전투 핸들 제거",
+                default(EntityHandle),
+                session.CurrentBattleFish,
+                ref caseCount);
+        }
+
+        private static void VerifyWaitingBoundary(ref int caseCount)
+        {
+            var session = new FishingSession();
+            var waiting = new FishingWaitingState(session);
+
+            session.BeginWaiting(1f);
+
+            AssertEqual(
+                "Waiting 타이머 경계 이전",
+                FishingStateSignal.None,
+                waiting.Tick(0.5f),
+                ref caseCount);
+            AssertEqual(
+                "Waiting 타이머 경계 BattleReady",
+                FishingStateSignal.BattleReady,
+                waiting.Tick(0.5f),
+                ref caseCount);
+        }
+
+        private static void VerifyNextStateTickTiming(ref int caseCount)
+        {
+            var order = new List<string>();
+            var stopped = new TrackingFishingState(
+                FishingState.Stopped,
+                "stopped",
+                order);
+            var battling = new TrackingFishingState(
+                FishingState.Battling,
+                "battling",
+                order);
+            var stateMachine = new FishingStateMachine(stopped);
+
+            stateMachine.ChangeState(battling);
+
+            AssertEqual(
+                "전환 프레임 새 State Tick 미실행",
+                0,
+                battling.TickCount,
+                ref caseCount);
+
+            stateMachine.Tick(0.1f);
+
+            AssertEqual(
+                "다음 프레임 새 State Tick 실행",
+                1,
+                battling.TickCount,
+                ref caseCount);
+        }
+
+        private sealed class TrackingFishingState : FishingStateBase
+        {
+            private readonly FishingState m_id;
+            private readonly string m_name;
+            private readonly List<string> m_order;
+
+            public override FishingState Id => m_id;
+            public int EnterCount { get; private set; }
+            public int ExitCount { get; private set; }
+            public int TickCount { get; private set; }
+
+            public TrackingFishingState(
+                FishingState id,
+                string name,
+                List<string> order)
+            {
+                m_id = id;
+                m_name = name;
+                m_order = order;
+            }
+
+            public override void Enter()
+            {
+                EnterCount++;
+                m_order.Add($"{m_name}:enter");
+            }
+
+            public override FishingStateSignal Tick(float deltaTime)
+            {
+                TickCount++;
+                m_order.Add($"{m_name}:tick");
+                return FishingStateSignal.None;
+            }
+
+            public override void Exit()
+            {
+                ExitCount++;
+                m_order.Add($"{m_name}:exit");
+            }
         }
 
         private static void AssertEqual<T>(
