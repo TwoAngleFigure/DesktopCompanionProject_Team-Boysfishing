@@ -6,7 +6,7 @@ namespace DesktopCompanion.Systems
     /// <summary>
     /// 미끼와 떡밥이 적용되는 단계별 가중치를 계산한다.
     /// </summary>
-    internal static class FishingWeightCalculator
+    public static class FishingWeightCalculator
     {
         private const float BaitStatScale = 0.01f;
         private const float GroundbaitStatScale = 0.01f;

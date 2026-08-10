@@ -32,6 +32,9 @@ namespace DesktopCompanion.Systems
         private FishingSettingSystem m_fishingSettingSystem;
         private FishingRewardProcessor m_rewardProcessor;
         private ShopSystem m_shopSystem;
+        private FishingCatchRoller m_catchRoller;
+        private FishingTimingCalculator m_timingCalculator;
+        private FishingCombatCalculator m_combatCalculator;
 
         private float baseBattleDuration = 10f;
         private float minBattleDuration = 2f;
@@ -45,16 +48,6 @@ namespace DesktopCompanion.Systems
         private float m_battleTimer;
         private float m_autoAttackTimer;
         private bool m_isResolvingPending;
-        private readonly float[] m_qualityWeights = new float[5];
-        private readonly float[] m_rarityWeights = new float[5];
-        private readonly List<BattleFishData>[] m_fishByRarity =
-        {
-            new(),
-            new(),
-            new(),
-            new(),
-            new()
-        };
         private float m_appliedBaitStat;
         private float m_appliedGroundbaitStat;
         private BattleFishData m_appliedSummonTarget;
@@ -99,7 +92,9 @@ namespace DesktopCompanion.Systems
             m_waitTimer = 0f;
             m_battleTimer = 0f;
             m_autoAttackTimer = 0f;
-
+            m_catchRoller = new FishingCatchRoller();
+            m_timingCalculator = new FishingTimingCalculator();
+            m_combatCalculator = new FishingCombatCalculator();
         }
 
         public override void PostInitialize()
@@ -223,13 +218,7 @@ namespace DesktopCompanion.Systems
         {
             Debug.Log("[FishingSystem] 자동 낚시 중지");
 
-            ClearCurrentBattleFish();
-
-            m_waitDuration = 0f;
-            m_battleDuration = 0f;
-            m_waitTimer = 0f;
-            m_battleTimer = 0f;
-            m_autoAttackTimer = 0f;
+            ResetFishingProgress();
 
             ChangeState(FishingState.Stopped);
         }
@@ -259,34 +248,11 @@ namespace DesktopCompanion.Systems
 
         private bool ShouldCreatePendingCatch(bool isCollectionUpdated, FishCollectionUpdateResult collectionResult)
         {
-            switch (m_fishingSettingSystem.CurrentInventoryFullPolicy)
-            {
-                case InventoryFullPolicy.StopAndAsk:
-                    return true;
-
-                case InventoryFullPolicy.AlwaysSell:
-                    return false;
-
-                case InventoryFullPolicy.StopOnRecordUpdate:
-                    // 도감 결과를 믿을 수 없으면 자동 판매하지 않는다.
-                    if (!isCollectionUpdated)
-                    {
-                        return true;
-                    }
-
-                    // 새 종은 선택한 기준과 관계없이 항상 멈춘다.
-                    if (collectionResult.IsRegistered)
-                    {
-                        return true;
-                    }
-
-                    return m_fishingSettingSystem.CurrentRecordStopCriterion
-                        == RecordStopCriterion.Quality
-                        ? collectionResult.IsBestQualityImproved
-                        : collectionResult.IsBestSizeImproved;
-
-                default: return true;
-            }
+            return FishingInventoryFullPolicyEvaluator.ShouldCreatePendingCatch(
+                m_fishingSettingSystem.CurrentInventoryFullPolicy,
+                m_fishingSettingSystem.CurrentRecordStopCriterion,
+                isCollectionUpdated,
+                collectionResult);
         }
         private void EnterPendingCatch(EntityHandle caughtHandle)
         {
@@ -383,8 +349,10 @@ namespace DesktopCompanion.Systems
                 return;
             }
 
-            ItemQuality quality = RollFishQuality(m_appliedBaitStat);
-            float rolledSize = RollFishSize(fishData, quality);
+            ItemQuality quality = m_catchRoller.RollFishQuality(
+                m_appliedBaitStat,
+                LogFishingItemDebug);
+            float rolledSize = m_catchRoller.RollFishSize(fishData, quality);
 
             float size = Mathf.Round(rolledSize * 10f) / 10f;
 
@@ -435,18 +403,14 @@ namespace DesktopCompanion.Systems
 
             if (battleFish == null)
             {
-                ClearCurrentBattleFish();
-                ScheduleNextFishing();
-                OnFishingResult?.Invoke(FishingResultType.Failed);
+                FinishCurrentAttempt(FishingResultType.Failed);
                 return;
             }
 
             if (m_rewardProcessor == null)
             {
                 Debug.LogWarning("[FishingSystem] 보상 처리기를 사용할 수 없어 물고기를 지급할 수 없습니다.");
-                ClearCurrentBattleFish();
-                ScheduleNextFishing();
-                OnFishingResult?.Invoke(FishingResultType.Failed);
+                FinishCurrentAttempt(FishingResultType.Failed);
                 return;
             }
 
@@ -463,36 +427,48 @@ namespace DesktopCompanion.Systems
                         : FishingResultType.Failed;
 
                 Debug.LogWarning($"[FishingSystem] 포획 물고기 생성 실패: result={createResult}");
-                ClearCurrentBattleFish();
-                ScheduleNextFishing();
-                OnFishingResult?.Invoke(resultType);
+                FinishCurrentAttempt(resultType);
                 return;
             }
 
-            FishCollectionUpdateResult collectionResult = default;
-            bool isCollectionUpdated = false;
+            bool isCollectionUpdated = TryUpdateCollection(
+                battleFish,
+                out FishCollectionUpdateResult collectionResult);
+
+            OnFishCaughtPresentation?.Invoke(caughtHandle, collectionResult);
+            PublishGrantedDrops(battleFish);
+            FinalizeCaughtFish(caughtHandle, isCollectionUpdated, collectionResult);
+        }
+
+        private bool TryUpdateCollection(
+            Entity_BattleFish battleFish,
+            out FishCollectionUpdateResult collectionResult)
+        {
+            collectionResult = default;
 
             if (m_collectionSystem == null)
             {
                 Debug.LogWarning(
                     "[FishingSystem] FishCollectionSystem을 사용할 수 없습니다.");
+                return false;
             }
-            else if (!m_collectionSystem.TryRegisterCatch(
-                         battleFish.BattleData.ItemFish.ID,
-                         battleFish.Quality,
-                         battleFish.Size,
-                         out collectionResult))
+
+            if (!m_collectionSystem.TryRegisterCatch(
+                    battleFish.BattleData.ItemFish.ID,
+                    battleFish.Quality,
+                    battleFish.Size,
+                    out collectionResult))
             {
                 Debug.LogWarning(
                     "[FishingSystem] 포획 물고기의 도감 반영에 실패했습니다.");
-            }
-            else
-            {
-                isCollectionUpdated = true;
+                return false;
             }
 
-            OnFishCaughtPresentation?.Invoke(caughtHandle, collectionResult);
+            return true;
+        }
 
+        private void PublishGrantedDrops(Entity_BattleFish battleFish)
+        {
             IReadOnlyList<FishingGrantedDropInfo> grantedDrops = m_rewardProcessor.Process(
                 battleFish.BattleData.Drops,
                 battleFish.Quality,
@@ -507,54 +483,22 @@ namespace DesktopCompanion.Systems
 
                 OnItemDropped?.Invoke(grantedDrop);
             }
+        }
 
-            FishingRewardResult finalizeResult = m_rewardProcessor.TryFinalizeCaughtFish(caughtHandle);
+        private void FinalizeCaughtFish(
+            EntityHandle caughtHandle,
+            bool isCollectionUpdated,
+            FishCollectionUpdateResult collectionResult)
+        {
+            FishingRewardResult finalizeResult =
+                m_rewardProcessor.TryFinalizeCaughtFish(caughtHandle);
 
             if (finalizeResult == FishingRewardResult.InventoryFull)
             {
-                if (HasPendingCatch)
-                {
-                    Debug.LogError(
-                        "[FishingSystem] 이미 Pending 물고기가 존재합니다.");
-
-                    EntityManager.Destroy(caughtHandle);
-
-                    ClearCurrentBattleFish();
-                    StopFishing();
-
-                    OnFishingResult?.Invoke(FishingResultType.Failed);
-                    return;
-                }
-
-                if (ShouldCreatePendingCatch(isCollectionUpdated, collectionResult))
-                {
-                    EnterPendingCatch(caughtHandle);
-                    return;
-                }
-
-                int earnedGold = 0;
-
-                bool isSold = m_shopSystem != null && m_shopSystem.SellAcquiredItem(caughtHandle, out earnedGold);
-
-                if (!isSold)
-                {
-                    // 자동 판매에 실패했을 때 물고기를 잃지 않도록
-                    // 기본 Pending 흐름으로 되돌린다.
-                    Debug.LogWarning(
-                        "[FishingSystem] 자동 판매에 실패하여 Pending 처리로 전환합니다.");
-
-                    EnterPendingCatch(caughtHandle);
-                    return;
-                }
-
-                Debug.Log(
-                    $"[FishingSystem] 인벤토리 부족 물고기 자동 판매 완료. " +
-                    $"earnedGold={earnedGold}");
-
-                ClearCurrentBattleFish();
-                ScheduleNextFishing();
-
-                OnFishingResult?.Invoke(FishingResultType.Success);
+                HandleInventoryFull(
+                    caughtHandle,
+                    isCollectionUpdated,
+                    collectionResult);
                 return;
             }
 
@@ -563,25 +507,70 @@ namespace DesktopCompanion.Systems
                 Debug.LogWarning(
                     $"[FishingSystem] 포획 물고기 지급 실패: result={finalizeResult}");
 
+                FinishCurrentAttempt(FishingResultType.Failed);
+                return;
+            }
+
+            FinishCurrentAttempt(FishingResultType.Success);
+        }
+
+        private void HandleInventoryFull(
+            EntityHandle caughtHandle,
+            bool isCollectionUpdated,
+            FishCollectionUpdateResult collectionResult)
+        {
+            if (HasPendingCatch)
+            {
+                Debug.LogError(
+                    "[FishingSystem] 이미 Pending 물고기가 존재합니다.");
+
+                EntityManager.Destroy(caughtHandle);
+
                 ClearCurrentBattleFish();
-                ScheduleNextFishing();
+                StopFishing();
 
                 OnFishingResult?.Invoke(FishingResultType.Failed);
                 return;
             }
 
-            ClearCurrentBattleFish();
-            ScheduleNextFishing();
-            OnFishingResult?.Invoke(FishingResultType.Success);
+            if (ShouldCreatePendingCatch(isCollectionUpdated, collectionResult))
+            {
+                EnterPendingCatch(caughtHandle);
+                return;
+            }
+
+            int earnedGold = 0;
+            bool isSold = m_shopSystem != null &&
+                m_shopSystem.SellAcquiredItem(caughtHandle, out earnedGold);
+
+            if (!isSold)
+            {
+                Debug.LogWarning(
+                    "[FishingSystem] 자동 판매에 실패하여 Pending 처리로 전환합니다.");
+
+                EnterPendingCatch(caughtHandle);
+                return;
+            }
+
+            Debug.Log(
+                $"[FishingSystem] 인벤토리 부족 물고기 자동 판매 완료. " +
+                $"earnedGold={earnedGold}");
+
+            FinishCurrentAttempt(FishingResultType.Success);
         }
 
         private void FailBattle(string reason)
         {
             Debug.Log($"[FishingSystem] 포획 실패: reason={reason}");
 
+            FinishCurrentAttempt(FishingResultType.Failed);
+        }
+
+        private void FinishCurrentAttempt(FishingResultType resultType)
+        {
             ClearCurrentBattleFish();
             ScheduleNextFishing();
-            OnFishingResult?.Invoke(FishingResultType.Failed);
+            OnFishingResult?.Invoke(resultType);
         }
 
         private void ScheduleNextFishing()
@@ -680,8 +669,13 @@ namespace DesktopCompanion.Systems
                 return null;
             }
 
-            TierPool selectedPool = SelectHighestTierPool(availablePools);
-            BattleFishData selectedFish = SelectBattleFishFromTierPool(selectedPool);
+            TierPool selectedPool =
+                m_catchRoller.SelectHighestTierPool(availablePools);
+            BattleFishData selectedFish =
+                m_catchRoller.SelectBattleFishFromTierPool(
+                    selectedPool,
+                    m_appliedGroundbaitStat,
+                    LogFishingItemDebug);
 
             if (selectedFish != null)
             {
@@ -689,115 +683,6 @@ namespace DesktopCompanion.Systems
             }
 
             return selectedFish;
-        }
-
-        private TierPool SelectHighestTierPool(List<TierPool> pools)
-        {
-            TierPool selectedPool = null;
-
-            foreach (TierPool pool in pools)
-            {
-                if (pool == null)
-                {
-                    continue;
-                }
-
-                if (selectedPool == null || pool.Tier > selectedPool.Tier)
-                {
-                    selectedPool = pool;
-                }
-            }
-
-            return selectedPool;
-        }
-
-        private BattleFishData SelectBattleFishFromTierPool(TierPool pool)
-        {
-            if (pool == null || pool.Entries == null || pool.Entries.Length == 0)
-            {
-                return null;
-            }
-
-            for (int i = 0; i < m_fishByRarity.Length; i++)
-            {
-                m_fishByRarity[i].Clear();
-            }
-
-            foreach (FishPoolEntry entry in pool.Entries)
-            {
-                if (entry == null || entry.Fish == null)
-                {
-                    continue;
-                }
-
-                ItemRarity rarity = entry.Fish.ItemFish.Rarity;
-                int rarityIndex = (int)rarity;
-
-                m_fishByRarity[rarityIndex].Add(entry.Fish);
-            }
-
-            float totalWeight = 0f;
-
-            for (int i = 0; i < m_fishByRarity.Length; i++)
-            {
-                m_rarityWeights[i] = 0f;
-
-                if (m_fishByRarity[i].Count == 0)
-                {
-                    continue;
-                }
-
-                ItemRarity rarity = (ItemRarity)i;
-                float weight = FishingWeightCalculator.CalculateRarityWeight(
-                    rarity,
-                    m_appliedGroundbaitStat);
-
-                m_rarityWeights[i] = weight;
-                totalWeight += weight;
-            }
-
-            if (totalWeight <= 0f)
-            {
-                return null;
-            }
-
-            float randomValue = UnityEngine.Random.Range(0f, totalWeight);
-            float accumulatedWeight = 0f;
-
-            for (int i = 0; i < m_fishByRarity.Length; i++)
-            {
-                if (m_fishByRarity[i].Count == 0)
-                {
-                    continue;
-                }
-
-                accumulatedWeight += m_rarityWeights[i];
-
-                if (randomValue <= accumulatedWeight)
-                {
-                    List<BattleFishData> selectedRarityFish = m_fishByRarity[i];
-                    int fishIndex = UnityEngine.Random.Range(0, selectedRarityFish.Count);
-                    BattleFishData selectedFish = selectedRarityFish[fishIndex];
-                    ItemRarity selectedRarity = (ItemRarity)i;
-
-                    // 0인 항목은 해당 TierPool에 그 희귀도의 물고기가 없어서 추첨에서 제외된 경우입니다.
-                    LogFishingItemDebug(
-                        $"[희귀도 추첨] groundbaitStat={m_appliedGroundbaitStat:0.##}, tier={pool.Tier}, " +
-                        $"weights=" +
-                        $"Normal:{FormatWeight(m_rarityWeights[0], totalWeight)}, " +
-                        $"Uncommon:{FormatWeight(m_rarityWeights[1], totalWeight)}, " +
-                        $"Rare:{FormatWeight(m_rarityWeights[2], totalWeight)}, " +
-                        $"Epic:{FormatWeight(m_rarityWeights[3], totalWeight)}, " +
-                        $"Legendary:{FormatWeight(m_rarityWeights[4], totalWeight)}, " +
-                        $"roll={randomValue:0.###}/{totalWeight:0.###}, " +
-                        $"selected={selectedRarity}, candidates={selectedRarityFish.Count}, " +
-                        $"fish={GetFishDebugName(selectedFish)}");
-
-                    return selectedFish;
-                }
-            }
-
-            return null;
         }
 
         #endregion
@@ -812,74 +697,6 @@ namespace DesktopCompanion.Systems
             }
 
             return m_playerSystem.StartingLicense;
-        }
-
-        private ItemQuality RollFishQuality(float baitStat)
-        {
-            float totalWeight = 0f;
-
-            // 1~5성의 가중치를 계산하고 전체 합계를 구한다.
-            for (int i = 0; i < m_qualityWeights.Length; i++)
-            {
-                ItemQuality quality = (ItemQuality)(i + 1);
-
-                float weight =
-                    FishingWeightCalculator.CalculateQualityWeight(
-                        quality,
-                        baitStat);
-
-                m_qualityWeights[i] = weight;
-                totalWeight += weight;
-            }
-
-            // 전체 가중치 범위에서 랜덤 값을 뽑는다.
-            float randomValue =
-                UnityEngine.Random.Range(0f, totalWeight);
-
-            float accumulatedWeight = 0f;
-
-            // 누적 가중치로 성급을 결정한다.
-            for (int i = 0; i < m_qualityWeights.Length; i++)
-            {
-                accumulatedWeight += m_qualityWeights[i];
-
-                if (randomValue <= accumulatedWeight)
-                {
-                    ItemQuality selectedQuality = (ItemQuality)(i + 1);
-
-                    // 각 가중치와 실제 확률, 랜덤 값, 선택 결과를 함께 출력합니다.
-                    LogQualityRoll(baitStat, totalWeight, randomValue, selectedQuality);
-                    return selectedQuality;
-                }
-            }
-
-            // 부동소수점 오차에 대한 마지막 반환값
-            LogQualityRoll(baitStat, totalWeight, randomValue, ItemQuality.FiveStar);
-            return ItemQuality.FiveStar;
-        }
-
-        private void LogQualityRoll(
-            float baitStat,
-            float totalWeight,
-            float randomValue,
-            ItemQuality selectedQuality)
-        {
-            LogFishingItemDebug(
-                $"[성급 추첨] baitStat={baitStat:0.##}, " +
-                $"weights=" +
-                $"1성:{FormatWeight(m_qualityWeights[0], totalWeight)}, " +
-                $"2성:{FormatWeight(m_qualityWeights[1], totalWeight)}, " +
-                $"3성:{FormatWeight(m_qualityWeights[2], totalWeight)}, " +
-                $"4성:{FormatWeight(m_qualityWeights[3], totalWeight)}, " +
-                $"5성:{FormatWeight(m_qualityWeights[4], totalWeight)}, " +
-                $"roll={randomValue:0.###}/{totalWeight:0.###}, selected={selectedQuality}");
-        }
-
-        // 가중치 원본 값과 전체 합계 기준 실제 확률을 같이 표시합니다.
-        private static string FormatWeight(float weight, float totalWeight)
-        {
-            float probability = weight / totalWeight * 100f;
-            return $"{weight:0.###}({probability:0.00}%)";
         }
 
         private static string GetItemDebugName(ItemData itemData)
@@ -904,26 +721,6 @@ namespace DesktopCompanion.Systems
             }
         }
 
-        private float RollFishSize(BattleFishData fishData, ItemQuality quality)
-        {
-            fishData.GetSizeRange(
-                quality,
-                out float minSize,
-                out float maxSize);
-
-            int minSizeStep = Mathf.RoundToInt(minSize * 10f);
-
-            int maxSizeStepExclusive = quality == ItemQuality.FiveStar
-                ? Mathf.RoundToInt(maxSize * 10f) + 1
-                : Mathf.RoundToInt(maxSize * 10f);
-
-            int selectedSizeStep = UnityEngine.Random.Range(
-                minSizeStep,
-                maxSizeStepExclusive);
-
-            return selectedSizeStep / 10f;
-        }
-
         private float CalculateBattleDuration(BattleFishData fishData, float fishSize)
         {
             if (m_playerSystem == null)
@@ -933,21 +730,14 @@ namespace DesktopCompanion.Systems
             }
 
 
-            float variableRatio = (float)m_playerSystem.BaseBattleTimeVariable / fishData.BattleTimeVariable;
-
-            float normalizedSize = Mathf.InverseLerp(fishData.MinSize, fishData.MaxSize, fishSize);
-
-            float sizeRatio = Mathf.Lerp(
-                1.3f, // 최소 크기: 시간 30% 증가
-                0.7f, // 최대 크기: 시간 30% 감소
-                normalizedSize);
-
-            float duration =
-                baseBattleDuration *
-                variableRatio *
-                sizeRatio;
-
-            return Mathf.Max(minBattleDuration, duration);
+            return m_timingCalculator.CalculateBattleDuration(
+                baseBattleDuration,
+                minBattleDuration,
+                m_playerSystem.BaseBattleTimeVariable,
+                fishData.BattleTimeVariable,
+                fishData.MinSize,
+                fishData.MaxSize,
+                fishSize);
         }
 
         private float CalculateNextFishingDelay()
@@ -955,14 +745,12 @@ namespace DesktopCompanion.Systems
             int playerLicense = GetPlayerLicense();
             List<TierPool> pools = m_stageSystem.GetAvailableTierPools(playerLicense);
 
-            TierPool selectedPool = SelectHighestTierPool(pools);
+            TierPool selectedPool =
+                m_catchRoller.SelectHighestTierPool(pools);
 
-            float calculatedCooldown = 30f - (m_playerSystem.BaseAutoBattleCooltime - selectedPool.RegionResistance) * 5f;
-
-            float randomMultiplier = UnityEngine.Random.Range(0.8f, 1.2f);
-            float randomizedCooldown = calculatedCooldown * randomMultiplier;
-
-            return Mathf.Clamp(randomizedCooldown, 3f, 60f);
+            return m_timingCalculator.CalculateNextFishingDelay(
+                m_playerSystem.BaseAutoBattleCooltime,
+                selectedPool.RegionResistance);
         }
 
         private int CalculateManualDamage()
@@ -973,16 +761,11 @@ namespace DesktopCompanion.Systems
                 return 1;
             }
 
-            float damage = m_playerSystem.BaseDamagePerClick * m_playerSystem.BaseManualDamagePerHitMultiply;
-
-            bool isCritical = UnityEngine.Random.value < m_playerSystem.BaseCriticalChance;
-
-            if (isCritical)
-            {
-                damage *= m_playerSystem.BaseCriticalMultiply;
-            }
-
-            return Mathf.Max(1, Mathf.RoundToInt(damage));
+            return m_combatCalculator.CalculateManualDamage(
+                m_playerSystem.BaseDamagePerClick,
+                m_playerSystem.BaseManualDamagePerHitMultiply,
+                m_playerSystem.BaseCriticalChance,
+                m_playerSystem.BaseCriticalMultiply);
         }
 
 
@@ -1010,6 +793,16 @@ namespace DesktopCompanion.Systems
             m_currentBattleFish = default;
         }
 
+        private void ResetFishingProgress()
+        {
+            ClearCurrentBattleFish();
+            m_waitDuration = 0f;
+            m_battleDuration = 0f;
+            m_waitTimer = 0f;
+            m_battleTimer = 0f;
+            m_autoAttackTimer = 0f;
+        }
+
         #endregion
 
         #region Event Handlers
@@ -1021,12 +814,7 @@ namespace DesktopCompanion.Systems
                 return;
             }
 
-            ClearCurrentBattleFish();
-            m_waitDuration = 0f;
-            m_battleDuration = 0f;
-            m_waitTimer = 0f;
-            m_battleTimer = 0f;
-            m_autoAttackTimer = 0f;
+            ResetFishingProgress();
 
             ChangeState(FishingState.Waiting);
 
