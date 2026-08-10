@@ -36,6 +36,11 @@ namespace DesktopCompanion.Systems
 
         public TierPool SelectHighestTierPool(IReadOnlyList<TierPool> pools)
         {
+            if (pools == null)
+            {
+                return null;
+            }
+
             TierPool selectedPool = null;
 
             foreach (TierPool pool in pools)

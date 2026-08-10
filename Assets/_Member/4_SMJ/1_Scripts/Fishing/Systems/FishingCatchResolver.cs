@@ -13,6 +13,12 @@ namespace DesktopCompanion.Systems
         private readonly FishingRewardProcessor m_rewardProcessor;
         private readonly ShopSystem m_shopSystem;
 
+        public bool IsReady =>
+            m_entityManager != null &&
+            m_collectionSystem != null &&
+            m_fishingSettingSystem != null &&
+            m_rewardProcessor != null;
+
         public FishingCatchResolver(
             EntityManager entityManager,
             FishCollectionSystem collectionSystem,
@@ -36,10 +42,10 @@ namespace DesktopCompanion.Systems
                     FishingResultType.Failed);
             }
 
-            if (m_rewardProcessor == null)
+            if (!IsReady)
             {
                 Debug.LogWarning(
-                    "[FishingSystem] 보상 처리기를 사용할 수 없어 물고기를 지급할 수 없습니다.");
+                    "[FishingSystem] 포획 정산에 필요한 시스템을 사용할 수 없습니다.");
                 return FishingCatchPreparation.Failed(
                     FishingResultType.Failed);
             }
@@ -102,17 +108,6 @@ namespace DesktopCompanion.Systems
                     0);
             }
 
-            if (finalizeResult != FishingRewardResult.InventoryFull)
-            {
-                Debug.LogWarning(
-                    $"[FishingSystem] 포획 물고기 지급 실패: result={finalizeResult}");
-                return new FishingCatchResolution(
-                    FishingCatchDisposition.Failed,
-                    FishingResultType.Failed,
-                    preparation.CaughtHandle,
-                    0);
-            }
-
             if (hasPendingCatch)
             {
                 Debug.LogError(
@@ -123,6 +118,14 @@ namespace DesktopCompanion.Systems
                     FishingResultType.Failed,
                     preparation.CaughtHandle,
                     0);
+            }
+
+            if (finalizeResult != FishingRewardResult.InventoryFull)
+            {
+                Debug.LogWarning(
+                    $"[FishingSystem] 포획 물고기 지급 실패로 Pending 처리합니다: " +
+                    $"result={finalizeResult}");
+                return CreatePendingResolution(preparation.CaughtHandle);
             }
 
             bool shouldCreatePending =

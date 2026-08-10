@@ -34,6 +34,7 @@ namespace DesktopCompanion.Systems
             VerifyCombatCalculations(ref verifiedCaseCount);
             VerifyInventoryFullPolicies(ref verifiedCaseCount);
             VerifyStateFlow(ref verifiedCaseCount);
+            VerifyFishingReadiness(ref verifiedCaseCount);
 
             return verifiedCaseCount;
         }
@@ -347,6 +348,64 @@ namespace DesktopCompanion.Systems
             VerifySessionReset(ref caseCount);
             VerifyWaitingBoundary(ref caseCount);
             VerifyNextStateTickTiming(ref caseCount);
+        }
+
+        private static void VerifyFishingReadiness(ref int caseCount)
+        {
+            var attemptService = new FishingAttemptService(
+                null,
+                null,
+                null,
+                null,
+                null,
+                10f,
+                2f,
+                null,
+                message => { });
+
+            AssertEqual(
+                "AttemptService 필수 의존성 누락 감지",
+                false,
+                attemptService.IsReady,
+                ref caseCount);
+            AssertEqual(
+                "필수 의존성 누락 대기시간 계산 실패",
+                false,
+                attemptService.TryCalculateNextFishingDelay(out _),
+                ref caseCount);
+            AssertEqual(
+                "필수 의존성 누락 전투 준비 실패",
+                false,
+                attemptService.StartAttempt().IsSuccess,
+                ref caseCount);
+
+            var catchResolver = new FishingCatchResolver(
+                null,
+                null,
+                null,
+                null,
+                null);
+
+            AssertEqual(
+                "CatchResolver 필수 의존성 누락 감지",
+                false,
+                catchResolver.IsReady,
+                ref caseCount);
+
+            var catchRoller = new FishingCatchRoller(
+                (min, max) => min,
+                (min, max) => min);
+
+            AssertEqual(
+                "TierPool null 목록 선택 실패",
+                default(TierPool),
+                catchRoller.SelectHighestTierPool(null),
+                ref caseCount);
+            AssertEqual(
+                "TierPool 빈 목록 선택 실패",
+                default(TierPool),
+                catchRoller.SelectHighestTierPool(Array.Empty<TierPool>()),
+                ref caseCount);
         }
 
         private static void VerifyStateMachineTransition(ref int caseCount)

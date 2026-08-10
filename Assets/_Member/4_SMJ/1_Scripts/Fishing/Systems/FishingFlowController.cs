@@ -78,7 +78,19 @@ namespace DesktopCompanion.Systems
                 return;
             }
 
-            ScheduleNextFishing();
+            if (!CanStartFishing())
+            {
+                StopAfterPreparationFailure(
+                    "필수 낚시 시스템을 사용할 수 없습니다.");
+                return;
+            }
+
+            if (!TryScheduleNextFishing())
+            {
+                StopAfterPreparationFailure(
+                    "입질 대기시간을 계산할 수 없습니다.");
+                return;
+            }
 
             Debug.Log(
                 "[FishingSystem] 자동 낚시 시작 " +
@@ -214,7 +226,8 @@ namespace DesktopCompanion.Systems
 
             if (!result.IsSuccess)
             {
-                ScheduleNextFishing();
+                StopAfterPreparationFailure(
+                    "전투 시작 준비에 실패했습니다.");
                 return;
             }
 
@@ -307,20 +320,47 @@ namespace DesktopCompanion.Systems
         private void FinishCurrentAttempt(FishingResultType resultType)
         {
             ResetFishingProgress();
-            ScheduleNextFishing();
+
+            if (!TryScheduleNextFishing())
+            {
+                StopAfterPreparationFailure(
+                    "다음 입질 대기시간을 계산할 수 없습니다.");
+                return;
+            }
+
             OnFishingResult?.Invoke(resultType);
         }
 
-        private void ScheduleNextFishing()
+        private bool TryScheduleNextFishing()
         {
-            float waitDuration =
-                m_attemptService.CalculateNextFishingDelay();
+            if (!m_attemptService.TryCalculateNextFishingDelay(
+                    out float waitDuration))
+            {
+                return false;
+            }
+
             Session.BeginWaiting(waitDuration);
             m_stateMachine.ChangeState(m_waitingState);
 
             Debug.Log(
                 $"[FishingSystem] 다음 입질 대기: " +
                 $"{Session.WaitTimeRemaining:0.00}초");
+            return true;
+        }
+
+        private bool CanStartFishing()
+        {
+            return m_attemptService.IsReady && m_catchResolver.IsReady;
+        }
+
+        private void StopAfterPreparationFailure(string reason)
+        {
+            Debug.LogWarning(
+                $"[FishingSystem] 낚시 준비 실패: reason={reason}");
+
+            ResetFishingProgress();
+            m_stateMachine.ChangeState(m_stoppedState);
+            OnFishingResult?.Invoke(FishingResultType.Failed);
         }
 
         private void ResetFishingProgress()

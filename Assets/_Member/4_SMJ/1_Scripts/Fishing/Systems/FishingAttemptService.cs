@@ -17,6 +17,14 @@ namespace DesktopCompanion.Systems
         private readonly float m_baseBattleDuration;
         private readonly float m_minBattleDuration;
         private readonly Action<string> m_debugLog;
+        private readonly Action<string> m_warningLog;
+
+        public bool IsReady =>
+            m_entityManager != null &&
+            m_stageSystem != null &&
+            m_playerSystem != null &&
+            m_catchRoller != null &&
+            m_timingCalculator != null;
 
         public FishingAttemptService(
             EntityManager entityManager,
@@ -26,7 +34,8 @@ namespace DesktopCompanion.Systems
             FishingTimingCalculator timingCalculator,
             float baseBattleDuration,
             float minBattleDuration,
-            Action<string> debugLog)
+            Action<string> debugLog,
+            Action<string> warningLog = null)
         {
             m_entityManager = entityManager;
             m_stageSystem = stageSystem;
@@ -36,22 +45,32 @@ namespace DesktopCompanion.Systems
             m_baseBattleDuration = baseBattleDuration;
             m_minBattleDuration = minBattleDuration;
             m_debugLog = debugLog;
+            m_warningLog = warningLog ?? Debug.LogWarning;
         }
 
         public FishingAttemptStartResult StartAttempt()
         {
-            PrepareConsumables(
-                out float appliedBaitStat,
-                out float appliedGroundbaitStat,
-                out BattleFishData summonTarget);
+            if (!IsReady)
+            {
+                m_warningLog(
+                    "[FishingSystem] 전투 시작 실패: 필수 시스템을 사용할 수 없습니다.");
+                return FishingAttemptStartResult.Failed();
+            }
+
+            if (!TryPrepareConsumables(out ConsumablePreparation consumables))
+            {
+                m_warningLog(
+                    "[FishingSystem] 전투 시작 실패: 장착 소모품 상태가 유효하지 않습니다.");
+                return FishingAttemptStartResult.Failed();
+            }
 
             BattleFishData fishData = SelectBattleFish(
-                summonTarget,
-                appliedGroundbaitStat);
+                consumables.SummonTarget,
+                consumables.AppliedGroundbaitStat);
 
             if (fishData == null)
             {
-                Debug.LogWarning(
+                m_warningLog(
                     "[FishingSystem] 전투 시작 실패: 선택 가능한 BattleFishData가 없습니다.");
                 return FishingAttemptStartResult.Failed();
             }
@@ -63,14 +82,24 @@ namespace DesktopCompanion.Systems
 
             if (battleFish == null)
             {
-                Debug.LogWarning(
+                m_warningLog(
                     $"[FishingSystem] Entity_BattleFish 생성 실패: id={fishData.ID}");
                 m_entityManager.Destroy(battleFishHandle);
                 return FishingAttemptStartResult.Failed();
             }
 
+            if (!TryConsumePreparedItems(consumables))
+            {
+                m_warningLog(
+                    "[FishingSystem] 전투 시작 실패: 장착 소모품 소비에 실패했습니다.");
+                m_entityManager.Destroy(battleFishHandle);
+                return FishingAttemptStartResult.Failed();
+            }
+
+            LogAppliedConsumables(consumables);
+
             ItemQuality quality = m_catchRoller.RollFishQuality(
-                appliedBaitStat,
+                consumables.AppliedBaitStat,
                 m_debugLog);
             float rolledSize = m_catchRoller.RollFishSize(fishData, quality);
             float size = Mathf.Round(rolledSize * 10f) / 10f;
@@ -80,8 +109,8 @@ namespace DesktopCompanion.Systems
             m_debugLog?.Invoke(
                 $"[최종 결과] fish={fishData.Name}(id={fishData.ID}), " +
                 $"rarity={fishData.ItemFish.Rarity}, quality={quality}, size={size:0.0}, " +
-                $"baitStat={appliedBaitStat:0.##}, " +
-                $"groundbaitStat={appliedGroundbaitStat:0.##}");
+                $"baitStat={consumables.AppliedBaitStat:0.##}, " +
+                $"groundbaitStat={consumables.AppliedGroundbaitStat:0.##}");
 
             float battleDuration = CalculateBattleDuration(fishData, size);
             var attempt = new FishingAttempt(
@@ -89,75 +118,147 @@ namespace DesktopCompanion.Systems
                 size,
                 quality,
                 battleDuration,
-                appliedBaitStat,
-                appliedGroundbaitStat);
+                consumables.AppliedBaitStat,
+                consumables.AppliedGroundbaitStat);
 
             return FishingAttemptStartResult.Success(attempt, battleFishHandle);
         }
 
-        public float CalculateNextFishingDelay()
+        public bool TryCalculateNextFishingDelay(out float delay)
         {
+            delay = 0f;
+
+            if (!IsReady)
+            {
+                m_warningLog(
+                    "[FishingSystem] 입질 대기시간 계산 실패: 필수 시스템을 사용할 수 없습니다.");
+                return false;
+            }
+
             int playerLicense = GetPlayerLicense();
             List<TierPool> pools =
                 m_stageSystem.GetAvailableTierPools(playerLicense);
             TierPool selectedPool =
                 m_catchRoller.SelectHighestTierPool(pools);
 
-            return m_timingCalculator.CalculateNextFishingDelay(
-                m_playerSystem.BaseAutoBattleCooltime,
-                selectedPool.RegionResistance);
-        }
-
-        private void PrepareConsumables(
-            out float appliedBaitStat,
-            out float appliedGroundbaitStat,
-            out BattleFishData summonTarget)
-        {
-            appliedBaitStat = m_playerSystem != null
-                ? m_playerSystem.BaseProbabilityAtFishSize
-                : 0f;
-            appliedGroundbaitStat = m_playerSystem != null
-                ? m_playerSystem.BaseProbabilityAtFishRarity
-                : 0f;
-            summonTarget = null;
-
-            bool consumedBait = false;
-            bool consumedGroundbait = false;
-            ItemData consumedBaitData = null;
-            ItemData consumedGroundbaitData = null;
-
-            if (m_playerSystem != null)
+            if (selectedPool == null)
             {
-                consumedBait = m_playerSystem.TryConsumeEquippedItem(
-                    EquipmentMountingArea.Bait,
-                    out consumedBaitData);
-
-                if (consumedBait &&
-                    consumedBaitData is ItemData_Consumables baitData)
-                {
-                    summonTarget = baitData.SummonTarget;
-                }
-
-                if (summonTarget == null)
-                {
-                    consumedGroundbait = m_playerSystem.TryConsumeEquippedItem(
-                        EquipmentMountingArea.Groundbait,
-                        out consumedGroundbaitData);
-                }
+                m_warningLog(
+                    $"[FishingSystem] 입질 대기시간 계산 실패: " +
+                    $"사용 가능한 TierPool이 없습니다. playerLicense={playerLicense}");
+                return false;
             }
 
-            string groundbaitResult = summonTarget != null
+            delay = m_timingCalculator.CalculateNextFishingDelay(
+                m_playerSystem.BaseAutoBattleCooltime,
+                selectedPool.RegionResistance);
+            return true;
+        }
+
+        private bool TryPrepareConsumables(
+            out ConsumablePreparation preparation)
+        {
+            preparation = default;
+
+            if (!TryGetEquippedItem(
+                    EquipmentMountingArea.Bait,
+                    out EquippedItemSnapshot bait))
+            {
+                return false;
+            }
+
+            BattleFishData summonTarget =
+                (bait.ItemData as ItemData_Consumables)?.SummonTarget;
+            EquippedItemSnapshot groundbait = default;
+
+            if (summonTarget == null &&
+                !TryGetEquippedItem(
+                    EquipmentMountingArea.Groundbait,
+                    out groundbait))
+            {
+                return false;
+            }
+
+            preparation = new ConsumablePreparation(
+                bait,
+                groundbait,
+                m_playerSystem.BaseProbabilityAtFishSize,
+                m_playerSystem.BaseProbabilityAtFishRarity,
+                summonTarget);
+            return true;
+        }
+
+        private bool TryGetEquippedItem(
+            EquipmentMountingArea area,
+            out EquippedItemSnapshot snapshot)
+        {
+            snapshot = default;
+            EntityHandle handle = m_playerSystem.GetEquippedItemHandle(area);
+
+            if (handle.Value == Guid.Empty)
+            {
+                return true;
+            }
+
+            Entity entity = m_entityManager.Get(handle);
+
+            if (entity is Entity_Consumables consumable &&
+                consumable.Quantity > 0 &&
+                consumable.ItemData != null)
+            {
+                snapshot = new EquippedItemSnapshot(consumable.ItemData);
+                return true;
+            }
+
+            if (entity is Entity_Materials material &&
+                material.Quantity > 0 &&
+                material.ItemData != null)
+            {
+                snapshot = new EquippedItemSnapshot(material.ItemData);
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool TryConsumePreparedItems(
+            ConsumablePreparation preparation)
+        {
+            if (preparation.Bait.HasItem &&
+                !m_playerSystem.TryConsumeEquippedItem(
+                    EquipmentMountingArea.Bait,
+                    out _))
+            {
+                return false;
+            }
+
+            if (preparation.Groundbait.HasItem &&
+                !m_playerSystem.TryConsumeEquippedItem(
+                    EquipmentMountingArea.Groundbait,
+                    out _))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private void LogAppliedConsumables(
+            ConsumablePreparation preparation)
+        {
+            string groundbaitResult = preparation.SummonTarget != null
                 ? "소비 생략(보스 미끼 우선)"
-                : $"consumed={consumedGroundbait}, " +
-                  $"item={GetItemDebugName(consumedGroundbaitData)}";
+                : $"consumed={preparation.Groundbait.HasItem}, " +
+                  $"item={GetItemDebugName(preparation.Groundbait.ItemData)}";
 
             m_debugLog?.Invoke(
-                $"[전투 시작 소모품 적용] baitConsumed={consumedBait}, " +
-                $"bait={GetItemDebugName(consumedBaitData)}, " +
-                $"baitStat={appliedBaitStat:0.##}, " +
+                $"[전투 시작 소모품 적용] " +
+                $"baitConsumed={preparation.Bait.HasItem}, " +
+                $"bait={GetItemDebugName(preparation.Bait.ItemData)}, " +
+                $"baitStat={preparation.AppliedBaitStat:0.##}, " +
                 $"groundbait={groundbaitResult}, " +
-                $"groundbaitStat={appliedGroundbaitStat:0.##}, " +
-                $"summonTarget={GetFishDebugName(summonTarget)}");
+                $"groundbaitStat={preparation.AppliedGroundbaitStat:0.##}, " +
+                $"summonTarget={GetFishDebugName(preparation.SummonTarget)}");
         }
 
         private BattleFishData SelectBattleFish(
@@ -175,7 +276,7 @@ namespace DesktopCompanion.Systems
 
             if (m_stageSystem == null)
             {
-                Debug.LogWarning(
+                m_warningLog(
                     "[FishingSystem] StageSystem을 찾을 수 없습니다.");
                 return null;
             }
@@ -186,7 +287,7 @@ namespace DesktopCompanion.Systems
 
             if (availablePools == null || availablePools.Count == 0)
             {
-                Debug.LogWarning(
+                m_warningLog(
                     $"[FishingSystem] 사용 가능한 TierPool이 없습니다. " +
                     $"playerLicense={playerLicense}");
                 return null;
@@ -248,6 +349,41 @@ namespace DesktopCompanion.Systems
             return fishData == null
                 ? "없음"
                 : $"{fishData.Name}(id={fishData.ID})";
+        }
+
+        private readonly struct EquippedItemSnapshot
+        {
+            public bool HasItem { get; }
+            public ItemData ItemData { get; }
+
+            public EquippedItemSnapshot(ItemData itemData)
+            {
+                HasItem = true;
+                ItemData = itemData;
+            }
+        }
+
+        private readonly struct ConsumablePreparation
+        {
+            public EquippedItemSnapshot Bait { get; }
+            public EquippedItemSnapshot Groundbait { get; }
+            public float AppliedBaitStat { get; }
+            public float AppliedGroundbaitStat { get; }
+            public BattleFishData SummonTarget { get; }
+
+            public ConsumablePreparation(
+                EquippedItemSnapshot bait,
+                EquippedItemSnapshot groundbait,
+                float appliedBaitStat,
+                float appliedGroundbaitStat,
+                BattleFishData summonTarget)
+            {
+                Bait = bait;
+                Groundbait = groundbait;
+                AppliedBaitStat = appliedBaitStat;
+                AppliedGroundbaitStat = appliedGroundbaitStat;
+                SummonTarget = summonTarget;
+            }
         }
     }
 }

@@ -62,12 +62,14 @@ namespace DesktopCompanion.Systems
                 return FishingRewardResult.InventoryFull;
             }
 
-            if (TryAddItem(caughtHandle))
+            if (m_inventorySystem.AddItem(caughtHandle))
             {
                 return FishingRewardResult.Success;
             }
 
-            Debug.LogWarning("[FishingRewardProcessor] 포획 물고기 인벤토리 지급에 실패했습니다.");
+            Debug.LogWarning(
+                "[FishingRewardProcessor] 포획 물고기 인벤토리 지급에 실패했습니다. " +
+                "Pending 처리를 위해 물고기 엔티티를 보존합니다.");
             return FishingRewardResult.Failed;
         }
 
