@@ -398,6 +398,10 @@ namespace DesktopCompanion
         public const int VK_LBUTTON = 0x01;
         public const int VK_RBUTTON = 0x02;
 
+        // 키는 전역 판독이 곧 다른 앱의 입력까지 가로채는 것이므로,
+        // 반드시 우리 창이 활성일 때만(GetActiveWindow) 읽어야 한다.
+        public const int VK_ESCAPE = 0x1B;
+
         [DllImport("user32.dll")]
         public static extern short GetAsyncKeyState(int vKey);
     }

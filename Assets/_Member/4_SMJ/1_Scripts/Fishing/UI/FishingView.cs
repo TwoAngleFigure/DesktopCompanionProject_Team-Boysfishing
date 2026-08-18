@@ -8,7 +8,6 @@ public class FishingView : UIViewBase
     [SerializeField] private TMP_Text m_stateText;
 
     [Header("Battle Gauge")]
-    [SerializeField] private GameObject m_battleGauge;
     [SerializeField] private TMP_Text m_hpText;
     [SerializeField] private Slider m_hpSlider;
     [SerializeField] private Slider m_timeLimitSlider;
@@ -16,6 +15,9 @@ public class FishingView : UIViewBase
     [Header("State Toggle")]
     [SerializeField] private Button m_toggleFishingButton;
     [SerializeField] private TMP_Text m_toggleFishingButtonText;
+
+    [Tooltip("버튼의 상태 연출(선택). 낚시가 도는 동안 켜짐 상태로 둔다")]
+    [SerializeField] private ButtonStateOwner m_toggleFishingStateOwner;
 
     [Header("Manual Attack")]
     [SerializeField] private Button m_manualAttackButton;
@@ -31,8 +33,8 @@ public class FishingView : UIViewBase
         m_vm.HpText.Bind(OnHpTextChanged);
         m_vm.HpRatio.Bind(OnHpRatioChanged);
         m_vm.ToggleButtonText.Bind(OnToggleButtonTextChanged);
+        m_vm.IsFishingActive.Bind(OnFishingActiveChanged);
         m_vm.BattleTimeRemainingRatio.Bind(OnBattleTimeRemainingRatioChanged);
-        m_vm.IsBattleGaugeVisible.Bind(OnBattleGaugeVisibleChanged);
         m_vm.IsManualAttackEnabled.Bind(OnManualAttackEnabledChanged);
 
         if (m_toggleFishingButton != null)
@@ -52,8 +54,8 @@ public class FishingView : UIViewBase
         m_vm.HpText.Unbind(OnHpTextChanged);
         m_vm.HpRatio.Unbind(OnHpRatioChanged);
         m_vm.ToggleButtonText.Unbind(OnToggleButtonTextChanged);
+        m_vm.IsFishingActive.Unbind(OnFishingActiveChanged);
         m_vm.BattleTimeRemainingRatio.Unbind(OnBattleTimeRemainingRatioChanged);
-        m_vm.IsBattleGaugeVisible.Unbind(OnBattleGaugeVisibleChanged);
         m_vm.IsManualAttackEnabled.Unbind(OnManualAttackEnabledChanged);
 
         if (m_toggleFishingButton != null)
@@ -107,6 +109,18 @@ public class FishingView : UIViewBase
         }
     }
 
+    /// <summary>
+    /// 낚시 진행 여부를 버튼 연출에 넘긴다. 클릭이 아니라 시스템이 상태를 바꾼 결과만 따르므로,
+    /// 시작이 거부된 경우에 표시만 켜지지 않는다.
+    /// </summary>
+    private void OnFishingActiveChanged(bool isActive)
+    {
+        if (m_toggleFishingStateOwner != null)
+        {
+            m_toggleFishingStateOwner.SetActive(isActive);
+        }
+    }
+
     private void OnToggleFishingClicked()
     {
         m_vm.ToggleFishingState?.Execute();
@@ -130,14 +144,6 @@ public class FishingView : UIViewBase
         if (m_manualAttackButton != null)
         {
             m_manualAttackButton.interactable = isEnabled;
-        }
-    }
-
-    private void OnBattleGaugeVisibleChanged(bool isVisible)
-    {
-        if (m_battleGauge != null)
-        {
-            m_battleGauge.SetActive(isVisible);
         }
     }
 

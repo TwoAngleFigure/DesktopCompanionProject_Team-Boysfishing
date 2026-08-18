@@ -16,7 +16,7 @@
     "m_baseGoldGettingMultiply": 1,
     "m_baseMapMovementSpeedPerTime": 10,
     "m_baseInventorySize": 20,
-    "m_startingLicense": 10,
+    "m_startingLicense": 9,
     "m_startingGold": 0
   },
   {
@@ -17420,30 +17420,6 @@
   },
   {
     "type": "ItemData_Consumables",
-    "m_id": 400005,
-    "m_name": "맹독의 자수정",
-    "m_type": "Consumables",
-    "m_tier": 2,
-    "m_basePrice": 300,
-    "m_mountingArea": "Bait",
-    "m_summonTarget": {
-      "type": "BattleFishData",
-      "id": 500089
-    },
-    "m_craftMaterials": [
-      {
-        "m_material": {
-          "type": "ItemData_Materials",
-          "id": 300009
-        },
-        "m_count": 10
-      }
-    ],
-    "m_craftGoldCost": 150,
-    "m_description": "쑤기미가 좋아하는 미끼입니다."
-  },
-  {
-    "type": "ItemData_Consumables",
     "m_id": 400003,
     "m_name": "무지개빛 옥구슬",
     "m_type": "Consumables",
@@ -17468,27 +17444,51 @@
   },
   {
     "type": "ItemData_Consumables",
-    "m_id": 400008,
-    "m_name": "얼어붙은 빙하 결정",
+    "m_id": 400004,
+    "m_name": "고대의 흑요석 미끼",
     "m_type": "Consumables",
-    "m_tier": 3,
-    "m_basePrice": 1800,
+    "m_tier": 7,
+    "m_basePrice": 12000,
     "m_mountingArea": "Bait",
     "m_summonTarget": {
       "type": "BattleFishData",
-      "id": 500067
+      "id": 500028
     },
     "m_craftMaterials": [
       {
         "m_material": {
           "type": "ItemData_Materials",
-          "id": 300012
+          "id": 300008
         },
         "m_count": 10
       }
     ],
-    "m_craftGoldCost": 300,
-    "m_description": "대구가 좋아하는 미끼입니다."
+    "m_craftGoldCost": 6000,
+    "m_description": "철갑상어가 좋아하는 미끼입니다."
+  },
+  {
+    "type": "ItemData_Consumables",
+    "m_id": 400005,
+    "m_name": "맹독의 자수정",
+    "m_type": "Consumables",
+    "m_tier": 2,
+    "m_basePrice": 300,
+    "m_mountingArea": "Bait",
+    "m_summonTarget": {
+      "type": "BattleFishData",
+      "id": 500089
+    },
+    "m_craftMaterials": [
+      {
+        "m_material": {
+          "type": "ItemData_Materials",
+          "id": 300009
+        },
+        "m_count": 10
+      }
+    ],
+    "m_craftGoldCost": 150,
+    "m_description": "쑤기미가 좋아하는 미끼입니다."
   },
   {
     "type": "ItemData_Consumables",
@@ -17513,6 +17513,54 @@
     ],
     "m_craftGoldCost": 900,
     "m_description": "대형 노랑가오리가 좋아하는 미끼입니다."
+  },
+  {
+    "type": "ItemData_Consumables",
+    "m_id": 400007,
+    "m_name": "단단한 갯바위 광석",
+    "m_type": "Consumables",
+    "m_tier": 8,
+    "m_basePrice": 15000,
+    "m_mountingArea": "Bait",
+    "m_summonTarget": {
+      "type": "BattleFishData",
+      "id": 500090
+    },
+    "m_craftMaterials": [
+      {
+        "m_material": {
+          "type": "ItemData_Materials",
+          "id": 300011
+        },
+        "m_count": 10
+      }
+    ],
+    "m_craftGoldCost": 10000,
+    "m_description": "돌돔이 좋아하는 미끼입니다."
+  },
+  {
+    "type": "ItemData_Consumables",
+    "m_id": 400008,
+    "m_name": "얼어붙은 빙하 결정",
+    "m_type": "Consumables",
+    "m_tier": 3,
+    "m_basePrice": 1800,
+    "m_mountingArea": "Bait",
+    "m_summonTarget": {
+      "type": "BattleFishData",
+      "id": 500067
+    },
+    "m_craftMaterials": [
+      {
+        "m_material": {
+          "type": "ItemData_Materials",
+          "id": 300012
+        },
+        "m_count": 10
+      }
+    ],
+    "m_craftGoldCost": 300,
+    "m_description": "대구가 좋아하는 미끼입니다."
   },
   {
     "type": "ItemData_Consumables",
@@ -17561,54 +17609,6 @@
     ],
     "m_craftGoldCost": 3500,
     "m_description": "청새치가 좋아하는 미끼입니다."
-  },
-  {
-    "type": "ItemData_Consumables",
-    "m_id": 400004,
-    "m_name": "고대의 흑요석 미끼",
-    "m_type": "Consumables",
-    "m_tier": 7,
-    "m_basePrice": 12000,
-    "m_mountingArea": "Bait",
-    "m_summonTarget": {
-      "type": "BattleFishData",
-      "id": 500028
-    },
-    "m_craftMaterials": [
-      {
-        "m_material": {
-          "type": "ItemData_Materials",
-          "id": 300008
-        },
-        "m_count": 10
-      }
-    ],
-    "m_craftGoldCost": 6000,
-    "m_description": "철갑상어가 좋아하는 미끼입니다."
-  },
-  {
-    "type": "ItemData_Consumables",
-    "m_id": 400007,
-    "m_name": "단단한 갯바위 광석",
-    "m_type": "Consumables",
-    "m_tier": 8,
-    "m_basePrice": 15000,
-    "m_mountingArea": "Bait",
-    "m_summonTarget": {
-      "type": "BattleFishData",
-      "id": 500090
-    },
-    "m_craftMaterials": [
-      {
-        "m_material": {
-          "type": "ItemData_Materials",
-          "id": 300011
-        },
-        "m_count": 10
-      }
-    ],
-    "m_craftGoldCost": 10000,
-    "m_description": "돌돔이 좋아하는 미끼입니다."
   },
   {
     "type": "ItemData_Consumables",
@@ -17945,105 +17945,105 @@
     "m_id": 810001,
     "m_resultType": "RandomDrop",
     "m_resultId": 900001,
+    "m_description": "1티어 장비를 랜덤으로 생산합니다.",
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300016:10",
     "m_isUnlocked": true,
-    "m_goldCost": 0,
-    "m_description": "1티어 장비를 랜덤으로 생산합니다."
+    "m_goldCost": 0
   },
   {
     "type": "RecipeData_Mixture",
     "m_id": 810002,
     "m_resultType": "RandomDrop",
     "m_resultId": 900002,
+    "m_description": "2티어 장비를 랜덤으로 생산합니다.",
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300017:10",
     "m_isUnlocked": true,
-    "m_goldCost": 0,
-    "m_description": "2티어 장비를 랜덤으로 생산합니다."
+    "m_goldCost": 0
   },
   {
     "type": "RecipeData_Mixture",
     "m_id": 810003,
     "m_resultType": "RandomDrop",
     "m_resultId": 900003,
+    "m_description": "3티어 장비를 랜덤으로 생산합니다.",
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300018:10",
     "m_isUnlocked": true,
-    "m_goldCost": 0,
-    "m_description": "3티어 장비를 랜덤으로 생산합니다."
+    "m_goldCost": 0
   },
   {
     "type": "RecipeData_Mixture",
     "m_id": 810004,
     "m_resultType": "RandomDrop",
     "m_resultId": 900004,
+    "m_description": "4티어 장비를 랜덤으로 생산합니다.",
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300019:10",
     "m_isUnlocked": true,
-    "m_goldCost": 0,
-    "m_description": "4티어 장비를 랜덤으로 생산합니다."
+    "m_goldCost": 0
   },
   {
     "type": "RecipeData_Mixture",
     "m_id": 810005,
     "m_resultType": "RandomDrop",
     "m_resultId": 900005,
+    "m_description": "5티어 장비를 랜덤으로 생산합니다.",
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300020:10",
     "m_isUnlocked": true,
-    "m_goldCost": 0,
-    "m_description": "5티어 장비를 랜덤으로 생산합니다."
+    "m_goldCost": 0
   },
   {
     "type": "RecipeData_Mixture",
     "m_id": 810006,
     "m_resultType": "RandomDrop",
     "m_resultId": 900006,
+    "m_description": "6티어 장비를 랜덤으로 생산합니다.",
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300021:10",
     "m_isUnlocked": true,
-    "m_goldCost": 0,
-    "m_description": "6티어 장비를 랜덤으로 생산합니다."
+    "m_goldCost": 0
   },
   {
     "type": "RecipeData_Mixture",
     "m_id": 810007,
     "m_resultType": "RandomDrop",
     "m_resultId": 900007,
+    "m_description": "7티어 장비를 랜덤으로 생산합니다.",
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300022:10",
     "m_isUnlocked": true,
-    "m_goldCost": 0,
-    "m_description": "7티어 장비를 랜덤으로 생산합니다."
+    "m_goldCost": 0
   },
   {
     "type": "RecipeData_Mixture",
     "m_id": 810008,
     "m_resultType": "RandomDrop",
     "m_resultId": 900008,
+    "m_description": "8티어 장비를 랜덤으로 생산합니다.",
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300023:10",
     "m_isUnlocked": true,
-    "m_goldCost": 0,
-    "m_description": "8티어 장비를 랜덤으로 생산합니다."
+    "m_goldCost": 0
   },
   {
     "type": "RecipeData_Mixture",
     "m_id": 810009,
     "m_resultType": "RandomDrop",
     "m_resultId": 900009,
+    "m_description": "9티어 장비를 랜덤으로 생산합니다.",
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300024:10",
     "m_isUnlocked": true,
-    "m_goldCost": 0,
-    "m_description": "9티어 장비를 랜덤으로 생산합니다."
+    "m_goldCost": 0
   },
   {
     "type": "RecipeData_Mixture",
     "m_id": 810101,
     "m_resultType": "Equipment",
-    "m_resultId": 200008,
+    "m_resultId": 200001,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300016:40",
     "m_isUnlocked": true,
@@ -18053,7 +18053,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810102,
     "m_resultType": "Equipment",
-    "m_resultId": 200009,
+    "m_resultId": 200002,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300016:40",
     "m_isUnlocked": true,
@@ -18063,7 +18063,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810103,
     "m_resultType": "Equipment",
-    "m_resultId": 200010,
+    "m_resultId": 200003,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300016:40",
     "m_isUnlocked": true,
@@ -18073,7 +18073,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810104,
     "m_resultType": "Equipment",
-    "m_resultId": 200011,
+    "m_resultId": 200004,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300016:40",
     "m_isUnlocked": true,
@@ -18083,7 +18083,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810105,
     "m_resultType": "Equipment",
-    "m_resultId": 200012,
+    "m_resultId": 200005,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300016:40",
     "m_isUnlocked": true,
@@ -18093,7 +18093,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810106,
     "m_resultType": "Equipment",
-    "m_resultId": 200013,
+    "m_resultId": 200006,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300016:40",
     "m_isUnlocked": true,
@@ -18103,7 +18103,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810107,
     "m_resultType": "Equipment",
-    "m_resultId": 200014,
+    "m_resultId": 200007,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300016:40",
     "m_isUnlocked": true,
@@ -18113,7 +18113,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810201,
     "m_resultType": "Equipment",
-    "m_resultId": 200015,
+    "m_resultId": 200008,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300017:40",
     "m_isUnlocked": true,
@@ -18123,7 +18123,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810202,
     "m_resultType": "Equipment",
-    "m_resultId": 200016,
+    "m_resultId": 200009,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300017:40",
     "m_isUnlocked": true,
@@ -18133,7 +18133,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810203,
     "m_resultType": "Equipment",
-    "m_resultId": 200017,
+    "m_resultId": 200010,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300017:40",
     "m_isUnlocked": true,
@@ -18143,7 +18143,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810204,
     "m_resultType": "Equipment",
-    "m_resultId": 200018,
+    "m_resultId": 200011,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300017:40",
     "m_isUnlocked": true,
@@ -18153,7 +18153,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810205,
     "m_resultType": "Equipment",
-    "m_resultId": 200019,
+    "m_resultId": 200012,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300017:40",
     "m_isUnlocked": true,
@@ -18163,7 +18163,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810206,
     "m_resultType": "Equipment",
-    "m_resultId": 200020,
+    "m_resultId": 200013,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300017:40",
     "m_isUnlocked": true,
@@ -18173,7 +18173,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810207,
     "m_resultType": "Equipment",
-    "m_resultId": 200021,
+    "m_resultId": 200014,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300017:40",
     "m_isUnlocked": true,
@@ -18183,7 +18183,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810301,
     "m_resultType": "Equipment",
-    "m_resultId": 200022,
+    "m_resultId": 200015,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300018:40",
     "m_isUnlocked": true,
@@ -18193,7 +18193,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810302,
     "m_resultType": "Equipment",
-    "m_resultId": 200023,
+    "m_resultId": 200016,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300018:40",
     "m_isUnlocked": true,
@@ -18203,7 +18203,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810303,
     "m_resultType": "Equipment",
-    "m_resultId": 200024,
+    "m_resultId": 200017,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300018:40",
     "m_isUnlocked": true,
@@ -18213,7 +18213,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810304,
     "m_resultType": "Equipment",
-    "m_resultId": 200025,
+    "m_resultId": 200018,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300018:40",
     "m_isUnlocked": true,
@@ -18223,7 +18223,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810305,
     "m_resultType": "Equipment",
-    "m_resultId": 200026,
+    "m_resultId": 200019,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300018:40",
     "m_isUnlocked": true,
@@ -18233,7 +18233,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810306,
     "m_resultType": "Equipment",
-    "m_resultId": 200027,
+    "m_resultId": 200020,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300018:40",
     "m_isUnlocked": true,
@@ -18243,7 +18243,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810307,
     "m_resultType": "Equipment",
-    "m_resultId": 200028,
+    "m_resultId": 200021,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300018:40",
     "m_isUnlocked": true,
@@ -18253,7 +18253,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810401,
     "m_resultType": "Equipment",
-    "m_resultId": 200029,
+    "m_resultId": 200022,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300019:40",
     "m_isUnlocked": true,
@@ -18263,7 +18263,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810402,
     "m_resultType": "Equipment",
-    "m_resultId": 200030,
+    "m_resultId": 200023,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300019:40",
     "m_isUnlocked": true,
@@ -18273,7 +18273,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810403,
     "m_resultType": "Equipment",
-    "m_resultId": 200031,
+    "m_resultId": 200024,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300019:40",
     "m_isUnlocked": true,
@@ -18283,7 +18283,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810404,
     "m_resultType": "Equipment",
-    "m_resultId": 200032,
+    "m_resultId": 200025,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300019:40",
     "m_isUnlocked": true,
@@ -18293,7 +18293,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810405,
     "m_resultType": "Equipment",
-    "m_resultId": 200033,
+    "m_resultId": 200026,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300019:40",
     "m_isUnlocked": true,
@@ -18303,7 +18303,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810406,
     "m_resultType": "Equipment",
-    "m_resultId": 200034,
+    "m_resultId": 200027,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300019:40",
     "m_isUnlocked": true,
@@ -18313,7 +18313,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810407,
     "m_resultType": "Equipment",
-    "m_resultId": 200035,
+    "m_resultId": 200028,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300019:40",
     "m_isUnlocked": true,
@@ -18323,7 +18323,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810501,
     "m_resultType": "Equipment",
-    "m_resultId": 200036,
+    "m_resultId": 200029,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300020:40",
     "m_isUnlocked": true,
@@ -18333,7 +18333,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810502,
     "m_resultType": "Equipment",
-    "m_resultId": 200037,
+    "m_resultId": 200030,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300020:40",
     "m_isUnlocked": true,
@@ -18343,7 +18343,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810503,
     "m_resultType": "Equipment",
-    "m_resultId": 200038,
+    "m_resultId": 200031,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300020:40",
     "m_isUnlocked": true,
@@ -18353,7 +18353,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810504,
     "m_resultType": "Equipment",
-    "m_resultId": 200039,
+    "m_resultId": 200032,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300020:40",
     "m_isUnlocked": true,
@@ -18363,7 +18363,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810505,
     "m_resultType": "Equipment",
-    "m_resultId": 200040,
+    "m_resultId": 200033,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300020:40",
     "m_isUnlocked": true,
@@ -18373,7 +18373,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810506,
     "m_resultType": "Equipment",
-    "m_resultId": 200041,
+    "m_resultId": 200034,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300020:40",
     "m_isUnlocked": true,
@@ -18383,7 +18383,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810507,
     "m_resultType": "Equipment",
-    "m_resultId": 200042,
+    "m_resultId": 200035,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300020:40",
     "m_isUnlocked": true,
@@ -18393,7 +18393,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810601,
     "m_resultType": "Equipment",
-    "m_resultId": 200043,
+    "m_resultId": 200036,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300021:40",
     "m_isUnlocked": true,
@@ -18403,7 +18403,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810602,
     "m_resultType": "Equipment",
-    "m_resultId": 200044,
+    "m_resultId": 200037,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300021:40",
     "m_isUnlocked": true,
@@ -18413,7 +18413,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810603,
     "m_resultType": "Equipment",
-    "m_resultId": 200045,
+    "m_resultId": 200038,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300021:40",
     "m_isUnlocked": true,
@@ -18423,7 +18423,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810604,
     "m_resultType": "Equipment",
-    "m_resultId": 200046,
+    "m_resultId": 200039,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300021:40",
     "m_isUnlocked": true,
@@ -18433,7 +18433,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810605,
     "m_resultType": "Equipment",
-    "m_resultId": 200047,
+    "m_resultId": 200040,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300021:40",
     "m_isUnlocked": true,
@@ -18443,7 +18443,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810606,
     "m_resultType": "Equipment",
-    "m_resultId": 200048,
+    "m_resultId": 200041,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300021:40",
     "m_isUnlocked": true,
@@ -18453,7 +18453,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810607,
     "m_resultType": "Equipment",
-    "m_resultId": 200049,
+    "m_resultId": 200042,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300021:40",
     "m_isUnlocked": true,
@@ -18463,7 +18463,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810701,
     "m_resultType": "Equipment",
-    "m_resultId": 200050,
+    "m_resultId": 200043,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300022:40",
     "m_isUnlocked": true,
@@ -18473,7 +18473,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810702,
     "m_resultType": "Equipment",
-    "m_resultId": 200051,
+    "m_resultId": 200044,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300022:40",
     "m_isUnlocked": true,
@@ -18483,7 +18483,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810703,
     "m_resultType": "Equipment",
-    "m_resultId": 200052,
+    "m_resultId": 200045,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300022:40",
     "m_isUnlocked": true,
@@ -18493,7 +18493,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810704,
     "m_resultType": "Equipment",
-    "m_resultId": 200053,
+    "m_resultId": 200046,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300022:40",
     "m_isUnlocked": true,
@@ -18503,7 +18503,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810705,
     "m_resultType": "Equipment",
-    "m_resultId": 200054,
+    "m_resultId": 200047,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300022:40",
     "m_isUnlocked": true,
@@ -18513,7 +18513,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810706,
     "m_resultType": "Equipment",
-    "m_resultId": 200055,
+    "m_resultId": 200048,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300022:40",
     "m_isUnlocked": true,
@@ -18523,7 +18523,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810707,
     "m_resultType": "Equipment",
-    "m_resultId": 200056,
+    "m_resultId": 200049,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300022:40",
     "m_isUnlocked": true,
@@ -18533,7 +18533,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810801,
     "m_resultType": "Equipment",
-    "m_resultId": 200057,
+    "m_resultId": 200050,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300023:40",
     "m_isUnlocked": true,
@@ -18543,7 +18543,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810802,
     "m_resultType": "Equipment",
-    "m_resultId": 200058,
+    "m_resultId": 200051,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300023:40",
     "m_isUnlocked": true,
@@ -18553,7 +18553,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810803,
     "m_resultType": "Equipment",
-    "m_resultId": 200059,
+    "m_resultId": 200052,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300023:40",
     "m_isUnlocked": true,
@@ -18563,7 +18563,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810804,
     "m_resultType": "Equipment",
-    "m_resultId": 200060,
+    "m_resultId": 200053,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300023:40",
     "m_isUnlocked": true,
@@ -18573,7 +18573,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810805,
     "m_resultType": "Equipment",
-    "m_resultId": 200061,
+    "m_resultId": 200054,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300023:40",
     "m_isUnlocked": true,
@@ -18583,7 +18583,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810806,
     "m_resultType": "Equipment",
-    "m_resultId": 200062,
+    "m_resultId": 200055,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300023:40",
     "m_isUnlocked": true,
@@ -18593,7 +18593,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810807,
     "m_resultType": "Equipment",
-    "m_resultId": 200063,
+    "m_resultId": 200056,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300023:40",
     "m_isUnlocked": true,
@@ -18603,7 +18603,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810901,
     "m_resultType": "Equipment",
-    "m_resultId": 200064,
+    "m_resultId": 200057,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300024:40",
     "m_isUnlocked": true,
@@ -18613,7 +18613,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810902,
     "m_resultType": "Equipment",
-    "m_resultId": 200065,
+    "m_resultId": 200058,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300024:40",
     "m_isUnlocked": true,
@@ -18623,7 +18623,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810903,
     "m_resultType": "Equipment",
-    "m_resultId": 200066,
+    "m_resultId": 200059,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300024:40",
     "m_isUnlocked": true,
@@ -18633,7 +18633,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810904,
     "m_resultType": "Equipment",
-    "m_resultId": 200067,
+    "m_resultId": 200060,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300024:40",
     "m_isUnlocked": true,
@@ -18643,7 +18643,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810905,
     "m_resultType": "Equipment",
-    "m_resultId": 200068,
+    "m_resultId": 200061,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300024:40",
     "m_isUnlocked": true,
@@ -18653,7 +18653,7 @@
     "type": "RecipeData_Mixture",
     "m_id": 810906,
     "m_resultType": "Equipment",
-    "m_resultId": 200069,
+    "m_resultId": 200062,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300024:40",
     "m_isUnlocked": true,
@@ -18663,11 +18663,65 @@
     "type": "RecipeData_Mixture",
     "m_id": 810907,
     "m_resultType": "Equipment",
-    "m_resultId": 200070,
+    "m_resultId": 200063,
     "m_resultCount": 1,
     "m_ingredients": "ItemData_Materials:300024:40",
     "m_isUnlocked": true,
     "m_goldCost": 0
+  },
+  {
+    "type": "RandomTableData",
+    "m_id": 900001,
+    "m_name": "1티어 무작위 장비 풀",
+    "m_entries": "Equipment:200001:1;Equipment:200002:1;Equipment:200003:1;Equipment:200004:1;Equipment:200005:1;Equipment:200006:1;Equipment:200007:1"
+  },
+  {
+    "type": "RandomTableData",
+    "m_id": 900002,
+    "m_name": "2티어 무작위 장비 풀",
+    "m_entries": "Equipment:200008:1;Equipment:200009:1;Equipment:200010:1;Equipment:200011:1;Equipment:200012:1;Equipment:200013:1;Equipment:200014:1"
+  },
+  {
+    "type": "RandomTableData",
+    "m_id": 900003,
+    "m_name": "3티어 무작위 장비 풀",
+    "m_entries": "Equipment:200015:1;Equipment:200016:1;Equipment:200017:1;Equipment:200018:1;Equipment:200019:1;Equipment:200020:1;Equipment:200021:1"
+  },
+  {
+    "type": "RandomTableData",
+    "m_id": 900004,
+    "m_name": "4티어 무작위 장비 풀",
+    "m_entries": "Equipment:200022:1;Equipment:200023:1;Equipment:200024:1;Equipment:200025:1;Equipment:200026:1;Equipment:200027:1;Equipment:200028:1"
+  },
+  {
+    "type": "RandomTableData",
+    "m_id": 900005,
+    "m_name": "5티어 무작위 장비 풀",
+    "m_entries": "Equipment:200029:1;Equipment:200030:1;Equipment:200031:1;Equipment:200032:1;Equipment:200033:1;Equipment:200034:1;Equipment:200035:1"
+  },
+  {
+    "type": "RandomTableData",
+    "m_id": 900006,
+    "m_name": "6티어 무작위 장비 풀",
+    "m_entries": "Equipment:200036:1;Equipment:200037:1;Equipment:200038:1;Equipment:200039:1;Equipment:200040:1;Equipment:200041:1;Equipment:200042:1"
+  },
+  {
+    "type": "RandomTableData",
+    "m_id": 900007,
+    "m_name": "7티어 무작위 장비 풀",
+    "m_entries": "Equipment:200043:1;Equipment:200044:1;Equipment:200045:1;Equipment:200046:1;Equipment:200047:1;Equipment:200048:1;Equipment:200049:1"
+  },
+  {
+    "type": "RandomTableData",
+    "m_id": 900008,
+    "m_name": "8티어 무작위 장비 풀",
+    "m_entries": "Equipment:200050:1;Equipment:200051:1;Equipment:200052:1;Equipment:200053:1;Equipment:200054:1;Equipment:200055:1;Equipment:200056:1"
+  },
+  {
+    "type": "RandomTableData",
+    "m_id": 900009,
+    "m_name": "9티어 무작위 장비 풀",
+    "m_entries": "Equipment:200057:1;Equipment:200058:1;Equipment:200059:1;Equipment:200060:1;Equipment:200061:1;Equipment:200062:1;Equipment:200063:1"
   },
   {
     "type": "AquariumUpgradeData",
@@ -18897,1436 +18951,6 @@
   },
   {
     "type": "BattleFishData",
-    "m_id": 500011,
-    "m_name": "잉어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100011
-    },
-    "m_maxHp": 200,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 30,
-    "m_maxSize": 100,
-    "m_qualityThresholds": [
-      46.0,
-      61.0,
-      76.0,
-      91.0
-    ],
-    "m_isBoss": true,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300001
-        },
-        "m_count": 5,
-        "m_probability": 0.65
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200008
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200009
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200010
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200011
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200012
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200013
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200014
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500089,
-    "m_name": "쑤기미",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100089
-    },
-    "m_maxHp": 30000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 15,
-    "m_maxSize": 40,
-    "m_qualityThresholds": [
-      20.0,
-      25.0,
-      30.0,
-      35.0
-    ],
-    "m_isBoss": true,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300001
-        },
-        "m_count": 5,
-        "m_probability": 0.65
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200015
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200016
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200017
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200018
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200019
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200020
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200021
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500027,
-    "m_name": "비단잉어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100027
-    },
-    "m_maxHp": 90000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 80,
-    "m_maxSize": 150,
-    "m_qualityThresholds": [
-      94.0,
-      108.0,
-      122.0,
-      136.0
-    ],
-    "m_isBoss": true,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300002
-        },
-        "m_count": 5,
-        "m_probability": 0.65
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200022
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200023
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200024
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200025
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200026
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200027
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200028
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500067,
-    "m_name": "대구",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100067
-    },
-    "m_maxHp": 90000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 30,
-    "m_maxSize": 110,
-    "m_qualityThresholds": [
-      46.0,
-      63.0,
-      80.0,
-      96.0
-    ],
-    "m_isBoss": true,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300002
-        },
-        "m_count": 5,
-        "m_probability": 0.65
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200022
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200023
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200024
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200025
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200026
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200027
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200028
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500058,
-    "m_name": "대형 노랑가오리",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100058
-    },
-    "m_maxHp": 220000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 100,
-    "m_maxSize": 200,
-    "m_qualityThresholds": [
-      121.0,
-      141.0,
-      161.0,
-      181.0
-    ],
-    "m_isBoss": true,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300002
-        },
-        "m_count": 5,
-        "m_probability": 0.65
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200029
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200030
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200031
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200032
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200033
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200034
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200035
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500091,
-    "m_name": "블루 랍스터",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100091
-    },
-    "m_maxHp": 600000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 10,
-    "m_maxSize": 60,
-    "m_qualityThresholds": [
-      20.0,
-      30.0,
-      40.0,
-      50.0
-    ],
-    "m_isBoss": true,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300003
-        },
-        "m_count": 3,
-        "m_probability": 0.65
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200036
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200037
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200038
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200039
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200040
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200041
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200042
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500088,
-    "m_name": "청새치",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100088
-    },
-    "m_maxHp": 1500000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 150,
-    "m_maxSize": 300,
-    "m_qualityThresholds": [
-      176.0,
-      206.0,
-      236.0,
-      266.0
-    ],
-    "m_isBoss": true,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300003
-        },
-        "m_count": 3,
-        "m_probability": 0.65
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200043
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200044
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200045
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200046
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200047
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200048
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200049
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500028,
-    "m_name": "철갑상어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100028
-    },
-    "m_maxHp": 3500000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 150,
-    "m_maxSize": 300,
-    "m_qualityThresholds": [
-      176.0,
-      206.0,
-      236.0,
-      266.0
-    ],
-    "m_isBoss": true,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300004
-        },
-        "m_count": 2,
-        "m_probability": 0.65
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200050
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200051
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200052
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200053
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200054
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200055
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200056
-        },
-        "m_count": 1,
-        "m_probability": 0.05
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500090,
-    "m_name": "돌돔",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100090
-    },
-    "m_maxHp": 9000000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 20,
-    "m_maxSize": 70,
-    "m_qualityThresholds": [
-      30.0,
-      40.0,
-      50.0,
-      60.0
-    ],
-    "m_isBoss": true,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300004
-        },
-        "m_count": 2,
-        "m_probability": 0.93
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200057
-        },
-        "m_count": 1,
-        "m_probability": 0.01
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200058
-        },
-        "m_count": 1,
-        "m_probability": 0.01
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200059
-        },
-        "m_count": 1,
-        "m_probability": 0.01
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200060
-        },
-        "m_count": 1,
-        "m_probability": 0.01
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200061
-        },
-        "m_count": 1,
-        "m_probability": 0.01
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200062
-        },
-        "m_count": 1,
-        "m_probability": 0.01
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200063
-        },
-        "m_count": 1,
-        "m_probability": 0.01
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500100,
-    "m_name": "혹등고래",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100100
-    },
-    "m_maxHp": 3000000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 1200,
-    "m_maxSize": 1700,
-    "m_qualityThresholds": [
-      1300.0,
-      1400.0,
-      1500.0,
-      1600.0
-    ],
-    "m_isBoss": true,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300005
-        },
-        "m_count": 1,
-        "m_probability": 0.79
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200057
-        },
-        "m_count": 1,
-        "m_probability": 0.03
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200058
-        },
-        "m_count": 1,
-        "m_probability": 0.03
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200059
-        },
-        "m_count": 1,
-        "m_probability": 0.03
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200060
-        },
-        "m_count": 1,
-        "m_probability": 0.03
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200061
-        },
-        "m_count": 1,
-        "m_probability": 0.03
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200062
-        },
-        "m_count": 1,
-        "m_probability": 0.03
-      },
-      {
-        "m_item": {
-          "type": "ItemData_Equipment",
-          "id": 200063
-        },
-        "m_count": 1,
-        "m_probability": 0.03
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500082,
-    "m_name": "빙어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100082
-    },
-    "m_maxHp": 85000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 5,
-    "m_maxSize": 13,
-    "m_qualityThresholds": [
-      6.0,
-      8.0,
-      10.0,
-      12.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300020
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500083,
-    "m_name": "백명태",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100083
-    },
-    "m_maxHp": 240000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 25,
-    "m_maxSize": 60,
-    "m_qualityThresholds": [
-      33.0,
-      41.0,
-      49.0,
-      56.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300021
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500084,
-    "m_name": "은대구",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100084
-    },
-    "m_maxHp": 240000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 35,
-    "m_maxSize": 95,
-    "m_qualityThresholds": [
-      47.0,
-      60.0,
-      73.0,
-      86.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300021
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500085,
-    "m_name": "황금가자미",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100085
-    },
-    "m_maxHp": 240000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 15,
-    "m_maxSize": 45,
-    "m_qualityThresholds": [
-      21.0,
-      27.0,
-      33.0,
-      39.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300021
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500023,
-    "m_name": "가물치",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100023
-    },
-    "m_maxHp": 650000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 30,
-    "m_maxSize": 90,
-    "m_qualityThresholds": [
-      43.0,
-      56.0,
-      69.0,
-      83.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300022
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500024,
-    "m_name": "뱀장어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100024
-    },
-    "m_maxHp": 650000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 30,
-    "m_maxSize": 100,
-    "m_qualityThresholds": [
-      45.0,
-      60.0,
-      75.0,
-      90.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300022
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500025,
-    "m_name": "끄리",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100025
-    },
-    "m_maxHp": 650000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 20,
-    "m_maxSize": 50,
-    "m_qualityThresholds": [
-      27.0,
-      34.0,
-      40.0,
-      46.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300022
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500052,
-    "m_name": "대왕문어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100052
-    },
-    "m_maxHp": 1800000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 50,
-    "m_maxSize": 180,
-    "m_qualityThresholds": [
-      76.0,
-      106.0,
-      136.0,
-      166.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300023
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500053,
-    "m_name": "먹물오징어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100053
-    },
-    "m_maxHp": 1800000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 12,
-    "m_maxSize": 30,
-    "m_qualityThresholds": [
-      16.0,
-      20.0,
-      24.0,
-      28.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300023
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500054,
-    "m_name": "황금꽃게",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100054
-    },
-    "m_maxHp": 1800000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 10,
-    "m_maxSize": 24,
-    "m_qualityThresholds": [
-      13.0,
-      16.0,
-      19.0,
-      22.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300023
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500055,
-    "m_name": "점농어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100055
-    },
-    "m_maxHp": 1800000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 30,
-    "m_maxSize": 95,
-    "m_qualityThresholds": [
-      44.0,
-      59.0,
-      73.0,
-      86.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300023
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500097,
-    "m_name": "덤보문어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100097
-    },
-    "m_maxHp": 5000000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 30,
-    "m_maxSize": 180,
-    "m_qualityThresholds": [
-      60.0,
-      90.0,
-      120.0,
-      150.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300024
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500098,
-    "m_name": "만타가오리",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100098
-    },
-    "m_maxHp": 5000000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 300,
-    "m_maxSize": 800,
-    "m_qualityThresholds": [
-      400.0,
-      500.0,
-      600.0,
-      700.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300024
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500086,
-    "m_name": "심해대구",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100086
-    },
-    "m_maxHp": 700000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 70,
-    "m_maxSize": 145,
-    "m_qualityThresholds": [
-      86.0,
-      101.0,
-      116.0,
-      131.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300021
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500087,
-    "m_name": "북태평양 연어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100087
-    },
-    "m_maxHp": 700000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 60,
-    "m_maxSize": 110,
-    "m_qualityThresholds": [
-      71.0,
-      81.0,
-      91.0,
-      101.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300021
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500026,
-    "m_name": "대형잉어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100026
-    },
-    "m_maxHp": 1600000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 80,
-    "m_maxSize": 150,
-    "m_qualityThresholds": [
-      94.0,
-      108.0,
-      122.0,
-      136.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300022
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500056,
-    "m_name": "대물민어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100056
-    },
-    "m_maxHp": 4500000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 60,
-    "m_maxSize": 135,
-    "m_qualityThresholds": [
-      76.0,
-      91.0,
-      106.0,
-      121.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300023
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500057,
-    "m_name": "산갈치",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100057
-    },
-    "m_maxHp": 4500000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 150,
-    "m_maxSize": 500,
-    "m_qualityThresholds": [
-      201.0,
-      281.0,
-      361.0,
-      441.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300023
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500099,
-    "m_name": "고래상어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100099
-    },
-    "m_maxHp": 13000000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 500,
-    "m_maxSize": 2000,
-    "m_qualityThresholds": [
-      800.0,
-      1100.0,
-      1400.0,
-      1700.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300024
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
     "m_id": 500001,
     "m_name": "피라미",
     "m_itemFish": {
@@ -20379,6 +19003,36 @@
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300016
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500003,
+    "m_name": "강준치",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100003
+    },
+    "m_maxHp": 1200,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 20,
+    "m_maxSize": 60,
+    "m_qualityThresholds": [
+      29.0,
+      38.0,
+      47.0,
+      55.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300018
         },
         "m_count": 1,
         "m_probability": 1.0
@@ -20537,186 +19191,6 @@
   },
   {
     "type": "BattleFishData",
-    "m_id": 500010,
-    "m_name": "미꾸라지",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100010
-    },
-    "m_maxHp": 80,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 10,
-    "m_maxSize": 20,
-    "m_qualityThresholds": [
-      13.0,
-      15.0,
-      17.0,
-      19.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300016
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500029,
-    "m_name": "망둥어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100029
-    },
-    "m_maxHp": 350,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 5,
-    "m_maxSize": 20,
-    "m_qualityThresholds": [
-      9.0,
-      12.0,
-      15.0,
-      18.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300017
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500035,
-    "m_name": "꼬시래기",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100035
-    },
-    "m_maxHp": 350,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 6,
-    "m_maxSize": 20,
-    "m_qualityThresholds": [
-      10.0,
-      13.0,
-      16.0,
-      19.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300017
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500036,
-    "m_name": "꽃게",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100036
-    },
-    "m_maxHp": 350,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 8,
-    "m_maxSize": 22,
-    "m_qualityThresholds": [
-      11.0,
-      14.0,
-      17.0,
-      20.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300017
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500037,
-    "m_name": "숲뿌리해파리",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100037
-    },
-    "m_maxHp": 350,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 8,
-    "m_maxSize": 20,
-    "m_qualityThresholds": [
-      11.0,
-      14.0,
-      16.0,
-      18.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300017
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500003,
-    "m_name": "강준치",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100003
-    },
-    "m_maxHp": 1200,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 20,
-    "m_maxSize": 60,
-    "m_qualityThresholds": [
-      29.0,
-      38.0,
-      47.0,
-      55.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300018
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
     "m_id": 500009,
     "m_name": "돌고기",
     "m_itemFish": {
@@ -20747,16 +19221,282 @@
   },
   {
     "type": "BattleFishData",
-    "m_id": 500059,
-    "m_name": "볼락",
+    "m_id": 500010,
+    "m_name": "미꾸라지",
     "m_itemFish": {
       "type": "ItemData_Fish",
-      "id": 100059
+      "id": 100010
     },
-    "m_maxHp": 1200,
+    "m_maxHp": 80,
     "m_battleTimeVariable": 10,
     "m_minSize": 10,
-    "m_maxSize": 30,
+    "m_maxSize": 20,
+    "m_qualityThresholds": [
+      13.0,
+      15.0,
+      17.0,
+      19.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300016
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500011,
+    "m_name": "잉어",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100011
+    },
+    "m_maxHp": 200,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 30,
+    "m_maxSize": 100,
+    "m_qualityThresholds": [
+      46.0,
+      61.0,
+      76.0,
+      91.0
+    ],
+    "m_isBoss": true,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300001
+        },
+        "m_count": 5,
+        "m_probability": 0.65
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200008
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200009
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200010
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200011
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200012
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200013
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200014
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500012,
+    "m_name": "누치",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100012
+    },
+    "m_maxHp": 1800,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 20,
+    "m_maxSize": 60,
+    "m_qualityThresholds": [
+      29.0,
+      38.0,
+      47.0,
+      55.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300018
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500013,
+    "m_name": "메기",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100013
+    },
+    "m_maxHp": 140000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 20,
+    "m_maxSize": 80,
+    "m_qualityThresholds": [
+      33.0,
+      46.0,
+      59.0,
+      73.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300022
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500014,
+    "m_name": "붕어",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100014
+    },
+    "m_maxHp": 110,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 10,
+    "m_maxSize": 35,
+    "m_qualityThresholds": [
+      16.0,
+      22.0,
+      27.0,
+      32.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300017
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500015,
+    "m_name": "강어귀망둥어",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100015
+    },
+    "m_maxHp": 1800,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 8,
+    "m_maxSize": 20,
+    "m_qualityThresholds": [
+      11.0,
+      14.0,
+      17.0,
+      19.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300018
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500016,
+    "m_name": "꺽지",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100016
+    },
+    "m_maxHp": 1800,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 10,
+    "m_maxSize": 25,
+    "m_qualityThresholds": [
+      14.0,
+      18.0,
+      21.0,
+      24.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300018
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500017,
+    "m_name": "미유기",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100017
+    },
+    "m_maxHp": 1800,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 10,
+    "m_maxSize": 28,
     "m_qualityThresholds": [
       14.0,
       18.0,
@@ -20777,21 +19517,81 @@
   },
   {
     "type": "BattleFishData",
-    "m_id": 500060,
-    "m_name": "황어",
+    "m_id": 500018,
+    "m_name": "동자개",
     "m_itemFish": {
       "type": "ItemData_Fish",
-      "id": 100060
+      "id": 100018
     },
-    "m_maxHp": 1200,
+    "m_maxHp": 1800,
     "m_battleTimeVariable": 10,
-    "m_minSize": 21,
-    "m_maxSize": 45,
+    "m_minSize": 10,
+    "m_maxSize": 30,
     "m_qualityThresholds": [
-      21.0,
-      27.0,
+      15.0,
+      20.0,
+      24.0,
+      28.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300018
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500019,
+    "m_name": "쏘가리",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100019
+    },
+    "m_maxHp": 310000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 20,
+    "m_maxSize": 60,
+    "m_qualityThresholds": [
+      29.0,
+      38.0,
+      47.0,
+      55.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300022
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500020,
+    "m_name": "배스",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100020
+    },
+    "m_maxHp": 3800,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 25,
+    "m_maxSize": 60,
+    "m_qualityThresholds": [
       33.0,
-      40.0
+      41.0,
+      49.0,
+      55.0
     ],
     "m_isBoss": false,
     "m_drops": [
@@ -20807,51 +19607,21 @@
   },
   {
     "type": "BattleFishData",
-    "m_id": 500061,
-    "m_name": "임연수어",
+    "m_id": 500021,
+    "m_name": "블루길",
     "m_itemFish": {
       "type": "ItemData_Fish",
-      "id": 100061
+      "id": 100021
     },
-    "m_maxHp": 1200,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 15,
-    "m_maxSize": 40,
-    "m_qualityThresholds": [
-      21.0,
-      27.0,
-      32.0,
-      27.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300018
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500062,
-    "m_name": "도루묵",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100062
-    },
-    "m_maxHp": 1200,
+    "m_maxHp": 3800,
     "m_battleTimeVariable": 10,
     "m_minSize": 10,
     "m_maxSize": 25,
     "m_qualityThresholds": [
-      13.0,
-      16.0,
-      19.0,
-      22.0
+      14.0,
+      18.0,
+      21.0,
+      24.0
     ],
     "m_isBoss": false,
     "m_drops": [
@@ -20867,28 +19637,28 @@
   },
   {
     "type": "BattleFishData",
-    "m_id": 500065,
-    "m_name": "쥐노래미",
+    "m_id": 500022,
+    "m_name": "산천어",
     "m_itemFish": {
       "type": "ItemData_Fish",
-      "id": 100065
+      "id": 100022
     },
-    "m_maxHp": 1200,
+    "m_maxHp": 310000,
     "m_battleTimeVariable": 10,
     "m_minSize": 15,
     "m_maxSize": 50,
     "m_qualityThresholds": [
-      21.0,
-      28.0,
-      35.0,
-      43.0
+      22.0,
+      29.0,
+      36.0,
+      44.0
     ],
     "m_isBoss": false,
     "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
-          "id": 300018
+          "id": 300022
         },
         "m_count": 1,
         "m_probability": 1.0
@@ -20897,28 +19667,320 @@
   },
   {
     "type": "BattleFishData",
-    "m_id": 500066,
-    "m_name": "가자미",
+    "m_id": 500023,
+    "m_name": "가물치",
     "m_itemFish": {
       "type": "ItemData_Fish",
-      "id": 100066
+      "id": 100023
     },
-    "m_maxHp": 1200,
+    "m_maxHp": 650000,
     "m_battleTimeVariable": 10,
-    "m_minSize": 12,
-    "m_maxSize": 35,
+    "m_minSize": 30,
+    "m_maxSize": 90,
     "m_qualityThresholds": [
-      17.0,
-      22.0,
-      27.0,
-      32.0
+      43.0,
+      56.0,
+      69.0,
+      83.0
     ],
     "m_isBoss": false,
     "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
-          "id": 300018
+          "id": 300022
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500024,
+    "m_name": "뱀장어",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100024
+    },
+    "m_maxHp": 650000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 30,
+    "m_maxSize": 100,
+    "m_qualityThresholds": [
+      45.0,
+      60.0,
+      75.0,
+      90.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300022
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500025,
+    "m_name": "끄리",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100025
+    },
+    "m_maxHp": 650000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 20,
+    "m_maxSize": 50,
+    "m_qualityThresholds": [
+      27.0,
+      34.0,
+      40.0,
+      46.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300022
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500026,
+    "m_name": "대형잉어",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100026
+    },
+    "m_maxHp": 1600000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 80,
+    "m_maxSize": 150,
+    "m_qualityThresholds": [
+      94.0,
+      108.0,
+      122.0,
+      136.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300022
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500027,
+    "m_name": "비단잉어",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100027
+    },
+    "m_maxHp": 90000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 80,
+    "m_maxSize": 150,
+    "m_qualityThresholds": [
+      94.0,
+      108.0,
+      122.0,
+      136.0
+    ],
+    "m_isBoss": true,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300002
+        },
+        "m_count": 5,
+        "m_probability": 0.65
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200022
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200023
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200024
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200025
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200026
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200027
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200028
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500028,
+    "m_name": "철갑상어",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100028
+    },
+    "m_maxHp": 3500000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 150,
+    "m_maxSize": 300,
+    "m_qualityThresholds": [
+      176.0,
+      206.0,
+      236.0,
+      266.0
+    ],
+    "m_isBoss": true,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300004
+        },
+        "m_count": 2,
+        "m_probability": 0.65
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200050
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200051
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200052
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200053
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200054
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200055
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200056
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500029,
+    "m_name": "망둥어",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100029
+    },
+    "m_maxHp": 350,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 5,
+    "m_maxSize": 20,
+    "m_qualityThresholds": [
+      9.0,
+      12.0,
+      15.0,
+      18.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300017
         },
         "m_count": 1,
         "m_probability": 1.0
@@ -21078,6 +20140,96 @@
   },
   {
     "type": "BattleFishData",
+    "m_id": 500035,
+    "m_name": "꼬시래기",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100035
+    },
+    "m_maxHp": 350,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 6,
+    "m_maxSize": 20,
+    "m_qualityThresholds": [
+      10.0,
+      13.0,
+      16.0,
+      19.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300017
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500036,
+    "m_name": "꽃게",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100036
+    },
+    "m_maxHp": 350,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 8,
+    "m_maxSize": 22,
+    "m_qualityThresholds": [
+      11.0,
+      14.0,
+      17.0,
+      20.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300017
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500037,
+    "m_name": "숲뿌리해파리",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100037
+    },
+    "m_maxHp": 350,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 8,
+    "m_maxSize": 20,
+    "m_qualityThresholds": [
+      11.0,
+      14.0,
+      16.0,
+      18.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300017
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
     "m_id": 500038,
     "m_name": "웅어",
     "m_itemFish": {
@@ -21108,561 +20260,21 @@
   },
   {
     "type": "BattleFishData",
-    "m_id": 500063,
-    "m_name": "청어",
+    "m_id": 500039,
+    "m_name": "농어",
     "m_itemFish": {
       "type": "ItemData_Fish",
-      "id": 100063
+      "id": 100039
     },
-    "m_maxHp": 10000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 15,
-    "m_maxSize": 40,
-    "m_qualityThresholds": [
-      20.0,
-      25.0,
-      30.0,
-      35.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300020
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500064,
-    "m_name": "명태",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100064
-    },
-    "m_maxHp": 10000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 20,
-    "m_maxSize": 55,
-    "m_qualityThresholds": [
-      27.0,
-      34.0,
-      41.0,
-      50.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300020
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500068,
-    "m_name": "홍어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100068
-    },
-    "m_maxHp": 10000,
+    "m_maxHp": 400000,
     "m_battleTimeVariable": 10,
     "m_minSize": 25,
-    "m_maxSize": 80,
+    "m_maxSize": 85,
     "m_qualityThresholds": [
       36.0,
-      49.0,
-      62.0,
-      74.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300020
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500092,
-    "m_name": "클리오네",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100092
-    },
-    "m_maxHp": 700000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 1,
-    "m_maxSize": 6,
-    "m_qualityThresholds": [
-      2.0,
-      3.0,
-      4.0,
-      5.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300024
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500093,
-    "m_name": "보름달물해파리",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100093
-    },
-    "m_maxHp": 700000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 15,
-    "m_maxSize": 40,
-    "m_qualityThresholds": [
-      20.0,
-      25.0,
-      30.0,
-      35.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300024
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500051,
-    "m_name": "민꽃게",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100051
-    },
-    "m_maxHp": 1200,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 5,
-    "m_maxSize": 14,
-    "m_qualityThresholds": [
-      7.0,
-      9.0,
-      11.0,
-      13.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300017
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500020,
-    "m_name": "배스",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100020
-    },
-    "m_maxHp": 3800,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 25,
-    "m_maxSize": 60,
-    "m_qualityThresholds": [
-      33.0,
-      41.0,
-      49.0,
-      55.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300018
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500021,
-    "m_name": "블루길",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100021
-    },
-    "m_maxHp": 3800,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 10,
-    "m_maxSize": 25,
-    "m_qualityThresholds": [
-      14.0,
-      18.0,
-      21.0,
-      24.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300018
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500077,
-    "m_name": "은어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100077
-    },
-    "m_maxHp": 3800,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 10,
-    "m_maxSize": 30,
-    "m_qualityThresholds": [
-      14.0,
-      18.0,
-      22.0,
-      26.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300018
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500078,
-    "m_name": "송어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100078
-    },
-    "m_maxHp": 3800,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 20,
-    "m_maxSize": 60,
-    "m_qualityThresholds": [
-      27.0,
-      34.0,
-      41.0,
-      50.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300018
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500079,
-    "m_name": "학꽁치",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100079
-    },
-    "m_maxHp": 3800,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 15,
-    "m_maxSize": 35,
-    "m_qualityThresholds": [
-      19.0,
-      23.0,
-      27.0,
-      31.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300018
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500047,
-    "m_name": "도다리",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100047
-    },
-    "m_maxHp": 11000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 15,
-    "m_maxSize": 40,
-    "m_qualityThresholds": [
-      20.0,
-      25.0,
-      30.0,
-      35.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300019
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500049,
-    "m_name": "무늬오징어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100049
-    },
-    "m_maxHp": 11000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 15,
-    "m_maxSize": 42,
-    "m_qualityThresholds": [
-      21.0,
-      27.0,
-      33.0,
-      38.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300019
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500050,
-    "m_name": "보구치",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100050
-    },
-    "m_maxHp": 11000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 15,
-    "m_maxSize": 32,
-    "m_qualityThresholds": [
-      19.0,
-      23.0,
-      27.0,
-      30.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300019
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500080,
-    "m_name": "열목어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100080
-    },
-    "m_maxHp": 38000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 15,
-    "m_maxSize": 45,
-    "m_qualityThresholds": [
-      21.0,
-      27.0,
-      33.0,
-      40.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300020
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500081,
-    "m_name": "만새기",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100081
-    },
-    "m_maxHp": 110000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 20,
-    "m_maxSize": 60,
-    "m_qualityThresholds": [
-      27.0,
-      34.0,
-      41.0,
-      50.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300021
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500019,
-    "m_name": "쏘가리",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100019
-    },
-    "m_maxHp": 310000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 20,
-    "m_maxSize": 60,
-    "m_qualityThresholds": [
-      29.0,
-      38.0,
-      47.0,
-      55.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300022
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500022,
-    "m_name": "산천어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100022
-    },
-    "m_maxHp": 310000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 15,
-    "m_maxSize": 50,
-    "m_qualityThresholds": [
-      22.0,
-      29.0,
-      36.0,
-      44.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300022
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500048,
-    "m_name": "광어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100048
-    },
-    "m_maxHp": 850000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 25,
-    "m_maxSize": 80,
-    "m_qualityThresholds": [
-      36.0,
-      49.0,
-      62.0,
-      74.0
+      50.0,
+      64.0,
+      77.0
     ],
     "m_isBoss": false,
     "m_drops": [
@@ -21678,88 +20290,28 @@
   },
   {
     "type": "BattleFishData",
-    "m_id": 500095,
-    "m_name": "잎새해룡",
+    "m_id": 500040,
+    "m_name": "붕장어",
     "m_itemFish": {
       "type": "ItemData_Fish",
-      "id": 100095
+      "id": 100040
     },
-    "m_maxHp": 2400000,
+    "m_maxHp": 400000,
     "m_battleTimeVariable": 10,
-    "m_minSize": 20,
-    "m_maxSize": 45,
+    "m_minSize": 30,
+    "m_maxSize": 90,
     "m_qualityThresholds": [
-      25.0,
-      30.0,
-      35.0,
-      40.0
+      43.0,
+      57.0,
+      70.0,
+      83.0
     ],
     "m_isBoss": false,
     "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
-          "id": 300024
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500096,
-    "m_name": "블루탱",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100096
-    },
-    "m_maxHp": 2400000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 15,
-    "m_maxSize": 40,
-    "m_qualityThresholds": [
-      20.0,
-      25.0,
-      30.0,
-      35.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300024
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500014,
-    "m_name": "붕어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100014
-    },
-    "m_maxHp": 110,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 10,
-    "m_maxSize": 35,
-    "m_qualityThresholds": [
-      16.0,
-      22.0,
-      27.0,
-      32.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300017
+          "id": 300023
         },
         "m_count": 1,
         "m_probability": 1.0
@@ -21790,6 +20342,36 @@
         "m_item": {
           "type": "ItemData_Materials",
           "id": 300017
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500042,
+    "m_name": "갑오징어",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100042
+    },
+    "m_maxHp": 4200,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 10,
+    "m_maxSize": 28,
+    "m_qualityThresholds": [
+      14.0,
+      18.0,
+      22.0,
+      26.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300019
         },
         "m_count": 1,
         "m_probability": 1.0
@@ -21918,28 +20500,28 @@
   },
   {
     "type": "BattleFishData",
-    "m_id": 500012,
-    "m_name": "누치",
+    "m_id": 500047,
+    "m_name": "도다리",
     "m_itemFish": {
       "type": "ItemData_Fish",
-      "id": 100012
+      "id": 100047
     },
-    "m_maxHp": 1800,
+    "m_maxHp": 11000,
     "m_battleTimeVariable": 10,
-    "m_minSize": 20,
-    "m_maxSize": 60,
+    "m_minSize": 15,
+    "m_maxSize": 40,
     "m_qualityThresholds": [
-      29.0,
-      38.0,
-      47.0,
-      55.0
+      20.0,
+      25.0,
+      30.0,
+      35.0
     ],
     "m_isBoss": false,
     "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
-          "id": 300018
+          "id": 300019
         },
         "m_count": 1,
         "m_probability": 1.0
@@ -21948,28 +20530,28 @@
   },
   {
     "type": "BattleFishData",
-    "m_id": 500015,
-    "m_name": "강어귀망둥어",
+    "m_id": 500048,
+    "m_name": "광어",
     "m_itemFish": {
       "type": "ItemData_Fish",
-      "id": 100015
+      "id": 100048
     },
-    "m_maxHp": 1800,
+    "m_maxHp": 850000,
     "m_battleTimeVariable": 10,
-    "m_minSize": 8,
-    "m_maxSize": 20,
+    "m_minSize": 25,
+    "m_maxSize": 80,
     "m_qualityThresholds": [
-      11.0,
-      14.0,
-      17.0,
-      19.0
+      36.0,
+      49.0,
+      62.0,
+      74.0
     ],
     "m_isBoss": false,
     "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
-          "id": 300018
+          "id": 300023
         },
         "m_count": 1,
         "m_probability": 1.0
@@ -21978,28 +20560,28 @@
   },
   {
     "type": "BattleFishData",
-    "m_id": 500016,
-    "m_name": "꺽지",
+    "m_id": 500049,
+    "m_name": "무늬오징어",
     "m_itemFish": {
       "type": "ItemData_Fish",
-      "id": 100016
+      "id": 100049
     },
-    "m_maxHp": 1800,
+    "m_maxHp": 11000,
     "m_battleTimeVariable": 10,
-    "m_minSize": 10,
-    "m_maxSize": 25,
+    "m_minSize": 15,
+    "m_maxSize": 42,
     "m_qualityThresholds": [
-      14.0,
-      18.0,
       21.0,
-      24.0
+      27.0,
+      33.0,
+      38.0
     ],
     "m_isBoss": false,
     "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
-          "id": 300018
+          "id": 300019
         },
         "m_count": 1,
         "m_probability": 1.0
@@ -22008,16 +20590,342 @@
   },
   {
     "type": "BattleFishData",
-    "m_id": 500017,
-    "m_name": "미유기",
+    "m_id": 500050,
+    "m_name": "보구치",
     "m_itemFish": {
       "type": "ItemData_Fish",
-      "id": 100017
+      "id": 100050
     },
-    "m_maxHp": 1800,
+    "m_maxHp": 11000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 15,
+    "m_maxSize": 32,
+    "m_qualityThresholds": [
+      19.0,
+      23.0,
+      27.0,
+      30.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300019
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500051,
+    "m_name": "민꽃게",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100051
+    },
+    "m_maxHp": 1200,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 5,
+    "m_maxSize": 14,
+    "m_qualityThresholds": [
+      7.0,
+      9.0,
+      11.0,
+      13.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300017
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500052,
+    "m_name": "대왕문어",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100052
+    },
+    "m_maxHp": 1800000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 50,
+    "m_maxSize": 180,
+    "m_qualityThresholds": [
+      76.0,
+      106.0,
+      136.0,
+      166.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300023
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500053,
+    "m_name": "먹물오징어",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100053
+    },
+    "m_maxHp": 1800000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 12,
+    "m_maxSize": 30,
+    "m_qualityThresholds": [
+      16.0,
+      20.0,
+      24.0,
+      28.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300023
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500054,
+    "m_name": "황금꽃게",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100054
+    },
+    "m_maxHp": 1800000,
     "m_battleTimeVariable": 10,
     "m_minSize": 10,
-    "m_maxSize": 28,
+    "m_maxSize": 24,
+    "m_qualityThresholds": [
+      13.0,
+      16.0,
+      19.0,
+      22.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300023
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500055,
+    "m_name": "점농어",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100055
+    },
+    "m_maxHp": 1800000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 30,
+    "m_maxSize": 95,
+    "m_qualityThresholds": [
+      44.0,
+      59.0,
+      73.0,
+      86.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300023
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500056,
+    "m_name": "대물민어",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100056
+    },
+    "m_maxHp": 4500000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 60,
+    "m_maxSize": 135,
+    "m_qualityThresholds": [
+      76.0,
+      91.0,
+      106.0,
+      121.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300023
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500057,
+    "m_name": "산갈치",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100057
+    },
+    "m_maxHp": 4500000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 150,
+    "m_maxSize": 500,
+    "m_qualityThresholds": [
+      201.0,
+      281.0,
+      361.0,
+      441.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300023
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500058,
+    "m_name": "대형 노랑가오리",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100058
+    },
+    "m_maxHp": 220000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 100,
+    "m_maxSize": 200,
+    "m_qualityThresholds": [
+      121.0,
+      141.0,
+      161.0,
+      181.0
+    ],
+    "m_isBoss": true,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300002
+        },
+        "m_count": 5,
+        "m_probability": 0.65
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200029
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200030
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200031
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200032
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200033
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200034
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200035
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500059,
+    "m_name": "볼락",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100059
+    },
+    "m_maxHp": 1200,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 10,
+    "m_maxSize": 30,
     "m_qualityThresholds": [
       14.0,
       18.0,
@@ -22038,21 +20946,21 @@
   },
   {
     "type": "BattleFishData",
-    "m_id": 500018,
-    "m_name": "동자개",
+    "m_id": 500060,
+    "m_name": "황어",
     "m_itemFish": {
       "type": "ItemData_Fish",
-      "id": 100018
+      "id": 100060
     },
-    "m_maxHp": 1800,
+    "m_maxHp": 1200,
     "m_battleTimeVariable": 10,
-    "m_minSize": 10,
-    "m_maxSize": 30,
+    "m_minSize": 21,
+    "m_maxSize": 45,
     "m_qualityThresholds": [
-      15.0,
-      20.0,
-      24.0,
-      28.0
+      21.0,
+      27.0,
+      33.0,
+      40.0
     ],
     "m_isBoss": false,
     "m_drops": [
@@ -22068,50 +20976,20 @@
   },
   {
     "type": "BattleFishData",
-    "m_id": 500075,
-    "m_name": "열기",
+    "m_id": 500061,
+    "m_name": "임연수어",
     "m_itemFish": {
       "type": "ItemData_Fish",
-      "id": 100075
+      "id": 100061
     },
-    "m_maxHp": 1800,
+    "m_maxHp": 1200,
     "m_battleTimeVariable": 10,
-    "m_minSize": 10,
-    "m_maxSize": 32,
+    "m_minSize": 15,
+    "m_maxSize": 40,
     "m_qualityThresholds": [
-      15.0,
-      20.0,
-      25.0,
-      29.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300018
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500076,
-    "m_name": "전어",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100076
-    },
-    "m_maxHp": 1800,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 12,
-    "m_maxSize": 30,
-    "m_qualityThresholds": [
-      16.0,
-      20.0,
-      24.0,
+      21.0,
+      27.0,
+      32.0,
       27.0
     ],
     "m_isBoss": false,
@@ -22128,13 +21006,279 @@
   },
   {
     "type": "BattleFishData",
-    "m_id": 500042,
-    "m_name": "갑오징어",
+    "m_id": 500062,
+    "m_name": "도루묵",
     "m_itemFish": {
       "type": "ItemData_Fish",
-      "id": 100042
+      "id": 100062
     },
-    "m_maxHp": 4200,
+    "m_maxHp": 1200,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 10,
+    "m_maxSize": 25,
+    "m_qualityThresholds": [
+      13.0,
+      16.0,
+      19.0,
+      22.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300018
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500063,
+    "m_name": "청어",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100063
+    },
+    "m_maxHp": 10000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 15,
+    "m_maxSize": 40,
+    "m_qualityThresholds": [
+      20.0,
+      25.0,
+      30.0,
+      35.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300020
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500064,
+    "m_name": "명태",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100064
+    },
+    "m_maxHp": 10000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 20,
+    "m_maxSize": 55,
+    "m_qualityThresholds": [
+      27.0,
+      34.0,
+      41.0,
+      50.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300020
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500065,
+    "m_name": "쥐노래미",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100065
+    },
+    "m_maxHp": 1200,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 15,
+    "m_maxSize": 50,
+    "m_qualityThresholds": [
+      21.0,
+      28.0,
+      35.0,
+      43.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300018
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500066,
+    "m_name": "가자미",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100066
+    },
+    "m_maxHp": 1200,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 12,
+    "m_maxSize": 35,
+    "m_qualityThresholds": [
+      17.0,
+      22.0,
+      27.0,
+      32.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300018
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500067,
+    "m_name": "대구",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100067
+    },
+    "m_maxHp": 90000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 30,
+    "m_maxSize": 110,
+    "m_qualityThresholds": [
+      46.0,
+      63.0,
+      80.0,
+      96.0
+    ],
+    "m_isBoss": true,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300002
+        },
+        "m_count": 5,
+        "m_probability": 0.65
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200022
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200023
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200024
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200025
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200026
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200027
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200028
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500068,
+    "m_name": "홍어",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100068
+    },
+    "m_maxHp": 10000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 25,
+    "m_maxSize": 80,
+    "m_qualityThresholds": [
+      36.0,
+      49.0,
+      62.0,
+      74.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300020
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500069,
+    "m_name": "도치",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100069
+    },
+    "m_maxHp": 50000,
     "m_battleTimeVariable": 10,
     "m_minSize": 10,
     "m_maxSize": 28,
@@ -22149,7 +21293,7 @@
       {
         "m_item": {
           "type": "ItemData_Materials",
-          "id": 300019
+          "id": 300021
         },
         "m_count": 1,
         "m_probability": 1.0
@@ -22248,66 +21392,6 @@
   },
   {
     "type": "BattleFishData",
-    "m_id": 500074,
-    "m_name": "까나리",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100074
-    },
-    "m_maxHp": 16000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 8,
-    "m_maxSize": 20,
-    "m_qualityThresholds": [
-      11.0,
-      14.0,
-      17.0,
-      19.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300020
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
-    "m_id": 500069,
-    "m_name": "도치",
-    "m_itemFish": {
-      "type": "ItemData_Fish",
-      "id": 100069
-    },
-    "m_maxHp": 50000,
-    "m_battleTimeVariable": 10,
-    "m_minSize": 10,
-    "m_maxSize": 28,
-    "m_qualityThresholds": [
-      14.0,
-      18.0,
-      22.0,
-      26.0
-    ],
-    "m_isBoss": false,
-    "m_drops": [
-      {
-        "m_item": {
-          "type": "ItemData_Materials",
-          "id": 300021
-        },
-        "m_count": 1,
-        "m_probability": 1.0
-      }
-    ]
-  },
-  {
-    "type": "BattleFishData",
     "m_id": 500073,
     "m_name": "황쏘가리",
     "m_itemFish": {
@@ -22338,28 +21422,148 @@
   },
   {
     "type": "BattleFishData",
-    "m_id": 500013,
-    "m_name": "메기",
+    "m_id": 500074,
+    "m_name": "까나리",
     "m_itemFish": {
       "type": "ItemData_Fish",
-      "id": 100013
+      "id": 100074
     },
-    "m_maxHp": 140000,
+    "m_maxHp": 16000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 8,
+    "m_maxSize": 20,
+    "m_qualityThresholds": [
+      11.0,
+      14.0,
+      17.0,
+      19.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300020
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500075,
+    "m_name": "열기",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100075
+    },
+    "m_maxHp": 1800,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 10,
+    "m_maxSize": 32,
+    "m_qualityThresholds": [
+      15.0,
+      20.0,
+      25.0,
+      29.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300018
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500076,
+    "m_name": "전어",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100076
+    },
+    "m_maxHp": 1800,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 12,
+    "m_maxSize": 30,
+    "m_qualityThresholds": [
+      16.0,
+      20.0,
+      24.0,
+      27.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300018
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500077,
+    "m_name": "은어",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100077
+    },
+    "m_maxHp": 3800,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 10,
+    "m_maxSize": 30,
+    "m_qualityThresholds": [
+      14.0,
+      18.0,
+      22.0,
+      26.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300018
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500078,
+    "m_name": "송어",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100078
+    },
+    "m_maxHp": 3800,
     "m_battleTimeVariable": 10,
     "m_minSize": 20,
-    "m_maxSize": 80,
+    "m_maxSize": 60,
     "m_qualityThresholds": [
-      33.0,
-      46.0,
-      59.0,
-      73.0
+      27.0,
+      34.0,
+      41.0,
+      50.0
     ],
     "m_isBoss": false,
     "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
-          "id": 300022
+          "id": 300018
         },
         "m_count": 1,
         "m_probability": 1.0
@@ -22368,28 +21572,148 @@
   },
   {
     "type": "BattleFishData",
-    "m_id": 500039,
-    "m_name": "농어",
+    "m_id": 500079,
+    "m_name": "학꽁치",
     "m_itemFish": {
       "type": "ItemData_Fish",
-      "id": 100039
+      "id": 100079
     },
-    "m_maxHp": 400000,
+    "m_maxHp": 3800,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 15,
+    "m_maxSize": 35,
+    "m_qualityThresholds": [
+      19.0,
+      23.0,
+      27.0,
+      31.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300018
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500080,
+    "m_name": "열목어",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100080
+    },
+    "m_maxHp": 38000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 15,
+    "m_maxSize": 45,
+    "m_qualityThresholds": [
+      21.0,
+      27.0,
+      33.0,
+      40.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300020
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500081,
+    "m_name": "만새기",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100081
+    },
+    "m_maxHp": 110000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 20,
+    "m_maxSize": 60,
+    "m_qualityThresholds": [
+      27.0,
+      34.0,
+      41.0,
+      50.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300021
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500082,
+    "m_name": "빙어",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100082
+    },
+    "m_maxHp": 85000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 5,
+    "m_maxSize": 13,
+    "m_qualityThresholds": [
+      6.0,
+      8.0,
+      10.0,
+      12.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300020
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500083,
+    "m_name": "백명태",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100083
+    },
+    "m_maxHp": 240000,
     "m_battleTimeVariable": 10,
     "m_minSize": 25,
-    "m_maxSize": 85,
+    "m_maxSize": 60,
     "m_qualityThresholds": [
-      36.0,
-      50.0,
-      64.0,
-      77.0
+      33.0,
+      41.0,
+      49.0,
+      56.0
     ],
     "m_isBoss": false,
     "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
-          "id": 300023
+          "id": 300021
         },
         "m_count": 1,
         "m_probability": 1.0
@@ -22398,28 +21722,522 @@
   },
   {
     "type": "BattleFishData",
-    "m_id": 500040,
-    "m_name": "붕장어",
+    "m_id": 500084,
+    "m_name": "은대구",
     "m_itemFish": {
       "type": "ItemData_Fish",
-      "id": 100040
+      "id": 100084
     },
-    "m_maxHp": 400000,
+    "m_maxHp": 240000,
     "m_battleTimeVariable": 10,
-    "m_minSize": 30,
-    "m_maxSize": 90,
+    "m_minSize": 35,
+    "m_maxSize": 95,
     "m_qualityThresholds": [
-      43.0,
-      57.0,
-      70.0,
-      83.0
+      47.0,
+      60.0,
+      73.0,
+      86.0
     ],
     "m_isBoss": false,
     "m_drops": [
       {
         "m_item": {
           "type": "ItemData_Materials",
-          "id": 300023
+          "id": 300021
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500085,
+    "m_name": "황금가자미",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100085
+    },
+    "m_maxHp": 240000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 15,
+    "m_maxSize": 45,
+    "m_qualityThresholds": [
+      21.0,
+      27.0,
+      33.0,
+      39.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300021
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500086,
+    "m_name": "심해대구",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100086
+    },
+    "m_maxHp": 700000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 70,
+    "m_maxSize": 145,
+    "m_qualityThresholds": [
+      86.0,
+      101.0,
+      116.0,
+      131.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300021
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500087,
+    "m_name": "북태평양 연어",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100087
+    },
+    "m_maxHp": 700000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 60,
+    "m_maxSize": 110,
+    "m_qualityThresholds": [
+      71.0,
+      81.0,
+      91.0,
+      101.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300021
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500088,
+    "m_name": "청새치",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100088
+    },
+    "m_maxHp": 1500000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 150,
+    "m_maxSize": 300,
+    "m_qualityThresholds": [
+      176.0,
+      206.0,
+      236.0,
+      266.0
+    ],
+    "m_isBoss": true,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300003
+        },
+        "m_count": 3,
+        "m_probability": 0.65
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200043
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200044
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200045
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200046
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200047
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200048
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200049
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500089,
+    "m_name": "쑤기미",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100089
+    },
+    "m_maxHp": 30000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 15,
+    "m_maxSize": 40,
+    "m_qualityThresholds": [
+      20.0,
+      25.0,
+      30.0,
+      35.0
+    ],
+    "m_isBoss": true,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300001
+        },
+        "m_count": 5,
+        "m_probability": 0.65
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200015
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200016
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200017
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200018
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200019
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200020
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200021
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500090,
+    "m_name": "돌돔",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100090
+    },
+    "m_maxHp": 9000000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 20,
+    "m_maxSize": 70,
+    "m_qualityThresholds": [
+      30.0,
+      40.0,
+      50.0,
+      60.0
+    ],
+    "m_isBoss": true,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300004
+        },
+        "m_count": 2,
+        "m_probability": 0.93
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200057
+        },
+        "m_count": 1,
+        "m_probability": 0.01
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200058
+        },
+        "m_count": 1,
+        "m_probability": 0.01
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200059
+        },
+        "m_count": 1,
+        "m_probability": 0.01
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200060
+        },
+        "m_count": 1,
+        "m_probability": 0.01
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200061
+        },
+        "m_count": 1,
+        "m_probability": 0.01
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200062
+        },
+        "m_count": 1,
+        "m_probability": 0.01
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200063
+        },
+        "m_count": 1,
+        "m_probability": 0.01
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500091,
+    "m_name": "블루 랍스터",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100091
+    },
+    "m_maxHp": 600000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 10,
+    "m_maxSize": 60,
+    "m_qualityThresholds": [
+      20.0,
+      30.0,
+      40.0,
+      50.0
+    ],
+    "m_isBoss": true,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300003
+        },
+        "m_count": 3,
+        "m_probability": 0.65
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200036
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200037
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200038
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200039
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200040
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200041
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200042
+        },
+        "m_count": 1,
+        "m_probability": 0.05
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500092,
+    "m_name": "클리오네",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100092
+    },
+    "m_maxHp": 700000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 1,
+    "m_maxSize": 6,
+    "m_qualityThresholds": [
+      2.0,
+      3.0,
+      4.0,
+      5.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300024
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500093,
+    "m_name": "보름달물해파리",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100093
+    },
+    "m_maxHp": 700000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 15,
+    "m_maxSize": 40,
+    "m_qualityThresholds": [
+      20.0,
+      25.0,
+      30.0,
+      35.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300024
         },
         "m_count": 1,
         "m_probability": 1.0
@@ -22453,6 +22271,242 @@
         },
         "m_count": 1,
         "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500095,
+    "m_name": "잎새해룡",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100095
+    },
+    "m_maxHp": 2400000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 20,
+    "m_maxSize": 45,
+    "m_qualityThresholds": [
+      25.0,
+      30.0,
+      35.0,
+      40.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300024
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500096,
+    "m_name": "블루탱",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100096
+    },
+    "m_maxHp": 2400000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 15,
+    "m_maxSize": 40,
+    "m_qualityThresholds": [
+      20.0,
+      25.0,
+      30.0,
+      35.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300024
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500097,
+    "m_name": "덤보문어",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100097
+    },
+    "m_maxHp": 5000000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 30,
+    "m_maxSize": 180,
+    "m_qualityThresholds": [
+      60.0,
+      90.0,
+      120.0,
+      150.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300024
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500098,
+    "m_name": "만타가오리",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100098
+    },
+    "m_maxHp": 5000000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 300,
+    "m_maxSize": 800,
+    "m_qualityThresholds": [
+      400.0,
+      500.0,
+      600.0,
+      700.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300024
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500099,
+    "m_name": "고래상어",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100099
+    },
+    "m_maxHp": 13000000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 500,
+    "m_maxSize": 2000,
+    "m_qualityThresholds": [
+      800.0,
+      1100.0,
+      1400.0,
+      1700.0
+    ],
+    "m_isBoss": false,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300024
+        },
+        "m_count": 1,
+        "m_probability": 1.0
+      }
+    ]
+  },
+  {
+    "type": "BattleFishData",
+    "m_id": 500100,
+    "m_name": "혹등고래",
+    "m_itemFish": {
+      "type": "ItemData_Fish",
+      "id": 100100
+    },
+    "m_maxHp": 3000000,
+    "m_battleTimeVariable": 10,
+    "m_minSize": 1200,
+    "m_maxSize": 1700,
+    "m_qualityThresholds": [
+      1300.0,
+      1400.0,
+      1500.0,
+      1600.0
+    ],
+    "m_isBoss": true,
+    "m_drops": [
+      {
+        "m_item": {
+          "type": "ItemData_Materials",
+          "id": 300005
+        },
+        "m_count": 1,
+        "m_probability": 0.79
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200057
+        },
+        "m_count": 1,
+        "m_probability": 0.03
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200058
+        },
+        "m_count": 1,
+        "m_probability": 0.03
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200059
+        },
+        "m_count": 1,
+        "m_probability": 0.03
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200060
+        },
+        "m_count": 1,
+        "m_probability": 0.03
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200061
+        },
+        "m_count": 1,
+        "m_probability": 0.03
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200062
+        },
+        "m_count": 1,
+        "m_probability": 0.03
+      },
+      {
+        "m_item": {
+          "type": "ItemData_Equipment",
+          "id": 200063
+        },
+        "m_count": 1,
+        "m_probability": 0.03
       }
     ]
   },
@@ -23142,196 +23196,6 @@
   },
   {
     "type": "StageData",
-    "m_id": 600009,
-    "m_name": "냉수대 앞바다3",
-    "m_requiredLicense": 6,
-    "m_boss": {
-      "type": "BattleFishData",
-      "id": 500088
-    },
-    "m_mapPosition": {
-      "x": 125,
-      "y": -150
-    },
-    "m_tierPools": [
-      {
-        "m_tier": 6,
-        "m_requiredLicense": 6,
-        "m_entries": [
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500059
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500060
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500061
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500062
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500065
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500066
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500067
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500075
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500077
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500078
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500079
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500063
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500064
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500068
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500070
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500071
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500072
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500074
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500080
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500082
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500069
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500073
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500081
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500083
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500084
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500085
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500086
-            }
-          },
-          {
-            "m_fish": {
-              "type": "BattleFishData",
-              "id": 500087
-            }
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "type": "StageData",
     "m_id": 600007,
     "m_name": "푸른 하천3",
     "m_requiredLicense": 7,
@@ -23704,6 +23568,196 @@
             "m_fish": {
               "type": "BattleFishData",
               "id": 500057
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "StageData",
+    "m_id": 600009,
+    "m_name": "냉수대 앞바다3",
+    "m_requiredLicense": 6,
+    "m_boss": {
+      "type": "BattleFishData",
+      "id": 500088
+    },
+    "m_mapPosition": {
+      "x": 125,
+      "y": -150
+    },
+    "m_tierPools": [
+      {
+        "m_tier": 6,
+        "m_requiredLicense": 6,
+        "m_entries": [
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500059
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500060
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500061
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500062
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500065
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500066
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500067
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500075
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500077
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500078
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500079
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500063
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500064
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500068
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500070
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500071
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500072
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500074
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500080
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500082
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500069
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500073
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500081
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500083
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500084
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500085
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500086
+            }
+          },
+          {
+            "m_fish": {
+              "type": "BattleFishData",
+              "id": 500087
             }
           }
         ]
