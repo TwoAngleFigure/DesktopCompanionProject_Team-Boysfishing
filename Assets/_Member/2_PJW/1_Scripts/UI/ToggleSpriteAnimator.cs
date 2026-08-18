@@ -33,6 +33,10 @@ namespace DesktopCompanion.Views
         private int m_onStateHash;
         private int m_offStateHash;
 
+        // Start 전에는 Animator를 건드리지 않는다(§Apply). 첫 활성화에서 미뤄 둔 동기화가 있는지도 함께 들고 있는다.
+        private bool m_started;
+        private bool m_pendingInstantSync;
+
         private void Awake()
         {
             m_toggle = GetComponent<Toggle>();
@@ -55,6 +59,20 @@ namespace DesktopCompanion.Views
             Apply(m_toggle.isOn, true);
         }
 
+        /// <summary>
+        /// 첫 활성화에서 미뤄 둔 동기화를 마친다. Start는 그 활성화 묶음의 Awake가 전부 끝난 뒤에 오므로,
+        /// 여기서는 자식 Animator도 반드시 깨어 있다. 화면에 그려지기 전이라 한 프레임 깜빡임은 없다.
+        /// </summary>
+        private void Start()
+        {
+            m_started = true;
+
+            if (m_pendingInstantSync)
+            {
+                Apply(m_toggle.isOn, true);
+            }
+        }
+
         private void OnDisable()
         {
             m_toggle.onValueChanged.RemoveListener(HandleValueChanged);
@@ -69,6 +87,17 @@ namespace DesktopCompanion.Views
             {
                 return;
             }
+
+            // 창이 SetActive로 켜질 때 Unity는 부모의 OnEnable을 자식의 Awake보다 먼저 부른다.
+            // Animator가 자식에 있으면 이 시점의 그것은 아직 Awake 전이라, SetBool·Play는 Awake의
+            // 기본 상태 초기화에 덮여 사라지고 Update()는 'm_DidAwake' 어서션을 낸다.
+            // Start까지 미뤘다가 그때 한 번에 맞춘다.
+            if (m_started == false)
+            {
+                m_pendingInstantSync |= instant;
+                return;
+            }
+            m_pendingInstantSync = false;
 
             m_animator.SetBool(m_onParameterHash, isOn);
 

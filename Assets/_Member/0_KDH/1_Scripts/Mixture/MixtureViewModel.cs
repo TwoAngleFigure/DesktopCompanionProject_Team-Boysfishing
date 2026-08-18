@@ -122,9 +122,19 @@ namespace DesktopCompanion.Views
             return TryGetResult(recipe, out ItemType type, out int dataId) ? GetItemData(type, dataId) : null;
         }
 
+        /// <summary>
+        /// 결과물의 표시용 정의. 확정 지급이면 아이템 정의, RandomDrop이면 랜덤 테이블 정의를 준다.
+        /// 둘 다 GameData라 이름과 에셋 키를 같은 방식으로 읽는다.
+        /// <see cref="GetResultData"/>는 ItemData만 다루므로 랜덤 결과에서 null이다.
+        /// </summary>
+        public GameData GetResultDefinition(RecipeData_Mixture recipe)
+        {
+            return m_mixtureSystem != null ? m_mixtureSystem.GetResultDefinition(recipe) : null;
+        }
+
         public string GetRecipeName(RecipeData_Mixture recipe)
         {
-            ItemData data = GetResultData(recipe);
+            GameData data = GetResultDefinition(recipe);
 
             return data != null ? data.Name : "알 수 없음";
         }

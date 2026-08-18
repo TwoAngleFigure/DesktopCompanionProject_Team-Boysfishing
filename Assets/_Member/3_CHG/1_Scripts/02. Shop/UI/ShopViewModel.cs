@@ -315,16 +315,19 @@ namespace DesktopCompanion.Views
             return AssetKeys.Of(item, AssetUsage.Icon);
         }
 
+        /// <summary>
+        /// 표시용 데이터가 가리키는 아이템 정의를 찾는다.
+        ///
+        /// 조회에 필요한 것은 종류와 baseId뿐이라 ShopProducts를 새로 만들지 않는다.
+        /// ShopProducts는 GameData(ScriptableObject)라 new로 만들면 Unity가 런타임에 거부한다
+        /// — 정의는 JsonDataLoader가 CreateInstance로만 만든다.
+        /// </summary>
         public ItemData FindData(ShopProductViewData productViewData)
         {
-            ShopProducts products = new ShopProducts(productViewData.BaseId, productViewData.ItemType, productViewData.IsSummon,
-                productViewData.Tier, productViewData.Price);
-
-            if (!m_shopSystem.FindProductItemData(products, out ItemData item))
+            if (productViewData == null)
                 return null;
-            
 
-            return item;
+            return m_shopSystem.FindItemDataById(productViewData.ItemType, productViewData.BaseId);
         }
 
         public ItemData FindDataById(ItemType type, int id)

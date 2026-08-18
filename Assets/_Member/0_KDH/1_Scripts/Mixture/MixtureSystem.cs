@@ -8,7 +8,11 @@ namespace DesktopCompanion.Systems
 {
     public class MixtureSystem : SystemBase
     {
+        // 결과 타입이 이 값이면 m_resultId는 아이템이 아니라 RandomTableData의 ID다.
+        private const string RandomDropTypeName = "RandomDrop";
+
         private InventorySystem m_inventorySystem;
+        private RandomTableSystem m_randomTableSystem;
 
         private Dictionary<int, RecipeData_Mixture> m_recipeDatabase = new();
 
@@ -29,10 +33,15 @@ namespace DesktopCompanion.Systems
         public override void Initialize()
         {
             m_inventorySystem = SystemManager.GetSystem<InventorySystem>();
+            m_randomTableSystem = SystemManager.GetSystem<RandomTableSystem>();
 
             if (m_inventorySystem == null)
             {
                 Debug.LogError("[MixtureSystem] InventorySystem을 찾을 수 없습니다! GameManager 등록 순서를 확인하세요.");
+            }
+            if (m_randomTableSystem == null)
+            {
+                Debug.LogError("[MixtureSystem] RandomTableSystem을 찾을 수 없습니다! RandomDrop 레시피가 동작하지 않습니다.");
             }
         }
 
@@ -107,6 +116,12 @@ namespace DesktopCompanion.Systems
                 return false;
             }
 
+            // 결과를 먼저 확정한다. 소모한 뒤에 실패하면 재료만 사라진다.
+            if (!TryResolveResult(recipe, out ItemType resultItemType, out int resultDataId))
+            {
+                return false;
+            }
+
             List<ParsedIngredient> ingredients = ParseIngredients(recipe.m_ingredients);
 
             foreach (var ingredient in ingredients)
@@ -120,16 +135,43 @@ namespace DesktopCompanion.Systems
                 }
             }
 
-            string resultTypeStr = recipe.m_resultType.Replace("ItemData_", "");
-            if (Enum.TryParse(resultTypeStr, out ItemType resultItemType))
+            return GrantReward(resultItemType, resultDataId, recipe.m_resultCount);
+        }
+
+        /// <summary>
+        /// 레시피의 결과물을 구체적인 (종류, ID)로 확정한다.
+        /// RandomDrop은 이 시점에 티어에서 후보를 뽑아 하나로 정한다.
+        /// 소모 전에 호출해야 실패했을 때 재료가 보존된다.
+        /// </summary>
+        private bool TryResolveResult(RecipeData_Mixture recipe, out ItemType itemType, out int dataId)
+        {
+            itemType = default;
+            dataId = 0;
+
+            string typeName = recipe.m_resultType != null
+                ? recipe.m_resultType.Replace("ItemData_", "")
+                : string.Empty;
+
+            // RandomDrop은 ItemType에 없는 값이다. 결과 ID가 아이템이 아니라 테이블을 가리키므로
+            // 여기서 굴려 하나로 확정한다. 어떤 후보가 있는지는 전적으로 시트가 정한다.
+            if (typeName == RandomDropTypeName)
             {
-                return GrantReward(resultItemType, recipe.m_resultId, recipe.m_resultCount);
+                if (m_randomTableSystem == null)
+                {
+                    Debug.LogError("[MixtureSystem] RandomTableSystem이 없어 랜덤 결과를 정할 수 없습니다.");
+                    return false;
+                }
+                return m_randomTableSystem.TryRoll(recipe.m_resultId, out itemType, out dataId);
             }
-            else
+
+            if (Enum.TryParse(typeName, out itemType))
             {
-                Debug.LogError($"[MixtureSystem] 보상 지급 실패. 알 수 없는 결과물 타입: {recipe.m_resultType}");
-                return false;
+                dataId = recipe.m_resultId;
+                return true;
             }
+
+            Debug.LogError($"[MixtureSystem] 알 수 없는 결과물 타입: {recipe.m_resultType} (레시피 {recipe.ID})");
+            return false;
         }
 
         private bool GrantReward(ItemType itemType, int dataId, int amount)
@@ -191,6 +233,34 @@ namespace DesktopCompanion.Systems
                 case ItemType.Fish: return dataManager.GetData<ItemData_Fish>(dataId);
                 default: return null;
             }
+        }
+
+        /// <summary>
+        /// 레시피 결과물의 표시용 정의. 확정 지급이면 아이템 정의를, RandomDrop이면 테이블 정의를 준다.
+        /// 둘 다 GameData라 이름·AssetKey를 같은 방식으로 읽을 수 있다.
+        ///
+        /// 표시 계층이 GetItemData(itemType, m_resultId)를 직접 부르면 RandomDrop에서 null이 된다 —
+        /// 그 ID는 아이템이 아니라 테이블을 가리키기 때문이다. 이 경로로 두 경우를 함께 해소한다.
+        /// </summary>
+        public GameData GetResultDefinition(RecipeData_Mixture recipe)
+        {
+            if (recipe == null)
+            {
+                return null;
+            }
+
+            string typeName = recipe.m_resultType != null
+                ? recipe.m_resultType.Replace("ItemData_", "")
+                : string.Empty;
+
+            if (typeName == RandomDropTypeName)
+            {
+                return m_randomTableSystem != null ? m_randomTableSystem.GetTable(recipe.m_resultId) : null;
+            }
+
+            return Enum.TryParse(typeName, out ItemType itemType)
+                ? GetItemData(itemType, recipe.m_resultId)
+                : null;
         }
 
         public string GetItemName(ItemType itemType, int dataId)
