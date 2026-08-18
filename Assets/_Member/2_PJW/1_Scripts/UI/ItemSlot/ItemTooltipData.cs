@@ -14,7 +14,7 @@ namespace DesktopCompanion.Views
         public string IconKey;
         public int Tier;
 
-        /// <summary>표시용 설명 문장(ItemData.Description). 비어 있으면 패널이 그 줄을 감춘다.</summary>
+        /// <summary>표시용 설명 문장(ItemData.Description). 비어 있으면 패널이 "이름 입니다"로 대체한다.</summary>
         public string Description;
 
         // 재료는 전용 섹션이 없다(헤더만 표시).
