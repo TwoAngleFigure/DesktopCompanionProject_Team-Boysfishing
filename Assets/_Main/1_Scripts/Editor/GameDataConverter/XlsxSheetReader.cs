@@ -15,6 +15,17 @@ namespace DesktopCompanion.EditorTools
     /// </summary>
     public static class XlsxSheetReader
     {
+        private static readonly List<(string sheet, string cell, int column)> s_staleFormulaCells = new();
+
+        /// <summary>
+        /// 직전 <see cref="Read"/>에서 발견한 '수식은 있는데 캐시값이 없는' 셀 목록.
+        ///
+        /// 셀에 캐시값이 없으면 빈 셀과 구분되지 않아 그 필드가 조용히 비어버린다. Excel 없이 파일을
+        /// 다시 쓰는 도구(openpyxl 등)는 수식만 남기고 캐시를 지우므로, 그런 파일을 변환하면
+        /// 수식으로 채우던 열이 통째로 사라진다. 호출자가 변환 대상 시트·열에 한해 검사해 차단한다.
+        /// </summary>
+        public static IReadOnlyList<(string sheet, string cell, int column)> StaleFormulaCells => s_staleFormulaCells;
+
         /// <summary>시트명 → (행번호 → (열인덱스(1-base) → 값 long/double/bool/string)).</summary>
         public static Dictionary<string, SortedDictionary<int, Dictionary<int, object>>> Read(string xlsxPath)
         {
@@ -24,6 +35,8 @@ namespace DesktopCompanion.EditorTools
             List<string> sharedStrings = ReadSharedStrings(zip);
             Dictionary<string, string> sheetPaths = ReadSheetPaths(zip);
 
+            s_staleFormulaCells.Clear();
+
             var result = new Dictionary<string, SortedDictionary<int, Dictionary<int, object>>>();
             foreach ((string sheetName, string entryPath) in sheetPaths)
             {
@@ -32,7 +45,7 @@ namespace DesktopCompanion.EditorTools
                 {
                     continue;
                 }
-                result[sheetName] = ReadSheet(entry, sharedStrings);
+                result[sheetName] = ReadSheet(entry, sharedStrings, sheetName);
             }
             return result;
         }
@@ -98,7 +111,8 @@ namespace DesktopCompanion.EditorTools
             return strings;
         }
 
-        private static SortedDictionary<int, Dictionary<int, object>> ReadSheet(ZipArchiveEntry entry, List<string> sst)
+        private static SortedDictionary<int, Dictionary<int, object>> ReadSheet(
+            ZipArchiveEntry entry, List<string> sst, string sheetName)
         {
             var rows = new SortedDictionary<int, Dictionary<int, object>>();
             using Stream s = entry.Open();
@@ -122,6 +136,12 @@ namespace DesktopCompanion.EditorTools
                     if (value != null)
                     {
                         cells[ColumnIndex(cellRef)] = value;
+                    }
+                    else if (c.Elements().Any(e => e.Name.LocalName == "f"))
+                    {
+                        // 수식은 있는데 값이 안 읽혔다 = 캐시 소실. 빈 셀과 구분되지 않으므로 여기서 기록해 둔다.
+                        // 열 번호를 함께 남긴다 — 호출자가 헤더를 보고 표시 전용(#) 열을 걸러내야 한다.
+                        s_staleFormulaCells.Add((sheetName, cellRef, ColumnIndex(cellRef)));
                     }
                 }
                 if (cells.Count > 0)
