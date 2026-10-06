@@ -41,6 +41,15 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Far
+    uniqueID: 113901053
+    locked: 0
+  - name: Middle
+    uniqueID: 4030181351
+    locked: 0
+  - name: Near
+    uniqueID: 1173393759
+    locked: 0
   m_RenderingLayers:
   - Default
   - Light Layer 1

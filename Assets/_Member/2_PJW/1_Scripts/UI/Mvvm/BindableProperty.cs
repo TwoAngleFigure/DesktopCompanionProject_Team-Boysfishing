@@ -4,8 +4,7 @@ using System.Collections.Generic;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 관찰 가능한 상태(System→View 바인딩의 최소 단위).
-    /// Value가 바뀔 때만 OnChanged를 발행한다. ViewModel이 표시용 상태를 담는 그릇.
+    /// ViewModel이 표시용 상태를 담는 관찰 가능한 값. Value가 실제로 바뀔 때만 OnChanged를 발행한다.
     /// </summary>
     public class BindableProperty<T>
     {
@@ -26,7 +25,7 @@ namespace DesktopCompanion.Views
             }
         }
 
-        /// <summary>구독과 동시에 현재값을 1회 즉시 전달(창 열자마자 올바른 초기값 표시).</summary>
+        /// <summary>구독을 등록하고 현재값을 1회 즉시 전달한다.</summary>
         public void Bind(Action<T> onChanged)
         {
             OnChanged += onChanged;

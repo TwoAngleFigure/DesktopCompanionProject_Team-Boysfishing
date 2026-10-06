@@ -4,6 +4,7 @@
 //  - 커버리지(a) 없는 픽셀은 discard → 원본 유지.
 //  - 가림: 씬 깊이가 셀 깊이보다 확실히 가까우면 discard(셀=단일 깊이라 경사 오차 불필요).
 //  - 아웃라인: 4이웃 셀의 커버리지/ID 비교(탐색 아님 — 결정적 4탭).
+//    ID가 다른 경계는 우선권이 높거나 같은 쪽만 그린다(계획 33 — BFPixelizerMeta.hlsl).
 //  - 셀 깊이를 SV_Depth로 출력 → 이후 물(투명) 합성 정상.
 Shader "Hidden/BFPixelizer/Composite"
 {
@@ -31,9 +32,11 @@ Shader "Hidden/BFPixelizer/Composite"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+            #include "BFPixelizerMeta.hlsl" // meta.r 언팩 + 우선권 경계 판정
 
-            // _BlitTexture(Blit.hlsl) = 오프스크린/다운샘플 컬러(a=커버리지).
-            TEXTURE2D_X(_BFP_OffMeta);            // R=ID, GBA=아웃라인 색
+            // _BlitTexture(Blit.hlsl) = 오프스크린/다운샘플 컬러(rgb=라이팅, a=아웃라인 강도).
+            TEXTURE2D_X(_BFP_OffMeta);            // r=ObjectId+256×우선권(0=배경=커버리지), gba=아웃라인 색
+            TEXTURE2D_X(_BFP_OffAlpha);           // r=오브젝트 알파, g=아웃라인 투명도
             TEXTURE2D_X_FLOAT(_BFP_OffDepth);     // 셀 깊이
             float _BFP_CellSize;                  // V0=1, V1=N_rt
             float _BFP_DepthEps;
@@ -46,12 +49,16 @@ Shader "Hidden/BFPixelizer/Composite"
 
             FragOutput frag(Varyings input)
             {
-                int2 p = int2(input.positionCS.xy);
-                int cellSize = max(1, (int)_BFP_CellSize);
-                int2 cell = p / cellSize;
+                // 화면 좌표·셀 크기는 항상 음수가 아니다. 부호 있는 정수 나눗셈은 GPU에서 느리므로
+                // 나눗셈만 uint로 수행하고, 이웃 셀 오프셋(음수 포함) 연산을 위해 int2로 되돌린다.
+                uint2 pu = uint2(input.positionCS.xy);
+                uint cellSize = max(1u, (uint)_BFP_CellSize);
+                int2 p = int2(pu);
+                int2 cell = int2(pu / cellSize);
 
-                half4 cellColor = LOAD_TEXTURE2D_X(_BlitTexture, cell);
-                if (cellColor.a < 0.5)
+                // 커버리지 = ObjectId(배경은 Color.clear로 0). 계획 15 G0에서 color.a 판정을 대체.
+                half4 cellMeta = LOAD_TEXTURE2D_X(_BFP_OffMeta, cell);
+                if (cellMeta.r < 0.5)
                     discard; // 비대상 → 원본 유지
 
                 float cellDepth = LOAD_TEXTURE2D_X(_BFP_OffDepth, cell).r;
@@ -64,25 +71,32 @@ Shader "Hidden/BFPixelizer/Composite"
                     discard;
                 #endif
 
-                half4 cellMeta = LOAD_TEXTURE2D_X(_BFP_OffMeta, cell);
+                half4 cellColor = LOAD_TEXTURE2D_X(_BlitTexture, cell);
+                half2 cellAlpha = LOAD_TEXTURE2D_X(_BFP_OffAlpha, cell).rg; // r=오브젝트 알파, g=아웃라인 투명도
+                half strength = saturate(cellColor.a);                      // 아웃라인 강도
 
                 // 아웃라인: 4이웃 셀이 비어 있거나 다른 ID면 경계 셀.
+                // 단 ID가 다른 경계는 우선권(계획 33)이 높거나 같은 쪽만 그린다 — 종전에는 판정이
+                // 대칭이라 양쪽 셀이 모두 경계가 되어 2셀 두께의 이중선이 됐다.
+                uint myId, myPriority;
+                BFP_UnpackMeta(cellMeta.r, myId, myPriority);
+
                 bool edge = false;
                 int2 dirs[4] = { int2(1, 0), int2(-1, 0), int2(0, 1), int2(0, -1) };
                 [unroll] for (int k = 0; k < 4; k++)
                 {
-                    int2 nc = cell + dirs[k];
-                    half neighborCoverage = LOAD_TEXTURE2D_X(_BlitTexture, nc).a;
-                    half neighborId = LOAD_TEXTURE2D_X(_BFP_OffMeta, nc).r;
-                    if (neighborCoverage < 0.5 || abs(neighborId - cellMeta.r) > 0.25)
+                    half neighborPacked = LOAD_TEXTURE2D_X(_BFP_OffMeta, cell + dirs[k]).r;
+                    if (BFP_IsOutlineEdge(neighborPacked, myId, myPriority))
                         edge = true;
                 }
 
+                // 강도 0이면 경계 셀도 내부와 동일해진다(아웃라인 없을 때 테두리 링 아티팩트 방지).
+                // 알파는 1로 고정한다 — 이 패스는 불투명 트랙 전용이며(Blend Off), 알파를 그대로 쓰면
+                // World_RT에 구멍이 생겨 데스크톱이 비친다. 반투명은 Render Queue를 Transparent로
+                // 바꿔 투명 트랙(패스 4)으로 보내야 한다(URP/Lit이 Opaque에서 알파를 무시하는 것과 동일).
                 FragOutput output;
-                // 커버리지 채널에 인코딩된 아웃라인 알파(0.5~1.0 → 0~1)로 블록 색과 블렌드.
-                half outlineAlpha = saturate((cellColor.a - 0.5) * 2.0);
                 output.color = edge
-                    ? half4(lerp(cellColor.rgb, cellMeta.gba, outlineAlpha), 1)
+                    ? half4(lerp(cellColor.rgb, cellMeta.gba, strength), 1)
                     : half4(cellColor.rgb, 1);
                 output.depth = cellDepth;
                 return output;
@@ -96,7 +110,13 @@ Shader "Hidden/BFPixelizer/Composite"
             // SW3 물 등 깊이 텍스처 소비자가 픽셀화 오브젝트의 수중 실루엣을 보게 한다.
             Name "BFPixelizerDepthTexUpdate"
             ZWrite On
-            ZTest Always
+            // ★LEqual 필수. Always면 기존 깊이와 비교 없이 덮어써서 _CameraDepthTexture의 값이
+            // 실제 원근이 아니라 '패스 기록 순서'로 정해진다. 이 패스는 스프라이트 경로보다 항상
+            // 뒤에 기록되므로(피처가 스프라이트 경로를 먼저 기록한다), Always에서는 v2 오브젝트가 더 앞에 있는
+            // 스프라이트 오브젝트의 깊이를 덮어써 물의 수중 투영이 앞뒤를 뒤집어 본다.
+            // LEqual이면 실제로 더 가까울 때만 기록되어 순서 의존이 사라지고, 일반 불투명에
+            // 가려진 구간이 주입되던 문제(컬러 합성에만 있던 가림 검사 누락)도 함께 해소된다.
+            ZTest LEqual
             Cull Off
             ColorMask 0
 
@@ -107,16 +127,18 @@ Shader "Hidden/BFPixelizer/Composite"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
+            // r = ObjectId+256×우선권. ObjectId가 1 이상이라 0 = 배경 = 커버리지 없음이 그대로 성립한다.
+            TEXTURE2D_X(_BFP_OffMeta);
             TEXTURE2D_X_FLOAT(_BFP_OffDepth); // 저해상도 셀 깊이
             float _BFP_CellSize;
 
             float frag(Varyings input) : SV_Depth
             {
-                int2 p = int2(input.positionCS.xy);
-                int2 cell = p / max(1, (int)_BFP_CellSize);
+                // 좌표·셀 크기 모두 음수가 아니므로 uint 나눗셈을 쓴다(부호 있는 나눗셈 회피).
+                uint2 p = uint2(input.positionCS.xy);
+                uint2 cell = p / max(1u, (uint)_BFP_CellSize);
 
-                // _BlitTexture = 저해상도 컬러(a=커버리지)
-                if (LOAD_TEXTURE2D_X(_BlitTexture, cell).a < 0.5)
+                if (LOAD_TEXTURE2D_X(_BFP_OffMeta, cell).r < 0.5)
                     discard;
 
                 return LOAD_TEXTURE2D_X(_BFP_OffDepth, cell).r;
@@ -143,7 +165,10 @@ Shader "Hidden/BFPixelizer/Composite"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
 
-            TEXTURE2D_X(_BFP_OffMeta);        // 저해상도 스프라이트 메타(R=ID, GBA=아웃라인 색)
+            // 저해상도 스프라이트 메타(r=ObjectId+256×우선권=커버리지, gba=아웃라인 색).
+            // 스프라이트 경로는 오브젝트마다 전용 버퍼라 ID 경계 자체가 없다 → 우선권 판정 불필요(커버리지만 본다).
+            TEXTURE2D_X(_BFP_OffMeta);
+            TEXTURE2D_X(_BFP_OffAlpha);       // r=오브젝트 알파, g=아웃라인 투명도
             TEXTURE2D_X_FLOAT(_BFP_OffDepth); // 저해상도 스프라이트 깊이
             float _BFP_CellSize;
             float _BFP_DepthEps;
@@ -183,8 +208,9 @@ Shader "Hidden/BFPixelizer/Composite"
                 float2 cellF = _BFP_SpritePivot.zw + float2(alignedView.x, _BFP_SpriteAxis.y * alignedView.y) / max(1.0, _BFP_CellSize);
                 int2 cell = int2(floor(cellF));
 
-                half4 cellColor = LOAD_TEXTURE2D_X(_BlitTexture, cell);
-                if (cellColor.a < 0.5)
+                // 커버리지 = ObjectId(스프라이트 버퍼 밖·미커버는 0).
+                half4 cellMeta = LOAD_TEXTURE2D_X(_BFP_OffMeta, cell);
+                if (cellMeta.r < 0.5)
                     discard; // 스프라이트 밖/비커버 → 원본 유지
 
                 float cellDepth = RemapSpriteDepth(LOAD_TEXTURE2D_X(_BFP_OffDepth, cell).r);
@@ -197,21 +223,23 @@ Shader "Hidden/BFPixelizer/Composite"
                     discard;
                 #endif
 
-                half4 cellMeta = LOAD_TEXTURE2D_X(_BFP_OffMeta, cell);
+                half4 cellColor = LOAD_TEXTURE2D_X(_BlitTexture, cell);
+                half2 cellAlpha = LOAD_TEXTURE2D_X(_BFP_OffAlpha, cell).rg;
+                half strength = saturate(cellColor.a);
 
                 // 아웃라인: 정렬(스프라이트) 공간의 4이웃 셀 — 회전과 함께 도는 경계.
                 bool edge = false;
                 int2 dirs[4] = { int2(1, 0), int2(-1, 0), int2(0, 1), int2(0, -1) };
                 [unroll] for (int k = 0; k < 4; k++)
                 {
-                    if (LOAD_TEXTURE2D_X(_BlitTexture, cell + dirs[k]).a < 0.5)
+                    if (LOAD_TEXTURE2D_X(_BFP_OffMeta, cell + dirs[k]).r < 0.5)
                         edge = true;
                 }
 
+                // 스프라이트 모드는 현재 불투명 트랙 전용이므로 알파를 1로 고정(위 패스와 동일 이유).
                 FragOutput output;
-                half outlineAlpha = saturate((cellColor.a - 0.5) * 2.0);
                 output.color = edge
-                    ? half4(lerp(cellColor.rgb, cellMeta.gba, outlineAlpha), 1)
+                    ? half4(lerp(cellColor.rgb, cellMeta.gba, strength), 1)
                     : half4(cellColor.rgb, 1);
                 output.depth = cellDepth;
                 return output;
@@ -225,7 +253,7 @@ Shader "Hidden/BFPixelizer/Composite"
             // SW3 물의 수중 투영이 스프라이트 모드 오브젝트를 보게 한다(v2의 pass 1과 동일 역할).
             Name "BFPixelizerSpriteDepthTexUpdate"
             ZWrite On
-            ZTest Always
+            ZTest LEqual // ★pass 1과 같은 이유 — 스프라이트 오브젝트끼리도 등록 순서로 앞뒤가 뒤집힌다
             Cull Off
             ColorMask 0
 
@@ -236,6 +264,8 @@ Shader "Hidden/BFPixelizer/Composite"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
+            // r = ObjectId+256×우선권. ObjectId가 1 이상이라 0 = 배경 = 커버리지 없음이 그대로 성립한다.
+            TEXTURE2D_X(_BFP_OffMeta);
             TEXTURE2D_X_FLOAT(_BFP_OffDepth);
             float _BFP_CellSize;
             float4 _BFP_SpriteRot;
@@ -263,10 +293,81 @@ Shader "Hidden/BFPixelizer/Composite"
                 float2 cellF = _BFP_SpritePivot.zw + float2(alignedView.x, _BFP_SpriteAxis.y * alignedView.y) / max(1.0, _BFP_CellSize);
                 int2 cell = int2(floor(cellF));
 
-                if (LOAD_TEXTURE2D_X(_BlitTexture, cell).a < 0.5)
+                if (LOAD_TEXTURE2D_X(_BFP_OffMeta, cell).r < 0.5)
                     discard;
 
                 return RemapSpriteDepth(LOAD_TEXTURE2D_X(_BFP_OffDepth, cell).r);
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            // 투명 트랙 합성(계획 15). 물(투명 큐) 이후에 실행되어 유리 너머로 물·물고기가 비친다.
+            //  - ZWrite Off: 깊이를 쓰면 이후 소비자가 유리에 막힌다. 가림은 _CameraDepthTexture 비교로 처리.
+            //  - 알파 블렌드의 알파 항이 One OneMinusSrcAlpha라 올바른 "over" 누적이 되어
+            //    불투명 씬 위에서는 World_RT 알파 1이 유지된다(데스크톱 관통 없음).
+            Name "BFPixelizerCompositeTransparent"
+            ZWrite Off
+            ZTest Always
+            Cull Off
+            Blend SrcAlpha OneMinusSrcAlpha, One OneMinusSrcAlpha
+
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment frag
+            #pragma target 4.5
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+            #include "BFPixelizerMeta.hlsl" // meta.r 언팩 + 우선권 경계 판정
+
+            TEXTURE2D_X(_BFP_OffMeta);
+            TEXTURE2D_X(_BFP_OffAlpha);
+            TEXTURE2D_X_FLOAT(_BFP_OffDepth);
+            float _BFP_CellSize;
+            float _BFP_DepthEps;
+
+            half4 frag(Varyings input) : SV_Target
+            {
+                uint2 pu = uint2(input.positionCS.xy);
+                uint cellSize = max(1u, (uint)_BFP_CellSize);
+                int2 p = int2(pu);
+                int2 cell = int2(pu / cellSize);
+
+                half4 cellMeta = LOAD_TEXTURE2D_X(_BFP_OffMeta, cell);
+                if (cellMeta.r < 0.5)
+                    discard;
+
+                float cellDepth = LOAD_TEXTURE2D_X(_BFP_OffDepth, cell).r;
+                float sceneDepth = LoadSceneDepth(p);
+                #if UNITY_REVERSED_Z
+                if (sceneDepth > cellDepth + _BFP_DepthEps)
+                    discard; // 앞의 불투명 물체에 가려짐
+                #else
+                if (sceneDepth < cellDepth - _BFP_DepthEps)
+                    discard;
+                #endif
+
+                half4 cellColor = LOAD_TEXTURE2D_X(_BlitTexture, cell);
+                half2 cellAlpha = LOAD_TEXTURE2D_X(_BFP_OffAlpha, cell).rg;
+                half strength = saturate(cellColor.a);
+
+                uint myId, myPriority;
+                BFP_UnpackMeta(cellMeta.r, myId, myPriority);
+
+                bool edge = false;
+                int2 dirs[4] = { int2(1, 0), int2(-1, 0), int2(0, 1), int2(0, -1) };
+                [unroll] for (int k = 0; k < 4; k++)
+                {
+                    half neighborPacked = LOAD_TEXTURE2D_X(_BFP_OffMeta, cell + dirs[k]).r;
+                    if (BFP_IsOutlineEdge(neighborPacked, myId, myPriority))
+                        edge = true;
+                }
+
+                return edge
+                    ? half4(lerp(cellColor.rgb, cellMeta.gba, strength), lerp(cellAlpha.r, cellAlpha.g, strength))
+                    : half4(cellColor.rgb, cellAlpha.r);
             }
             ENDHLSL
         }

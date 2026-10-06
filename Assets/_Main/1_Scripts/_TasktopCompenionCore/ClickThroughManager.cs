@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace DesktopCompanion
 {
@@ -109,6 +110,39 @@ namespace DesktopCompanion
             return true;
         }
 
+        /// <summary>
+        /// 레이캐스트에 걸린 UI 중 실제로 입력을 받는 것이 있는지 판정한다.
+        /// 비활성 위젯(interactable=false)은 눌러도 반응하지 않으므로 관통을 막지 않는다.
+        ///
+        /// 위젯의 Raycast Target을 끄는 방식은 쓰지 않는다. 그렇게 하면 위젯마다 켜고 끄는 코드가
+        /// 필요해 빠뜨리기 쉽고, 그 위젯이 뒤쪽 요소를 가려 주던 역할까지 함께 사라진다.
+        /// 판정하는 쪽에서 걸러내면 한 곳에서 모든 위젯에 적용된다.
+        ///
+        /// 불투명한 창 위의 비활성 버튼은 창 배경이 따로 히트에 잡히므로 창은 그대로 관통을 막는다.
+        /// </summary>
+        private static bool HasBlockingUi()
+        {
+            for (int i = 0; i < s_uiResults.Count; i++)
+            {
+                GameObject hit = s_uiResults[i].gameObject;
+                if (hit == null)
+                {
+                    continue;
+                }
+
+                // 라벨·아이콘 같은 자식 그래픽이 걸릴 수 있어 부모까지 훑어 위젯을 찾는다.
+                Selectable selectable = hit.GetComponentInParent<Selectable>();
+                bool ignorable = selectable != null
+                                 && (selectable.enabled == false || selectable.IsInteractable() == false);
+                if (ignorable)
+                {
+                    continue;
+                }
+                return true;
+            }
+            return false;
+        }
+
         private bool IsCursorOverInteractive()
         {
             if (TryGetCursorScreenPos(out Vector2 pos) == false)
@@ -130,7 +164,7 @@ namespace DesktopCompanion
                 _pointerData.position = pos;
                 s_uiResults.Clear();
                 EventSystem.current.RaycastAll(_pointerData, s_uiResults);
-                if (s_uiResults.Count > 0)
+                if (HasBlockingUi())
                 {
                     return true;
                 }

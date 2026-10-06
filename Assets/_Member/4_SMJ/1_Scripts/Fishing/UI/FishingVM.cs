@@ -12,14 +12,23 @@ namespace DesktopCompanion.Views
         public readonly BindableProperty<string> HpText = new("-");
         public readonly BindableProperty<float> HpRatio = new(0f);
         public readonly BindableProperty<float> BattleTimeRemainingRatio = new(0f);
-        public readonly BindableProperty<bool> IsBattleGaugeVisible = new(false);
         public readonly BindableProperty<string> ToggleButtonText = new("낚시 시작");
+
+        /// <summary>
+        /// 낚시가 돌아가는 중인지(Waiting·Battling). 시작/중지 버튼 연출이 이 값을 켜짐으로 쓴다.
+        /// 버튼이 클릭으로 스스로 뒤집지 않고 이쪽 결과만 따르므로,
+        /// 시작이 거부되는 경우(Pending 물고기 보유)에 표시만 켜지는 어긋남이 생기지 않는다.
+        /// </summary>
+        public readonly BindableProperty<bool> IsFishingActive = new(false);
+
+        /// <summary>
+        /// 수동 공격 버튼을 쓸 수 있는지. <see cref="CanManualAttack"/>과 같은 조건(전투 중)이다.
+        /// RelayCommand가 실행을 막아도 버튼은 눌리는 채로 남으므로, 표시용으로 따로 내보낸다.
+        /// </summary>
+        public readonly BindableProperty<bool> IsManualAttackEnabled = new(false);
 
         public RelayCommand ToggleFishingState { get; private set; }
         public RelayCommand ManualAttack { get; private set; }
-
-        // Debug HUD
-        public readonly BindableProperty<string> DebugWaitTimeText = new("입질 대기: -");
 
         public override void Bind()
         {
@@ -55,21 +64,8 @@ namespace DesktopCompanion.Views
         {
             if (m_fishingSystem == null)
             {
-                DebugWaitTimeText.Value = "대기 시간: -";
                 BattleTimeRemainingRatio.Value = 0f;
                 return;
-            }
-
-            if (m_fishingSystem.State == FishingState.Waiting)
-            {
-                DebugWaitTimeText.Value =
-                    $"대기 시간: " +
-                    $"{m_fishingSystem.WaitDuration:0.0}초 / " +
-                    $"{ClampZero(m_fishingSystem.WaitTimeRemaining):0.0}초";
-            }
-            else
-            {
-                DebugWaitTimeText.Value = "대기 시간: -";
             }
 
             if (m_fishingSystem.State == FishingState.Battling &&
@@ -94,8 +90,9 @@ namespace DesktopCompanion.Views
                     HpText.Value = "";
                     HpRatio.Value = 0f;
                     BattleTimeRemainingRatio.Value = 0f;
-                    IsBattleGaugeVisible.Value = false;
+                    IsManualAttackEnabled.Value = false;
                     ToggleButtonText.Value = "낚시 시작";
+                    IsFishingActive.Value = false;
                     break;
 
                 case FishingState.Waiting:
@@ -103,16 +100,18 @@ namespace DesktopCompanion.Views
                     HpText.Value = "";
                     HpRatio.Value = 0f;
                     BattleTimeRemainingRatio.Value = 0f;
-                    IsBattleGaugeVisible.Value = false;
+                    IsManualAttackEnabled.Value = false;   // 입질 전 — 때릴 대상이 없다
 
                     ToggleButtonText.Value = "낚시 중지";
+                    IsFishingActive.Value = true;
                     break;
 
                 case FishingState.Battling:
                     StateText.Value = "낚시 중";
                     BattleTimeRemainingRatio.Value = 1f;
-                    IsBattleGaugeVisible.Value = true;
+                    IsManualAttackEnabled.Value = true;
                     ToggleButtonText.Value = "낚시 중지";
+                    IsFishingActive.Value = true;
                     break;
             }
         }
@@ -149,11 +148,6 @@ namespace DesktopCompanion.Views
         private void ExecuteManualAttack()
         {
             m_fishingSystem.ManualAttack();
-        }
-
-        private float ClampZero(float value)
-        {
-            return value > 0f ? value : 0f;
         }
     }
 }

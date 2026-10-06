@@ -4,13 +4,9 @@ using UnityEngine.UI;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// [프로토타입] RT 크롭 전환(계획 06)의 최대 리스크 검증용.
-    /// 목적: Camera를 '투명 RenderTexture'에 렌더하고 전체화면 RawImage로 표시했을 때,
-    ///       URP에서 per-pixel 알파가 보존되어 데스크톱 비침(투명 합성)이 되는지 확인한다.
-    ///
-    /// 범위: 오직 "투명 RT → 화면 표시"만. 모드/스케일/드래그/클릭관통/모니터는 포함하지 않는다.
-    /// 테스트 시: 이 씬에서 Camera Swap(DisplayModeController·Camera B·Clear)은 비활성화하고,
-    ///           월드 카메라(A) 1대 + 전체화면 RawImage만 남긴 뒤 이 컴포넌트를 붙인다.
+    /// 카메라를 투명 RenderTexture에 렌더하고 전체화면 RawImage로 표시해,
+    /// per-pixel 알파가 보존되어 데스크톱이 비치는지 확인하는 프로토타입 컴포넌트.
+    /// 투명 RT 생성·카메라 클리어 설정·RawImage 바인딩만 수행하며, 모드·배율·드래그·모니터는 다루지 않는다.
     /// </summary>
     public class RtCropPrototype : MonoBehaviour
     {
@@ -44,8 +40,8 @@ namespace DesktopCompanion.Views
             m_worldCamera.backgroundColor = new Color(0f, 0f, 0f, 0f);
             m_worldCamera.targetTexture = m_rt;
 
-            // 화면 클리어 카메라: 백버퍼를 매 프레임 투명으로 지워 잔상 방지(RT 방식 필수).
-            // 지오메트리를 그리지 않으므로(cull Nothing) 물/SW3에 관여하지 않는다.
+            // 화면 클리어 카메라: 백버퍼를 매 프레임 투명으로 지워 잔상을 막는다.
+            // 지오메트리를 그리지 않으므로(cull Nothing) 씬 렌더에 관여하지 않는다.
             if (m_screenClearCamera != null)
             {
                 m_screenClearCamera.targetTexture = null;            // 화면에 렌더

@@ -1,0 +1,365 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5798908203956440
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4945223346026452647}
+  - component: {fileID: 1045052723150630618}
+  m_Layer: 0
+  m_Name: StageData_600007_Model
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4945223346026452647
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5798908203956440}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5727006724838496526}
+  - {fileID: 4138306769929329630}
+  - {fileID: 3900178508738883329}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1045052723150630618
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5798908203956440}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ef8cb83ea7e41d4cbeead965b27403a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Views.StageBlueprint
+  m_nearLayer: {fileID: 5727006724838496526}
+  m_midLayer: {fileID: 4138306769929329630}
+  m_farLayer: {fileID: 3900178508738883329}
+  m_nearParallax: 0
+  m_midParallax: 0.35
+  m_farParallax: 0.65
+  m_blueprintList:
+  - m_assetKey: river_back_4
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 65
+    m_targetWorldOffsetFromCamera: 18
+    m_targetLocalY: 2.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_4
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 55
+    m_targetWorldOffsetFromCamera: 10
+    m_targetLocalY: 2.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_3
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 38
+    m_targetWorldOffsetFromCamera: 1
+    m_targetLocalY: 2.3
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_4
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 23
+    m_targetWorldOffsetFromCamera: -8
+    m_targetLocalY: 2.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_4
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 16
+    m_targetWorldOffsetFromCamera: -16
+    m_targetLocalY: 2.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_3
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 9
+    m_targetWorldOffsetFromCamera: -24
+    m_targetLocalY: 2.3
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_2
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 48
+    m_targetWorldOffsetFromCamera: 16
+    m_targetLocalY: 4.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_1
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 40
+    m_targetWorldOffsetFromCamera: 7
+    m_targetLocalY: 4.3
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_2
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 12
+    m_targetWorldOffsetFromCamera: -12
+    m_targetLocalY: 4.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_1
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 2
+    m_targetWorldOffsetFromCamera: -22
+    m_targetLocalY: 4.3
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_2
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: -17
+    m_targetWorldOffsetFromCamera: -35
+    m_targetLocalY: 4.3
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_back_1
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: -24
+    m_targetWorldOffsetFromCamera: -44
+    m_targetLocalY: 4.3
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_log_2
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 6
+    m_targetWorldOffsetFromCamera: -26
+    m_targetLocalY: 0
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_log
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 25
+    m_targetWorldOffsetFromCamera: -11
+    m_targetLocalY: 0
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_reeds
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 35
+    m_targetWorldOffsetFromCamera: 4
+    m_targetLocalY: -0.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_reeds
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 31
+    m_targetWorldOffsetFromCamera: 1
+    m_targetLocalY: -0.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_reeds
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 28
+    m_targetWorldOffsetFromCamera: -3
+    m_targetLocalY: -0.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_reeds
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 25
+    m_targetWorldOffsetFromCamera: -11
+    m_targetLocalY: -0.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_reeds
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 25
+    m_targetWorldOffsetFromCamera: -15
+    m_targetLocalY: -0.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_reeds
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 25
+    m_targetWorldOffsetFromCamera: -15
+    m_targetLocalY: -0.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_reeds
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 20
+    m_targetWorldOffsetFromCamera: -19
+    m_targetLocalY: -0.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_reeds
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 3
+    m_targetWorldOffsetFromCamera: -34
+    m_targetLocalY: -0.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_reeds
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: -1
+    m_targetWorldOffsetFromCamera: -39
+    m_targetLocalY: -0.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_background_3
+    m_layerDepth: 2
+    m_spawnDistanceTrigger: 160
+    m_targetWorldOffsetFromCamera: 37
+    m_targetLocalY: 2
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+--- !u!1 &606873470048552616
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4138306769929329630}
+  m_Layer: 0
+  m_Name: MidLayer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4138306769929329630
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 606873470048552616}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 14}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4945223346026452647}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &675230302712766180
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3900178508738883329}
+  m_Layer: 0
+  m_Name: FarLayer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3900178508738883329
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 675230302712766180}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 25}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4945223346026452647}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7863917083881199809
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5727006724838496526}
+  m_Layer: 0
+  m_Name: NearLayer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5727006724838496526
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7863917083881199809}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 3}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4945223346026452647}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

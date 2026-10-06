@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Reflection;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 
@@ -43,10 +44,15 @@ namespace DesktopCompanion.Core
             { "ItemData_Consumables", "m_modifiers" },
         };
 
+        // 압축 문자열 미파싱 경고의 중복 억제(타입·필드 단위). 100행이 같은 열을 쓰면 경고도 100번 나므로
+        // 최초 1건만 남긴다. Normalize 진입 시 초기화 — 에디터 단일 스레드 실행 전제.
+        private static readonly HashSet<string> s_warnedCompactFields = new();
+
         public static JArray Normalize(JObject root, IReadOnlyDictionary<string, Type> typeMap)
         {
             var items = new JArray();
             var index = new Dictionary<(string type, int id), JObject>();
+            s_warnedCompactFields.Clear();
 
             // ── 타입 시트 → 항목 ──
             foreach (JProperty sheet in root.Properties())
@@ -56,7 +62,7 @@ namespace DesktopCompanion.Core
                 {
                     continue;   // 서브시트는 아래에서 병합
                 }
-                if (!typeMap.ContainsKey(sheetName))
+                if (!typeMap.TryGetValue(sheetName, out Type sheetType))
                 {
                     continue;   // README/Enums 등 비데이터 시트
                 }
@@ -76,7 +82,7 @@ namespace DesktopCompanion.Core
                         continue;
                     }
 
-                    JObject item = NormalizeItem(sheetName, id, row);
+                    JObject item = NormalizeItem(sheetName, sheetType, id, row);
                     items.Add(item);
                     index[(sheetName, id)] = item;
                 }
@@ -88,7 +94,7 @@ namespace DesktopCompanion.Core
         }
 
         // ── 타입 시트 행 하나 → 내부 표준 항목 ──
-        private static JObject NormalizeItem(string typeName, int id, JObject row)
+        private static JObject NormalizeItem(string typeName, Type type, int id, JObject row)
         {
             var item = new JObject { ["type"] = typeName, ["m_id"] = id };
             JToken posX = null, posY = null;
@@ -123,7 +129,7 @@ namespace DesktopCompanion.Core
                     case "m_craftMaterials":
                         SetIfNotNull(item, name, ParseMaterialCosts(value, typeName, id));
                         break;
-                    case "m_bossDrops":
+                    case "m_drops":
                         SetIfNotNull(item, name, ParseItemDrops(value, typeName, id));
                         break;
                     case "m_qualityThresholds":
@@ -136,6 +142,7 @@ namespace DesktopCompanion.Core
                         posY = value;
                         break;
                     default:
+                        WarnIfUnparsedCompact(type, name, value, typeName, id);
                         // 단순 스칼라. 정수형 실수(예: 50.0)는 정수로 복원한다(int 필드 로드 안전).
                         // XlsxSheetReader의 셀 단위 복원과 동일 규칙을 외부 시트맵(Google Sheets 등) 경로에도 적용.
                         item[name] = NormalizeScalar(value);
@@ -354,12 +361,13 @@ namespace DesktopCompanion.Core
                 ["m_probability"] = ParseFloat(parts[3]),
             });
 
-        // "battleFishId:weight;..." → FishPoolEntry[]
+        // "battleFishId;..." → FishPoolEntry[]
+        // 가중치는 폐지됐다(풀 안에서 균등 추첨). 시트 정리 전의 옛 "battleFishId:weight" 표기가
+        // 남아 있어도 변환이 깨지지 않도록 뒤 토큰은 받아서 버린다.
         private static JArray ParsePoolEntries(JToken token, int stageId)
-            => ParseCompact(token, 2, SheetStageTierPools, stageId, parts => new JObject
+            => ParseCompact(token, 1, 2, SheetStageTierPools, stageId, parts => new JObject
             {
-                ["m_fish"] = MakeRef("BattleFishData", int.Parse(parts[0])),
-                ["m_weight"] = ParseFloat(parts[1]),
+                ["m_fish"] = MakeRef("BattleFishData", ParseId(parts[0])),
             });
 
         // "v1;v2;v3;v4" → float[]
@@ -387,6 +395,10 @@ namespace DesktopCompanion.Core
         }
 
         private static JArray ParseCompact(JToken token, int expectedParts, string context, int id, Func<string[], JObject> build)
+            => ParseCompact(token, expectedParts, expectedParts, context, id, build);
+
+        // 토큰 수가 [minParts, maxParts] 범위면 통과시킨다. 초과분은 build에 넘어가되 쓰지 않으면 버려진다.
+        private static JArray ParseCompact(JToken token, int minParts, int maxParts, string context, int id, Func<string[], JObject> build)
         {
             string text = AsString(token);
             if (text == null)
@@ -399,9 +411,10 @@ namespace DesktopCompanion.Core
                 foreach (string entry in SplitItems(text))
                 {
                     string[] parts = entry.Split(':');
-                    if (parts.Length != expectedParts)
+                    if (parts.Length < minParts || parts.Length > maxParts)
                     {
-                        throw new FormatException($"'{entry}' — 토큰 {expectedParts}개 필요");
+                        string need = minParts == maxParts ? $"{minParts}개" : $"{minParts}~{maxParts}개";
+                        throw new FormatException($"'{entry}' — 토큰 {need} 필요");
                     }
                     for (int i = 0; i < parts.Length; i++)
                     {
@@ -416,6 +429,56 @@ namespace DesktopCompanion.Core
                 Debug.LogError($"[ExternalSheetNormalizer] {context}#{id} 압축 문자열 파싱 실패 '{text}': {e.Message}");
                 return null;
             }
+        }
+
+        /// <summary>
+        /// 압축 문자열로 보이는데 전용 파서(위 switch)가 없는 열을 변환 시점에 잡는다.
+        /// 시트 컬럼명을 바꾸면 case 라벨과 조용히 어긋나 값이 문자열째로 실리고, 로드 시점
+        /// PopulateObject에서야 형 변환 실패로 터진다 — 그 사고를 여기서 앞당겨 알린다.
+        /// 대상 C# 필드가 string이면 소비자가 직접 파싱하는 원본 문자열 설계이므로 제외한다.
+        /// </summary>
+        private static void WarnIfUnparsedCompact(Type type, string field, JToken value, string context, int id)
+        {
+            if (value == null || value.Type != JTokenType.String)
+            {
+                return;
+            }
+            string text = value.Value<string>();
+            if (string.IsNullOrEmpty(text) || (text.IndexOf(':') < 0 && text.IndexOf(';') < 0))
+            {
+                return;
+            }
+
+            FieldInfo target = FindField(type, field);
+            if (target != null && target.FieldType == typeof(string))
+            {
+                return;   // 예: RecipeData_Mixture.m_ingredients — 압축 문자열을 그대로 보관하는 필드
+            }
+            if (!s_warnedCompactFields.Add($"{context}.{field}"))
+            {
+                return;   // 같은 열은 최초 1건만
+            }
+
+            string reason = target == null
+                ? $"{type.Name}에 '{field}' 필드가 없음"
+                : $"{type.Name}.{field}는 {target.FieldType.Name} 형";
+            Debug.LogWarning($"[ExternalSheetNormalizer] {context}#{id} 열 '{field}'가 압축 문자열로 보이는데 전용 파서가 없습니다 " +
+                             $"({reason}, 값 '{text}'). 시트 컬럼명과 NormalizeItem의 case 라벨이 어긋났는지 확인하세요.");
+        }
+
+        // 선언 타입부터 상위로 올라가며 필드를 찾는다(GetField는 상위 클래스의 private을 반환하지 않음).
+        private static FieldInfo FindField(Type type, string name)
+        {
+            for (Type current = type; current != null; current = current.BaseType)
+            {
+                FieldInfo field = current.GetField(name,
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                if (field != null)
+                {
+                    return field;
+                }
+            }
+            return null;
         }
 
         // ── 공용 헬퍼 ──
@@ -436,6 +499,11 @@ namespace DesktopCompanion.Core
 
         private static float ParseFloat(string text)
             => float.Parse(text.Trim(), CultureInfo.InvariantCulture);
+
+        // 숫자 하나만 든 셀은 스프레드시트가 실수로 넘겨(500001 → "500001.0") int.Parse가 터진다.
+        // 소수부 0인 실수 표기를 허용해 id로 복원한다.
+        private static int ParseId(string text)
+            => checked((int)Math.Round(double.Parse(text.Trim(), CultureInfo.InvariantCulture)));
 
         private static string AsString(JToken token)
             => token == null || token.Type == JTokenType.Null ? null

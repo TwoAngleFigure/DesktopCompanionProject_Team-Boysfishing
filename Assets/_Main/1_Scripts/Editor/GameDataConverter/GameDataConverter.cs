@@ -43,8 +43,15 @@ namespace DesktopCompanion.EditorTools
             try
             {
                 var sheets = XlsxSheetReader.Read(xlsxPath);
+                Dictionary<string, System.Type> typeMap = GameDataTypes.BuildTypeMap();
+
+                if (HasStaleFormulaCells(sheets, typeMap))
+                {
+                    return;
+                }
+
                 JObject externalShape = BuildExternalShape(sheets);
-                JArray items = ExternalSheetNormalizer.Normalize(externalShape, GameDataTypes.BuildTypeMap());
+                JArray items = ExternalSheetNormalizer.Normalize(externalShape, typeMap);
 
                 string json = items.ToString(Formatting.Indented);
 
@@ -73,6 +80,62 @@ namespace DesktopCompanion.EditorTools
             }
         }
 
+        /// <summary>
+        /// 변환에 실리는 열에 캐시값 없는 수식 셀이 있으면 변환을 막는다.
+        ///
+        /// 그런 셀은 빈 셀과 구분되지 않아 해당 필드가 조용히 비어버린다. ShopProducts의 m_name·m_price처럼
+        /// 수식으로 채우는 변환 대상 열이 실제로 있으므로, 눈치채지 못한 채 데이터가 통째로 날아갈 수 있다.
+        /// Excel/LibreOffice로 한 번 열고 저장하면 캐시가 복구된다.
+        ///
+        /// 변환 대상이 아닌 시트(_Lookup 등)와 표시 전용(#) 열은 무시한다 — 어차피 JSON에 나가지 않으므로
+        /// 캐시가 없어도 잃을 값이 없다. 대부분의 수식이 표시 전용 열에 몰려 있어, 걸러내지 않으면
+        /// 실제 피해가 없는 상황에서 변환이 통째로 막힌다.
+        /// </summary>
+        private static bool HasStaleFormulaCells(
+            Dictionary<string, SortedDictionary<int, Dictionary<int, object>>> sheets,
+            Dictionary<string, System.Type> typeMap)
+        {
+            var affected = XlsxSheetReader.StaleFormulaCells
+                .Where(x => typeMap.ContainsKey(x.sheet) && IsConvertedColumn(sheets, x.sheet, x.column))
+                .ToList();
+
+            if (affected.Count == 0)
+            {
+                return false;
+            }
+
+            string sample = string.Join(", ", affected.Take(10).Select(x => $"{x.sheet}!{x.cell}"));
+            string message =
+                $"수식 결과가 저장돼 있지 않은 셀 {affected.Count}개를 발견했습니다.\n" +
+                $"이 상태로 변환하면 해당 열이 빈 값으로 들어갑니다.\n\n" +
+                $"xlsx를 Excel에서 한 번 열고 저장한 뒤 다시 시도하세요.\n\n예: {sample}";
+
+            Debug.LogError($"[GameDataConverter] {message}");
+            EditorUtility.DisplayDialog("GameData 변환 중단", message, "확인");
+            return true;
+        }
+
+        /// <summary>
+        /// 그 열이 실제로 JSON에 실리는 열인지. 헤더가 #로 시작하거나 비어 있으면 표시 전용이라
+        /// 값이 없어도 산출물에 영향이 없다(<see cref="BuildExternalShape"/>가 같은 규칙으로 스킵한다).
+        /// 헤더를 읽지 못하면 판단을 보류하고 변환 대상으로 본다 — 막는 쪽이 안전하다.
+        /// </summary>
+        private static bool IsConvertedColumn(
+            Dictionary<string, SortedDictionary<int, Dictionary<int, object>>> sheets,
+            string sheetName, int column)
+        {
+            if (!sheets.TryGetValue(sheetName, out var rows) ||
+                !rows.TryGetValue(1, out Dictionary<int, object> headerCells))
+            {
+                return true;
+            }
+            return headerCells.TryGetValue(column, out object header) && IsConvertedHeader(header);
+        }
+
+        /// <summary>헤더 값이 변환 대상인지(#·빈 헤더 = 표시 전용, D17).</summary>
+        private static bool IsConvertedHeader(object header)
+            => header is string name && !string.IsNullOrWhiteSpace(name) && !name.StartsWith("#");
+
         // 시트 데이터 → 외부 포맷 모양 JObject (Normalizer 입력 규약에 맞춤)
         private static JObject BuildExternalShape(
             Dictionary<string, SortedDictionary<int, Dictionary<int, object>>> sheets)
@@ -89,9 +152,9 @@ namespace DesktopCompanion.EditorTools
                 var headers = new SortedDictionary<int, string>();
                 foreach ((int col, object value) in headerCells)
                 {
-                    if (value is string name && !string.IsNullOrWhiteSpace(name) && !name.StartsWith("#"))
+                    if (IsConvertedHeader(value))
                     {
-                        headers[col] = name;
+                        headers[col] = (string)value;
                     }
                 }
                 if (headers.Count == 0)

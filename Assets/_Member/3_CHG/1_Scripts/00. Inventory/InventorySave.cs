@@ -9,6 +9,10 @@ namespace DesktopCompanion.Systems
     {
         public List<SlotSave> slots = new List<SlotSave>();
 
+        public bool autoSellEnabled;
+        public ItemQuality maxAutoSellQuality = ItemQuality.OneStar;
+        public ItemRarity maxAutoSellRarity = ItemRarity.Normal;
+
         [Serializable]
         public class SlotSave
         {

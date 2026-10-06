@@ -3,9 +3,10 @@ using UnityEngine;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 아쿠아리움 3D 탱크의 RT 프로듀서. 전용 카메라(cullingMask=Aquarium)를 투명 RenderTexture에 상시 렌더한다.
-    /// 표현(컨슈머)은 이 <see cref="TankTexture"/>를 바인딩만 한다: 지금=UI 창 RawImage, 이후=월페이퍼(전체화면 배경).
-    /// 창 개폐·표시 모드와 무관하게 항상 렌더되어야 헤엄/미리보기가 유지된다(오브젝트를 비활성화하지 말 것).
+    /// 아쿠아리움 3D 탱크의 RT 프로듀서. 전용 카메라를 투명 RenderTexture에 상시 렌더하고,
+    /// 헤엄 범위(로컬 박스)와 탱크 로컬 공간 Transform을 에이전트·월드 뷰에 제공한다.
+    /// 컨슈머는 <see cref="TankTexture"/>를 바인딩해 표시한다.
+    /// 창 개폐·표시 모드와 무관하게 항상 렌더되어야 하므로 오브젝트를 비활성화하지 않는다.
     /// </summary>
     [DisallowMultipleComponent]
     public class AquariumTankRenderer : MonoBehaviour
@@ -25,11 +26,35 @@ namespace DesktopCompanion.Views
 
         private RenderTexture m_rt;
 
-        /// <summary>컨슈머(RawImage/월페이퍼)가 바인딩할 렌더 텍스처.</summary>
+        /// <summary>컨슈머가 바인딩할 탱크 렌더 텍스처.</summary>
         public RenderTexture TankTexture => m_rt;
 
-        /// <summary>헤엄 범위(월드 좌표). 이 오브젝트 위치에 오프셋을 더한 박스.</summary>
-        public Bounds TankBounds => new Bounds(transform.position + m_boundsCenter, m_boundsSize);
+        /// <summary>로컬 헤엄 박스. 에이전트가 이 범위에서 목표 지점을 샘플링한다.</summary>
+        public Bounds LocalBounds => new Bounds(m_boundsCenter, m_boundsSize);
+
+        /// <summary>탱크 로컬 공간의 기준 Transform. 루트 회전이 반영된다.</summary>
+        public Transform TankSpace => transform;
+
+        /// <summary>
+        /// 루트 회전·스케일을 반영한 월드 AABB. 로컬 박스의 8코너를 월드로 변환해 감싼 값이다.
+        /// </summary>
+        public Bounds TankBounds
+        {
+            get
+            {
+                Vector3 c = m_boundsCenter, e = m_boundsSize * 0.5f;
+                Matrix4x4 m = transform.localToWorldMatrix;
+                var b = new Bounds(m.MultiplyPoint3x4(c + new Vector3(-e.x, -e.y, -e.z)), Vector3.zero);
+                b.Encapsulate(m.MultiplyPoint3x4(c + new Vector3(e.x, -e.y, -e.z)));
+                b.Encapsulate(m.MultiplyPoint3x4(c + new Vector3(-e.x, e.y, -e.z)));
+                b.Encapsulate(m.MultiplyPoint3x4(c + new Vector3(e.x, e.y, -e.z)));
+                b.Encapsulate(m.MultiplyPoint3x4(c + new Vector3(-e.x, -e.y, e.z)));
+                b.Encapsulate(m.MultiplyPoint3x4(c + new Vector3(e.x, -e.y, e.z)));
+                b.Encapsulate(m.MultiplyPoint3x4(c + new Vector3(-e.x, e.y, e.z)));
+                b.Encapsulate(m.MultiplyPoint3x4(c + new Vector3(e.x, e.y, e.z)));
+                return b;
+            }
+        }
 
         private void Awake()
         {
@@ -61,8 +86,10 @@ namespace DesktopCompanion.Views
 #if UNITY_EDITOR
         private void OnDrawGizmosSelected()
         {
+            // 로컬 박스를 루트 회전·스케일에 맞춰 그린다(회전한 헤엄 범위 확인용).
+            Gizmos.matrix = transform.localToWorldMatrix;
             Gizmos.color = new Color(0.3f, 0.7f, 1f, 0.4f);
-            Gizmos.DrawWireCube(transform.position + m_boundsCenter, m_boundsSize);
+            Gizmos.DrawWireCube(m_boundsCenter, m_boundsSize);
         }
 #endif
     }

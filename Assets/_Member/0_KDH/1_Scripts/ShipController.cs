@@ -6,7 +6,7 @@ namespace DesktopCompanion.Controllers
     {
         [Header("항해 속도 (초당 X 이동량)")]
         [Tooltip("맵 간의 거리와 도착 시간에 맞춰 이 속도를 조절하세요.")]
-        public float m_speed = 10f;
+        public float m_speed = 5f;
 
         private bool m_isTraveling = false;
 

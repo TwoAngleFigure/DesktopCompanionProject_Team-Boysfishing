@@ -4,9 +4,8 @@ using UnityEngine.UI;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 버튼으로 대상 창을 토글한다: 열려 있으면 Hide, 닫혀 있으면 Show.
-    /// 이미 열린 창의 버튼을 다시 눌러도 재-Show(스택 재삽입→재정렬)가 일어나지 않아
-    /// 창 순서가 흐트러지지 않는다. HideMode(SetActive/CanvasGroup) 무관하게 IsShown으로 판정.
+    /// 버튼 클릭으로 대상 창을 토글한다. 열려 있으면 Hide, 닫혀 있으면 Show를 호출한다.
+    /// 열림 여부는 HideMode와 무관하게 <see cref="UIWindowBase.IsShown"/>으로 판정한다.
     /// </summary>
     [RequireComponent(typeof(Button))]
     public class WindowToggleButton : MonoBehaviour

@@ -17,6 +17,7 @@ namespace DesktopCompanion.Data
         Rare = 2,
         Epic = 3,
         Legendary = 4,
+        Boss = 5,       // 티어별 보스 물고기. 일반 등급 위의 별도 축이라 자동판매 범위(≤Legendary)에서 제외된다
     }
 
     public enum ItemQuality
@@ -82,8 +83,15 @@ namespace DesktopCompanion.Data
         [SerializeField] private int m_tier;        // 아이템 수준(기획서 '아이템의 티어')
         [SerializeField] private int m_basePrice;   // 기준 판매가(0=판매 불가)
 
+        [TextArea]
+        [Tooltip("표시용 설명 문장. 수치로 보여줄 수 없는 효과(보스 소환 대상 등)를 이 칸에 적는다")]
+        [SerializeField] private string m_description;
+
         public ItemType Type => m_type;
         public int Tier => m_tier;
         public int BasePrice => m_basePrice;
+
+        /// <summary>표시용 설명 문장. 비어 있으면 표시 계층이 수치 등 다른 표현으로 대체한다.</summary>
+        public string Description => m_description;
     }
 }

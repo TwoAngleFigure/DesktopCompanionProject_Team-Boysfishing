@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using DesktopCompanion.Core;
 using DesktopCompanion.Data;
 using TMPro;
 using UnityEngine;
@@ -7,7 +8,7 @@ using UnityEngine.UI;
 
 namespace DesktopCompanion.Views
 {
-    public class InventoryWindowView : UIWindowBase
+    public class InventoryWindowView : UIWindowBase, IItemTooltipSource
     {
         [Header("Tab Buttons")]
         [SerializeField] private Button m_fishTabButton;
@@ -20,12 +21,12 @@ namespace DesktopCompanion.Views
         [Header("Slot Grid")]
         [SerializeField] private Transform m_slotRoot;
         [SerializeField] private InventorySlotView m_slotPrefab;
+        [SerializeField] private Sprite m_FishSlotBackGround;
+        [SerializeField] private Sprite m_MaterialsSlotBackGround;
+        [SerializeField] private Sprite m_EquipmentSlotBackGround;
 
         [Header("Gold")]
         [SerializeField] private TMP_Text m_goldText;
-
-        [Header("Hover Tooltip")]
-        [SerializeField] private InventoryItemTooltipView m_itemTooltip;
 
         [Header("Item Pickup")]
         [SerializeField] private ItemPickupController m_itemPickupController;
@@ -36,7 +37,17 @@ namespace DesktopCompanion.Views
         private readonly InventoryViewModel m_vm = new();
         private readonly List<InventorySlotView> m_slotViews = new();
 
-        private int m_hoveredSlotIndex = -1;
+        private readonly Dictionary<string, Sprite> m_runtimeIconCache = new();
+
+        public ItemTooltipData BuildTooltip(ItemSlotVD vd)
+        {
+            ItemTooltipData data = null;
+            if (vd != null && vd.HasEntity)
+            {
+                data = ItemTooltipBuilder.FromEntity(vd.Handle, EntityManager);
+            }
+            return data;
+        }
 
         public override void Bind()
         {
@@ -66,11 +77,6 @@ namespace DesktopCompanion.Views
                 Debug.LogError("[InventoryWindowView] ItemPickupController is not assigned.");
             }
 
-            if (m_itemTooltip == null)
-            {
-                Debug.LogError("[InventoryWindowView] InventoryItemTooltipView is not assigned.");
-            }
-
             if (m_fishTabButton != null)
             {
                 m_fishTabButton.onClick.AddListener(OnFishTabClicked);
@@ -94,8 +100,6 @@ namespace DesktopCompanion.Views
 
         public override void Unbind()
         {
-            ClearHoveredTooltip();
-
             if (m_itemPickupController != null)
             {
                 m_itemPickupController.OnPickupChanged -= RefreshPickupSourceFrames;
@@ -133,6 +137,8 @@ namespace DesktopCompanion.Views
             }
 
             m_vm.Unbind();
+
+            ClearRuntimeIconCache();
         }
 
         private void RefreshSlotViews(List<InventorySlotViewData> slots)
@@ -152,7 +158,22 @@ namespace DesktopCompanion.Views
                 InventorySlotViewData slotData = slots[i];
                 Sprite icon = GetIcon(slotData);
 
-                m_slotViews[i].Set(slotData, icon);
+                ItemSlotVD slotVd = ItemSlotVD.FromEntity(slots[i].Handle, EntityManager);
+
+                switch (m_vm.CurrentTab.Value)
+                {
+                    case ItemType.Equipment:
+                        m_slotViews[i].Set(slotData, icon, m_EquipmentSlotBackGround, slotVd, this);
+                        break;
+                    case ItemType.Materials:
+                        m_slotViews[i].Set(slotData, icon, m_MaterialsSlotBackGround, slotVd, this);
+                        break;
+                    case ItemType.Fish:
+                        m_slotViews[i].Set(slotData, icon, m_FishSlotBackGround, slotVd, this);
+                        break;
+                }
+                        
+
                 ApplySellSlotVisual(m_slotViews[i], slotData);
             }
 
@@ -164,8 +185,6 @@ namespace DesktopCompanion.Views
             }
 
             RefreshPickupSourceFrames();
-
-            RefreshHoveredTooltip();
         }
 
         private bool EnsureSlotViews(int requiredCount)
@@ -190,9 +209,7 @@ namespace DesktopCompanion.Views
                 slotView.Initialize(
                     slotIndex,
                     OnSlotClicked,
-                    OnSlotDoubleClicked,
-                    OnSlotPointerEntered,
-                    OnSlotPointerExited);
+                    OnSlotDoubleClicked);
 
                 m_slotViews.Add(slotView);
             }
@@ -224,7 +241,6 @@ namespace DesktopCompanion.Views
             if (m_sellView != null && m_sellView.IsSellMode)
             {
                 ClearPickup();
-                ClearHoveredTooltip();
 
                 if (!clickedSlot.IsEmpty)
                 {
@@ -248,8 +264,6 @@ namespace DesktopCompanion.Views
                 {
                     return;
                 }
-
-                ClearHoveredTooltip();
                 BeginPickup(clickedSlot);
                 return;
             }
@@ -269,7 +283,6 @@ namespace DesktopCompanion.Views
 
                 if (placed)
                 {
-                    ClearHoveredTooltip();
                     m_itemPickupController.ClearPickup();
                 }
 
@@ -324,14 +337,20 @@ namespace DesktopCompanion.Views
                 return;
             }
 
-            if (slotData.ItemType != ItemType.Equipment)
+            if (slotData.ItemType != ItemType.Equipment && slotData.ItemType != ItemType.Consumables)
             {
                 return;
             }
 
-            ClearHoveredTooltip();
-
-            bool equipped = m_vm.EquipEquipmentAtSlot(slotIndex);
+            bool equipped = false;
+            if(slotData.ItemType == ItemType.Equipment)
+            {
+                equipped = m_vm.EquipAtSlot(slotIndex, ItemType.Equipment);
+            }
+            else if(slotData.ItemType == ItemType.Consumables)
+            {
+                equipped = m_vm.EquipAtSlot(slotIndex, ItemType.Consumables);
+            }
 
             if (equipped)
             {
@@ -339,71 +358,6 @@ namespace DesktopCompanion.Views
             }
         }
 
-        private void OnSlotPointerEntered(int slotIndex)
-        {
-            m_hoveredSlotIndex = slotIndex;
-            RefreshHoveredTooltip();
-        }
-
-        private void OnSlotPointerExited(int slotIndex)
-        {
-            if (m_hoveredSlotIndex != slotIndex)
-            {
-                return;
-            }
-
-            ClearHoveredTooltip();
-        }
-
-        private void RefreshHoveredTooltip()
-        {
-            if (m_itemTooltip == null || m_hoveredSlotIndex < 0)
-            {
-                return;
-            }
-
-            List<InventorySlotViewData> slots = m_vm.Slots.Value;
-
-            if (slots == null || m_hoveredSlotIndex >= slots.Count)
-            {
-                ClearHoveredTooltip();
-                return;
-            }
-
-            InventorySlotViewData hoveredSlot = slots[m_hoveredSlotIndex];
-
-            // 빈 슬롯엔 Tooltip 미표시
-            if (hoveredSlot == null || hoveredSlot.IsEmpty)
-            {
-                ClearHoveredTooltip();
-                return;
-            }
-
-            if (m_hoveredSlotIndex >= m_slotViews.Count)
-            {
-                ClearHoveredTooltip();
-                return;
-            }
-
-            RectTransform slotRect =
-                m_slotViews[m_hoveredSlotIndex].transform as RectTransform;
-
-            if (slotRect == null)
-            {
-                ClearHoveredTooltip();
-                return;
-            }
-
-            Sprite icon = GetIcon(hoveredSlot);
-
-            m_itemTooltip.Show(hoveredSlot, icon, slotRect);
-        }
-
-        private void ClearHoveredTooltip()
-        {
-            m_hoveredSlotIndex = -1;
-            m_itemTooltip?.Hide();
-        }
 
         private Sprite GetIcon(InventorySlotViewData slotData)
         {
@@ -414,13 +368,90 @@ namespace DesktopCompanion.Views
                 return null;
             }
 
-            if (AssetProvider.TryGet<Sprite>(slotData.IconKey, out var icon))
+            string iconKey = slotData.IconKey;
+
+            // 원래 Sprite 타입으로 정상 캐시된 경우
+            if (AssetProvider.TryGet<Sprite>(iconKey, out Sprite sprite))
             {
-                return icon;
+                return sprite;
             }
 
-            Debug.LogWarning($"[Inventory] Icon not found for key: {slotData.IconKey}. Returning null.");
+            // 이전에 Texture2D에서 변환해둔 Sprite가 있는 경우
+            if (m_runtimeIconCache.TryGetValue(iconKey, out Sprite cachedSprite)
+                && cachedSprite != null)
+            {
+                return cachedSprite;
+            }
+
+            // 빌드에서 Texture2D로 캐시된 경우
+            if (AssetProvider.TryGet<Texture2D>(iconKey, out Texture2D texture)
+                && texture != null)
+            {
+                Sprite convertedSprite = CreateSpriteFromTexture(iconKey, texture);
+
+                if (convertedSprite != null)
+                {
+                    m_runtimeIconCache[iconKey] = convertedSprite;
+                    return convertedSprite;
+                }
+            }
+
+            // 실제 캐시 타입 확인용
+            if (AssetProvider.TryGet<UnityEngine.Object>(iconKey, out UnityEngine.Object cachedAsset))
+            {
+                return null;
+            }
+
+            Debug.LogWarning(
+                $"[Inventory] Icon asset not found. key: {iconKey}");
+
             return null;
+        }
+
+        private Sprite CreateSpriteFromTexture(string iconKey, Texture2D texture)
+        {
+            if (texture == null)
+            {
+                return null;
+            }
+
+            Rect textureRect = new(
+                0f,
+                0f,
+                texture.width,
+                texture.height);
+
+            Vector2 pivot = new(0.5f, 0.5f);
+
+            Sprite sprite = Sprite.Create(
+                texture,
+                textureRect,
+                pivot,
+                100f,
+                0,
+                SpriteMeshType.FullRect);
+
+            if (sprite == null)
+            {
+                return null;
+            }
+
+            sprite.name = $"{texture.name}_RuntimeSprite";
+
+            return sprite;
+        }
+
+        private void ClearRuntimeIconCache()
+        {
+            foreach (Sprite sprite in m_runtimeIconCache.Values)
+            {
+                if (sprite != null)
+                {
+                    Destroy(sprite);
+                }
+            }
+
+            m_runtimeIconCache.Clear();
         }
 
 
@@ -526,7 +557,6 @@ namespace DesktopCompanion.Views
             if (isSellMode)
             {
                 ClearPickup();
-                ClearHoveredTooltip();
             }
 
             RefreshSellSlotVisuals();
@@ -535,7 +565,6 @@ namespace DesktopCompanion.Views
         private void OnFishTabClicked()
         {
             ClearPickup();
-            ClearHoveredTooltip();
 
             m_vm.SelectTabCommand.Execute(ItemType.Fish);
         }
@@ -548,15 +577,12 @@ namespace DesktopCompanion.Views
                 m_itemPickupController.ClearPickup();
             }
 
-            ClearHoveredTooltip();
-
             m_vm.SelectTabCommand.Execute(ItemType.Equipment);
         }
 
         private void OnMaterialTabClicked()
         {
             ClearPickup();
-            ClearHoveredTooltip();
 
             m_vm.SelectTabCommand.Execute(ItemType.Materials);
         }
@@ -573,7 +599,6 @@ namespace DesktopCompanion.Views
         private void OnCloseButtonClicked()
         {
             ClearPickup();
-            ClearHoveredTooltip();
             m_sellView?.ResetSellState();
 
             Close();
@@ -589,6 +614,20 @@ namespace DesktopCompanion.Views
             // 천 단위 쉼표로 표시
             // 예: 1000 -> 1,000
             m_goldText.text = gold.ToString("N0");
+        }
+
+        //FishingSystem 참조용
+        public void OrganizeFishTab()
+        {
+            Show();
+            OnFishTabClicked();
+            EnterSellMode();
+        }
+
+
+        private void EnterSellMode()
+        {
+            m_sellView.EnterSellMode();
         }
     }
 }

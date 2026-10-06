@@ -4,11 +4,10 @@ using DesktopCompanion.Core;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 월드 View 유닛의 공통 베이스. 팀원은 이 클래스를 상속해 자기 오브젝트를 만들고,
-    /// Bind()에서 자기 System의 Action을 구독한다(WorldManager는 도메인을 모른다).
-    /// 수명·의존성 주입은 WorldManager가 관리한다.
+    /// 월드 View 유닛의 공통 베이스. 파생 클래스는 Bind()에서 자기 System의 Action을 구독한다.
+    /// 수명·의존성 주입은 WorldManager가 담당한다.
     ///
-    /// 흐름: OnEnable → WorldManager.Register(this) → (초기화 시점에) Inject → Bind
+    /// 흐름: OnEnable → WorldManager.Register(this) → Inject → Bind
     ///       OnDisable → Unbind → WorldManager.Unregister(this)
     /// </summary>
     public abstract class WorldViewBase : MonoBehaviour
@@ -34,10 +33,10 @@ namespace DesktopCompanion.Views
             AssetProvider = assetProvider;
         }
 
-        /// <summary>의존성 주입 후 호출. 자기 System Action 구독(+=)을 여기서 한다.</summary>
+        /// <summary>의존성 주입 후 호출된다. System Action 구독(+=)을 수행한다.</summary>
         public abstract void Bind();
 
-        /// <summary>구독 해제(-=). Bind와 1:1 대칭. OnDisable에서 호출된다.</summary>
+        /// <summary>구독을 해제한다(-=). Bind와 1:1 대칭이며 OnDisable에서 호출된다.</summary>
         public abstract void Unbind();
     }
 }

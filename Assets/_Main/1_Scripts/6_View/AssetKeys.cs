@@ -5,9 +5,8 @@ namespace DesktopCompanion.Views
     /// <summary>에셋 용도 접미 상수(D18). 필요 시 확장.</summary>
     public static class AssetUsage
     {
-        public const string Icon = "Icon";             // UI 아이콘(Sprite)
-        public const string Model = "Model";           // 월드 프리팹(GameObject)
-        public const string Background = "Background"; // 스테이지 배경
+        public const string Icon = "Icon";   // UI 아이콘(Sprite)
+        public const string Model = "Model"; // 월드 프리팹(GameObject) — 스테이지 배경도 이 용도로 싣는다
     }
 
     /// <summary>
@@ -16,11 +15,43 @@ namespace DesktopCompanion.Views
     /// </summary>
     public static class AssetKeys
     {
-        /// <summary>키 베이스(용도 접미 제외). 예: "ItemData_Fish_100001" 또는 오버라이드 값.</summary>
+        /// <summary>기본(대체) 에셋 키 접두. 파생 키가 없을 때 AssetProvider가 대신 조회한다.</summary>
+        public const string DefaultPrefix = "Default";
+
+        /// <summary>용도별 기본 에셋 키. 예: DefaultOf(AssetUsage.Icon) → "Default_Icon".</summary>
+        public static string DefaultOf(string usage)
+            => $"{DefaultPrefix}_{usage}";
+
+        /// <summary>키에서 용도 접미를 추출한다. 예: "ItemData_Fish_100001_Icon" → "Icon".</summary>
+        public static string UsageOf(string key)
+        {
+            if (string.IsNullOrEmpty(key))
+            {
+                return null;
+            }
+            int separator = key.LastIndexOf('_');
+            return separator >= 0 && separator < key.Length - 1
+                ? key.Substring(separator + 1)
+                : null;
+        }
+
+        /// <summary>
+        /// 키 베이스(용도 접미 제외). 예: "ItemData_Fish_100001" 또는 오버라이드 값.
+        /// BattleFishData는 대응 ItemData_Fish와 비주얼을 공유하므로 그 베이스를 그대로 빌려 쓴다
+        /// — 같은 프리팹을 BattleFishData 주소로 중복 등록하지 않기 위함이다.
+        /// </summary>
         public static string BaseOf(GameData data)
-            => string.IsNullOrEmpty(data.AssetKey)
-                ? $"{data.GetType().Name}_{data.ID}"
-                : data.AssetKey;
+        {
+            if (string.IsNullOrEmpty(data.AssetKey) == false)
+            {
+                return data.AssetKey;   // 명시 오버라이드가 최우선(공유/스킨)
+            }
+            if (data is BattleFishData battleFish && battleFish.ItemFish != null)
+            {
+                return BaseOf(battleFish.ItemFish);
+            }
+            return $"{data.GetType().Name}_{data.ID}";
+        }
 
         /// <summary>최종 키. 예: Of(fishData, AssetUsage.Icon) → "ItemData_Fish_100001_Icon".</summary>
         public static string Of(GameData data, string usage)

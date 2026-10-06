@@ -259,15 +259,15 @@ namespace DesktopCompanion.Views
 
             CleanupInvalidSelections();
 
-            List<SellRequest> requests = BuildSellRequests();
+            List<ItemQuantity> items = BuildSellItems();
 
-            if (requests.Count == 0)
+            if (items.Count == 0)
             {
                 ResetSellState();
                 return;
             }
 
-            if (!m_shopSystem.SellItems(requests, out _))
+            if (!m_shopSystem.SellItems(items, out _))
             {
                 IsConfirmPopupOpen.Value = false;
                 CleanupInvalidSelections();
@@ -291,6 +291,7 @@ namespace DesktopCompanion.Views
             IsSellMode.Value = false;
             IsQuantityPopupOpen.Value = false;
             IsConfirmPopupOpen.Value = false;
+            IsFilterPopupOpen.Value = false;
 
             QuantityItemName.Value = string.Empty;
             QuantityAmount.Value = 1;
@@ -327,16 +328,16 @@ namespace DesktopCompanion.Views
             }
         }
 
-        private List<SellRequest> BuildSellRequests()
+        private List<ItemQuantity> BuildSellItems()
         {
-            List<SellRequest> requests = new();
+            List<ItemQuantity> items = new();
 
             foreach (KeyValuePair<EntityHandle, int> pair in m_selectedSellAmounts)
             {
-                requests.Add(new SellRequest(pair.Key, pair.Value));
+                items.Add(new ItemQuantity(pair.Key, pair.Value));
             }
 
-            return requests;
+            return items;
         }
 
         private void RefreshSellSelection()
@@ -354,12 +355,12 @@ namespace DesktopCompanion.Views
                 totalAmount += amount;
             }
 
-            List<SellRequest> requests = BuildSellRequests();
+            List<ItemQuantity> items = BuildSellItems();
 
             SelectedItemCount.Value = m_selectedSellAmounts.Count;
             SelectedTotalAmount.Value = totalAmount;
             ExpectedGold.Value = m_shopSystem != null
-                ? m_shopSystem.CalculateSellGold(requests)
+                ? m_shopSystem.CalculateSellGold(items)
                 : 0;
         }
 
@@ -376,6 +377,8 @@ namespace DesktopCompanion.Views
 
         private void CloseFilter()
         {
+            // 적용되지 않은 값 되돌림
+            RefreshAutoSellFilter();
             IsFilterPopupOpen.Value = false;
         }
 
@@ -396,8 +399,14 @@ namespace DesktopCompanion.Views
                 return;
             }
 
-            m_inventorySystem.SetAutoSellFilter(true, AutoSellMaxQuality.Value, AutoSellMaxRarity.Value);
-            IsFilterPopupOpen.Value = false;
+            if (m_inventorySystem.SetAutoSellFilter(true, AutoSellMaxQuality.Value, AutoSellMaxRarity.Value))
+            {
+                IsFilterPopupOpen.Value = false;
+            }
+            else
+            {
+                RefreshAutoSellFilter();
+            }
         }
 
         private void DisableAutoSell()
@@ -407,7 +416,14 @@ namespace DesktopCompanion.Views
                 return;
             }
 
-            m_inventorySystem.SetAutoSellFilter(false, AutoSellMaxQuality.Value, AutoSellMaxRarity.Value);
+            // 해제는 활성 상태만 바꾸고 현재 기준값은 유지합니다.
+            if (!m_inventorySystem.SetAutoSellFilter(false, m_inventorySystem.MaxAutoSellQuality, m_inventorySystem.MaxAutoSellRarity))
+            {
+                RefreshAutoSellFilter();
+                return;
+            }
+
+            RefreshAutoSellFilter();
             IsFilterPopupOpen.Value = false;
         }
 
