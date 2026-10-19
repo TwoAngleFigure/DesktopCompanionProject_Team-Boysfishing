@@ -30,7 +30,7 @@ namespace DesktopCompanion.Data
         [SerializeField] private float m_rarityProbability;
 
         [Header("Main Stat Formulas")]
-        [SerializeField] private StatFormula_New[] m_statFormulas;
+        [SerializeField] private StatFormula[] m_statFormulas;
 
         [Header("Auto Fishing Settings")]
         [Tooltip("자동 릴링 공격 간격(초). 수동·자동 공격력은 동일하다.")]
@@ -60,7 +60,7 @@ namespace DesktopCompanion.Data
         public float SizeModifier => m_sizeModifier;
         public float RarityProbability => m_rarityProbability;
 
-        public IReadOnlyList<StatFormula_New> StatFormulas => m_statFormulas ?? System.Array.Empty<StatFormula_New>();
+        public IReadOnlyList<StatFormula> StatFormulas => m_statFormulas ?? System.Array.Empty<StatFormula>();
 
         public float AutoAttackInterval => m_autoAttackInterval;
         public float BaseGoldGettingMultiply => m_baseGoldGettingMultiply;
