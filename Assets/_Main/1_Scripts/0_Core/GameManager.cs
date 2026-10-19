@@ -142,6 +142,8 @@ namespace DesktopCompanion.Core
 
             m_systemManager.Register(new DesktopCompanion.Systems.AquariumSystem());   // Inventory 이후(생산물 지급 의존)
 
+            m_systemManager.Register(new DesktopCompanion.Systems.RandomTableSystem());   // Mixture 이전(굴리기 제공)
+
             m_systemManager.Register(new DesktopCompanion.Systems.MixtureSystem());
 
             m_systemManager.Register(new DesktopCompanion.Systems.TutorialSystem());   // 타 System 구독만 하므로 최후미

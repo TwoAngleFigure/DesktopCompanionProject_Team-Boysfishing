@@ -224,7 +224,8 @@ namespace DesktopCompanion.Views
         /// <see cref="UIWindowBase.ClosableByShortcut"/>가 켜진 첫 창을 닫고, 꺼진 창은 건너뛴다.
         /// 특정 창을 지목해 닫을 때는 그 창의 Close()/Hide()를 직접 호출한다.
         /// </summary>
-        public void CloseTopWindow()
+        /// <returns>실제로 닫은 창이 있으면 true. 닫기 입력이 그 다음 동작으로 넘어갈지 판단하는 데 쓴다.</returns>
+        public bool CloseTopWindow()
         {
             for (int i = m_activeWindows.Count - 1; i >= 0; i--)
             {
@@ -239,11 +240,14 @@ namespace DesktopCompanion.Views
                 }
 
                 window.Close();   // → Hide() (HideMode에 따라 CanvasGroup 숨김 또는 SetActive(false)) → RemoveActiveWindow
-                return;
+                return true;
             }
+
+            return false;   // 열린 창이 없거나 전부 보호 창이다
         }
 
-        /// <summary>중앙 닫기 요청의 정적 진입점(우클릭·ESC 등 닫기 입력이 호출한다).</summary>
-        public static void RequestCloseTopWindow() => s_instance?.CloseTopWindow();
+        /// <summary>중앙 닫기 요청의 정적 진입점(ESC 등 닫기 입력이 호출한다).</summary>
+        /// <returns>실제로 닫은 창이 있으면 true.</returns>
+        public static bool RequestCloseTopWindow() => s_instance != null && s_instance.CloseTopWindow();
     }
 }

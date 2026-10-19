@@ -117,11 +117,17 @@ namespace DesktopCompanion.Views
                 // 칸에 보이는 것은 레시피가 아니라 '결과물 아이템'이다 — 정의 기반으로 슬롯을 만든다.
                 ItemSlotVD slotVD = ItemSlotVD.FromData(m_viewModel.GetResultData(recipe), recipe.m_resultCount);
 
-                // 결과 아이템 정의가 없는 레시피(랜덤 장비 생산 등)는 아이콘 키도 없다.
-                // 칸이 통째로 비어 보이지 않도록 기본 아이콘으로 대신 채운다.
-                string iconKey = slotVD != null ? slotVD.IconKey : AssetKeys.DefaultOf(AssetUsage.Icon);
+                // 랜덤 테이블 결과는 ItemData가 없어 슬롯 VD를 만들 수 없다. 아이콘 키만 테이블 정의에서 얻는다.
+                string iconKey = slotVD != null ? slotVD.IconKey : ResolveResultIconKey(recipe);
 
-                slotObj.Set(recipe, slotVD, ResolveIcon(iconKey), this, SelectRecipe);
+                Sprite icon = ResolveIcon(iconKey);
+                if (icon == null)
+                {
+                    // 테이블 전용 아이콘이 아직 없을 수 있다. 칸이 통째로 비어 보이지 않도록 기본 아이콘으로 대신 채운다.
+                    icon = ResolveIcon(AssetKeys.DefaultOf(AssetUsage.Icon));
+                }
+
+                slotObj.Set(recipe, slotVD, icon, this, SelectRecipe);
             }
         }
 
@@ -284,6 +290,16 @@ namespace DesktopCompanion.Views
             TooltipItemKind.Consumables => ItemType.Consumables,
             _ => default,
         };
+
+        // 결과 아이템 정의가 없는 레시피(랜덤 테이블)의 아이콘 키. 테이블도 GameData라 규약이 그대로 적용된다.
+        private string ResolveResultIconKey(RecipeData_Mixture recipe)
+        {
+            GameData definition = m_viewModel.GetResultDefinition(recipe);
+
+            return definition != null
+                ? AssetKeys.Of(definition, AssetUsage.Icon)
+                : AssetKeys.DefaultOf(AssetUsage.Icon);
+        }
 
         private Sprite ResolveIcon(string iconKey)
         {

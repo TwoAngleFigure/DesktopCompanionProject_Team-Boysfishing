@@ -14,13 +14,4 @@ public class ShopProducts : GameData
     public bool IsSummon => m_isSummon;
     public int Tier => m_tier;
     public int Price => m_price;
-
-    public ShopProducts(int baseId, ItemType itemType, bool isSummon, int tier, int price)
-    {
-        m_baseId = baseId;
-        m_itemType = itemType;
-        m_isSummon = isSummon;
-        m_tier = tier;
-        m_price = price;
-    }
 }

@@ -19,7 +19,7 @@ namespace DesktopCompanion.Views
         [Tooltip("티어 색으로 칠할 뱃지 배경(선택). 슬롯 프리팹과 같은 ItemGradeStyle 에셋을 쓰면 색이 일치한다")]
         [SerializeField] private Image m_tierBadge;
 
-        [Tooltip("ItemData.Description을 표시한다(선택). 설명이 비어 있으면 이 오브젝트를 통째로 끈다")]
+        [Tooltip("ItemData.Description을 표시한다(선택). 설명이 비어 있으면 \"이름 입니다\"로 대체한다")]
         [SerializeField] private TMP_Text m_descriptionText;
 
         [Header("등급 색")]
@@ -56,12 +56,19 @@ namespace DesktopCompanion.Views
             // 슬롯 테두리와 같은 티어 색 — 슬롯에서 팝업으로 시선이 옮겨가도 같은 색이라 연결이 읽힌다.
             if (m_style != null) ApplyBadge(m_tierText, m_tierBadge, m_style.TierColor(data.Tier));
 
-            // 설명이 없는 아이템이 대부분이라, 비면 줄을 통째로 감춰 빈 여백이 생기지 않게 한다.
+            // 설명이 없는 아이템이 대부분이다. 줄을 감추면 툴팁 높이가 아이템마다 들쭉날쭉해지므로
+            // 이름으로 기본 문장을 만들어 채운다. 이름까지 없을 때만 줄을 감춘다.
             if (m_descriptionText != null)
             {
-                bool hasDescription = string.IsNullOrEmpty(data.Description) == false;
+                string description = data.Description;
+                if (string.IsNullOrEmpty(description))
+                {
+                    description = string.IsNullOrEmpty(data.Name) ? string.Empty : $"{data.Name} 입니다";
+                }
+
+                bool hasDescription = string.IsNullOrEmpty(description) == false;
                 m_descriptionText.gameObject.SetActive(hasDescription);
-                if (hasDescription) m_descriptionText.text = data.Description;
+                if (hasDescription) m_descriptionText.text = description;
             }
 
             ApplyBody(data);

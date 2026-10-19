@@ -96,6 +96,11 @@ namespace DesktopCompanion.Views
         [SerializeField] private bool m_lockSelectedButton = false;
 
         private UnityAction[] m_handlers;   // 버튼별 리스너 — Unbind에서 이것만 걷어낸다(타 리스너 보존)
+
+        // 탭 버튼의 연출. 버튼이 계층을 뒤져 자기 창을 찾게 두면 탭 창이 중첩된 곳에서 바깥 창을 잡으므로,
+        // 탭 목록을 가진 이쪽이 직접 쥐고 선택 상태를 넣어 준다.
+        private ButtonStateOwner[] m_stateOwners;
+
         private int m_selectedIndex = -1;
 
         /// <summary>현재 선택된 탭 인덱스. 아직 선택된 적이 없으면 -1이다.</summary>
@@ -112,6 +117,7 @@ namespace DesktopCompanion.Views
         public override void Bind()
         {
             m_handlers = new UnityAction[m_tabs.Count];
+            m_stateOwners = new ButtonStateOwner[m_tabs.Count];
 
             for (int i = 0; i < m_tabs.Count; i++)
             {
@@ -132,6 +138,18 @@ namespace DesktopCompanion.Views
                 int index = i;   // 클로저가 루프 변수를 잡지 않도록 복사
                 m_handlers[i] = () => SelectTab(index);
                 tab.Button.onClick.AddListener(m_handlers[i]);
+
+                // 소유자가 직접 알려 준다. 버튼이 계층을 거슬러 올라가 찾게 두면, 탭 창이 중첩된 곳에서
+                // 자기 창이 아니라 더 가까운 바깥 창을 잡는다(§TabBookmarkButton).
+                if (tab.Button.TryGetComponent(out TabBookmarkButton bookmark))
+                {
+                    bookmark.Attach(this, index);
+                }
+
+                if (tab.Button.TryGetComponent(out ButtonStateOwner stateOwner))
+                {
+                    m_stateOwners[i] = stateOwner;
+                }
             }
 
             // 열림 정책에 따라 시작 탭 결정. 강제 적용해 '겹쳐 보이는 초기 상태'를 정리한다.
@@ -155,8 +173,14 @@ namespace DesktopCompanion.Views
                 }
                 tab.Button.onClick.RemoveListener(m_handlers[i]);
                 tab.Button.interactable = true;   // 잠금 상태가 창을 닫은 뒤까지 남지 않도록 되돌린다
+
+                if (tab.Button.TryGetComponent(out TabBookmarkButton bookmark))
+                {
+                    bookmark.Detach(this);
+                }
             }
             m_handlers = null;
+            m_stateOwners = null;
         }
 
         /// <summary>탭을 전환한다. 인덱스가 범위를 벗어나면 무시한다.</summary>
@@ -227,6 +251,19 @@ namespace DesktopCompanion.Views
             }
 
             m_selectedIndex = index;
+
+            // 선택 상태를 탭 버튼 연출에 넣는다. 창이 목록을 갖고 있으므로 버튼이 찾아 나설 필요가 없다.
+            if (m_stateOwners != null)
+            {
+                for (int i = 0; i < m_stateOwners.Length; i++)
+                {
+                    if (m_stateOwners[i] != null)
+                    {
+                        m_stateOwners[i].SetActive(i == index);
+                    }
+                }
+            }
+
             SelectedChanged?.Invoke(index);   // 탭 버튼 연출 등 표시자에게 알린다
         }
 
