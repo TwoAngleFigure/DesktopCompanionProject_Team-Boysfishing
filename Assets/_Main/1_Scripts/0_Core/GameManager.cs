@@ -136,6 +136,8 @@ namespace DesktopCompanion.Core
 
             m_systemManager.Register(new DesktopCompanion.Systems.StageSystem());
 
+            m_systemManager.Register(new DesktopCompanion.Systems.WorldSystemBridge());
+
             m_systemManager.Register(new DesktopCompanion.Systems.AquariumSystem());   // Inventory 이후(생산물 지급 의존)
         }
 

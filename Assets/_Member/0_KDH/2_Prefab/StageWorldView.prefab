@@ -41,7 +41,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 3294695391222888595}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5db5709f0d66ace488a0ae748ce8b8b4, type: 3}
+  m_Script: {fileID: 11500000, guid: 0adf2722c647d3c4783698f67e9a8d25, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Views.StageWorldView
+  m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Views.StageCycleWorldView
   m_shipController: {fileID: 0}
+  m_nearLayer: {fileID: 0}
+  m_midLayer: {fileID: 0}
+  m_farLayer: {fileID: 0}
+  m_nearParallax: 0
+  m_midParallax: 0.35
+  m_farParallax: 0.65
