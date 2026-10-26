@@ -124,6 +124,8 @@ namespace DesktopCompanion.Core
         // (2단계 초기화로 순서 민감도는 낮지만, 같은 phase 내 tie-break를 위해 결정적으로 고정)
         private void RegisterSystems()
         {
+            m_systemManager.Register(new DesktopCompanion.Systems.RecordSystem());   // 기반 시스템 — 다른 System을 참조하지 않는다
+
             m_systemManager.Register(new DesktopCompanion.Systems.PlayerSystem());
 
             m_systemManager.Register(new DesktopCompanion.Systems.CurrencySystem());

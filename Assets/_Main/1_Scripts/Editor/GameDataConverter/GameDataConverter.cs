@@ -69,8 +69,13 @@ namespace DesktopCompanion.EditorTools
 
                 string summary = BuildSummary(items);
                 Debug.Log($"[GameDataConverter] 변환 완료 → {outputPath}\n{summary}");
+
+                // 시트 조건 칸(m_condition)을 런타임과 같은 규칙으로 검증한다. 오류는 Console에 데이터 종류·ID와 함께 남는다.
+                int conditionErrors = RecordConditionValidator.Validate(items, out int conditionCount);
+
                 EditorUtility.DisplayDialog("GameData 변환 완료",
                     $"{Path.GetFileName(xlsxPath)} → StreamingAssets/Data/{OutputFileName}\n\n{summary}\n\n" +
+                    $"기록 조건: {conditionCount}건 검사, 오류 {conditionErrors}건\n\n" +
                     "에러/경고는 Console 창을 확인하세요.", "확인");
             }
             catch (System.Exception e)
