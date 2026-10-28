@@ -30,6 +30,7 @@ Shader "Hidden/BFPixelizer/Downsample"
 
             // _BlitTexture(Blit.hlsl) = 오프스크린 컬러(풀해상도).
             TEXTURE2D_X(_BFP_OffMeta);
+            TEXTURE2D_X(_BFP_OffAlpha);
             TEXTURE2D_X_FLOAT(_BFP_OffDepth);
             float _BFP_CellSize; // N_rt
 
@@ -37,18 +38,21 @@ Shader "Hidden/BFPixelizer/Downsample"
             {
                 half4 color : SV_Target0;
                 half4 meta : SV_Target1;
+                half2 alpha : SV_Target2; // r = 오브젝트 알파, g = 아웃라인 투명도(계획 15)
                 float depth : SV_Depth;
             };
 
             FragOutput frag(Varyings input)
             {
-                int2 cell = int2(input.positionCS.xy);      // 저해상도 타깃의 픽셀 = 셀
-                int n = max(1, (int)_BFP_CellSize);
-                int2 src = cell * n + n / 2;                 // 블록 중앙 텍셀(전역 격자와 정렬)
+                // 좌표·셀 크기 모두 음수가 아니므로 uint로 계산한다(부호 있는 정수 나눗셈 회피).
+                uint2 cell = uint2(input.positionCS.xy);    // 저해상도 타깃의 픽셀 = 셀
+                uint n = max(1u, (uint)_BFP_CellSize);
+                uint2 src = cell * n + n / 2;                // 블록 중앙 텍셀(전역 격자와 정렬)
 
                 FragOutput output;
                 output.color = LOAD_TEXTURE2D_X(_BlitTexture, src);
                 output.meta = LOAD_TEXTURE2D_X(_BFP_OffMeta, src);
+                output.alpha = LOAD_TEXTURE2D_X(_BFP_OffAlpha, src).rg;
                 output.depth = LOAD_TEXTURE2D_X(_BFP_OffDepth, src).r;
                 return output;
             }

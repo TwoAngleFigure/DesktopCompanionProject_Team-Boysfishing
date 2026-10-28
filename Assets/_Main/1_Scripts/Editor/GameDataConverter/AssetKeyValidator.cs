@@ -26,8 +26,8 @@ namespace DesktopCompanion.EditorTools
             { typeof(ItemData_Materials),   new[] { AssetUsage.Icon } },
             { typeof(ItemData_Consumables), new[] { AssetUsage.Icon } },
             { typeof(BattleFishData),       new[] { AssetUsage.Model } },
-            { typeof(StageData),            new[] { AssetUsage.Background } },
             // PlayerData/LicenseData: 현재 비주얼 에셋 불요 → 미등록(검사 제외)
+            // StageData: 배경을 Model 용도로 싣는다(StageWorldView) — 전용 Background 용도는 미사용이라 검사 제외
         };
 
         [MenuItem("Tools/DesktopCompanion/에셋 키 검증")]

@@ -4,19 +4,34 @@
 //    BFPixelizerFeature의 RendererList만 이 태그로 드로우한다.
 //  - 정점 스냅: 오브젝트 피벗(모델 행렬 원점)을 전역 매크로픽셀 격자에 맞추는 서브픽셀
 //    보정을 정점에서 수행 → 격자와 지오메트리가 항상 정렬(크리프 구조적 제거).
-//  - MRT: RT0 = 라이팅 색(a=커버리지 1), RT1 = (ID, 아웃라인 RGB).
+//  - MRT: RT0 = 라이팅 색(a=커버리지 1), RT1 = (ID+우선권 패킹, 아웃라인 RGB).
 //  - V3: 메인 라이트 그림자 수신(케스케이드/소프트) + ShadowCaster(그림자 캐스팅).
 //    ShadowCaster는 라이트 공간이므로 정점 스냅을 적용하지 않는다.
 Shader "BFPixelizer/PixelizedLit"
 {
     Properties
     {
-        _BaseMap("Albedo", 2D) = "white" {}
-        _BaseColor("Color", Color) = (1, 1, 1, 1)
-        _PixelSize("Pixel Size (V1: 전역 격자 사용 — 유보)", Range(1, 5)) = 3
-        _OutlineColor("Outline Color", Color) = (0, 0, 0, 1)
-        _ObjectId("Object Id (겹침 아웃라인 구분, 1~255)", Range(1, 255)) = 1
-        _RenderingLayers("Rendering Layers (수광 레이어 비트, 일반=1)", Float) = 1
+        _BaseMap                      ("Albedo", 2D)                   = "white" {}
+        _BaseColor                    ("Color", Color)                 = (1, 1, 1, 1)
+        _PixelSize                    ("Pixel Size", Range(1, 5))      = 3
+        _OutlineColor                 ("Outline Color", Color)         = (0, 0, 0, 1)
+        // ⚠ 이름에 _BFP_ 접두사 필수: 단순 `_ObjectId`는 Unity 에디터의 씬 뷰 피킹이 쓰는
+        // 전역 int 프로퍼티와 충돌해 머티리얼 값이 무시되고 항상 0으로 읽힌다.
+        _BFP_ObjectId                 ("Object Id", Range(1, 255))     = 1
+        // 아웃라인 우선권(계획 33). ID가 다른 두 오브젝트가 맞닿은 구간에서 값이 큰 쪽만 그린다.
+        // 0 = 기본(우선권 없음) — 0끼리 만나면 양쪽 다 그리는 종전 거동이 된다.
+        [IntRange] _BFP_OutlinePriority ("Outline Priority", Range(0, 7)) = 0
+        // 수광 레이어 비트(일반=1, 물=2). 자세한 배경은 프래그먼트 주석 참고.
+        _RenderingLayers              ("Rendering Layers", Float)      = 1
+
+        // 알파(계획 15). 반투명으로 쓰려면 머티리얼 인스펙터의 Render Queue를
+        // Transparent(3000)로 바꿔야 한다 — 그래야 투명 트랙(물 이후 합성)으로 분류된다.
+        _Alpha                        ("Alpha", Range(0, 1))           = 1
+        [Toggle] _OutlineFollowsAlpha ("Outline Follows Alpha", Float) = 0
+
+        // 언릿(빛 영향 무시, 원색 그대로). [ToggleUI]는 인스펙터 토글만 제공하고
+        // 셰이더 키워드를 만들지 않는다 → 라이팅 multi_compile 많은 이 셰이더의 변형 폭증 방지.
+        [ToggleUI] _Unlit             ("Unlit", Float)                 = 0
     }
 
     SubShader
@@ -51,6 +66,7 @@ Shader "BFPixelizer/PixelizedLit"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "BFPixelizerMeta.hlsl" // meta.r 패킹 규약(ID + 256×우선권)
 
             TEXTURE2D(_BaseMap);
             SAMPLER(sampler_BaseMap);
@@ -60,8 +76,14 @@ Shader "BFPixelizer/PixelizedLit"
             half4 _BaseColor;
             float _PixelSize;
             half4 _OutlineColor;
-            float _ObjectId;
+            float _BFP_ObjectId;
+            // ⚠ UnityPerMaterial은 메인 패스와 ShadowCaster에 중복 선언된다. SRP Batcher는 두
+            // 레이아웃이 완전히 일치할 때만 배칭을 유지하므로 추가·삭제는 반드시 양쪽 같은 위치에.
+            float _BFP_OutlinePriority;
             float _RenderingLayers;
+            float _Alpha;
+            float _OutlineFollowsAlpha;
+            float _Unlit;
             CBUFFER_END
 
             // 피처가 오프스크린 패스에서 설정하는 전역(메타 RT 크기·수퍼샘플 배율·전역 셀 크기).
@@ -113,10 +135,13 @@ Shader "BFPixelizer/PixelizedLit"
                 return output;
             }
 
+            // 채널 배치(계획 15 G0). 커버리지는 meta.r(ObjectId, 배경=0)이 담당하므로
+            // color.a는 아웃라인 강도 전용이 되었다(구 0.5+a*0.5 인코딩 폐지).
             struct FragOutput
             {
-                half4 color : SV_Target0; // 라이팅 결과, a = 커버리지(1)
-                half4 meta : SV_Target1;  // R = ID, GBA = 아웃라인 색
+                half4 color : SV_Target0; // rgb = 라이팅 결과, a = 아웃라인 강도(0~1)
+                half4 meta  : SV_Target1; // r = ObjectId + 256×우선권(0 = 배경 = 커버리지), gba = 아웃라인 RGB
+                half2 alpha : SV_Target2; // r = 오브젝트 알파, g = 아웃라인 투명도
             };
 
             FragOutput frag(Varyings input)
@@ -182,10 +207,18 @@ Shader "BFPixelizer/PixelizedLit"
 
                 half3 ambient = SampleSH(normalWS);
 
+                // Unlit: 라이팅·앰비언트를 모두 건너뛰고 원색(_BaseMap × _BaseColor) 그대로 출력.
+                half3 shaded = albedo.rgb * (lighting + ambient);
+                half3 finalRGB = (_Unlit > 0.5) ? albedo.rgb : shaded;
+
                 FragOutput output;
-                // a = 커버리지 + 아웃라인 알파 인코딩: 0.5(알파0) ~ 1.0(알파1). 커버리지 판정(≥0.5)과 호환.
-                output.color = half4(albedo.rgb * (lighting + ambient), 0.5 + saturate(_OutlineColor.a) * 0.5);
-                output.meta = half4(_ObjectId, _OutlineColor.rgb);
+                output.color = half4(finalRGB, saturate(_OutlineColor.a));
+                output.meta = half4(BFP_PackMeta(_BFP_ObjectId, _BFP_OutlinePriority), _OutlineColor.rgb);
+                // 아웃라인 투명도는 여기서 확정한다(토글이 합성 셰이더까지 전파될 필요 없음).
+                // OFF면 1 → 내부가 투명해져도 테두리는 불투명하게 남는다(아쿠아리움 유리 룩).
+                // _Alpha(전역 조절) × 텍스처 알파 × _BaseColor 알파 → URP Lit과 동일한 알파 공식.
+                half objectAlpha = saturate(_Alpha * albedo.a);
+                output.alpha = half2(objectAlpha, _OutlineFollowsAlpha > 0.5 ? objectAlpha : 1.0);
                 return output;
             }
             ENDHLSL
@@ -216,8 +249,14 @@ Shader "BFPixelizer/PixelizedLit"
             half4 _BaseColor;
             float _PixelSize;
             half4 _OutlineColor;
-            float _ObjectId;
+            float _BFP_ObjectId;
+            // ⚠ UnityPerMaterial은 메인 패스와 ShadowCaster에 중복 선언된다. SRP Batcher는 두
+            // 레이아웃이 완전히 일치할 때만 배칭을 유지하므로 추가·삭제는 반드시 양쪽 같은 위치에.
+            float _BFP_OutlinePriority;
             float _RenderingLayers;
+            float _Alpha;
+            float _OutlineFollowsAlpha;
+            float _Unlit;
             CBUFFER_END
 
             float3 _LightDirection;

@@ -3,8 +3,7 @@ using System;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 실행 가능한 사용자 행동(View→System 명령의 최소 단위).
-    /// View 위젯이 System을 직접 부르지 않고 이 명령에 바인딩한다.
+    /// View 위젯이 바인딩하는 사용자 명령. 실행 동작과 실행 가능 조건을 함께 보유한다.
     /// </summary>
     public class RelayCommand
     {
@@ -25,7 +24,7 @@ namespace DesktopCompanion.Views
         }
     }
 
-    /// <summary>인자 있는 명령(예: 슬롯 인덱스 (from, to)).</summary>
+    /// <summary>인자를 받는 사용자 명령.</summary>
     public class RelayCommand<TArg>
     {
         private readonly Action<TArg> m_execute;

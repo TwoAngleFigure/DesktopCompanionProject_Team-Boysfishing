@@ -21,17 +21,28 @@ namespace DesktopCompanion.Views
         private void Update()
         {
             if (!m_isInitialized || m_mainCamera == null) return;
-
             float halfHeight = m_mainCamera.orthographicSize;
             float halfWidth = halfHeight * m_mainCamera.aspect;
 
-            float cameraRightEdgeX = m_mainCamera.transform.position.x + halfWidth;
-
-            if (transform.position.x > cameraRightEdgeX + m_destroyMargin)
+            float parallaxFactor = 0f;
+            StageBlueprint blueprint = GetComponentInParent<StageBlueprint>();
+            if (blueprint != null && transform.parent != null)
             {
-                Debug.Log($"[WorldProp] {gameObject.name} 카메라 뒤로 멀어짐 -> 스스로 파괴");
+                if (transform.parent == blueprint.m_farLayer) parallaxFactor = blueprint.m_farParallax;
+                else if (transform.parent == blueprint.m_midLayer) parallaxFactor = blueprint.m_midParallax;
+                else if (transform.parent == blueprint.m_nearLayer) parallaxFactor = blueprint.m_nearParallax;
+            }
+
+            float effectiveFactor = Mathf.Max(1f - parallaxFactor, 0.15f);
+            float rawRelativeOffset = transform.position.x - m_mainCamera.transform.position.x;
+            float correctedOffset = rawRelativeOffset * effectiveFactor;
+
+            if (correctedOffset > halfWidth + m_destroyMargin)
+            {
+                Debug.Log($"[WorldProp] {gameObject.name} 카메라 우측 뒤로 완전히 지나침 -> 스스로 파괴");
                 Destroy(gameObject);
             }
         }
+
     }
 }

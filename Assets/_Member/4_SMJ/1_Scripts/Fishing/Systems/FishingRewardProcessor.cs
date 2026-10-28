@@ -2,6 +2,7 @@ using DesktopCompanion.Core;
 using DesktopCompanion.Data;
 using DesktopCompanion.Entities;
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace DesktopCompanion.Systems
 {
@@ -39,11 +40,6 @@ namespace DesktopCompanion.Systems
                 return FishingRewardResult.Failed;
             }
 
-            if (IsFishInventoryFull())
-            {
-                return FishingRewardResult.InventoryFull;
-            }
-
             EntityHandle handle = m_entityManager.Create<ItemData_Fish>(itemData.ID);
             Entity_Fish fish = m_entityManager.Get<Entity_Fish>(handle);
 
@@ -61,6 +57,11 @@ namespace DesktopCompanion.Systems
 
         public FishingRewardResult TryFinalizeCaughtFish(EntityHandle caughtHandle)
         {
+            if (IsFishInventoryFull())
+            {
+                return FishingRewardResult.InventoryFull;
+            }
+
             if (TryAddItem(caughtHandle))
             {
                 return FishingRewardResult.Success;
@@ -76,18 +77,46 @@ namespace DesktopCompanion.Systems
                    m_inventorySystem.GetMaxSlotCount(ItemType.Fish);
         }
 
-        public void Process(ItemDrop[] drops)
+        public IReadOnlyList<FishingGrantedDropInfo> Process(
+            ItemDrop[] drops,
+            ItemQuality quality,
+            bool isBoss)
         {
+            var grantedDrops = new List<FishingGrantedDropInfo>();
+
             if (drops == null || drops.Length == 0)
             {
-                return;
+                return grantedDrops;
             }
+
+            if (isBoss)
+            {
+                ProcessBossDrop(drops, quality, grantedDrops);
+            }
+            else
+            {
+                ProcessNormalDrops(drops, quality, grantedDrops);
+            }
+
+            return grantedDrops;
+        }
+
+        private void ProcessNormalDrops(
+            ItemDrop[] drops,
+            ItemQuality quality,
+            List<FishingGrantedDropInfo> grantedDrops)
+        {
+            int qualityCount = Mathf.Clamp(
+                (int)quality,
+                (int)ItemQuality.OneStar,
+                (int)ItemQuality.FiveStar);
 
             foreach (ItemDrop drop in drops)
             {
-                if (drop == null || drop.Item == null || drop.Count <= 0)
+                if (!IsValidDrop(drop))
                 {
-                    Debug.LogWarning("[FishingRewardProcessor] 유효하지 않은 드랍 데이터입니다.");
+                    Debug.LogWarning(
+                        "[FishingRewardProcessor] 유효하지 않은 드롭 데이터입니다.");
                     continue;
                 }
 
@@ -96,18 +125,118 @@ namespace DesktopCompanion.Systems
                     continue;
                 }
 
-                int grantedCount = GrantItem(drop.Item, drop.Count);
+                // 기본 수량 × 성급
+                int requestedCount = drop.Count * qualityCount;
 
-                if (grantedCount == drop.Count)
-                {
-                    Debug.Log($"[FishingRewardProcessor] 보상 지급: {drop.Item.Name} x{grantedCount}");
-                }
-                else
+                GrantDrop(drop, requestedCount, quality, grantedDrops);
+            }
+        }
+
+        private void ProcessBossDrop(
+            ItemDrop[] drops,
+            ItemQuality quality,
+            List<FishingGrantedDropInfo> grantedDrops)
+        {
+            ItemDrop selectedDrop = SelectSingleDrop(drops);
+
+            if (selectedDrop == null)
+            {
+                return;
+            }
+
+            // 보스 드롭은 성급 배율 없이 시트에 적힌 수량을 그대로 지급한다.
+            GrantDrop(selectedDrop, selectedDrop.Count, quality, grantedDrops);
+        }
+
+        private ItemDrop SelectSingleDrop(ItemDrop[] drops)
+        {
+            float totalProbability = 0f;
+
+            foreach (ItemDrop drop in drops)
+            {
+                if (!IsValidDrop(drop))
                 {
                     Debug.LogWarning(
-                        $"[FishingRewardProcessor] 보상 일부/전체 지급 실패: " +
-                        $"{drop.Item.Name}, 요청={drop.Count}, 지급={grantedCount}");
+                        "[FishingRewardProcessor] 유효하지 않은 보스 드롭 데이터입니다.");
+                    continue;
                 }
+
+                if (drop.Probability > 0f)
+                {
+                    totalProbability += drop.Probability;
+                }
+            }
+
+            if (totalProbability > 1.0001f)
+            {
+                Debug.LogError(
+                    $"[FishingRewardProcessor] 보스 드롭 확률 합이 1을 초과했습니다: " +
+                    $"total={totalProbability:0.####}");
+                return null;
+            }
+
+            float roll = UnityEngine.Random.value;
+            float cumulativeProbability = 0f;
+
+            foreach (ItemDrop drop in drops)
+            {
+                if (!IsValidDrop(drop) || drop.Probability <= 0f)
+                {
+                    continue;
+                }
+
+                cumulativeProbability += drop.Probability;
+
+                if (roll <= cumulativeProbability)
+                {
+                    return drop;
+                }
+            }
+
+            // 확률 합이 1보다 작으면 남은 구간에서는 아무것도 지급하지 않는다.
+            return null;
+        }
+
+        private bool IsValidDrop(ItemDrop drop)
+        {
+            return drop != null &&
+                   drop.Item != null &&
+                   drop.Count > 0;
+        }
+
+        private void GrantDrop(
+            ItemDrop drop,
+            int requestedCount,
+            ItemQuality quality,
+            List<FishingGrantedDropInfo> grantedDrops)
+        {
+            int grantedCount = GrantItem(drop.Item, requestedCount);
+
+            if (grantedCount > 0)
+            {
+                grantedDrops.Add(
+                    new FishingGrantedDropInfo(
+                        drop.Item.Type,
+                        drop.Item.ID,
+                        grantedCount));
+            }
+
+            if (grantedCount == requestedCount)
+            {
+                Debug.Log(
+                    $"[FishingRewardProcessor] 보상 지급 성공: " +
+                    $"item={drop.Item.Name}, " +
+                    $"quality={quality}, " +
+                    $"count={grantedCount}");
+            }
+            else
+            {
+                Debug.LogWarning(
+                    $"[FishingRewardProcessor] 보상 일부/전체 지급 실패: " +
+                    $"item={drop.Item.Name}, " +
+                    $"quality={quality}, " +
+                    $"requested={requestedCount}, " +
+                    $"granted={grantedCount}");
             }
         }
 

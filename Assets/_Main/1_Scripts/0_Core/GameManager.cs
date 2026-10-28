@@ -124,6 +124,8 @@ namespace DesktopCompanion.Core
         // (2단계 초기화로 순서 민감도는 낮지만, 같은 phase 내 tie-break를 위해 결정적으로 고정)
         private void RegisterSystems()
         {
+            m_systemManager.Register(new DesktopCompanion.Systems.RecordSystem());   // 기반 시스템 — 다른 System을 참조하지 않는다
+
             m_systemManager.Register(new DesktopCompanion.Systems.PlayerSystem());
 
             m_systemManager.Register(new DesktopCompanion.Systems.CurrencySystem());
@@ -132,6 +134,10 @@ namespace DesktopCompanion.Core
 
             m_systemManager.Register(new DesktopCompanion.Systems.ShopSystem());
 
+            m_systemManager.Register(new DesktopCompanion.Systems.FishCollectionSystem());
+
+            m_systemManager.Register(new DesktopCompanion.Systems.FishingSettingSystem());
+
             m_systemManager.Register(new DesktopCompanion.Systems.FishingSystem());
 
             m_systemManager.Register(new DesktopCompanion.Systems.StageSystem());
@@ -139,6 +145,12 @@ namespace DesktopCompanion.Core
             m_systemManager.Register(new DesktopCompanion.Systems.WorldSystemBridge());
 
             m_systemManager.Register(new DesktopCompanion.Systems.AquariumSystem());   // Inventory 이후(생산물 지급 의존)
+
+            m_systemManager.Register(new DesktopCompanion.Systems.RandomTableSystem());   // Mixture 이전(굴리기 제공)
+
+            m_systemManager.Register(new DesktopCompanion.Systems.MixtureSystem());
+
+            m_systemManager.Register(new DesktopCompanion.Systems.TutorialSystem());   // 타 System 구독만 하므로 최후미
         }
 
         // Data 타입 ↔ Entity 매핑 등록. 새 계열은 여기 한 줄 추가(EntityManager 본체는 불변).

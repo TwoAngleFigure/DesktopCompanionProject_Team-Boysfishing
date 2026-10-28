@@ -8,8 +8,8 @@ using DesktopCompanion.Save;
 namespace DesktopCompanion.EditorTools
 {
     /// <summary>
-    /// 세이브 파일 관리 툴(Tools 메뉴). 테스트 데이터 정리·수동 저장용.
-    /// 파일 경로는 SaveManager 기본값(Application.persistentDataPath/save.json)과 동일.
+    /// Tools 메뉴에서 세이브 파일을 삭제·즉시 저장하고 저장 폴더를 여는 에디터 툴.
+    /// 대상 경로는 SaveManager 기본값(Application.persistentDataPath/save.json)이다.
     /// </summary>
     public static class SaveDataTool
     {

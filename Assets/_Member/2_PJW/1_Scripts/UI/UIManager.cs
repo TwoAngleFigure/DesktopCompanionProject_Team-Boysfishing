@@ -6,9 +6,9 @@ using DesktopCompanion.Core;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 'UI'의 중앙 관리자(WorldManager와 동형). 도메인 구독은 갖지 않는다 —
-    /// 개별 UI는 팀원이 UIViewBase/UIWindowBase를 상속해 만들고, System 구독은 각 ViewModel 안에서.
-    /// UIManager는 유닛의 호스트/레지스트리 + 공통 의존성 공급자 + 활성 윈도우 관리자 + 자동 배치자다.
+    /// UI View 유닛의 레지스트리이자 공통 의존성(SystemManager·EntityManager·AssetProvider) 공급자.
+    /// 유닛의 등록·주입·Bind 수명과 함께, 활성 윈도우 스택·자동 배치·중앙 닫기 요청을 관리한다.
+    /// 도메인별 구독 로직은 갖지 않는다.
     /// </summary>
     public class UIManager : MonoBehaviour
     {
@@ -32,6 +32,12 @@ namespace DesktopCompanion.Views
 
         private readonly List<UIViewBase> m_views = new();
         private readonly List<UIWindowBase> m_activeWindows = new();   // 마지막에 열린 것이 맨 뒤(top)
+
+        /// <summary>
+        /// 윈도우가 활성 스택 top으로 올라온 직후 방송한다(신규 열림·이미 열린 창의 재활성 모두 포함).
+        /// 창의 활성 상태(OnEnable)로는 CanvasGroup 개폐 창을 잡을 수 없어 이 경로를 공통 알림으로 쓴다.
+        /// </summary>
+        public static event System.Action<UIWindowBase> OnWindowShown;
 
         private void AdoptPending(UIViewBase view)
         {
@@ -57,8 +63,8 @@ namespace DesktopCompanion.Views
         }
 
         /// <summary>
-        /// GameManager.OnBootCompleted에서 호출. 이 시점에 싱글턴을 지정하고(조립 루트가 수명을 통제),
-        /// Initialize 이전(씬 로드)에 등록을 시도해 대기 중이던 View를 흡수·바인딩한다.
+        /// GameManager.OnBootCompleted에서 호출한다. 싱글턴을 지정하고 의존성을 보관한 뒤,
+        /// 대기 큐에 쌓인 View를 모두 등록·바인딩하고 표시 중인 윈도우를 활성 스택에 반영한다.
         /// </summary>
         public void Initialize(SystemManager systemManager, EntityManager entityManager, AssetProvider assetProvider)
         {
@@ -68,11 +74,15 @@ namespace DesktopCompanion.Views
             m_assetProvider = assetProvider;
             m_initialized = true;
 
-            for (int i = 0; i < s_pending.Count; i++)
-            {
-                AdoptPending(s_pending[i]);
-            }
+            // 스냅샷 후 비우고 순회한다. Bind가 다른 뷰를 켜고 끌 수 있고(예: UITabWindow의 초기 탭 적용 →
+            // 비선택 창 SetActive(false) → OnDisable → Unregister → s_pending.Remove), 그 제거가
+            // 순회 중인 목록을 밀어 항목을 건너뛰게 하기 때문이다.
+            UIViewBase[] pending = s_pending.ToArray();
             s_pending.Clear();
+            for (int i = 0; i < pending.Length; i++)
+            {
+                AdoptPending(pending[i]);
+            }
         }
 
         // ── 자가 등록·수명 (WorldManager와 동일 패턴) ──
@@ -136,7 +146,7 @@ namespace DesktopCompanion.Views
 
         // ── 활성 윈도우 관리 (윈도우형 전용) ──
 
-        /// <summary>윈도우가 켜질 때(OnEnable) 호출 — 최근 열림을 스택 top으로.</summary>
+        /// <summary>윈도우를 활성 스택의 top(최근 열림)으로 올리고 재배치한다.</summary>
         public static void PushActiveWindow(UIWindowBase window)
         {
             if (s_instance == null || window == null)
@@ -151,9 +161,11 @@ namespace DesktopCompanion.Views
             m_activeWindows.Remove(window);   // 재진입 시 중복 방지
             m_activeWindows.Add(window);      // 최근 열림 = 맨 뒤
             RelayoutWindows();
+
+            OnWindowShown?.Invoke(window);    // 배치까지 끝난 뒤 알린다(구독자가 최종 위치를 읽을 수 있게)
         }
 
-        /// <summary>윈도우가 꺼질 때(OnDisable/Hide) 호출 — 스택에서 제거.</summary>
+        /// <summary>윈도우를 활성 스택에서 제거하고 재배치한다.</summary>
         public static void RemoveActiveWindow(UIWindowBase window)
         {
             if (s_instance == null || window == null)
@@ -173,8 +185,8 @@ namespace DesktopCompanion.Views
         }
 
         /// <summary>
-        /// 활성 창을 우측→좌측으로 재배치(오래된 것=우측 가장자리·세로 중앙, 최근=좌측). 빈틈 제거.
-        /// 대상 창은 고정 크기 + Canvas(또는 전체화면 루트) 직속 자식이어야 앵커(1,0.5)가 화면 우측·세로중앙과 일치.
+        /// 활성 창을 우측→좌측 순으로 재배치한다(오래된 것이 우측 가장자리·세로 중앙, 최근이 좌측).
+        /// 대상 창은 앵커·피벗을 (1, 0.5)로 맞추며, 배치 예외 창은 건너뛴다.
         /// </summary>
         private void RelayoutWindows()
         {
@@ -208,21 +220,34 @@ namespace DesktopCompanion.Views
         }
 
         /// <summary>
-        /// 활성 윈도우 중 가장 최근에 열린 것을 닫는다(우클릭 닫기용).
-        /// ※ 입력과 미연결: 추후 InputManager가 우클릭을 감지해 이 함수를 호출한다. 지금은 연결하지 않는다.
+        /// 중앙 닫기 요청을 처리한다. 활성 윈도우를 최근 열린 순(LIFO)으로 훑어
+        /// <see cref="UIWindowBase.ClosableByShortcut"/>가 켜진 첫 창을 닫고, 꺼진 창은 건너뛴다.
+        /// 특정 창을 지목해 닫을 때는 그 창의 Close()/Hide()를 직접 호출한다.
         /// </summary>
-        public void CloseTopWindow()
+        /// <returns>실제로 닫은 창이 있으면 true. 닫기 입력이 그 다음 동작으로 넘어갈지 판단하는 데 쓴다.</returns>
+        public bool CloseTopWindow()
         {
-            if (m_activeWindows.Count == 0)
+            for (int i = m_activeWindows.Count - 1; i >= 0; i--)
             {
-                return;
+                UIWindowBase window = m_activeWindows[i];
+                if (window == null)
+                {
+                    continue;
+                }
+                if (window.ClosableByShortcut == false)
+                {
+                    continue;   // 보호 창 — 건너뛰고 아래 창을 찾는다
+                }
+
+                window.Close();   // → Hide() (HideMode에 따라 CanvasGroup 숨김 또는 SetActive(false)) → RemoveActiveWindow
+                return true;
             }
 
-            UIWindowBase top = m_activeWindows[m_activeWindows.Count - 1];
-            top.Close();   // → Hide() (HideMode에 따라 CanvasGroup 숨김 또는 SetActive(false)) → RemoveActiveWindow
+            return false;   // 열린 창이 없거나 전부 보호 창이다
         }
 
-        /// <summary>최상단(최근) 창 닫기 요청(정적 통로 — 우클릭 입력 등에서 호출).</summary>
-        public static void RequestCloseTopWindow() => s_instance?.CloseTopWindow();
+        /// <summary>중앙 닫기 요청의 정적 진입점(ESC 등 닫기 입력이 호출한다).</summary>
+        /// <returns>실제로 닫은 창이 있으면 true.</returns>
+        public static bool RequestCloseTopWindow() => s_instance != null && s_instance.CloseTopWindow();
     }
 }

@@ -54,33 +54,105 @@ MonoBehaviour:
   m_midParallax: 0.35
   m_farParallax: 0.65
   m_blueprintList:
-  - m_assetKey: Dummy_Rock
+  - m_assetKey: islands_background_5
+    m_layerDepth: 2
+    m_spawnDistanceTrigger: 150
+    m_targetWorldOffsetFromCamera: 30
+    m_targetLocalY: 1.7
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: islands_background_6
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 120
+    m_targetWorldOffsetFromCamera: 52
+    m_targetLocalY: 1.5
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: islands_background_1
+    m_layerDepth: 2
+    m_spawnDistanceTrigger: 70
+    m_targetWorldOffsetFromCamera: -12
+    m_targetLocalY: 1.7
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: islands_fishship
     m_layerDepth: 1
     m_spawnDistanceTrigger: 40
-    m_targetWorldOffsetFromCamera: 0
-    m_targetLocalY: -0.6
+    m_targetWorldOffsetFromCamera: -15
+    m_targetLocalY: -1
     m_isSpawned: 0
-    m_spawnTriggerX: -55
-    m_targetWorldX: -85
-    m_targetCameraX: -85
-  - m_assetKey: Dummy_Lighthouse
-    m_layerDepth: 2
-    m_spawnDistanceTrigger: 55
-    m_targetWorldOffsetFromCamera: 0
-    m_targetLocalY: -1.4
-    m_isSpawned: 0
-    m_spawnTriggerX: -55
-    m_targetWorldX: -85
-    m_targetCameraX: -85
-  - m_assetKey: Dummy_Buoy
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: islands_wooden
     m_layerDepth: 0
     m_spawnDistanceTrigger: 25
-    m_targetWorldOffsetFromCamera: 0
-    m_targetLocalY: -5.5
+    m_targetWorldOffsetFromCamera: -2
+    m_targetLocalY: 1.7
     m_isSpawned: 0
-    m_spawnTriggerX: -55
-    m_targetWorldX: -85
-    m_targetCameraX: -85
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: islands_wooden
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 35
+    m_targetWorldOffsetFromCamera: 11
+    m_targetLocalY: 1.7
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: islands_wooden
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 0
+    m_targetWorldOffsetFromCamera: -25
+    m_targetLocalY: 1.7
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: islands_background_3
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 10
+    m_targetWorldOffsetFromCamera: -19
+    m_targetLocalY: 3.01
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: islands_background_2
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: -5
+    m_targetWorldOffsetFromCamera: -42
+    m_targetLocalY: 2.46
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: islands_wooden
+    m_layerDepth: 0
+    m_spawnDistanceTrigger: 45
+    m_targetWorldOffsetFromCamera: 12
+    m_targetLocalY: 2.46
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
+  - m_assetKey: river_log
+    m_layerDepth: 1
+    m_spawnDistanceTrigger: 75
+    m_targetWorldOffsetFromCamera: 23
+    m_targetLocalY: -0.69
+    m_isSpawned: 0
+    m_spawnTriggerX: 0
+    m_targetWorldX: -15
+    m_targetCameraX: -15
 --- !u!1 &606873470048552616
 GameObject:
   m_ObjectHideFlags: 0

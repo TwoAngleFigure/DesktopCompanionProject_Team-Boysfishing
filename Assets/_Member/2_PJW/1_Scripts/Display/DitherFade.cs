@@ -4,21 +4,17 @@ using UnityEngine;
 namespace DesktopCompanion.Views
 {
     /// <summary>
-    /// 페이드 셰이더 3종(DitherFadeLit / DitherFadeLitSmooth / FadeLitAlpha)의 공통 프로퍼티
-    /// _Fade(0=투명 → 1=불투명)를 DOTween으로 전환한다(스폰/디스폰 페이드).
-    ///
-    /// DOFade/DOFadeIn/DOFadeOut은 <see cref="Tween"/>을 반환하므로 DOTween Sequence에
-    /// Append/Join/Insert로 바로 조합할 수 있다.
+    /// 페이드 셰이더(DitherFadeLit / DitherFadeLitSmooth / FadeLitAlpha)의 공통 프로퍼티
+    /// _Fade(0=투명, 1=불투명)를 DOTween으로 전환한다.
+    /// DOFade·DOFadeIn·DOFadeOut은 <see cref="Tween"/>을 반환하므로 Sequence에 조합할 수 있다.
     /// <code>
     /// DOTween.Sequence()
     ///        .Append(fade.DOFadeIn(0.4f))
     ///        .AppendInterval(1f)
     ///        .Append(fade.DOFadeOut(0.4f));
     /// </code>
-    ///
-    /// ※ _Fade는 MaterialPropertyBlock이 아니라 '인스턴스 머티리얼'에 직접 쓴다.
-    ///    MPB는 SRP Batcher 호환 셰이더에서 나머지 UnityPerMaterial 프로퍼티(_BaseColor 등)를
-    ///    0으로 만들어 모델이 검게 렌더된다.
+    /// _Fade는 MaterialPropertyBlock이 아니라 인스턴스 머티리얼에 직접 쓴다.
+    /// MPB는 SRP Batcher 호환 셰이더에서 나머지 UnityPerMaterial 프로퍼티를 0으로 만들어 모델이 검게 렌더된다.
     /// </summary>
     [DisallowMultipleComponent]
     public class DitherFade : MonoBehaviour
@@ -80,7 +76,7 @@ namespace DesktopCompanion.Views
 
         // ── DOTween: Sequence 조합용 Tween 반환 API ─────────────────────────────
 
-        /// <summary>_Fade를 endValue(0~1)로 전환하는 Tween을 반환. Sequence에 Append/Join 가능.</summary>
+        /// <summary>_Fade를 endValue(0~1)로 전환하는 Tween을 반환한다.</summary>
         public Tween DOFade(float endValue, float duration)
         {
             return DOTween.To(() => m_current, SetFade, Mathf.Clamp01(endValue), Mathf.Max(0.0001f, duration))
@@ -89,31 +85,31 @@ namespace DesktopCompanion.Views
                           .SetLink(gameObject); // GameObject 파괴 시 자동 Kill
         }
 
-        /// <summary>기본 시간으로 _Fade를 endValue로 전환하는 Tween.</summary>
+        /// <summary>기본 소요 시간으로 _Fade를 endValue로 전환하는 Tween을 반환한다.</summary>
         public Tween DOFade(float endValue) => DOFade(endValue, m_duration);
 
-        /// <summary>0→1(불투명) 페이드 인 Tween.</summary>
+        /// <summary>불투명(1)으로 페이드 인하는 Tween을 반환한다.</summary>
         public Tween DOFadeIn(float duration) => DOFade(1f, duration);
 
-        /// <summary>기본 시간으로 페이드 인.</summary>
+        /// <summary>기본 소요 시간으로 페이드 인하는 Tween을 반환한다.</summary>
         public Tween DOFadeIn() => DOFade(1f, m_duration);
 
-        /// <summary>1→0(투명) 페이드 아웃 Tween.</summary>
+        /// <summary>투명(0)으로 페이드 아웃하는 Tween을 반환한다.</summary>
         public Tween DOFadeOut(float duration) => DOFade(0f, duration);
 
-        /// <summary>기본 시간으로 페이드 아웃.</summary>
+        /// <summary>기본 소요 시간으로 페이드 아웃하는 Tween을 반환한다.</summary>
         public Tween DOFadeOut() => DOFade(0f, m_duration);
 
         // ── 즉시 제어 ──────────────────────────────────────────────────────────
 
-        /// <summary>진행 중인 페이드를 멈추고 즉시 값 설정(전환 없이).</summary>
+        /// <summary>진행 중인 페이드를 중단하고 값을 즉시 설정한다.</summary>
         public void SetFadeImmediate(float value)
         {
             DOTween.Kill(this);
             SetFade(value);
         }
 
-        /// <summary>_Fade를 지정 값으로 적용(내부 setter 겸용, 전환 없음).</summary>
+        /// <summary>_Fade를 지정 값으로 모든 인스턴스 머티리얼에 적용한다.</summary>
         public void SetFade(float value)
         {
             m_current = Mathf.Clamp01(value);
