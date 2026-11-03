@@ -97,8 +97,11 @@ namespace DesktopCompanion.Systems
         public IReadOnlyList<StageData> GetAllStageDatas() => DataManager.GetAll<StageData>();
 
         // 내부 상태 변수
+        private RecordSystem m_recordSystem;
         private int m_lastStageId = 600001;
         private int m_targetStageId = 0;
+        private bool m_hasRestoredPosition = false;
+        private Vector2 m_restoredPosition = Vector2.zero;
         private const float MAP_WIDTH = 2048f;
         private const float MAP_HEIGHT = 1024f;
         private const int PIXELS_PER_GRID = 10;
@@ -121,8 +124,18 @@ namespace DesktopCompanion.Systems
 
         public override void PostInitialize()
         {
-            var stageData = DataManager.GetData<StageData>(m_lastStageId);
-            Vector2 initialPos = stageData != null ? stageData.MapPosition : Vector2.zero;
+            m_recordSystem = SystemManager.GetSystem<RecordSystem>();
+
+            Vector2 initialPos;
+            if (m_hasRestoredPosition)
+            {
+                initialPos = m_restoredPosition;
+            }
+            else
+            {
+                var stageData = DataManager.GetData<StageData>(m_lastStageId);
+                initialPos = stageData != null ? stageData.MapPosition : Vector2.zero;
+            }
             VoyageEngine.SetInitialPosition(initialPos, GridDomain);
 
             VoyageEngine.OnAreaChanged += (newAreaId, env) =>
@@ -136,15 +149,26 @@ namespace DesktopCompanion.Systems
                 OnStageChanged?.Invoke(newAreaId);
             };
 
-            VoyageEngine.OnVoyageStateChanged += (state) =>
+            VoyageEngine.OnAnchored += (anchorType, cell) =>
             {
-                if (state == VoyageState.Anchored)
+                if (anchorType != AnchorType.Interrupted)
                 {
                     if (m_targetStageId != 0)
                     {
                         m_lastStageId = m_targetStageId;
                         m_targetStageId = 0;
                     }
+                    else if (cell.AreaId > 0)
+                    {
+                        m_lastStageId = cell.AreaId;
+                    }
+
+                    OnStageChanged?.Invoke(m_lastStageId);
+                    m_recordSystem?.RecordStageArrived(m_lastStageId);
+                }
+                else
+                {
+                    m_targetStageId = 0;
                     OnStageChanged?.Invoke(m_lastStageId);
                 }
             };
@@ -171,6 +195,11 @@ namespace DesktopCompanion.Systems
             {
                 Debug.LogWarning($"[StageSystem] 경로 탐색 실패: 목적지({targetWorldPos})로 갈 수 있는 해로가 없습니다.");
                 return;
+            }
+
+            if (targetStageId == 0 && GridDomain.TryGetCell(targetCell, out var destCell))
+            {
+                targetStageId = destCell.PortId > 0 ? destCell.PortId : destCell.AreaId;
             }
 
             m_targetStageId = targetStageId;
@@ -285,7 +314,9 @@ namespace DesktopCompanion.Systems
         {
             return new StageSaveData
             {
-                currentStageDataId = m_lastStageId
+                currentStageDataId = m_lastStageId,
+                savedPosX = VoyageEngine.CurrentLogicalPosition.x,
+                savedPosY = VoyageEngine.CurrentLogicalPosition.y
             };
         }
 
@@ -294,9 +325,18 @@ namespace DesktopCompanion.Systems
             if (state is StageSaveData saveData)
             {
                 m_lastStageId = saveData.currentStageDataId > 0 ? saveData.currentStageDataId : 600001;
-                var stage = DataManager.GetData<StageData>(m_lastStageId);
-                Vector2 savedPos = stage != null ? stage.MapPosition : Vector2.zero;
-                VoyageEngine.SetInitialPosition(savedPos, GridDomain);
+                if (saveData.savedPosX != 0f || saveData.savedPosY != 0f)
+                {
+                    m_restoredPosition = new Vector2(saveData.savedPosX, saveData.savedPosY);
+                    m_hasRestoredPosition = true;
+                    VoyageEngine.SetInitialPosition(m_restoredPosition, GridDomain);
+                }
+                else
+                {
+                    var stage = DataManager.GetData<StageData>(m_lastStageId);
+                    Vector2 savedPos = stage != null ? stage.MapPosition : Vector2.zero;
+                    VoyageEngine.SetInitialPosition(savedPos, GridDomain);
+                }
             }
         }
     }
@@ -305,5 +345,7 @@ namespace DesktopCompanion.Systems
     public class StageSaveData
     {
         public int currentStageDataId;
+        public float savedPosX;
+        public float savedPosY;
     }
 }

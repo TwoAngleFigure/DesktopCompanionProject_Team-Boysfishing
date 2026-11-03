@@ -16,11 +16,25 @@ namespace DesktopCompanion.Systems
         public string SaveId => "world_system_bridge";
         public Type StateType => typeof(WorldBridgeSaveData);
 
-        // 도메인 엔진 코어 인스턴스
-        public WorldGridDomain GridDomain { get; private set; } = new WorldGridDomain();
-        public VoyageEngine VoyageEngine { get; private set; } = new VoyageEngine();
-        public WorldPathfinder Pathfinder { get; private set; } = new WorldPathfinder();
-        public IAreaAccessPolicy AccessPolicy { get; set; } = new AlwaysOpenAccessPolicy();
+        private StageSystem m_stageSystem;
+        private readonly WorldGridDomain m_fallbackGridDomain = new WorldGridDomain();
+        private readonly VoyageEngine m_fallbackVoyageEngine = new VoyageEngine();
+        private readonly WorldPathfinder m_fallbackPathfinder = new WorldPathfinder();
+        private IAreaAccessPolicy m_fallbackAccessPolicy = new AlwaysOpenAccessPolicy();
+
+        // 도메인 엔진 코어 인스턴스 (StageSystem과 100% 단일 인스턴스 공유)
+        public WorldGridDomain GridDomain => m_stageSystem != null ? m_stageSystem.GridDomain : m_fallbackGridDomain;
+        public VoyageEngine VoyageEngine => m_stageSystem != null ? m_stageSystem.VoyageEngine : m_fallbackVoyageEngine;
+        public WorldPathfinder Pathfinder => m_stageSystem != null ? m_stageSystem.Pathfinder : m_fallbackPathfinder;
+        public IAreaAccessPolicy AccessPolicy
+        {
+            get => m_stageSystem != null ? m_stageSystem.AccessPolicy : m_fallbackAccessPolicy;
+            set
+            {
+                if (m_stageSystem != null) m_stageSystem.AccessPolicy = value;
+                else m_fallbackAccessPolicy = value;
+            }
+        }
 
         // 뷰 계층 및 외부 시스템용 이벤트 중계 (도메인 계약 래핑)
         public event Action<WorldCellData> OnCellEntered
@@ -71,6 +85,7 @@ namespace DesktopCompanion.Systems
         {
             get
             {
+                if (m_stageSystem != null) return m_stageSystem.CurrentStageData;
                 int currentAreaId = VoyageEngine.CurrentCell.AreaId > 0 ? VoyageEngine.CurrentCell.AreaId : m_lastStageId;
                 return DataManager.GetData<StageData>(currentAreaId);
             }
@@ -81,6 +96,8 @@ namespace DesktopCompanion.Systems
         /// </summary>
         public List<TierPool> GetAvailableTierPools(int playerLicense)
         {
+            if (m_stageSystem != null) return m_stageSystem.GetAvailableTierPools(playerLicense);
+
             var availablePools = new List<TierPool>();
             var stageData = CurrentStageData;
             if (stageData == null || stageData.TierPools == null) return availablePools;
@@ -105,6 +122,13 @@ namespace DesktopCompanion.Systems
 
         public override void Initialize()
         {
+            m_stageSystem = SystemManager.GetSystem<StageSystem>();
+            if (m_stageSystem != null)
+            {
+                // StageSystem과 단일 코어 엔진을 공유하므로 중복 초기화를 생략합니다.
+                return;
+            }
+
             // 맵 텍스처로부터 그리드 데이터 자동 생성
             Texture2D mapTex = Resources.Load<Texture2D>("Map_01");
             if (mapTex != null)
@@ -123,6 +147,19 @@ namespace DesktopCompanion.Systems
 
         public override void PostInitialize()
         {
+            m_stageSystem ??= SystemManager.GetSystem<StageSystem>();
+            if (m_stageSystem != null)
+            {
+                m_stageSystem.OnStageChanged += stageId =>
+                {
+                    m_lastStageId = stageId;
+                    OnStageChanged?.Invoke(stageId);
+                };
+                m_stageSystem.OnTravelStarted += (targetId, duration) => OnTravelStarted?.Invoke(targetId, duration);
+                m_stageSystem.OnTravelCanceled += () => OnTravelCanceled?.Invoke();
+                return;
+            }
+
             // 초기 위치 설정 (기본 스폰 600001)
             var stageData = DataManager.GetData<StageData>(m_lastStageId);
             Vector2 initialPos = stageData != null ? stageData.MapPosition : Vector2.zero;
@@ -145,6 +182,8 @@ namespace DesktopCompanion.Systems
 
         public void Tick(float dt)
         {
+            // StageSystem이 등록되어 있다면 StageSystem.Tick(dt)에서 단일 VoyageEngine을 구동하므로 중복 틱 방지
+            if (m_stageSystem != null) return;
             VoyageEngine.Tick(dt, GridDomain);
         }
 
@@ -153,6 +192,12 @@ namespace DesktopCompanion.Systems
         /// </summary>
         public void MoveToWorldPosition(Vector2 targetWorldPos)
         {
+            if (m_stageSystem != null)
+            {
+                m_stageSystem.MoveToWorldPosition(targetWorldPos);
+                return;
+            }
+
             if (CurrentState == VoyageState.Departing || CurrentState == VoyageState.Arriving || CurrentState == VoyageState.Stopping)
             {
                 Debug.LogWarning("[WorldSystemBridge] 가감속 중에는 목적지를 변경할 수 없습니다.");
@@ -178,6 +223,12 @@ namespace DesktopCompanion.Systems
         /// </summary>
         public void MoveToStage(int targetStageId)
         {
+            if (m_stageSystem != null)
+            {
+                m_stageSystem.MoveToStage(targetStageId);
+                return;
+            }
+
             var targetStage = DataManager.GetData<StageData>(targetStageId);
             if (targetStage != null)
             {
@@ -187,6 +238,12 @@ namespace DesktopCompanion.Systems
 
         public void CancelTravel()
         {
+            if (m_stageSystem != null)
+            {
+                m_stageSystem.CancelTravel();
+                return;
+            }
+
             if (CurrentState == VoyageState.Traveling)
             {
                 VoyageEngine.CancelVoyage();
