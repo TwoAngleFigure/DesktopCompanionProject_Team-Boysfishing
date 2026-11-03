@@ -7,6 +7,7 @@ namespace DesktopCompanion.Views
     public class StageViewModel : UIViewModelBase
     {
         private StageSystem m_stageSystem;
+        private WorldSystemBridge m_worldBridge;
 
         public readonly BindableProperty<string> CurrentStageName = new("위치 로드 중...");
         public readonly BindableProperty<bool> IsCancelButtonInteractable = new(false);
@@ -16,12 +17,30 @@ namespace DesktopCompanion.Views
 
         public override void Bind()
         {
+            m_worldBridge = SystemManager.GetSystem<WorldSystemBridge>();
             m_stageSystem = SystemManager.GetSystem<StageSystem>();
 
-            MoveCommand = new RelayCommand<int>(targetMapId => m_stageSystem?.MoveToStage(targetMapId));
-            CancelCommand = new RelayCommand(() => m_stageSystem?.CancelTravel());
+            MoveCommand = new RelayCommand<int>(targetMapId =>
+            {
+                if (m_worldBridge != null) m_worldBridge.MoveToStage(targetMapId);
+                else m_stageSystem?.MoveToStage(targetMapId);
+            });
 
-            if (m_stageSystem != null)
+            CancelCommand = new RelayCommand(() =>
+            {
+                if (m_worldBridge != null) m_worldBridge.CancelTravel();
+                else m_stageSystem?.CancelTravel();
+            });
+
+            if (m_worldBridge != null)
+            {
+                m_worldBridge.OnStageChanged += HandleStageChanged;
+                m_worldBridge.OnTravelStarted += HandleTravelStarted;
+                m_worldBridge.OnTravelCanceled += HandleTravelCanceled;
+
+                RefreshCurrentStage();
+            }
+            else if (m_stageSystem != null)
             {
                 m_stageSystem.OnStageChanged += HandleStageChanged;
                 m_stageSystem.OnTravelStarted += HandleTravelStarted;
@@ -33,13 +52,21 @@ namespace DesktopCompanion.Views
 
         public override void Unbind()
         {
+            if (m_worldBridge != null)
+            {
+                m_worldBridge.OnStageChanged -= HandleStageChanged;
+                m_worldBridge.OnTravelStarted -= HandleTravelStarted;
+                m_worldBridge.OnTravelCanceled -= HandleTravelCanceled;
+                m_worldBridge = null;
+            }
+
             if (m_stageSystem != null)
             {
                 m_stageSystem.OnStageChanged -= HandleStageChanged;
                 m_stageSystem.OnTravelStarted -= HandleTravelStarted;
                 m_stageSystem.OnTravelCanceled -= HandleTravelCanceled;
+                m_stageSystem = null;
             }
-            m_stageSystem = null;
         }
 
         private void HandleTravelStarted(int targetMapId, float duration)
@@ -67,8 +94,8 @@ namespace DesktopCompanion.Views
             }
         }
 
-        public bool IsTraveling => m_stageSystem?.IsTraveling ?? false;
-        public float RemainingTravelTime => m_stageSystem?.RemainingTravelTime ?? 0f;
-        public StageData CurrentStageData => m_stageSystem?.CurrentStageData;
+        public bool IsTraveling => m_worldBridge?.IsTraveling ?? (m_stageSystem?.IsTraveling ?? false);
+        public float RemainingTravelTime => m_worldBridge?.RemainingTravelTime ?? (m_stageSystem?.RemainingTravelTime ?? 0f);
+        public StageData CurrentStageData => m_worldBridge?.CurrentStageData ?? m_stageSystem?.CurrentStageData;
     }
 }

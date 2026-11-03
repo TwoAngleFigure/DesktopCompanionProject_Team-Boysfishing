@@ -3,11 +3,12 @@ using DesktopCompanion.Systems;
 using DesktopCompanion.Core;
 using DesktopCompanion.Controllers;
 using DesktopCompanion.Data;
+using DesktopCompanion.Domain.World;
 using DG.Tweening;
 
 namespace DesktopCompanion.Views
 {
-    public class StageWorldView : UIViewBase
+    public class StageWorldView : WorldViewBase
     {
         private readonly StageViewModel m_vm = new();
 
@@ -61,11 +62,20 @@ namespace DesktopCompanion.Views
 
         private void Update()
         {
-            if (m_vm == null || SystemManager == null) return;
+            if (SystemManager == null) return;
             var stageSystem = SystemManager.GetSystem<StageSystem>();
             if (stageSystem == null) return;
 
-            if (m_shipController != null) m_shipController.SetTraveling(stageSystem.IsTraveling);
+            if (m_shipController == null)
+            {
+                m_shipController = FindAnyObjectByType<ShipController>();
+            }
+
+            if (m_shipController != null)
+            {
+                m_shipController.SetTraveling(stageSystem.IsTraveling);
+                m_shipController.m_speed = stageSystem.CurrentSpeed;
+            }
         }
 
         private void HandleVoyageStateChanged(VoyageState newState)
@@ -87,7 +97,7 @@ namespace DesktopCompanion.Views
                     break;
 
                 case VoyageState.Departing:
-                    PlayDepartureSequence(stageSystem);
+                    // 도메인 엔진이 가속 곡선을 계산하므로 별도 DOTween 덮어쓰기 불필요
                     break;
 
                 case VoyageState.Traveling:
@@ -95,12 +105,10 @@ namespace DesktopCompanion.Views
                     break;
 
                 case VoyageState.Arriving:
-                    PlayArrivalSequence(stageSystem);
                     break;
 
                 case VoyageState.Stopping:
                     ClearCurrentStage();
-                    PlayStoppingSequence(stageSystem);
                     break;
             }
         }
@@ -118,70 +126,10 @@ namespace DesktopCompanion.Views
 
         private void PlayDepartureSequence(StageSystem stageSystem)
         {
-            DOTween.Kill(this);
-            float maxSpeed = stageSystem.MaxSpeed;
-
-            if (m_shipController != null) m_shipController.m_speed = 0f;
-            stageSystem.SyncSpeed(0f);
-
-            DOVirtual.Float(0f, 1f, DEPARTURE_TIME, (v) =>
-            {
-                float currentSpeed = maxSpeed * v;
-                if (m_shipController != null) m_shipController.m_speed = currentSpeed;
-                stageSystem.SyncSpeed(currentSpeed);
-            })
-            .SetEase(Ease.InOutSine)
-            .SetId(this)
-            .OnComplete(() =>
-            {
-                if (m_shipController != null) m_shipController.m_speed = maxSpeed;
-                stageSystem.SyncSpeed(maxSpeed);
-                stageSystem.SequenceComplete_Departure();
-            });
         }
 
-        private void PlayArrivalSequence(StageSystem stageSystem)
-        {
-            DOTween.Kill(this);
-            float maxSpeed = stageSystem.MaxSpeed;
-
-            DOVirtual.Float(1f, 0f, ARRIVAL_TIME, (v) =>
-            {
-                float currentSpeed = maxSpeed * v;
-                if (m_shipController != null) m_shipController.m_speed = currentSpeed;
-                stageSystem.SyncSpeed(currentSpeed);
-            })
-            .SetEase(Ease.InOutSine)
-            .SetId(this)
-            .OnComplete(() =>
-            {
-                if (m_shipController != null) m_shipController.m_speed = 0f;
-                stageSystem.SyncSpeed(0f);
-                stageSystem.SequenceComplete_Arrival();
-            });
-        }
-
-        private void PlayStoppingSequence(StageSystem stageSystem)
-        {
-            DOTween.Kill(this);
-            float maxSpeed = stageSystem.MaxSpeed;
-            float currentRatio = (m_shipController != null && maxSpeed > 0f) ? Mathf.Clamp01(m_shipController.m_speed / maxSpeed) : 1f;
-
-            DOVirtual.Float(currentRatio, 0f, STOPPING_TIME, (v) =>
-            {
-                float currentSpeed = maxSpeed * v;
-                if (m_shipController != null) m_shipController.m_speed = currentSpeed;
-                stageSystem.SyncSpeed(currentSpeed);
-            })
-            .SetEase(Ease.InOutSine)
-            .SetId(this)
-            .OnComplete(() =>
-            {
-                if (m_shipController != null) m_shipController.m_speed = 0f;
-                stageSystem.SyncSpeed(0f);
-                stageSystem.SequenceComplete_Stop();
-            });
-        }
+        private void PlayArrivalSequence(StageSystem stageSystem) { }
+        private void PlayStoppingSequence(StageSystem stageSystem) { }
 
         private void LoadStage(string stageAssetKey, bool isTarget)
         {
