@@ -126,6 +126,8 @@ namespace DesktopCompanion.Core
         {
             m_systemManager.Register(new DesktopCompanion.Systems.RecordSystem());   // 기반 시스템 — 다른 System을 참조하지 않는다
 
+            m_systemManager.Register(new DesktopCompanion.Systems.TimeSystem());   // 기반 시스템 — 게임 시계. 다른 System보다 먼저 전진한다
+
             m_systemManager.Register(new DesktopCompanion.Systems.PlayerSystem());
 
             m_systemManager.Register(new DesktopCompanion.Systems.CurrencySystem());

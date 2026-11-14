@@ -73,9 +73,13 @@ namespace DesktopCompanion.EditorTools
                 // 시트 조건 칸(m_condition)을 런타임과 같은 규칙으로 검증한다. 오류는 Console에 데이터 종류·ID와 함께 남는다.
                 int conditionErrors = RecordConditionValidator.Validate(items, out int conditionCount);
 
+                // 시간 설정과 시트 시간 조건 칸(m_timeCondition)도 런타임과 같은 규칙으로 검증한다.
+                int timeErrors = TimeConditionValidator.Validate(items, out int timeCount);
+
                 EditorUtility.DisplayDialog("GameData 변환 완료",
                     $"{Path.GetFileName(xlsxPath)} → StreamingAssets/Data/{OutputFileName}\n\n{summary}\n\n" +
-                    $"기록 조건: {conditionCount}건 검사, 오류 {conditionErrors}건\n\n" +
+                    $"기록 조건: {conditionCount}건 검사, 오류 {conditionErrors}건\n" +
+                    $"시간 조건: {timeCount}건 검사, 오류 {timeErrors}건(설정 오류 포함)\n\n" +
                     "에러/경고는 Console 창을 확인하세요.", "확인");
             }
             catch (System.Exception e)
