@@ -3,6 +3,7 @@ using DesktopCompanion.Data;
 using DesktopCompanion.Systems;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DesktopCompanion.Views
 {
@@ -45,5 +46,12 @@ namespace DesktopCompanion.Views
 
             return new List<StageData>();
         }
+
+        // View(UI)가 매 프레임 읽어갈 배의 실시간 논리적 위치
+        public Vector2 CurrentShipPosition => m_worldBridge != null
+            ? m_worldBridge.CurrentLogicalPosition
+            : (m_stageSystem != null ? m_stageSystem.CurrentLogicalPosition : Vector2.zero);
+
+        public bool IsSystemReady => m_worldBridge != null || m_stageSystem != null;
     }
 }

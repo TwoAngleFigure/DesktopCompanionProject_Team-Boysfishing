@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using DesktopCompanion.Domain.World;
 using DesktopCompanion.Data;
 using DesktopCompanion.Save;
@@ -15,6 +16,11 @@ namespace DesktopCompanion.Systems
     {
         public string SaveId => "world_system_bridge";
         public Type StateType => typeof(WorldBridgeSaveData);
+
+        [Header("단독 구동 시 폴백 맵 텍스처 및 픽셀 크기")]
+        [SerializeField] private Texture2D m_mapTexture;
+        [Range(1, 10)]
+        [SerializeField] private int m_pixelsPerGrid = 2;
 
         private StageSystem m_stageSystem;
         private readonly WorldGridDomain m_fallbackGridDomain = new WorldGridDomain();
@@ -87,7 +93,7 @@ namespace DesktopCompanion.Systems
             {
                 if (m_stageSystem != null) return m_stageSystem.CurrentStageData;
                 int currentAreaId = VoyageEngine.CurrentCell.AreaId > 0 ? VoyageEngine.CurrentCell.AreaId : m_lastStageId;
-                return DataManager.GetData<StageData>(currentAreaId);
+                return DataManager.GetData<StageData>(currentAreaId) ?? DataManager.GetData<StageData>(m_lastStageId);
             }
         }
 
@@ -118,7 +124,6 @@ namespace DesktopCompanion.Systems
         private int m_lastStageId = 600001;
         private const float MAP_WIDTH = 2048f;
         private const float MAP_HEIGHT = 1024f;
-        private const int PIXELS_PER_GRID = 10;
 
         public override void Initialize()
         {
@@ -129,15 +134,14 @@ namespace DesktopCompanion.Systems
                 return;
             }
 
-            // 맵 텍스처로부터 그리드 데이터 자동 생성
-            Texture2D mapTex = Resources.Load<Texture2D>("Map_01");
+            Texture2D mapTex = ResolveMapTexture();
             if (mapTex != null)
             {
                 BuildGridFromTexture(mapTex);
             }
             else
             {
-                Debug.LogWarning("[WorldSystemBridge] Map_01 텍스처를 Resources에서 찾지 못해 기본 그리드로 초기화합니다.");
+                Debug.LogWarning("[WorldSystemBridge] Map_01 텍스처를 찾지 못해 기본 그리드로 초기화합니다.");
                 BuildDefaultGrid();
             }
 
@@ -160,13 +164,13 @@ namespace DesktopCompanion.Systems
                 return;
             }
 
-            // 초기 위치 설정 (기본 스폰 600001)
             var stageData = DataManager.GetData<StageData>(m_lastStageId);
             Vector2 initialPos = stageData != null ? stageData.MapPosition : Vector2.zero;
             VoyageEngine.SetInitialPosition(initialPos, GridDomain);
 
             VoyageEngine.OnAreaChanged += (newAreaId, env) =>
             {
+                if (newAreaId <= 0) return;
                 m_lastStageId = newAreaId;
                 OnStageChanged?.Invoke(newAreaId);
             };
@@ -182,14 +186,10 @@ namespace DesktopCompanion.Systems
 
         public void Tick(float dt)
         {
-            // StageSystem이 등록되어 있다면 StageSystem.Tick(dt)에서 단일 VoyageEngine을 구동하므로 중복 틱 방지
             if (m_stageSystem != null) return;
             VoyageEngine.Tick(dt, GridDomain);
         }
 
-        /// <summary>
-        /// 월드맵의 임의 좌표(Vector2) 또는 노드 좌표로 항해를 요청하는 통합 진입점
-        /// </summary>
         public void MoveToWorldPosition(Vector2 targetWorldPos)
         {
             if (m_stageSystem != null)
@@ -215,12 +215,9 @@ namespace DesktopCompanion.Systems
             }
 
             VoyageEngine.StartVoyage(path, GridDomain);
-            OnTravelStarted?.Invoke(GridDomain.TryGetCell(targetCell, out var c) ? c.AreaId : 0, VoyageEngine.TotalTravelTime);
+            OnTravelStarted?.Invoke(GridDomain.TryGetCell(path[path.Count - 1], out var c) && c.AreaId > 0 ? c.AreaId : m_lastStageId, VoyageEngine.TotalTravelTime);
         }
 
-        /// <summary>
-        /// 레거시 스테이지 ID 기반 이동 요청 (기존 UI 및 뷰모델 호환)
-        /// </summary>
         public void MoveToStage(int targetStageId)
         {
             if (m_stageSystem != null)
@@ -251,37 +248,60 @@ namespace DesktopCompanion.Systems
             }
         }
 
-        // =========================================================================
-        // 그리드 빌더 및 세이브/로드
-        // =========================================================================
+        private Texture2D ResolveMapTexture()
+        {
+            if (m_mapTexture != null) return m_mapTexture;
+
+            m_mapTexture = Resources.Load<Texture2D>("Map_01");
+            if (m_mapTexture != null) return m_mapTexture;
+
+            var images = UnityEngine.Object.FindObjectsByType<Image>(FindObjectsInactive.Include);
+            for (int i = 0; i < images.Length; i++)
+            {
+                var sp = images[i] != null ? images[i].sprite : null;
+                if (sp != null && sp.texture != null && sp.texture.name.Contains("Map_01"))
+                {
+                    m_mapTexture = sp.texture;
+                    return m_mapTexture;
+                }
+            }
+
+#if UNITY_EDITOR
+            m_mapTexture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Resource/UI_Sprite/Map/Map_01.png");
+#endif
+            return m_mapTexture;
+        }
+
         private void BuildGridFromTexture(Texture2D tex)
         {
-            int width = tex.width / PIXELS_PER_GRID;
-            int height = tex.height / PIXELS_PER_GRID;
+            int step = Mathf.Max(1, m_pixelsPerGrid);
+            int width = tex.width / step;
+            int height = tex.height / step;
             float cellSize = MAP_WIDTH / width;
             Vector2 origin = new Vector2(-MAP_WIDTH * 0.5f, -MAP_HEIGHT * 0.5f);
+
+            Color32[] pixels = tex.GetPixels32();
+            int texWidth = tex.width;
+            int texHeight = tex.height;
 
             var cellData = new WorldCellData[width, height];
             var allStages = DataManager.GetAll<StageData>();
 
-            for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
             {
-                for (int y = 0; y < height; y++)
+                float hexRowWorldOffset = ((y & 1) == 1) ? 0.5f * cellSize : 0f;
+                int hexRowPixelOffset = ((y & 1) == 1) ? (step >> 1) : 0;
+                float cellWorldY = origin.y + (y + 0.5f) * cellSize;
+
+                for (int x = 0; x < width; x++)
                 {
-                    float u = (float)x / (width - 1);
-                    float v = (float)y / (height - 1);
-                    int px = Mathf.Clamp(Mathf.FloorToInt(u * tex.width), 0, tex.width - 1);
-                    int py = Mathf.Clamp(Mathf.FloorToInt(v * tex.height), 0, tex.height - 1);
+                    bool isWater = EvaluateHexCellWater(pixels, texWidth, texHeight, x * step + hexRowPixelOffset, y * step, step);
+                    float cellWorldX = origin.x + (x + 0.5f) * cellSize + hexRowWorldOffset;
+                    Vector2 cellWorldPos = new Vector2(cellWorldX, cellWorldY);
 
-                    Color pixel = tex.GetPixel(px, py);
-                    bool isWater = pixel.b > (pixel.r + 0.15f);
-
-                    Vector2 cellWorldPos = origin + new Vector2((x + 0.5f) * cellSize, (y + 0.5f) * cellSize);
-
-                    // 가장 가까운 스테이지 노드로 소속 AreaId 매핑
-                    int nearestAreaId = 600001;
+                    int resolvedAreaId = 0;
                     int portId = 0;
-                    float minDst = float.MaxValue;
+                    float bestOverlapDistSq = float.MaxValue;
 
                     if (allStages != null)
                     {
@@ -289,13 +309,20 @@ namespace DesktopCompanion.Systems
                         {
                             var stage = allStages[s];
                             if (stage == null) continue;
-                            float d = Vector2.Distance(cellWorldPos, stage.MapPosition);
-                            if (d < minDst)
+
+                            float dx = Mathf.Abs(cellWorldPos.x - stage.MapPosition.x);
+                            float dy = Mathf.Abs(cellWorldPos.y - stage.MapPosition.y);
+
+                            float distSq = dx * dx + dy * dy;
+                            if (dx <= 180f && dy <= 130f)
                             {
-                                minDst = d;
-                                nearestAreaId = stage.ID;
+                                if (distSq < bestOverlapDistSq)
+                                {
+                                    bestOverlapDistSq = distSq;
+                                    resolvedAreaId = stage.ID;
+                                }
                             }
-                            if (d <= cellSize)
+                            if (distSq <= 784f) // 반경 28px 항구 정박 범위
                             {
                                 portId = stage.ID;
                             }
@@ -303,20 +330,58 @@ namespace DesktopCompanion.Systems
                     }
 
                     EnvironmentType env = (portId > 0) ? EnvironmentType.Port : EnvironmentType.Ocean;
-                    cellData[x, y] = new WorldCellData((short)x, (short)y, isWater, nearestAreaId, env, portId);
+                    cellData[x, y] = new WorldCellData((short)x, (short)y, isWater, resolvedAreaId, env, portId);
                 }
             }
 
             GridDomain.Initialize(width, height, cellSize, origin, cellData, m_lastStageId);
-            Debug.Log($"[WorldSystemBridge] 월드 그리드 빌드 완료: {width}x{height} (셀 크기: {cellSize:F1})");
+            Debug.Log($"[WorldSystemBridge] 🐝 2픽셀 육각형(Hex) 월드 그리드 빌드 완료: {width}x{height} (셀 크기: {cellSize:F1}px)");
+        }
+
+        private static bool EvaluateHexCellWater(Color32[] pixels, int texWidth, int texHeight, int basePx, int basePy, int step)
+        {
+            int waterCount = 0;
+            int totalCount = 0;
+            int blueMarginSum = 0;
+
+            for (int dy = 0; dy < step; dy++)
+            {
+                int py = Mathf.Clamp(basePy + dy, 0, texHeight - 1);
+                int rowIndex = py * texWidth;
+
+                for (int dx = 0; dx < step; dx++)
+                {
+                    int px = Mathf.Clamp(basePx + dx, 0, texWidth - 1);
+                    Color32 c = pixels[rowIndex + px];
+                    int margin = (int)c.b - ((int)c.r + 38);
+                    blueMarginSum += margin;
+                    totalCount++;
+
+                    if (margin > 0)
+                    {
+                        waterCount++;
+                    }
+                }
+            }
+
+            if (waterCount * 2 > totalCount) return true;
+            if (waterCount * 2 < totalCount) return false;
+
+            int centerPx = Mathf.Clamp(basePx + (step >> 1), 0, texWidth - 1);
+            int centerPy = Mathf.Clamp(basePy + (step >> 1), 0, texHeight - 1);
+            Color32 centerColor = pixels[centerPy * texWidth + centerPx];
+            int centerMargin = (int)centerColor.b - ((int)centerColor.r + 48);
+
+            return (centerMargin > 0) && (blueMarginSum > totalCount * 6);
         }
 
         private void BuildDefaultGrid()
         {
-            int width = 204;
-            int height = 102;
-            float cellSize = 10f;
-            Vector2 origin = new Vector2(-1020f, -510f);
+            int step = Mathf.Max(1, m_pixelsPerGrid);
+            int width = Mathf.RoundToInt(MAP_WIDTH) / step;
+            int height = Mathf.RoundToInt(MAP_HEIGHT) / step;
+            float cellSize = step;
+            Vector2 origin = new Vector2(-MAP_WIDTH * 0.5f, -MAP_HEIGHT * 0.5f);
             var cellData = new WorldCellData[width, height];
 
             for (int x = 0; x < width; x++)

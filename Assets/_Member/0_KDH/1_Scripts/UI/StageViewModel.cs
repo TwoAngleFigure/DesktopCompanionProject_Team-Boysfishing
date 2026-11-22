@@ -1,6 +1,7 @@
 using System;
 using DesktopCompanion.Systems;
 using DesktopCompanion.Data;
+using DesktopCompanion.Domain.World;
 
 namespace DesktopCompanion.Views
 {
@@ -8,6 +9,7 @@ namespace DesktopCompanion.Views
     {
         private StageSystem m_stageSystem;
         private WorldSystemBridge m_worldBridge;
+        private bool m_isCanceled = false;
 
         public readonly BindableProperty<string> CurrentStageName = new("위치 로드 중...");
         public readonly BindableProperty<bool> IsCancelButtonInteractable = new(false);
@@ -37,6 +39,7 @@ namespace DesktopCompanion.Views
                 m_worldBridge.OnStageChanged += HandleStageChanged;
                 m_worldBridge.OnTravelStarted += HandleTravelStarted;
                 m_worldBridge.OnTravelCanceled += HandleTravelCanceled;
+                m_worldBridge.OnVoyageStateChanged += HandleVoyageStateChanged;
 
                 RefreshCurrentStage();
             }
@@ -45,6 +48,7 @@ namespace DesktopCompanion.Views
                 m_stageSystem.OnStageChanged += HandleStageChanged;
                 m_stageSystem.OnTravelStarted += HandleTravelStarted;
                 m_stageSystem.OnTravelCanceled += HandleTravelCanceled;
+                m_stageSystem.OnVoyageStateChanged += HandleVoyageStateChanged;
 
                 RefreshCurrentStage();
             }
@@ -57,6 +61,7 @@ namespace DesktopCompanion.Views
                 m_worldBridge.OnStageChanged -= HandleStageChanged;
                 m_worldBridge.OnTravelStarted -= HandleTravelStarted;
                 m_worldBridge.OnTravelCanceled -= HandleTravelCanceled;
+                m_worldBridge.OnVoyageStateChanged -= HandleVoyageStateChanged;
                 m_worldBridge = null;
             }
 
@@ -65,36 +70,51 @@ namespace DesktopCompanion.Views
                 m_stageSystem.OnStageChanged -= HandleStageChanged;
                 m_stageSystem.OnTravelStarted -= HandleTravelStarted;
                 m_stageSystem.OnTravelCanceled -= HandleTravelCanceled;
+                m_stageSystem.OnVoyageStateChanged -= HandleVoyageStateChanged;
                 m_stageSystem = null;
             }
         }
 
         private void HandleTravelStarted(int targetMapId, float duration)
         {
-            IsCancelButtonInteractable.Value = true;
+            m_isCanceled = false;
+            // 출항 가속(Departing) 동안에는 중단 버튼 비활성화, 본 항해(Traveling) 진입 시 활성화
+            IsCancelButtonInteractable.Value = false;
+        }
+
+        private void HandleVoyageStateChanged(VoyageState state)
+        {
+            // 실제 본 항해 중(Traveling)일 때에만 중단 버튼 활성화
+            IsCancelButtonInteractable.Value = (state == VoyageState.Traveling);
         }
 
         private void HandleStageChanged(int newStageDataId)
         {
-            RefreshCurrentStage();
+            if (!m_isCanceled)
+            {
+                RefreshCurrentStage();
+            }
             IsCancelButtonInteractable.Value = false;
         }
 
         private void HandleTravelCanceled()
         {
+            m_isCanceled = true;
             CurrentStageName.Value = "항해 중지 (바다 위)";
             IsCancelButtonInteractable.Value = false;
         }
 
         private void RefreshCurrentStage()
         {
-            if (m_stageSystem != null && m_stageSystem.CurrentStageData != null)
+            var data = CurrentStageData;
+            if (data != null)
             {
-                CurrentStageName.Value = $"현재 지역: {m_stageSystem.CurrentStageData.Name}";
+                CurrentStageName.Value = $"현재 지역: {data.Name}";
             }
         }
 
         public bool IsTraveling => m_worldBridge?.IsTraveling ?? (m_stageSystem?.IsTraveling ?? false);
+        public bool IsCanceled => m_isCanceled;
         public float RemainingTravelTime => m_worldBridge?.RemainingTravelTime ?? (m_stageSystem?.RemainingTravelTime ?? 0f);
         public StageData CurrentStageData => m_worldBridge?.CurrentStageData ?? m_stageSystem?.CurrentStageData;
     }

@@ -29,14 +29,23 @@ namespace DesktopCompanion.Views
             m_vm.CurrentStageName.Bind(OnCurrentStageNameChanged);
             m_vm.IsCancelButtonInteractable.Bind(interactable => { if (m_cancelButton != null) m_cancelButton.interactable = interactable; });
 
-            if (m_cancelButton != null) m_cancelButton.onClick.AddListener(() => m_vm.CancelCommand?.Execute());
+            if (m_cancelButton != null)
+            {
+                m_cancelButton.onClick = new Button.ButtonClickedEvent();
+                m_cancelButton.onClick.AddListener(() =>
+                {
+                    bool wasMapActive = m_worldMapPanel != null && m_worldMapPanel.activeSelf;
+                    m_vm.CancelCommand?.Execute();
+                    if (wasMapActive && m_worldMapPanel != null)
+                    {
+                        OpenWorldMap();
+                    }
+                });
+            }
 
             if (m_openMapButton != null)
             {
-                m_openMapButton.onClick.AddListener(() =>
-                {
-                    if (m_worldMapPanel != null) m_worldMapPanel.SetActive(true);
-                });
+                m_openMapButton.onClick.AddListener(OpenWorldMap);
             }
 
             if (m_timerText != null && !m_vm.IsTraveling)
@@ -49,11 +58,28 @@ namespace DesktopCompanion.Views
         public override void Unbind()
         {
             if (m_cancelButton != null) m_cancelButton.onClick.RemoveAllListeners();
-
             if (m_openMapButton != null) m_openMapButton.onClick.RemoveAllListeners();
 
             m_vm.CurrentStageName.Unbind(OnCurrentStageNameChanged);
             m_vm.Unbind();
+        }
+
+        public void OpenWorldMap()
+        {
+            if (m_worldMapPanel != null)
+            {
+                var mapWindow = m_worldMapPanel.GetComponent<WorldMapUIView>();
+                if (mapWindow != null)
+                {
+                    mapWindow.OpenByPlayer();
+                }
+                else
+                {
+                    m_worldMapPanel.SetActive(true);
+                    var window = m_worldMapPanel.GetComponent<UIWindowBase>();
+                    if (window != null) window.Show();
+                }
+            }
         }
 
         private void OnCurrentStageNameChanged(string newName)
@@ -73,7 +99,7 @@ namespace DesktopCompanion.Views
             }
             else if (m_wasTraveling)
             {
-                m_timerText.text = m_vm.CurrentStageName.Value.Contains("바다 위") ? "정지됨" : "도착 완료!";
+                m_timerText.text = m_vm.IsCanceled ? "항해 중단" : "도착 완료!";
             }
 
             m_wasTraveling = isCurrentlyTraveling;
