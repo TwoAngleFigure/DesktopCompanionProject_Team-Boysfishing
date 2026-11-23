@@ -13,11 +13,14 @@ namespace DesktopCompanion.Systems
 
         private InventorySystem m_inventorySystem;
         private RandomTableSystem m_randomTableSystem;
+        private RecordSystem m_recordSystem;
 
         private Dictionary<int, RecipeData_Mixture> m_recipeDatabase = new();
 
         public override void PostInitialize()
         {
+            m_recordSystem = SystemManager.GetSystem<RecordSystem>();
+
             if (this.DataManager != null)
             {
                 var recipeList = this.DataManager.GetAll<RecipeData_Mixture>();
@@ -135,7 +138,12 @@ namespace DesktopCompanion.Systems
                 }
             }
 
-            return GrantReward(resultItemType, resultDataId, recipe.m_resultCount);
+            bool granted = GrantReward(resultItemType, resultDataId, recipe.m_resultCount);
+            if (granted)
+            {
+                m_recordSystem?.RecordItemCrafted(new ItemCraftInfo(recipe.ID, resultItemType, resultDataId, recipe.m_resultCount));
+            }
+            return granted;
         }
 
         /// <summary>

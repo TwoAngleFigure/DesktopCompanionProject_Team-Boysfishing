@@ -82,11 +82,6 @@ public class TestDebug : MonoBehaviour
         {
             TestPoolsWithLicense(2);
         }
-
-        if (m_stageSystem.IsTraveling)
-        {
-            m_stageSystem.Tick(Time.deltaTime);
-        }
     }
 
     private void TestPoolsWithLicense(int simulatedLicenseGrade)

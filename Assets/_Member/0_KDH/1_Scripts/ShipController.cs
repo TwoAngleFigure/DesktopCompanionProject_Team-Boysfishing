@@ -12,7 +12,11 @@ namespace DesktopCompanion.Controllers
 
         public void SetTraveling(bool isTraveling)
         {
-            m_isTraveling = isTraveling;
+            if (m_isTraveling != isTraveling)
+            {
+                m_isTraveling = isTraveling;
+                Debug.Log($"[ShipController] SetTraveling 상태 변경: {m_isTraveling} (속도: {m_speed})");
+            }
         }
 
         public void ResetToOrigin()
@@ -25,7 +29,8 @@ namespace DesktopCompanion.Controllers
         {
             if (m_isTraveling)
             {
-                transform.Translate(Vector3.left * m_speed * Time.deltaTime);
+                Vector3 delta = Vector3.left * m_speed * Time.deltaTime;
+                transform.Translate(delta);
             }
         }
     }
