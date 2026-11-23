@@ -889,26 +889,30 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Views.DisplaySettingsView
   m_participateInLayout: 1
+  m_closableByShortcut: 1
   m_hideMode: 1
   m_canvasGroup: {fileID: 1865806599}
   m_ownCanvas: {fileID: 1968292559}
   m_openOnStart: 0
+  m_openDuration: 0
+  m_openRise: 40
+  m_openEase: 9
+  m_openAnimationRoot: {fileID: 0}
+  m_closeDuration: 0
+  m_closeEase: 8
   m_controller: {fileID: 624381190}
-  m_fullButton: {fileID: 1293129697}
-  m_windowButton: {fileID: 2081023818}
-  m_scaleSlider: {fileID: 0}
-  m_scaleLabel: {fileID: 0}
-  m_scale075Button: {fileID: 0}
-  m_scale100Button: {fileID: 0}
-  m_scale125Button: {fileID: 0}
-  m_cropLeftSlider: {fileID: 0}
-  m_cropRightSlider: {fileID: 0}
+  m_modeDropdown: {fileID: 0}
+  m_scaleDropdown: {fileID: 0}
+  m_uiScaleDropdown: {fileID: 0}
+  m_fpsDropdown: {fileID: 0}
+  m_cropSlider: {fileID: 0}
   m_cropLabel: {fileID: 0}
-  m_monitorPrevButton: {fileID: 1824116427}
-  m_monitorNextButton: {fileID: 304662009}
-  m_monitorLabel: {fileID: 723388434}
+  m_topMostToggle: {fileID: 0}
+  m_monitorDropdown: {fileID: 0}
   m_moveButton: {fileID: 1484356475}
   m_moveLabel: {fileID: 1901065180}
+  m_windowOnlyTexts: []
+  m_disabledTextAlpha: 0.4
 --- !u!1 &109289014
 GameObject:
   m_ObjectHideFlags: 0
@@ -1560,14 +1564,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7041e5cb2ff28248be905849180add4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Views.InventoryItemTooltipView
-  m_canvas: {fileID: 330234012}
-  m_tooltipRoot: {fileID: 159285408}
-  m_canvasGroup: {fileID: 159285411}
-  m_itemIcon: {fileID: 68622868}
-  m_itemNameText: {fileID: 1993772508}
-  m_gradeText: {fileID: 244440758}
-  m_effectText: {fileID: 1351332198}
-  m_horizontalGap: 0
 --- !u!114 &159285413
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2010,23 +2006,30 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Views.MixtureUIView
   m_participateInLayout: 1
+  m_closableByShortcut: 1
   m_hideMode: 0
   m_canvasGroup: {fileID: 0}
   m_ownCanvas: {fileID: 0}
   m_openOnStart: 0
+  m_openDuration: 0
+  m_openRise: 40
+  m_openEase: 9
+  m_openAnimationRoot: {fileID: 0}
+  m_closeDuration: 0
+  m_closeEase: 8
   m_closeButton: {fileID: 1624043978}
-  m_mixtureList:
-  - {fileID: 11400000, guid: b15a997abe5cef148a653d6f1baef582, type: 2}
-  - {fileID: 11400000, guid: f68a1026e9375a24282a304a8bc278e3, type: 2}
   m_mixtureSlotPrefab: {fileID: 4470191008398514025, guid: a3c9550bffd09c44e90e3a87a33e3c83, type: 3}
   m_gridContainer: {fileID: 1979494308}
+  m_categoryText: {fileID: 0}
+  m_effectText: {fileID: 0}
+  m_statRoot: {fileID: 0}
+  m_statRowPrefab: {fileID: 0}
+  m_ingredientRoot: {fileID: 0}
+  m_ingredientRowPrefab: {fileID: 0}
+  m_goldText: {fileID: 0}
+  m_goldNormalColor: {r: 1, g: 1, b: 1, a: 1}
+  m_goldLackColor: {r: 0.85, g: 0.25, b: 0.25, a: 1}
   m_craftBtn: {fileID: 1121627023}
-  m_mainTooltipPanel: {fileID: 1971310517}
-  m_tooltipNameText: {fileID: 610290648}
-  m_tooltipIngredientsText: {fileID: 742013597}
-  m_tooltipCloseBtn: {fileID: 835046833}
-  m_hoverTooltipRect: {fileID: 1445670536}
-  m_hoverTooltipText: {fileID: 1739087793}
 --- !u!1 &197171512
 GameObject:
   m_ObjectHideFlags: 0
@@ -2181,6 +2184,9 @@ MonoBehaviour:
   m_fishRoot: {fileID: 200672085}
   m_layerName: Aquarium
   m_swimSpeed: 0.6
+  m_sizeScale: 1
+  m_sizeMin: 0.5
+  m_sizeMax: 2
 --- !u!1 &203070658
 GameObject:
   m_ObjectHideFlags: 0
@@ -4102,8 +4108,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 403728747}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.0025331243, y: 0.9659188, z: -0.002868258, w: 0.2588172}
-  m_LocalPosition: {x: -4.593, y: 0.012301513, z: 2.733}
+  m_LocalRotation: {x: -0.0018301252, y: 0.9659226, z: 0.0018496705, w: 0.2588182}
+  m_LocalPosition: {x: -4.593, y: 0.0008783556, z: 2.733}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5921,6 +5927,7 @@ MonoBehaviour:
   m_cropHeight01: 0.33333334
   m_transparentWindow: {fileID: 3815796473645367558}
   m_clickThrough: {fileID: 2027140459621452161}
+  m_frameRate: {fileID: 0}
 --- !u!1 &646380072
 GameObject:
   m_ObjectHideFlags: 0
@@ -6235,18 +6242,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3eba3a0e1061b74cb16bf393e5dd6af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Views.AquariumMirrorWindow
-  m_participateInLayout: 1
-  m_hideMode: 0
-  m_canvasGroup: {fileID: 0}
-  m_ownCanvas: {fileID: 0}
-  m_openOnStart: 0
-  m_deployRoot: {fileID: 138628990}
-  m_placedRoot: {fileID: 875324280}
-  m_rowPrefab: {fileID: 3570195742825766492, guid: 2051e4153bf7709468cc5401bf9f4f8c, type: 3}
-  m_detailIcon: {fileID: 1721193222}
-  m_detailName: {fileID: 751072186}
-  m_detailInfo: {fileID: 744672777}
-  m_closeButton: {fileID: 96084559}
 --- !u!114 &659556220
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6611,11 +6606,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Views.EquipmentWindowView
   m_participateInLayout: 1
+  m_closableByShortcut: 1
   m_hideMode: 1
   m_canvasGroup: {fileID: 692760377}
   m_ownCanvas: {fileID: 458214171}
   m_openOnStart: 0
-  m_allStatsText: {fileID: 6836684865120672513}
+  m_openDuration: 0
+  m_openRise: 40
+  m_openEase: 9
+  m_openAnimationRoot: {fileID: 0}
+  m_closeDuration: 0
+  m_closeEase: 8
+  m_battleStatsText: {fileID: 0}
+  m_autoBattleStatsText: {fileID: 0}
+  m_rewardStatsText: {fileID: 0}
   m_slots:
   - {fileID: 5511479162090415576}
   - {fileID: 7184149176693141460}
@@ -10859,18 +10863,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Views.InventoryWindowView
   m_participateInLayout: 1
+  m_closableByShortcut: 1
   m_hideMode: 1
   m_canvasGroup: {fileID: 1452028220}
   m_ownCanvas: {fileID: 330234012}
   m_openOnStart: 0
+  m_openDuration: 0
+  m_openRise: 40
+  m_openEase: 9
+  m_openAnimationRoot: {fileID: 0}
+  m_closeDuration: 0
+  m_closeEase: 8
   m_fishTabButton: {fileID: 1789906911}
   m_equipmentTabButton: {fileID: 324004540}
   m_materialTabButton: {fileID: 730551592}
   m_closeButton: {fileID: 0}
   m_slotRoot: {fileID: 1116286869}
   m_slotPrefab: {fileID: 2131937382253344352, guid: 0f9a65e03614f6b43b151abc56de6b1b, type: 3}
+  m_FishSlotBackGround: {fileID: 0}
+  m_MaterialsSlotBackGround: {fileID: 0}
+  m_EquipmentSlotBackGround: {fileID: 0}
   m_goldText: {fileID: 2146375886}
-  m_itemTooltip: {fileID: 159285412}
   m_itemPickupController: {fileID: 1402299731}
   m_sellView: {fileID: 983460879}
 --- !u!1 &1116286868
@@ -14630,8 +14643,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1445137105}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.00077322434, y: 0.13052592, z: 0.0019443192, w: 0.99144274}
-  m_LocalPosition: {x: -11.16, y: 0.0034660667, z: 7.36}
+  m_LocalRotation: {x: 0.0010495824, y: 0.13052554, z: -0.0030064303, w: 0.9914399}
+  m_LocalPosition: {x: -11.16, y: 0.010600387, z: 7.36}
   m_LocalScale: {x: 0.68887, y: 0.68887, z: 0.68887}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -17224,19 +17237,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.Views.AquariumWindow
   m_participateInLayout: 1
+  m_closableByShortcut: 1
   m_hideMode: 0
   m_canvasGroup: {fileID: 0}
   m_ownCanvas: {fileID: 0}
   m_openOnStart: 0
+  m_openDuration: 0
+  m_openRise: 40
+  m_openEase: 9
+  m_openAnimationRoot: {fileID: 0}
+  m_closeDuration: 0
+  m_closeEase: 8
   m_tankImage: {fileID: 1334418897}
   m_tankRenderer: {fileID: 200672084}
-  m_fishListRoot: {fileID: 1421487136}
-  m_fishRowPrefab: {fileID: 8992753022686873657, guid: c7283e61a2ece504d8dfcc95a534d2d2, type: 3}
-  m_materialListRoot: {fileID: 1421487136}
-  m_materialRowPrefab: {fileID: 5352583304809160201, guid: 1ab037324b10fb843ac5fd5ddd2fb5e6, type: 3}
-  m_capacityText: {fileID: 792751384}
-  m_openMirrorButton: {fileID: 775332806}
-  m_mirrorWindow: {fileID: 659556219}
   m_closeButton: {fileID: 915860538}
 --- !u!114 &1670214137
 MonoBehaviour:
@@ -28272,14 +28285,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FishingView
   m_stateText: {fileID: 0}
-  m_battleGauge: {fileID: 8797682123004836641}
   m_hpText: {fileID: 2298094995503499}
   m_hpSlider: {fileID: 6962105495514865875}
   m_timeLimitSlider: {fileID: 3672497865261664860}
   m_toggleFishingButton: {fileID: 851015726}
   m_toggleFishingButtonText: {fileID: 0}
+  m_toggleFishingStateOwner: {fileID: 0}
   m_manualAttackButton: {fileID: 3867547847974664227}
-  m_debugWaitTimeText: {fileID: 0}
 --- !u!1 &316680336919769974
 GameObject:
   m_ObjectHideFlags: 0
@@ -40779,6 +40791,7 @@ MonoBehaviour:
   m_slotButton: {fileID: 6119120750052235963}
   m_itemNameText: {fileID: 1599630393343987684}
   m_iconImage: {fileID: 0}
+  m_quantityText: {fileID: 0}
 --- !u!1 &3524872662484418865
 GameObject:
   m_ObjectHideFlags: 0
@@ -41113,6 +41126,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DesktopCompanion.TransparentWindow
   _clickThrough: 1
   _hideFromTaskbar: 0
+  _topMost: 1
   _hwndRetryFrames: 30
   _coverFullScreen: 1
   _edgeInset: 1
@@ -47841,6 +47855,7 @@ MonoBehaviour:
   m_slotButton: {fileID: 2949723337554041670}
   m_itemNameText: {fileID: 7653859902534487577}
   m_iconImage: {fileID: 0}
+  m_quantityText: {fileID: 0}
 --- !u!1 &5523343424104342406
 GameObject:
   m_ObjectHideFlags: 0
@@ -48096,6 +48111,7 @@ MonoBehaviour:
   m_slotButton: {fileID: 3152473269270846428}
   m_itemNameText: {fileID: 7595225133937561219}
   m_iconImage: {fileID: 0}
+  m_quantityText: {fileID: 0}
 --- !u!224 &5730419585217283530
 RectTransform:
   m_ObjectHideFlags: 0
@@ -48131,6 +48147,7 @@ MonoBehaviour:
   m_slotButton: {fileID: 3105425186515331539}
   m_itemNameText: {fileID: 7620323082891574412}
   m_iconImage: {fileID: 0}
+  m_quantityText: {fileID: 0}
 --- !u!1 &5741764337472732585
 GameObject:
   m_ObjectHideFlags: 0
@@ -49908,6 +49925,66 @@ PrefabInstance:
       propertyPath: m_openMapButton
       value: 
       objectReference: {fileID: 1678736958}
+    - target: {fileID: 7401952806291184377, guid: 95821651e1199214cab428c3abe30aae, type: 3}
+      propertyPath: m_stageAreaRects.Array.data[0].m_hexRadius
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 7401952806291184377, guid: 95821651e1199214cab428c3abe30aae, type: 3}
+      propertyPath: m_stageAreaRects.Array.data[1].m_hexRadius
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 7401952806291184377, guid: 95821651e1199214cab428c3abe30aae, type: 3}
+      propertyPath: m_stageAreaRects.Array.data[2].m_hexRadius
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 7401952806291184377, guid: 95821651e1199214cab428c3abe30aae, type: 3}
+      propertyPath: m_stageAreaRects.Array.data[3].m_hexRadius
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 7401952806291184377, guid: 95821651e1199214cab428c3abe30aae, type: 3}
+      propertyPath: m_stageAreaRects.Array.data[4].m_hexRadius
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 7401952806291184377, guid: 95821651e1199214cab428c3abe30aae, type: 3}
+      propertyPath: m_stageAreaRects.Array.data[5].m_hexRadius
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 7401952806291184377, guid: 95821651e1199214cab428c3abe30aae, type: 3}
+      propertyPath: m_stageAreaRects.Array.data[6].m_hexRadius
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 7401952806291184377, guid: 95821651e1199214cab428c3abe30aae, type: 3}
+      propertyPath: m_stageAreaRects.Array.data[7].m_hexRadius
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 7401952806291184377, guid: 95821651e1199214cab428c3abe30aae, type: 3}
+      propertyPath: m_stageAreaRects.Array.data[8].m_hexRadius
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 7401952806291184377, guid: 95821651e1199214cab428c3abe30aae, type: 3}
+      propertyPath: m_stageAreaRects.Array.data[9].m_hexRadius
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 7401952806291184377, guid: 95821651e1199214cab428c3abe30aae, type: 3}
+      propertyPath: m_stageAreaRects.Array.data[2].m_additionalStamps.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7401952806291184377, guid: 95821651e1199214cab428c3abe30aae, type: 3}
+      propertyPath: m_stageAreaRects.Array.data[2].m_additionalStamps.Array.data[0].m_scale.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7401952806291184377, guid: 95821651e1199214cab428c3abe30aae, type: 3}
+      propertyPath: m_stageAreaRects.Array.data[2].m_additionalStamps.Array.data[0].m_scale.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7401952806291184377, guid: 95821651e1199214cab428c3abe30aae, type: 3}
+      propertyPath: m_stageAreaRects.Array.data[2].m_additionalStamps.Array.data[0].m_offset.x
+      value: 45.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7401952806291184377, guid: 95821651e1199214cab428c3abe30aae, type: 3}
+      propertyPath: m_stageAreaRects.Array.data[2].m_additionalStamps.Array.data[0].m_hexRadius
+      value: 120
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -50154,6 +50231,7 @@ MonoBehaviour:
   m_slotButton: {fileID: 513420508306264394}
   m_itemNameText: {fileID: 5041908991199069205}
   m_iconImage: {fileID: 0}
+  m_quantityText: {fileID: 0}
 --- !u!1 &7220688439897091224
 GameObject:
   m_ObjectHideFlags: 0
@@ -50398,6 +50476,7 @@ MonoBehaviour:
   m_slotButton: {fileID: 275386445611834401}
   m_itemNameText: {fileID: 4686596001733839230}
   m_iconImage: {fileID: 0}
+  m_quantityText: {fileID: 0}
 --- !u!1 &7457631170859805421
 GameObject:
   m_ObjectHideFlags: 0
@@ -51838,6 +51917,7 @@ MonoBehaviour:
   m_slotButton: {fileID: 1178044928049929771}
   m_itemNameText: {fileID: 5945100216966826868}
   m_iconImage: {fileID: 0}
+  m_quantityText: {fileID: 0}
 --- !u!1 &8431595053099670065
 GameObject:
   m_ObjectHideFlags: 0
@@ -52105,8 +52185,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 74827879233646106}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.00048679078, y: -0, z: 0.00051683525, w: 0.99999976}
-  m_LocalPosition: {x: 0, y: 0.05276232, z: 0}
+  m_LocalRotation: {x: 0.00045671756, y: -0, z: -0.0037463459, w: 0.9999929}
+  m_LocalPosition: {x: 0, y: 0.06225105, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -52228,22 +52308,9 @@ MonoBehaviour:
   m_flightModelLocalEulerAngles: {x: -90, y: 0, z: 0}
   m_flightReferenceSizeCm: 50
   m_minFlightScale: 0.2
-  m_spawnPoint: {fileID: 1290612873581960595}
-  m_modelRoot: {fileID: 1273871826458286603}
-  m_modelScale: {x: 1, y: 1, z: 1}
-  m_popupCanvasGroup: {fileID: 507008054974930630}
-  m_popupRoot: {fileID: 8109779405310378011}
-  m_fishInfoText: {fileID: 6428533161496982019}
-  m_qualityStars:
-  - {fileID: 648104646539125808}
-  - {fileID: 4780071144913514259}
-  - {fileID: 7730209262943071124}
-  - {fileID: 1117310307044084895}
-  - {fileID: 1560186439123055468}
-  m_popupHoldDuration: 1.5
-  m_popupMoveDistance: 0.4
-  m_popupEnterDuration: 0.35
-  m_popupExitDuration: 0.4
+  m_caughtFishPopup: {fileID: 0}
+  m_dropPopup: {fileID: 0}
+  m_tempDropIcon: {fileID: 0}
 --- !u!114 &8886213465155934032
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -52580,6 +52647,7 @@ MonoBehaviour:
   m_slotButton: {fileID: 1943847573435868118}
   m_itemNameText: {fileID: 6350519305567499913}
   m_iconImage: {fileID: 0}
+  m_quantityText: {fileID: 0}
 --- !u!4 &9131367901443567684
 Transform:
   m_ObjectHideFlags: 0

@@ -18,11 +18,11 @@ namespace DesktopCompanion.Views
         [Header("UI 제어")]
         public Button m_closeButton;
 
-        [Header("스테이지별 사각형(Width x Height) 소속 해역 설정")]
-        [Tooltip("각 스테이지 노드를 중심으로 하는 사각형 해역 크기 설정 리스트 (교집합 진입 시 중심점 거리 우선순위 판정)")]
+        [Header("스테이지별 육각형 클러스터(메인 육각형 + 보조 스탬프) 소속 해역 설정")]
+        [Tooltip("각 스테이지 노드를 중심으로 하는 육각형 해역 및 보조 육각 스탬프 설정 리스트 (교집합 진입 시 중심점 직선거리 우선순위 판정)")]
         [SerializeField] private List<StageAreaRectConfig> m_stageAreaRects = new List<StageAreaRectConfig>();
 
-        [Tooltip("체크 시 유니티 Scene 뷰에서 각 스테이지의 사각형(Width x Height) 해역 범위를 기즈모로 표시합니다.")]
+        [Tooltip("체크 시 유니티 Scene 뷰에서 각 스테이지의 육각형 해역 및 보조 스탬프 범위를 기즈모로 표시합니다.")]
         [SerializeField] private bool m_drawAreaGizmos = true;
 
         public IReadOnlyList<StageAreaRectConfig> StageAreaRects => m_stageAreaRects;
@@ -216,33 +216,7 @@ namespace DesktopCompanion.Views
             Transform basis = m_nodeContainer != null ? m_nodeContainer : transform;
             Gizmos.matrix = basis.localToWorldMatrix;
 
-            Color[] palette =
-            {
-                new Color(0.2f, 0.8f, 1.0f, 0.85f),
-                new Color(0.3f, 0.9f, 0.5f, 0.85f),
-                new Color(1.0f, 0.7f, 0.2f, 0.85f),
-                new Color(0.9f, 0.4f, 0.8f, 0.85f),
-                new Color(0.6f, 0.5f, 1.0f, 0.85f),
-                new Color(1.0f, 0.4f, 0.4f, 0.85f)
-            };
-
-            for (int i = 0; i < m_stageAreaRects.Count; i++)
-            {
-                var cfg = m_stageAreaRects[i];
-                if (cfg == null) continue;
-
-                Vector2 basePos = StageSystem.GetDefaultStageMapPosition(cfg.m_stageId);
-                Vector3 portCenter = new Vector3(basePos.x, basePos.y, 0f);
-                Vector3 rectCenter = new Vector3(basePos.x + cfg.m_centerOffset.x, basePos.y + cfg.m_centerOffset.y, 0f);
-                Vector3 size = new Vector3(cfg.m_width, cfg.m_height, 1f);
-
-                Color c = palette[i % palette.Length];
-                Gizmos.color = new Color(c.r, c.g, c.b, 0.18f);
-                Gizmos.DrawCube(rectCenter, size);
-                Gizmos.color = c;
-                Gizmos.DrawWireCube(rectCenter, size);
-                Gizmos.DrawWireSphere(portCenter, cfg.m_portRadius);
-            }
+            StageSystem.DrawStageHexAreaGizmos(m_stageAreaRects);
 
             Gizmos.matrix = Matrix4x4.identity;
         }

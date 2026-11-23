@@ -78,8 +78,9 @@ namespace DesktopCompanion.Views
         private void HandleTravelStarted(int targetMapId, float duration)
         {
             m_isCanceled = false;
-            // 출항 가속(Departing) 동안에는 중단 버튼 비활성화, 본 항해(Traveling) 진입 시 활성화
-            IsCancelButtonInteractable.Value = false;
+            var currentState = m_worldBridge != null ? m_worldBridge.CurrentState : (m_stageSystem?.CurrentState ?? VoyageState.Departing);
+            // 출항 가속(Departing) 동안에는 중단 버튼 비활성화, 이미 본 항해 중(Traveling) 목적지를 바꾼 경우 활성화 유지
+            IsCancelButtonInteractable.Value = (currentState == VoyageState.Traveling);
         }
 
         private void HandleVoyageStateChanged(VoyageState state)

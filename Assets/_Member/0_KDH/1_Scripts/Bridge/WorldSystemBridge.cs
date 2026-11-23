@@ -310,11 +310,11 @@ namespace DesktopCompanion.Systems
                             var stage = allStages[s];
                             if (stage == null) continue;
 
-                            float dx = Mathf.Abs(cellWorldPos.x - stage.MapPosition.x);
-                            float dy = Mathf.Abs(cellWorldPos.y - stage.MapPosition.y);
-
+                            float dx = cellWorldPos.x - stage.MapPosition.x;
+                            float dy = cellWorldPos.y - stage.MapPosition.y;
                             float distSq = dx * dx + dy * dy;
-                            if (dx <= 180f && dy <= 130f)
+
+                            if (StageAreaRectConfig.IsInsidePointyHex(cellWorldPos, stage.MapPosition, 160f, Vector2.one))
                             {
                                 if (distSq < bestOverlapDistSq)
                                 {

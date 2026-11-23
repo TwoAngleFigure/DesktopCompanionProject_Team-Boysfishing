@@ -133,11 +133,27 @@ namespace DesktopCompanion.Views
 
         private void LoadStage(string stageAssetKey, bool isTarget)
         {
-            if (m_lastLoadedAssetKey == stageAssetKey) return;
+            var stageSystem = SystemManager.GetSystem<StageSystem>();
+
+            if (m_lastLoadedAssetKey == stageAssetKey && m_currentStageInstance != null)
+            {
+                if (isTarget)
+                {
+                    StageBlueprint existingBlueprint = m_currentStageInstance.GetComponent<StageBlueprint>();
+                    if (existingBlueprint != null)
+                    {
+                        float currentCamX = Camera.main != null ? Camera.main.transform.position.x : 0f;
+                        float remainingDist = stageSystem != null ? stageSystem.RemainingDistance : 0f;
+                        m_absoluteStartCamX = currentCamX;
+                        m_absoluteTargetCamX = m_absoluteStartCamX - remainingDist;
+                        existingBlueprint.InitProvider(AssetProvider, m_absoluteStartCamX, m_absoluteTargetCamX, false);
+                    }
+                }
+                return;
+            }
+
             bool isFirstLoad = string.IsNullOrEmpty(m_lastLoadedAssetKey) && !isTarget;
             ClearCurrentStage();
-
-            var stageSystem = SystemManager.GetSystem<StageSystem>();
             bool isActuallyAnchored = stageSystem != null && stageSystem.CurrentState == VoyageState.Anchored;
 
             if (isFirstLoad && m_shipController != null) m_shipController.ResetToOrigin();

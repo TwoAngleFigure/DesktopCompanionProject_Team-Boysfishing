@@ -10,9 +10,25 @@ using DesktopCompanion.Views;
 namespace DesktopCompanion.Systems
 {
     /// <summary>
-    /// 스테이지별 사각형(Width x Height) 소속 해역 설정 구조체
-    /// 중심점(StageData.MapPosition + m_centerOffset)을 기준으로 가로(m_width), 세로(m_height) 직사각형 영역을 정의하며,
-    /// 영역이 겹치는 교집합 구간에서는 중심점까지의 거리가 더 가까운 스테이지가 우선권을 가집니다.
+    /// 복잡한 강줄기나 휘어진 해안선을 표현하기 위해 메인 육각 해역에 추가로 이어 붙이는 보조 육각형 도장(Stamp) 설정
+    /// </summary>
+    [Serializable]
+    public class HexStampZone
+    {
+        [Tooltip("스테이지 기본 위치(MapPosition) 기준 보조 육각 도장의 중심 오프셋")]
+        public Vector2 m_offset = Vector2.zero;
+
+        [Tooltip("보조 육각 도장의 반경 (중심에서 육각형 변까지의 거리, 픽셀 단위)")]
+        public float m_hexRadius = 120f;
+
+        [Tooltip("육각형의 가로(X) / 세로(Y) 비율 (기본 1, 1)")]
+        public Vector2 m_scale = Vector2.one;
+    }
+
+    /// <summary>
+    /// 스테이지별 육각형 클러스터(메인 육각형 + 보조 육각 스탬프) 소속 해역 설정 구조체
+    /// 중심점(StageData.MapPosition + m_centerOffset)을 기준으로 육각형 반경(m_hexRadius)과 비율(m_scale)로 영역을 정의하며,
+    /// 영역이 겹치는 교집합 구간에서는 중심점까지의 직선거리(distSq)가 더 가까운 스테이지가 우선권을 가집니다.
     /// </summary>
     [Serializable]
     public class StageAreaRectConfig
@@ -23,17 +39,92 @@ namespace DesktopCompanion.Systems
         [Tooltip("인스펙터 식별용 이름")]
         public string m_stageName;
 
-        [Tooltip("StageData.MapPosition 기준 중심점 추가 오프셋 (기본 0,0)")]
+        [Header("메인 육각 해역 설정 (방안 1 베이스)")]
+        [Tooltip("StageData.MapPosition 기준 메인 육각형 중심점 추가 오프셋 (기본 0,0)")]
         public Vector2 m_centerOffset = Vector2.zero;
 
-        [Tooltip("사각형 해역의 가로 길이 (월드/맵 픽셀 단위)")]
-        public float m_width = 400f;
+        [Tooltip("메인 육각형 해역의 반경 (중심에서 변까지의 거리, 월드 픽셀 단위)")]
+        public float m_hexRadius = 180f;
 
-        [Tooltip("사각형 해역의 세로 길이 (월드/맵 픽셀 단위)")]
-        public float m_height = 300f;
+        [Tooltip("메인 육각형의 가로(X)·세로(Y) 비율 (1,1이면 정육각형, 늘리면 납작/길쭉한 육각형)")]
+        public Vector2 m_scale = Vector2.one;
 
-        [Tooltip("공식 항구 정박지로 인정할 노드 중심 반경")]
+        [Header("보조 육각 스탬프 리스트 (방안 2 결합 - 필요한 스테이지만 추가)")]
+        [Tooltip("구불구불한 강이나 긴 해안선을 따라 추가로 찍어줄 보조 육각형 도장 리스트")]
+        public List<HexStampZone> m_additionalStamps = new List<HexStampZone>();
+
+        [Header("공식 항구 정박 반경")]
+        [Tooltip("공식 항구 정박지로 인정할 노드(MapPosition) 중심 반경")]
         public float m_portRadius = 28f;
+
+        // 레거시 직렬화 호환용 필드 (숨김)
+        [HideInInspector] public float m_width = 360f;
+        [HideInInspector] public float m_height = 260f;
+
+        /// <summary>
+        /// 특정 월드 좌표(worldPos)가 이 스테이지의 메인 육각형 또는 보조 육각 스탬프 내부에 포함되는지 판정하고,
+        /// 포함될 경우 교집합 우선순위 비교를 위한 가장 가까운 중심점 직선거리 제곱(closestCenterDistSq)을 반환합니다.
+        /// </summary>
+        public bool TryEvaluateHexInclusion(Vector2 worldPos, Vector2 stageBasePos, out float closestCenterDistSq)
+        {
+            bool isInside = false;
+            closestCenterDistSq = float.MaxValue;
+
+            // 1) 메인 육각형 검사
+            Vector2 mainCenter = stageBasePos + m_centerOffset;
+            if (IsInsidePointyHex(worldPos, mainCenter, m_hexRadius, m_scale))
+            {
+                isInside = true;
+                closestCenterDistSq = (worldPos - mainCenter).sqrMagnitude;
+            }
+
+            // 2) 보조 육각형 스탬프들(방안 2) 검사 (합집합)
+            if (m_additionalStamps != null)
+            {
+                for (int i = 0; i < m_additionalStamps.Count; i++)
+                {
+                    var stamp = m_additionalStamps[i];
+                    if (stamp == null || stamp.m_hexRadius <= 0f) continue;
+
+                    Vector2 stampCenter = stageBasePos + stamp.m_offset;
+                    if (IsInsidePointyHex(worldPos, stampCenter, stamp.m_hexRadius, stamp.m_scale))
+                    {
+                        isInside = true;
+                        float dSq = (worldPos - stampCenter).sqrMagnitude;
+                        if (dSq < closestCenterDistSq)
+                        {
+                            closestCenterDistSq = dSq;
+                        }
+                    }
+                }
+            }
+
+            return isInside;
+        }
+
+        /// <summary>
+        /// Odd-R Pointy-Top(위아래가 뾰족한) 육각형 기하학 내부 포함 판정 공식
+        /// </summary>
+        public static bool IsInsidePointyHex(Vector2 point, Vector2 center, float radius, Vector2 scale)
+        {
+            if (radius <= 0f) return false;
+
+            float sx = Mathf.Max(0.1f, Mathf.Abs(scale.x));
+            float sy = Mathf.Max(0.1f, Mathf.Abs(scale.y));
+
+            // 비율(Scale)이 적용된 로컬 절대 거리
+            float dx = Mathf.Abs(point.x - center.x) / sx;
+            float dy = Mathf.Abs(point.y - center.y) / sy;
+
+            // Pointy-Top 정육각형의 내접반경(Apothem = radius) 기준 3축 경계 검사:
+            // 1) 좌우 수직 변까지의 거리: dx <= radius
+            // 2) 상하 대각선(60도) 4개 변까지의 거리: dx * 0.5 + dy * (sqrt(3)/2) <= radius
+            const float SIN_60 = 0.8660254f;
+            if (dx > radius) return false;
+            if (dx * 0.5f + dy * SIN_60 > radius) return false;
+
+            return true;
+        }
     }
 
     /// <summary>
@@ -347,12 +438,13 @@ namespace DesktopCompanion.Systems
                 targetList = new List<StageAreaRectConfig>();
             }
 
-            int[] defaultIds = { 600001, 600002, 600003, 600004, 600005, 600006, 600007, 600008, 600009 };
+            int[] defaultIds = { 600001, 600002, 600003, 600004, 600005, 600006, 600007, 600008, 600009, 600010 };
             string[] defaultNames =
             {
                 "푸른 하천1 (600001)", "갯벌 연안1 (600002)", "냉수대 앞바다1 (600003)",
                 "푸른 하천2 (600004)", "갯벌 연안2 (600005)", "냉수대 앞바다2 (600006)",
-                "푸른 하천3 (600007)", "갯벌 연안3 (600008)", "냉수대 앞바다3 (600009)"
+                "푸른 하천3 (600007)", "갯벌 연안3 (600008)", "냉수대 앞바다3 (600009)",
+                "냉수대 앞바다4 (600010)"
             };
 
             for (int i = 0; i < defaultIds.Length; i++)
@@ -367,6 +459,28 @@ namespace DesktopCompanion.Systems
                             targetList[j].m_stageName = defaultNames[i];
                         if (targetList[j].m_portRadius <= 12f)
                             targetList[j].m_portRadius = 28f;
+                        if (targetList[j].m_hexRadius <= 1f)
+                            targetList[j].m_hexRadius = 160f;
+                        if (targetList[j].m_scale == Vector2.zero)
+                            targetList[j].m_scale = Vector2.one;
+                        if (targetList[j].m_additionalStamps == null)
+                            targetList[j].m_additionalStamps = new List<HexStampZone>();
+
+                        for (int s = 0; s < targetList[j].m_additionalStamps.Count; s++)
+                        {
+                            var stamp = targetList[j].m_additionalStamps[s];
+                            if (stamp == null) continue;
+                            // 유니티 인스펙터에서 리스트 '+' 버튼 클릭 시 0으로 초기화되는 현상 자동 보정
+                            if (stamp.m_hexRadius <= 0f && stamp.m_scale == Vector2.zero)
+                            {
+                                stamp.m_hexRadius = 120f;
+                                stamp.m_scale = Vector2.one;
+                            }
+                            else if (stamp.m_scale == Vector2.zero)
+                            {
+                                stamp.m_scale = Vector2.one;
+                            }
+                        }
                         exists = true;
                         break;
                     }
@@ -379,8 +493,9 @@ namespace DesktopCompanion.Systems
                         m_stageId = id,
                         m_stageName = defaultNames[i],
                         m_centerOffset = Vector2.zero,
-                        m_width = 360f,
-                        m_height = 260f,
+                        m_hexRadius = 160f,
+                        m_scale = Vector2.one,
+                        m_additionalStamps = new List<HexStampZone>(),
                         m_portRadius = 28f
                     });
                 }
@@ -392,13 +507,30 @@ namespace DesktopCompanion.Systems
                 {
                     var st = allStages[i];
                     if (st == null) continue;
+                    bool found = false;
                     for (int j = 0; j < targetList.Count; j++)
                     {
                         if (targetList[j].m_stageId == st.ID)
                         {
                             targetList[j].m_stageName = $"{st.Name} ({st.ID})";
+                            found = true;
                             break;
                         }
+                    }
+
+                    // 추후 시트에 신규 스테이지가 추가되더라도 누락 없이 자동 등록
+                    if (!found)
+                    {
+                        targetList.Add(new StageAreaRectConfig
+                        {
+                            m_stageId = st.ID,
+                            m_stageName = $"{st.Name} ({st.ID})",
+                            m_centerOffset = Vector2.zero,
+                            m_hexRadius = 160f,
+                            m_scale = Vector2.one,
+                            m_additionalStamps = new List<HexStampZone>(),
+                            m_portRadius = 28f
+                        });
                     }
                 }
             }
@@ -417,6 +549,7 @@ namespace DesktopCompanion.Systems
                 600007 => new Vector2(-150f, 0f),
                 600008 => new Vector2(-500f, -200f),
                 600009 => new Vector2(125f, -150f),
+                600010 => new Vector2(375f, -200f),
                 _ => Vector2.zero
             };
         }
@@ -437,23 +570,19 @@ namespace DesktopCompanion.Systems
             var cellData = new WorldCellData[width, height];
             var allStages = DataManager.GetAll<StageData>();
 
-            // 스테이지별 사각형 중심 좌표 및 항구 원점 캐싱 (고속 판정용)
-            int rectCount = m_stageAreaRects.Count;
-            int[] stageIds = new int[rectCount];
-            Vector2[] portPositions = new Vector2[rectCount];
-            Vector2[] rectCenters = new Vector2[rectCount];
-            Vector2[] halfSizes = new Vector2[rectCount];
-            float[] portRadiiSq = new float[rectCount];
+            // 스테이지별 육각형 클러스터 설정 및 항구 원점 캐싱 (고속 판정용)
+            int stageCount = m_stageAreaRects.Count;
+            int[] stageIds = new int[stageCount];
+            Vector2[] portPositions = new Vector2[stageCount];
+            float[] portRadiiSq = new float[stageCount];
 
-            for (int i = 0; i < rectCount; i++)
+            for (int i = 0; i < stageCount; i++)
             {
                 var cfg = m_stageAreaRects[i];
                 stageIds[i] = cfg.m_stageId;
                 StageData st = DataManager.GetData<StageData>(cfg.m_stageId);
-                Vector2 basePos = st != null ? st.MapPosition : Vector2.zero;
+                Vector2 basePos = st != null ? st.MapPosition : GetDefaultStageMapPosition(cfg.m_stageId);
                 portPositions[i] = basePos;
-                rectCenters[i] = basePos + cfg.m_centerOffset;
-                halfSizes[i] = new Vector2(Mathf.Max(1f, cfg.m_width * 0.5f), Mathf.Max(1f, cfg.m_height * 0.5f));
                 float pr = Mathf.Max(cellSize * 2f, cfg.m_portRadius);
                 portRadiiSq[i] = pr * pr;
             }
@@ -473,7 +602,8 @@ namespace DesktopCompanion.Systems
                     bool isWater = EvaluateHexCellWater(pixels, texWidth, texHeight, x * step + hexRowPixelOffset, y * step, step);
                     if (isWater) waterCellCount++;
 
-                    // 2) 사각형(Width x Height) 소속 해역 판정 + 교집합(겹침) 발생 시 중심점 최근접 거리 우선순위
+                    // 2) 육각형 클러스터(메인 육각형 + 추가 육각 스탬프) 소속 해역 판정
+                    //    교집합(겹치는 구간) 진입 시 중심점까지의 직선거리(distSq)가 더 가까운 스테이지가 우선권을 가짐
                     float cellWorldX = origin.x + (x + 0.5f) * cellSize + hexRowWorldOffset;
                     Vector2 cellWorldPos = new Vector2(cellWorldX, cellWorldY);
 
@@ -482,29 +612,24 @@ namespace DesktopCompanion.Systems
                     float bestOverlapDistSq = float.MaxValue;
                     float bestPortDistSq = float.MaxValue;
 
-                    for (int s = 0; s < rectCount; s++)
+                    for (int s = 0; s < stageCount; s++)
                     {
-                        Vector2 center = rectCenters[s];
-                        float dx = Mathf.Abs(cellWorldPos.x - center.x);
-                        float dy = Mathf.Abs(cellWorldPos.y - center.y);
+                        var cfg = m_stageAreaRects[s];
+                        Vector2 basePos = portPositions[s];
 
-                        // 사각형(Width, Height) 내부에 포함되는지 1차 검사
-                        if (dx <= halfSizes[s].x && dy <= halfSizes[s].y)
+                        if (cfg != null && cfg.TryEvaluateHexInclusion(cellWorldPos, basePos, out float hexCenterDistSq))
                         {
-                            float distSq = dx * dx + dy * dy;
-
-                            // 교집합 구간일 경우 사각형 중심점 거리가 더 가까운 스테이지가 우선권을 가짐
-                            if (distSq < bestOverlapDistSq)
+                            // 교집합 구간일 경우 직선거리(hexCenterDistSq)가 더 가까운 스테이지로 깔끔하게 판정
+                            if (hexCenterDistSq < bestOverlapDistSq)
                             {
-                                bestOverlapDistSq = distSq;
+                                bestOverlapDistSq = hexCenterDistSq;
                                 resolvedAreaId = stageIds[s];
                             }
                         }
 
-                        // 공식 항구(PortId)는 m_centerOffset과 무관하게 실제 스테이지 노드 좌표(MapPosition) 기준으로 판정
-                        Vector2 portPos = portPositions[s];
-                        float pdx = cellWorldPos.x - portPos.x;
-                        float pdy = cellWorldPos.y - portPos.y;
+                        // 공식 항구(PortId)는 오프셋과 무관하게 실제 스테이지 노드 좌표(MapPosition) 기준으로 판정
+                        float pdx = cellWorldPos.x - basePos.x;
+                        float pdy = cellWorldPos.y - basePos.y;
                         float portDistSq = pdx * pdx + pdy * pdy;
                         if (portDistSq <= portRadiiSq[s] && portDistSq < bestPortDistSq)
                         {
@@ -513,7 +638,7 @@ namespace DesktopCompanion.Systems
                         }
                     }
 
-                    // 만약 항구 반경 내부인데 사각형 오프셋 조정으로 AreaId가 비어있다면 해당 항구 스테이지로 보정
+                    // 만약 항구 반경 내부인데 육각형 오프셋 조정으로 AreaId가 비어있다면 해당 항구 스테이지로 보정
                     if (portId > 0 && resolvedAreaId == 0)
                     {
                         resolvedAreaId = portId;
@@ -631,38 +756,105 @@ namespace DesktopCompanion.Systems
             }
         }
 
+        public static void DrawStageHexAreaGizmos(IReadOnlyList<StageAreaRectConfig> configs)
+        {
+            if (configs == null) return;
+
+            Color[] palette =
+            {
+                new Color(0.2f, 0.8f, 1.0f, 0.9f),
+                new Color(0.3f, 0.9f, 0.5f, 0.9f),
+                new Color(1.0f, 0.7f, 0.2f, 0.9f),
+                new Color(0.9f, 0.4f, 0.8f, 0.9f),
+                new Color(0.6f, 0.5f, 1.0f, 0.9f),
+                new Color(1.0f, 0.4f, 0.4f, 0.9f)
+            };
+
+            for (int i = 0; i < configs.Count; i++)
+            {
+                var cfg = configs[i];
+                if (cfg == null) continue;
+
+                Vector2 basePos = GetDefaultStageMapPosition(cfg.m_stageId);
+                Vector3 portCenter = new Vector3(basePos.x, basePos.y, 0f);
+                Vector3 mainHexCenter = new Vector3(basePos.x + cfg.m_centerOffset.x, basePos.y + cfg.m_centerOffset.y, 0f);
+
+                Color c = palette[i % palette.Length];
+                Gizmos.color = c;
+
+                // 1) 메인 육각형 해역 기즈모 그리기
+                DrawPointyHexGizmo(mainHexCenter, cfg.m_hexRadius, cfg.m_scale, c);
+
+                // 2) 보조 육각 스탬프(방안 2) 기즈모 및 메인 중심과의 연결 보조선 그리기
+                if (cfg.m_additionalStamps != null)
+                {
+                    for (int s = 0; s < cfg.m_additionalStamps.Count; s++)
+                    {
+                        var stamp = cfg.m_additionalStamps[s];
+                        if (stamp == null || stamp.m_hexRadius <= 0f) continue;
+
+                        Vector3 stampCenter = new Vector3(basePos.x + stamp.m_offset.x, basePos.y + stamp.m_offset.y, 0f);
+                        DrawPointyHexGizmo(stampCenter, stamp.m_hexRadius, stamp.m_scale, c);
+                        Gizmos.color = new Color(c.r, c.g, c.b, 0.5f);
+                        Gizmos.DrawLine(mainHexCenter, stampCenter);
+                    }
+                }
+
+                // 3) 공식 항구 정박 반경 원 그리기
+                Gizmos.color = c;
+                Gizmos.DrawWireSphere(portCenter, cfg.m_portRadius);
+            }
+        }
+
+        private static void DrawPointyHexGizmo(Vector3 center, float apothemRadius, Vector2 scale, Color color)
+        {
+            if (apothemRadius <= 0f) return;
+
+            float sx = Mathf.Max(0.1f, Mathf.Abs(scale.x));
+            float sy = Mathf.Max(0.1f, Mathf.Abs(scale.y));
+
+            // 내접반경(Apothem = apothemRadius)으로부터 외접반경(Circumradius = R / cos(30°)) 도출
+            float circumRadius = apothemRadius / 0.8660254f;
+
+            Vector3 prev = Vector3.zero;
+            Vector3 first = Vector3.zero;
+            Gizmos.color = color;
+
+            for (int v = 0; v < 6; v++)
+            {
+                // Pointy-Top 육각형 꼭짓점 각도: 30°, 90°, 150°, 210°, 270°, 330°
+                float angleRad = (30f + v * 60f) * Mathf.Deg2Rad;
+                Vector3 vertex = center + new Vector3(
+                    Mathf.Cos(angleRad) * circumRadius * sx,
+                    Mathf.Sin(angleRad) * circumRadius * sy,
+                    0f
+                );
+
+                if (v == 0)
+                {
+                    first = vertex;
+                }
+                else
+                {
+                    Gizmos.DrawLine(prev, vertex);
+                }
+
+                // 중심에서 각 꼭짓점으로 옅은 방사형 내부 가이드선 표시
+                Gizmos.color = new Color(color.r, color.g, color.b, 0.2f);
+                Gizmos.DrawLine(center, vertex);
+                Gizmos.color = color;
+
+                prev = vertex;
+            }
+
+            Gizmos.DrawLine(prev, first);
+        }
+
 #if UNITY_EDITOR
         private void OnDrawGizmosSelected()
         {
             if (!m_drawAreaGizmos || m_stageAreaRects == null) return;
-
-            Color[] palette =
-            {
-                new Color(0.2f, 0.8f, 1.0f, 0.85f),
-                new Color(0.3f, 0.9f, 0.5f, 0.85f),
-                new Color(1.0f, 0.7f, 0.2f, 0.85f),
-                new Color(0.9f, 0.4f, 0.8f, 0.85f),
-                new Color(0.6f, 0.5f, 1.0f, 0.85f),
-                new Color(1.0f, 0.4f, 0.4f, 0.85f)
-            };
-
-            for (int i = 0; i < m_stageAreaRects.Count; i++)
-            {
-                var cfg = m_stageAreaRects[i];
-                if (cfg == null) continue;
-
-                Vector2 basePos = GetEditorStagePosition(cfg.m_stageId);
-                Vector3 portCenter = new Vector3(basePos.x, basePos.y, 0f);
-                Vector3 rectCenter = new Vector3(basePos.x + cfg.m_centerOffset.x, basePos.y + cfg.m_centerOffset.y, 0f);
-                Vector3 size = new Vector3(cfg.m_width, cfg.m_height, 1f);
-
-                Color c = palette[i % palette.Length];
-                Gizmos.color = new Color(c.r, c.g, c.b, 0.18f);
-                Gizmos.DrawCube(rectCenter, size);
-                Gizmos.color = c;
-                Gizmos.DrawWireCube(rectCenter, size);
-                Gizmos.DrawWireSphere(portCenter, cfg.m_portRadius);
-            }
+            DrawStageHexAreaGizmos(m_stageAreaRects);
         }
 
         private Vector2 GetEditorStagePosition(int stageId)

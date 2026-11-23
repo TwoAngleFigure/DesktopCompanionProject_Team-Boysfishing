@@ -77,16 +77,27 @@ namespace DesktopCompanion.Domain.World
                 prev = m_activeWaypoints[i];
             }
 
-            // 가감속 시간을 반영한 총 예상 항해 시간 산정
-            float accelDist = 0.5f * MaxSpeed * m_departureDuration;
+            // 이미 본 항해(Traveling) 중 목적지만 변경한 경우: 멈추거나 재가속(Departing)하지 않고 현재 최고 속도를 그대로 유지
+            bool isAlreadyTraveling = (CurrentState == VoyageState.Traveling);
+
+            float accelTime = isAlreadyTraveling ? 0f : m_departureDuration;
+            float accelDist = isAlreadyTraveling ? 0f : (0.5f * MaxSpeed * m_departureDuration);
             float decelDist = 0.5f * MaxSpeed * m_arrivalDuration;
             float cruiseDist = Mathf.Max(0f, totalDistance - accelDist - decelDist);
 
-            m_totalTravelTime = m_departureDuration + (cruiseDist / MaxSpeed) + m_arrivalDuration;
+            m_totalTravelTime = accelTime + (cruiseDist / MaxSpeed) + m_arrivalDuration;
             m_remainingTravelTime = m_totalTravelTime;
 
-            Debug.Log($"<color=#38bdf8>[World-Voyage] 🚀 항해 시작!</color> 총거리: {totalDistance:F1}m | 예상시간: {m_totalTravelTime:F1}s | 최고속도: {MaxSpeed:F1} | 경로점: {m_activeWaypoints.Count}개");
-            ChangeState(VoyageState.Departing);
+            if (isAlreadyTraveling)
+            {
+                m_currentSpeed = MaxSpeed;
+                Debug.Log($"<color=#38bdf8>[World-Voyage] 🧭 항해 중 목적지 변경!</color> 속도 유지: {m_currentSpeed:F1} | 남은거리: {totalDistance:F1}m | 예상시간: {m_totalTravelTime:F1}s | 경로점: {m_activeWaypoints.Count}개");
+            }
+            else
+            {
+                Debug.Log($"<color=#38bdf8>[World-Voyage] 🚀 항해 시작!</color> 총거리: {totalDistance:F1}m | 예상시간: {m_totalTravelTime:F1}s | 최고속도: {MaxSpeed:F1} | 경로점: {m_activeWaypoints.Count}개");
+                ChangeState(VoyageState.Departing);
+            }
         }
 
         public void CancelVoyage()
